@@ -2,3 +2,4 @@ otros/
 env/
 car/db.sqlite3
 car/car/migrations/
+car/car/views_api.py
