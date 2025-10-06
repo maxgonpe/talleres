@@ -1,0 +1,367 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+{% block content %}
+
+<div class="container py-4">
+  <h2>Ingreso de Diagnóstico</h2>
+
+  <form id="form-ingreso" method="post" novalidate>
+    {% csrf_token %}
+
+    <!-- ---------------- CLIENTE ---------------- -->
+    <h3>Cliente</h3>
+    <div class="mb-3">
+      <label class="form-label">Elegir cliente existente:</label>
+      <select id="cliente_existente" name="cliente_existente" class="form-select">
+        <option value="">-- Nuevo cliente --</option>
+        {% for cliente in clientes_existentes %}
+          <option value="{{ cliente.id }}"
+            {% if selected_cliente and selected_cliente|stringformat:"s" == cliente.id|stringformat:"s" %} selected {% endif %}>
+            {{ cliente.nombre }} - {{ cliente.telefono }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div id="nuevo_cliente_campos">
+      {{ cliente_form|crispy }}
+    </div>
+    <hr>
+
+    <!-- ---------------- VEHÍCULO ---------------- -->
+    <h3>Vehículo</h3>
+    <div class="mb-3">
+      <label class="form-label">Seleccionar vehículo existente:</label>
+      <select id="vehiculo_select" name="vehiculo_existente" class="form-select" data-selected="{{ selected_vehiculo|default:'' }}">
+        <option value="">-- Nuevo vehículo --</option>
+      </select>
+    </div>
+    <div id="vehiculo_fields">
+  <div class="mb-3">
+    <label for="vehiculo-placa" class="form-label">Placa</label>
+    <div class="input-group">
+      <input type="text" id="vehiculo-placa" name="vehiculo-placa" class="form-control" placeholder="Ej: JGCX79">
+      <button type="button" class="btn btn-outline-primary" id="btn-buscar-vehiculo">
+        Buscar en API
+      </button>
+    </div>
+  </div>
+
+  {{ vehiculo_form|crispy }}
+</div>
+
+    <hr>
+
+    <!-- ---------------- DIAGNÓSTICO ---------------- -->
+    <h3>Diagnóstico</h3>
+    <div class="row">
+      <!-- Columna izquierda: acordeón -->
+      <div class="col-md-6 border-end">
+        <h5>Seleccionar por lista</h5>
+
+        <div class="accordion" id="componentesAccordion">
+          {% for padre in componentes %}
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="heading-{{ padre.id }}">
+                <button class="accordion-button collapsed" type="button"
+                        data-bs-toggle="collapse" data-bs-target="#collapse-{{ padre.id }}"
+                        aria-expanded="false" aria-controls="collapse-{{ padre.id }}">
+                  {{ padre.nombre }}
+                </button>
+              </h2>
+              <div id="collapse-{{ padre.id }}" class="accordion-collapse collapse"
+                   aria-labelledby="heading-{{ padre.id }}" data-bs-parent="#componentesAccordion">
+                <div class="accordion-body">
+                  {% for hijo in padre.hijos.all %}
+                    <div class="form-check">
+                      <input class="form-check-input"
+                             type="checkbox"
+                             name="componentes_seleccionados"
+                             value="{{ hijo.id }}"
+                             id="comp-{{ hijo.id }}"
+                             data-nombre="{{ hijo.nombre }}"
+                             {% if hijo.id in selected_componentes_ids %}checked{% endif %}>
+                      <label class="form-check-label" for="comp-{{ hijo.id }}">
+                        {{ hijo.nombre }}
+                      </label>
+                    </div>
+                  {% empty %}
+                    <p class="text-muted small">No hay subcomponentes registrados.</p>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Columna derecha: plano SVG -->
+      <div class="col-md-6">
+        <h5>Seleccionar en el plano</h5>
+        <button id="btn-reset-plano" type="button" class="btn btn-sm btn-outline-secondary mb-2">
+          ⬅️ Volver al plano inicial
+        </button>
+
+        <div id="plano-container"
+             style="border:1px solid #ccc; max-height:100%; overflow:auto;"
+             data-inicial-url="{% static 'images/vehiculo-desde-abajo.svg' %}">
+          <div style="transform:scale(0.9); transform-origin: top left;">
+            {{ svg|safe }}
+          </div>
+        </div>
+
+        <!-- 🔽 Lista de componentes elegidos -->
+        <div id="componentes-seleccionados" class="mt-3">
+          <h6>Componentes seleccionados:</h6>
+          <ul id="lista-seleccionados" class="list-group small"></ul>
+
+          <!-- ====== BLOQUE ACCIONES ====== -->
+          <div class="card mt-2">
+            <div class="card-body p-2">
+              <h3 class="h6">Acciones para componentes seleccionados</h3>
+              <ul id="acciones-para-componentes" class="list-group list-group-flush small"></ul>
+              <input type="hidden" id="acciones_componentes_json" name="acciones_componentes_json" value="[]">
+              <div class="d-flex justify-content-end mt-2">
+                <div class="text-end">
+                  <div class="small text-muted">Total mano de obra</div>
+                  <div class="fw-bold" id="total_mano_obra">$0</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- ====== FIN BLOQUE ACCIONES ====== -->
+
+          <!-- ====== BLOQUE REPUESTOS (meta + botones) ====== -->
+          <!-- Un solo diagnostico-meta en el template -->
+          <div id="diagnostico-meta"
+               data-diagnostico-id="{{ diagnostico.id|default:'' }}"
+               data-csrf="{{ csrf_token }}">
+          </div>
+
+          <hr>
+          <h3>🔧 Repuestos sugeridos</h3>
+          <button type="button" class="btn btn-outline-primary mb-2" onclick="cargarRepuestos()">
+            Buscar repuestos sugeridos
+          </button>
+
+          <!-- Un solo contenedor #repuestos-list -->
+          <div id="repuestos-list"
+               data-preview-url="{% url 'sugerir_repuestos_preview' %}"
+               data-with-id-template="{% url 'sugerir_repuestos' 0 %}">
+            <p class="text-muted">Aquí aparecerán los repuestos sugeridos.</p>
+          </div>
+
+          <hr>
+          <h4>🧾 Repuestos agregados al diagnóstico</h4>
+          <div id="tabla-contenido"></div>
+          <!-- ====== FIN BLOQUE REPUESTOS ====== -->
+
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-3">
+      <label class="form-label">Descripción del problema:</label>
+      {{ diagnostico_form|crispy }}
+    </div>
+    <!-- hidden que envía los repuestos seleccionados -->
+    <input type="hidden" name="repuestos_json" id="repuestos-json">
+
+
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <!--button type="submit" class="btn btn-primary" onclick="prepararRepuestosParaEnvio()">Guardar</button-->
+
+    <a href="javascript:history.back()" class="btn btn-sm btn-warning mt-2">Regresar</a>
+    
+  </form>
+</div>
+
+<!-- Punto de referencia para build de endpoints (una sola vez) -->
+<div id="acciones-endpoints" data-acciones-url-template="{% url 'acciones_por_componente' 0 %}"></div>
+
+<div id="componentes-endpoints"
+     data-lookup-url="{% url 'componentes_lookup' %}">
+</div>
+
+<div id="repuestos-endpoints"
+     data-preview-url="{% url 'sugerir_repuestos_preview' %}"
+     data-with-id-template="{% url 'sugerir_repuestos' 0 %}">
+</div>
+
+
+
+<!-- ---------------- SCRIPTS (TODO integrado aquí) ---------------- -->
+<script src="{% static 'js/ingreso.js' %}"></script>
+<script>
+// ---------------------- BUSCAR VEHICULO POR PLACA ----------------------
+// usage: llama buscarVehiculoPorPlaca('JGCX79') o usa el botón/blur
+async function buscarVehiculoPorPlaca(rawPlaca, opts={showAlerts:true}) {
+  const placa = String(rawPlaca || '').trim().toUpperCase();
+  if (!placa) {
+    if (opts.showAlerts) console.warn("buscarVehiculoPorPlaca: placa vacía");
+    return null;
+  }
+  console.debug("buscarVehiculoPorPlaca ->", placa);
+
+  try {
+    const url = `/car/vehiculo_lookup/?placa=${encodeURIComponent(placa)}`;
+    console.debug("Fetch URL:", url);
+    const resp = await fetch(url);
+    if (!resp.ok) {
+      const msg = `Error HTTP ${resp.status}`;
+      console.error(msg);
+      if (opts.showAlerts) alert(msg);
+      return null;
+    }
+    const dataRaw = await resp.json();
+    console.debug("Respuesta JSON:", dataRaw);
+
+    // Soportar dos formatos posibles:
+    // 1) { success: true, data: {...} }
+    // 2) { marca: ..., modelo: ..., ... }
+    const payload = (dataRaw && dataRaw.success && dataRaw.data) ? dataRaw.data : dataRaw;
+
+    // Normalizar campos desde muchas posibles rutas
+    const marca = payload.marca || (payload.model && (payload.model.brand?.name || payload.model.brand_name)) || payload.brand?.name || '';
+    const modelo = payload.modelo || payload.model?.name || payload.version || payload.modelName || '';
+    const anio = payload.anio || payload.year || payload.yearRT || payload.model?.year || '';
+    const vin = payload.vin || payload.vinNumber || payload.vin_number || payload.vin_no || '';
+    const placaRes = payload.placa || payload.licensePlate || placa;
+    const descripcion_motor = payload.descripcion_motor || (payload.engine ? `Motor ${payload.engine} • ${payload.version || ''}` : (payload.engineNumber || ''));
+
+    const datos = {
+      marca: marca || '',
+      modelo: modelo || '',
+      anio: anio || '',
+      vin: vin || '',
+      placa: placaRes || placa,
+      descripcion_motor: descripcion_motor || ''
+    };
+    console.debug("vehículo datos procesados:", datos);
+
+    // Helper: intenta setear un campo probando varios selectores (id y name)
+    function setField(nameSuffix, value) {
+      if (value === undefined || value === null) value = '';
+      const candidates = [
+        `id_vehiculo-${nameSuffix}`,
+        `id_vehiculo_${nameSuffix}`,
+        `vehiculo-${nameSuffix}`,
+        `vehiculo_${nameSuffix}`,
+        `id_${nameSuffix}`,
+        nameSuffix
+      ];
+      for (const sel of candidates) {
+        // por id
+        const eById = document.getElementById(sel);
+        if (eById) { eById.value = value; eById.dispatchEvent(new Event('input',{bubbles:true})); console.debug("setField -> id:", sel, value); return true; }
+        // por name
+        const eByName = document.querySelector(`[name="${sel}"]`);
+        if (eByName) { eByName.value = value; eByName.dispatchEvent(new Event('input',{bubbles:true})); console.debug("setField -> name:", sel, value); return true; }
+      }
+      console.debug("setField: no encontró selector para", nameSuffix);
+      return false;
+    }
+
+    // Intentar rellenar
+    setField('marca', datos.marca);
+    setField('modelo', datos.modelo);
+    setField('anio', datos.anio);
+    setField('vin', datos.vin);
+    setField('placa', datos.placa);
+    setField('descripcion_motor', datos.descripcion_motor);
+
+    // Indicar éxito visualmente si quieres
+    if (opts.showAlerts) {
+      // añade un pequeño feedback en la UI si existe un contenedor para mensajes
+      const placaInput = document.querySelector('#id_vehiculo-placa, #id_vehiculo_placa, [name="vehiculo-placa"]');
+      if (placaInput) {
+        // crear/mostrar pequeño badge temporal
+        let badge = document.getElementById('vehiculo-lookup-badge');
+        if (!badge) {
+          badge = document.createElement('div');
+          badge.id = 'vehiculo-lookup-badge';
+          badge.style.fontSize = '0.9rem';
+          badge.style.marginTop = '0.35rem';
+          placaInput.closest('.mb-3')?.appendChild(badge) || placaInput.parentNode.appendChild(badge);
+        }
+        badge.textContent = `Vehículo encontrado: ${datos.marca} ${datos.modelo} ${datos.anio}`;
+        badge.style.color = '#0b5ed7';
+        setTimeout(()=> badge && badge.remove(), 4500);
+      } else {
+        console.info("Vehículo encontrado:", datos);
+      }
+    }
+
+    return datos;
+  } catch (err) {
+    console.error("Error en buscarVehiculoPorPlaca:", err);
+    if (opts.showAlerts) alert("Error al consultar la API del vehículo. Revisa consola Network/Console.");
+    return null;
+  }
+}
+
+// ------------------ conectar evento: botón o blur en campo placa ------------------
+document.addEventListener('DOMContentLoaded', function () {
+  // intenta localizar el input de placa usando los ids/names más probables
+  const placaInput = document.querySelector('#id_vehiculo-placa, #id_vehiculo_placa, [name="vehiculo-placa"], [name="vehiculo_placa"], [name="placa"]');
+  const btnId = 'btn-buscar-placa';
+
+  // si no existe botón en template, lo insertamos junto al input (si lo encontramos)
+  if (placaInput) {
+    // crear botón si no existe
+    if (!document.getElementById(btnId)) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.id = btnId;
+      btn.className = 'btn btn-sm btn-outline-secondary ms-2';
+      btn.textContent = 'Buscar placa';
+      // si está dentro de input-group o .form-control-wrap lo insertamos ahí, sino al lado
+      const wrapper = placaInput.closest('.input-group') || placaInput.parentNode;
+      // intentar colocar después del input
+      if (wrapper) {
+        // si wrapper es input-group y placaInput es hijo, agregar como lastChild
+        if (wrapper.classList && wrapper.classList.contains('input-group')) {
+          const wrapBtn = document.createElement('button');
+          wrapBtn.type = 'button';
+          wrapBtn.id = btnId;
+          wrapBtn.className = 'btn btn-outline-secondary';
+          wrapBtn.textContent = 'Buscar';
+          // añadir al final del input-group
+          wrapper.appendChild(wrapBtn);
+        } else {
+          // colocar el botón inmediatamente después del input
+          placaInput.insertAdjacentElement('afterend', btn);
+        }
+      } else {
+        placaInput.insertAdjacentElement('afterend', btn);
+      }
+    }
+
+    // click al botón -> buscar
+    document.getElementById(btnId)?.addEventListener('click', function () {
+      const val = placaInput.value || placaInput.textContent || '';
+      buscarVehiculoPorPlaca(val);
+    });
+
+    // también buscar al salir del campo (blur) o al presionar Enter
+    placaInput.addEventListener('blur', function () {
+      const val = placaInput.value || '';
+      if (val && String(val).trim().length >= 3) buscarVehiculoPorPlaca(val, {showAlerts:false});
+    });
+    placaInput.addEventListener('keydown', function(e){
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        buscarVehiculoPorPlaca(placaInput.value);
+      }
+    });
+
+    console.debug("Hook placa instalado en", placaInput);
+  } else {
+    console.debug("No se encontró input de placa (id_vehiculo-placa). Asegúrate del nombre/id del campo en el formulario.");
+  }
+});
+
+  
+</script>
+
+{% endblock %}

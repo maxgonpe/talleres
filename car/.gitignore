@@ -1,0 +1,7 @@
+db.sqlite3
+views.api.py
+__pycache__/
+*.pyc
+car/migrations/__pycache__/
+settings_local.py
+

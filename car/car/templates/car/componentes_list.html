@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="container py-4">
+  
+    <div class="d-flex gap-2 mb-2">
+    <h4>🧩 Componentes</h4>
+
+    <a href="{% url 'componente_create' %}" class="btn btn-success btn-sm mb-3">+ Nuevo</a>
+    <a href="javascript:history.back()" class="btn btn-sm btn-warning mb-3">⬅️ Volver al panel</a>
+  </div>
+
+  <form class="mb-3">
+    <div class="input-group">
+      <input type="text" class="form-control" id="searchBox" placeholder="Buscar componente...">
+    </div>
+  </form>
+
+  <div id="componentes-container">
+    {% include 'car/componentes_tree.html' with componentes=componentes %}
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const searchBox = document.getElementById('searchBox');
+  const container = document.getElementById('componentes-container');
+
+  searchBox.addEventListener('keyup', function () {
+    const query = this.value;
+    fetch(`?q=${encodeURIComponent(query)}`, {
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      container.innerHTML = data.html;
+
+      // Re-activar los colapsables de Bootstrap
+      container.querySelectorAll('[data-bs-toggle="collapse"]').forEach(el => {
+        new bootstrap.Collapse(el, { toggle: false });
+      });
+    });
+  });
+});
+</script>
+
+
+{% endblock %}

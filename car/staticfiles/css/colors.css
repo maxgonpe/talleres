@@ -1,0 +1,61 @@
+:root {
+  /* Paleta boutique cálida */
+  --color-blush-rose: #F7C6C7;
+  --color-champagne-cream: #FDE8C9;
+  --color-apricot-glow: #F9D3A8;
+  --color-soft-coral: #F8B6A4;
+  --color-warm-gray: #B8A9A1;
+
+  /* Derivados útiles */
+  --color-bg: var(--color-champagne-cream);
+  --color-primary: var(--color-soft-coral);
+  --color-accent: var(--color-apricot-glow);
+  --color-text: #3E3E3E;
+  --color-muted: var(--color-warm-gray);
+}
+
+/* Aplicación base */
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: "Poppins", "Helvetica Neue", sans-serif;
+}
+
+/* Botones */
+button, .btn {
+  background-color: var(--color-primary);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  padding: 0.6em 1.2em;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+button:hover, .btn:hover {
+  background-color: var(--color-soft-coral);
+}
+
+/* Tarjetas o contenedores */
+.card, .box, .panel {
+  background-color: white;
+  border: 1px solid var(--color-muted);
+  border-radius: 12px;
+  padding: 1em;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+/* Encabezados */
+h1, h2, h3 {
+  color: var(--color-primary);
+}
+
+/* Links */
+a {
+  color: var(--color-soft-coral);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--color-apricot-glow);
+}
