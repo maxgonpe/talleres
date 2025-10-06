@@ -24,6 +24,7 @@ class VehiculoForm(forms.ModelForm):
 #    class Meta:
 #        model = Diagnostico
 #        fields = ['componente', 'descripcion_problema']
+#
 
 class DiagnosticoForm(forms.ModelForm):
     class Meta:
