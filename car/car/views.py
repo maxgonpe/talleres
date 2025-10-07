@@ -29,7 +29,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.utils.timezone import now
-
+from django.views.decorators.http import require_http_methods
 
 
 from .models import Diagnostico, Cliente, Vehiculo,\
@@ -1326,7 +1326,7 @@ class RepuestoListView(ListView):
     template_name = "repuestos/repuesto_list.html"
     context_object_name = "repuestos"
 
-
+'''
 class RepuestoCreateView(CreateView):
     model = Repuesto
     fields = ["nombre", "marca", "descripcion", "medida", "posicion",
@@ -1341,9 +1341,115 @@ class RepuestoUpdateView(UpdateView):
               "unidad", "precio_costo", "precio_venta", "codigo_barra", "stock"]
     template_name = "repuestos/repuesto_form.html"
     success_url = reverse_lazy("repuesto_list")
-
+'''
 
 class RepuestoDeleteView(DeleteView):
     model = Repuesto
     template_name = "repuestos/repuesto_confirm_delete.html"
     success_url = reverse_lazy("repuesto_list")
+
+
+# ============================
+# Seguimiento público por placa
+# ============================
+
+@require_http_methods(["GET"])
+def tracking_publico(request):
+    """Página pública con formulario simple para buscar por placa y ver avance.
+    No requiere login. Si se pasa ?placa=... intenta mostrar el detalle.
+    """
+    placa = (request.GET.get("placa") or "").strip().upper()
+    trabajo = None
+    if placa:
+        trabajo = (
+            Trabajo.objects.select_related("vehiculo", "vehiculo__cliente")
+            .prefetch_related("acciones", "repuestos", "fotos")
+            .filter(vehiculo__placa__iexact=placa)
+            .order_by("-fecha_inicio")
+            .first()
+        )
+    return render(request, "car/tracking_publico.html", {"placa": placa, "trabajo": trabajo})
+
+@require_http_methods(["GET"])
+def tracking_publico_preview(request):
+    """Devuelve un fragmento HTML del card de trabajo para insertar bajo el formulario."""
+    placa = (request.GET.get("placa") or "").strip().upper()
+    trabajo = None
+    if placa:
+        trabajo = (
+            Trabajo.objects.select_related("vehiculo", "vehiculo__cliente")
+            .prefetch_related("acciones", "repuestos", "fotos")
+            .filter(vehiculo__placa__iexact=placa)
+            .order_by("-fecha_inicio")
+            .first()
+        )
+    html = render_to_string("car/_tracking_card.html", {"trabajo": trabajo}, request=request)
+    return JsonResponse({"html": html, "found": bool(trabajo)})
+
+
+
+# === Utilidad temporal: clonar Repuesto → RepuestoEnStock ===
+def clone_repuesto_to_stock(repuesto: Repuesto, deposito: str = "bodega-principal", proveedor: str = "") -> RepuestoEnStock:
+    """
+    Crea o actualiza una fila en RepuestoEnStock para el `repuesto` dado.
+    - depósito por defecto: "bodega-principal"
+    - proveedor por defecto: "" (vacío)
+    Copia: stock, precio_compra, precio_venta desde Repuesto.
+    Retorna la instancia de RepuestoEnStock creada/actualizada.
+    """
+    defaults = {
+        "stock": repuesto.stock or 0,
+        "reservado": 0,
+        "precio_compra": repuesto.precio_costo,
+        "precio_venta": repuesto.precio_venta,
+    }
+
+    repstk, created = RepuestoEnStock.objects.get_or_create(
+        repuesto=repuesto,
+        deposito=deposito,
+        proveedor=proveedor,
+        defaults=defaults,
+    )
+
+    if not created:
+        repstk.stock = repuesto.stock if repuesto.stock is not None else repstk.stock
+        if repuesto.precio_costo is not None:
+            repstk.precio_compra = repuesto.precio_costo
+        if repuesto.precio_venta is not None:
+            repstk.precio_venta = repuesto.precio_venta
+        repstk.save()
+
+    return repstk
+
+
+# === Vistas: crear/editar Repuesto clonando a RepuestoEnStock ===
+class RepuestoCreateView(CreateView):
+    model = Repuesto
+    fields = ["nombre", "marca", "descripcion", "medida", "posicion",
+              "unidad", "precio_costo", "precio_venta", "codigo_barra", "stock"]
+    template_name = "repuestos/repuesto_form.html"
+    success_url = reverse_lazy("repuesto_list")
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        try:
+            clone_repuesto_to_stock(self.object)
+        except Exception:
+            pass
+        return response
+
+
+class RepuestoUpdateView(UpdateView):
+    model = Repuesto
+    fields = ["nombre", "marca", "descripcion", "medida", "posicion",
+              "unidad", "precio_costo", "precio_venta", "codigo_barra", "stock"]
+    template_name = "repuestos/repuesto_form.html"
+    success_url = reverse_lazy("repuesto_list")
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        try:
+            clone_repuesto_to_stock(self.object)
+        except Exception:
+            pass
+        return response

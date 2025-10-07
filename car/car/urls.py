@@ -89,6 +89,10 @@ urlpatterns = [
     path("repuestos/nuevo/", RepuestoCreateView.as_view(), name="repuesto_create"),
     path("repuestos/<int:pk>/editar/", RepuestoUpdateView.as_view(), name="repuesto_update"),
     path("repuestos/<int:pk>/eliminar/", RepuestoDeleteView.as_view(), name="repuesto_delete"),
+    # Seguimiento público por placa
+    path("tracking/", views.tracking_publico, name="tracking_publico"),
+    path("tracking/placa/", views.tracking_publico_preview, name="tracking_publico_preview"),
+
 ]
 
 if settings.DEBUG:

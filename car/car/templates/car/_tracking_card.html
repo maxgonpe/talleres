@@ -1,0 +1,75 @@
+{% load humanize %}
+{% if trabajo %}
+<div class="card shadow-sm h-100 position-relative">
+  <div class="watermark">{{ trabajo.porcentaje_avance }}%</div>
+  <div class="card-body">
+    <h5 class="card-title">🚗 {{ trabajo.vehiculo }}</h5>
+    <p class="card-text mb-2">
+      <strong>Estado:</strong>
+      <span class="badge 
+        {% if trabajo.estado == 'iniciado' %}bg-secondary
+        {% elif trabajo.estado == 'trabajando' %}bg-warning
+        {% elif trabajo.estado == 'completado' %}bg-success
+        {% elif trabajo.estado == 'entregado' %}bg-dark{% endif %}">
+        {{ trabajo.get_estado_display }}
+      </span>
+    </p>
+    <p class="text-muted small mb-3"><strong>Inicio:</strong> {{ trabajo.fecha_inicio|date:"d/m/Y H:i" }}</p>
+
+    <p><strong>🛠️ Acciones:</strong></p>
+    {% if trabajo.acciones.all %}
+      <ul class="list-group list-group-flush small mb-2">
+        {% for acc in trabajo.acciones.all|slice:":3" %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            {{ acc.accion.nombre }} – {{ acc.componente.nombre }}
+            <span class="badge {% if acc.completado %}bg-success{% else %}bg-warning{% endif %}">
+              {% if acc.completado %}✔️ Completado{% else %}Pendiente{% endif %}
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+      {% if trabajo.acciones.count > 3 %}
+        <p class="text-muted small">+ {{ trabajo.acciones.count|add:"-3" }} más...</p>
+      {% endif %}
+    {% else %}
+      <p class="text-muted">No registradas</p>
+    {% endif %}
+
+    <p><strong>⚙️ Repuestos:</strong></p>
+    {% if trabajo.repuestos.all %}
+      <ul class="list-group list-group-flush small mb-2">
+        {% for rep in trabajo.repuestos.all|slice:":3" %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            {{ rep.repuesto.nombre }} (x{{ rep.cantidad }})
+            <span class="badge {% if rep.completado %}bg-success{% else %}bg-warning{% endif %}">
+              {% if rep.completado %}✔️ Instalado{% else %}Pendiente{% endif %}
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+      {% if trabajo.repuestos.count > 3 %}
+        <p class="text-muted small">+ {{ trabajo.repuestos.count|add:"-3" }} más...</p>
+      {% endif %}
+    {% else %}
+      <p class="text-muted">No registrados</p>
+    {% endif %}
+
+    <div class="progress mt-3" style="height: 20px;">
+      <div class="progress-bar 
+        {% if trabajo.porcentaje_avance < 50 %}bg-danger
+        {% elif trabajo.porcentaje_avance < 100 %}bg-warning
+        {% else %}bg-success{% endif %}"
+        style="width: {{ trabajo.porcentaje_avance }}%;">
+        {{ trabajo.porcentaje_avance }}%
+      </div>
+    </div>
+
+    {# Sin datos de cliente/teléfono/montos en público #}
+  </div>
+</div>
+<style>
+.watermark{position:absolute;top:10%;left:60%;transform:translate(-30%,-30%);font-size:5rem;font-weight:bold;color:rgba(0,0,0,.1);pointer-events:none}
+</style>
+{% else %}
+<div class="alert alert-warning">No encontramos un trabajo activo para esa placa.</div>
+{% endif %}
