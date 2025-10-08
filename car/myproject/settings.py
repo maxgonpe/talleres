@@ -110,16 +110,16 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Redirigir usuarios no autenticados
 LOGIN_URL = 'login'         # nombre de la URL de tu vista de login
-LOGIN_REDIRECT_URL = 'panel_principal'  # a dónde ir después de login exitoso
+LOGIN_REDIRECT_URL = 'panel_principal'  # a dónde ir después de login exitoso (ahora apunta a inicio.html)
 LOGOUT_REDIRECT_URL = 'login'  # opcional: a dónde mandar tras logout
 
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'es-cl'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Santiago'
 
 USE_I18N = True
 

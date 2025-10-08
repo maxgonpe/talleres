@@ -2,7 +2,9 @@ from django import forms
 from .models import Componente, Cliente, Vehiculo,\
                     Diagnostico,Accion, ComponenteAccion,\
                     Mecanico, Trabajo, TrabajoFoto,\
-                    Venta, VentaItem, Repuesto
+                    Venta, VentaItem, Repuesto, SesionVenta,\
+                    CarritoItem, VentaPOS, VentaPOSItem, ConfiguracionPOS,\
+                    Cotizacion, CotizacionItem, AdministracionTaller
 
 class MecanicoForm(forms.ModelForm):
     class Meta:
@@ -147,3 +149,165 @@ class RepuestoForm(forms.ModelForm):
         widgets = {
             "descripcion": forms.Textarea(attrs={"rows": 3}),
         }
+
+# ========================
+# FORMULARIOS PARA POS
+# ========================
+
+class BuscarRepuestoForm(forms.Form):
+    """Formulario para búsqueda rápida de repuestos en POS"""
+    busqueda = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control form-control-lg',
+            'placeholder': 'Buscar por nombre, SKU, código de barras...',
+            'autofocus': True,
+            'id': 'busqueda-repuesto'
+        })
+    )
+
+class CarritoItemForm(forms.ModelForm):
+    """Formulario para agregar/editar items en el carrito"""
+    class Meta:
+        model = CarritoItem
+        fields = ['cantidad', 'precio_unitario']
+        widgets = {
+            'cantidad': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': '1',
+                'style': 'width: 80px;'
+            }),
+            'precio_unitario': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'style': 'width: 100px;'
+            }),
+        }
+
+class VentaPOSForm(forms.ModelForm):
+    """Formulario para completar la venta POS"""
+    class Meta:
+        model = VentaPOS
+        fields = ['cliente', 'descuento', 'metodo_pago', 'observaciones']
+        widgets = {
+            'cliente': forms.Select(attrs={
+                'class': 'form-select',
+                'placeholder': 'Cliente (opcional)'
+            }),
+            'descuento': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0',
+                'value': '0'
+            }),
+            'metodo_pago': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'observaciones': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': 'Observaciones (opcional)'
+            }),
+        }
+
+class ConfiguracionPOSForm(forms.ModelForm):
+    """Formulario para configurar el sistema POS"""
+    class Meta:
+        model = ConfiguracionPOS
+        fields = '__all__'
+        widgets = {
+            'nombre_empresa': forms.TextInput(attrs={'class': 'form-control'}),
+            'direccion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'telefono': forms.TextInput(attrs={'class': 'form-control'}),
+            'ruc': forms.TextInput(attrs={'class': 'form-control'}),
+            'imprimir_ticket': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'mostrar_descuentos': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'permitir_venta_sin_stock': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'margen_ganancia_default': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0',
+                'max': '100'
+            }),
+        }
+
+class ClienteRapidoForm(forms.ModelForm):
+    """Formulario rápido para crear cliente desde POS"""
+    class Meta:
+        model = Cliente
+        fields = ['nombre', 'telefono']
+        widgets = {
+            'nombre': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nombre del cliente'
+            }),
+            'telefono': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Teléfono (opcional)'
+            }),
+        }
+
+# ========================
+# FORMULARIOS PARA COTIZACIONES
+# ========================
+
+class CotizacionForm(forms.ModelForm):
+    """Formulario para crear cotizaciones"""
+    class Meta:
+        model = Cotizacion
+        fields = ['cliente', 'descuento', 'observaciones', 'valida_hasta']
+        widgets = {
+            'cliente': forms.Select(attrs={
+                'class': 'form-select',
+                'placeholder': 'Cliente (opcional)'
+            }),
+            'descuento': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0',
+                'value': '0'
+            }),
+            'observaciones': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': 'Observaciones (opcional)'
+            }),
+            'valida_hasta': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+        }
+
+
+class AdministracionTallerForm(forms.ModelForm):
+    class Meta:
+        model = AdministracionTaller
+        fields = [
+            # Información básica
+            'nombre_taller', 'direccion', 'telefono', 'email', 'rut',
+            # Logos
+            'logo_principal_png', 'logo_principal_svg', 'logo_secundario_png',
+            # Fondo
+            'imagen_fondo',
+            # Políticas de seguridad
+            'sesion_timeout_minutos', 'intentos_login_maximos', 'bloqueo_temporal_horas',
+            'requiere_cambio_password', 'dias_validez_password',
+            # Configuraciones
+            'tema_por_defecto', 'mostrar_estadisticas_publicas', 
+            'permitir_registro_usuarios', 'notificaciones_email'
+        ]
+        widgets = {
+            'direccion': forms.Textarea(attrs={'rows': 3}),
+            'sesion_timeout_minutos': forms.NumberInput(attrs={'min': 5, 'max': 480}),
+            'intentos_login_maximos': forms.NumberInput(attrs={'min': 3, 'max': 10}),
+            'bloqueo_temporal_horas': forms.NumberInput(attrs={'min': 1, 'max': 24}),
+            'dias_validez_password': forms.NumberInput(attrs={'min': 0, 'max': 365}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Hacer campos de archivos opcionales
+        self.fields['logo_principal_png'].required = False
+        self.fields['logo_principal_svg'].required = False
+        self.fields['logo_secundario_png'].required = False
+        self.fields['imagen_fondo'].required = False

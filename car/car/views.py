@@ -28,7 +28,8 @@ from reportlab.lib.styles import ParagraphStyle
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
-from django.utils.timezone import now
+from django.utils import timezone
+from django.db.models import Sum
 from django.views.decorators.http import require_http_methods
 
 
@@ -36,13 +37,14 @@ from .models import Diagnostico, Cliente, Vehiculo,\
                     Componente, Accion, ComponenteAccion,\
                     DiagnosticoComponenteAccion, Repuesto, VehiculoVersion,\
                     DiagnosticoRepuesto, Trabajo, Mecanico, TrabajoFoto,TrabajoRepuesto,\
-                    TrabajoAccion, Venta, VentaItem, RepuestoEnStock, StockMovimiento
+                    TrabajoAccion, Venta, VentaItem, RepuestoEnStock, StockMovimiento,\
+                    VentaPOS, SesionVenta, CarritoItem, AdministracionTaller
 from django.forms import modelformset_factory
 from django.forms import inlineformset_factory
 from .forms import ComponenteForm, ClienteForm, VehiculoForm,\
                    DiagnosticoForm, AccionForm, ComponenteAccionForm,\
                    MecanicoForm, AsignarMecanicosForm, SubirFotoForm,\
-                   VentaForm, VentaItemForm
+                   VentaForm, VentaItemForm, AdministracionTallerForm
 
 
 import datetime
@@ -70,10 +72,7 @@ def logout_view(request):
     return redirect("login")
 
 
-@login_required
-def panel_principal(request):
-    clientes = Cliente.objects.all()
-    return render(request, 'car/panel_principal.html', {'clientes': clientes})
+
 
 @login_required
 def componente_list(request):
@@ -619,7 +618,7 @@ def comp_accion_delete(request, pk):
 
 
 @login_required
-def sugerir_repuestos(request, diagnostico_id=None):
+def sugerir_repuestos2(request, diagnostico_id=None):
     """
     Vista única:
     - Si viene diagnostico_id: usa los datos guardados en la BD.
@@ -681,7 +680,131 @@ def sugerir_repuestos(request, diagnostico_id=None):
     print("resultados del punto 3 ",resultados)
     return JsonResponse({"repuestos": resultados})
 
+@login_required
+def sugerir_repuestos(request, diagnostico_id=None):
+    """
+    Sugerir repuestos en base a:
+    1) Componentes seleccionados (ComponenteRepuesto)
+    2) Compatibilidad exacta con la versión del vehículo (VehiculoVersion + RepuestoAplicacion)
+       - Si hay versión, se usa INTERSECCIÓN (solo compatibles con esa versión)
+       - Si no hay versión, se queda solo con los de componentes
+    3) Priorizar filas con stock disponible en RepuestoEnStock
+    """
+    componentes_ids = []
+    veh_marca = veh_modelo = None
+    veh_anio = None
 
+    # MODO "DIAGNÓSTICO GUARDADO"
+    if diagnostico_id:
+        diag = get_object_or_404(Diagnostico, pk=diagnostico_id)
+        veh = diag.vehiculo
+        veh_marca, veh_modelo, veh_anio = veh.marca, veh.modelo, veh.anio
+        componentes_ids = list(diag.componentes.values_list('id', flat=True))
+
+    # MODO "PREVIEW" (sin guardar)
+    else:
+        componentes_ids = request.GET.getlist("componentes_ids", [])
+        veh_marca = (request.GET.get("marca") or "").strip()
+        veh_modelo = (request.GET.get("modelo") or "").strip()
+        veh_anio_raw = (request.GET.get("anio") or "").strip()
+        try:
+            veh_anio = int(veh_anio_raw) if veh_anio_raw else None
+        except ValueError:
+            veh_anio = None
+
+    # 1) Repuestos ligados a los componentes
+    repuestos_comp = (
+        Repuesto.objects
+        .filter(componenterepuesto__componente_id__in=componentes_ids)
+        .distinct()
+    )
+
+    # 2) Compatibilidad exacta por versión (INTERSECCIÓN)
+    candidates = repuestos_comp
+    if veh_marca and veh_modelo and veh_anio:
+        version = (
+            VehiculoVersion.objects
+            .filter(
+                marca__iexact=veh_marca,
+                modelo__iexact=veh_modelo,
+                anio_desde__lte=veh_anio,
+                anio_hasta__gte=veh_anio
+            )
+            .first()
+        )
+        if version:
+            candidates = repuestos_comp.filter(aplicaciones__version=version).distinct()
+
+    # 3) Enriquecer con stock, priorizando disponibles
+    resultados = []
+    for r in candidates.select_related().order_by("nombre")[:80]:
+        stock_obj = (
+            r.stocks.filter(stock__gt=0).order_by('-ultima_actualizacion').first()
+            or r.stocks.order_by('-ultima_actualizacion').first()
+        )
+        resultados.append({
+            "id": r.id,
+            "sku": r.sku,
+            "oem": r.oem,
+            "nombre": r.nombre,
+            "posicion": r.posicion,
+            "precio_venta": float(r.precio_venta or 0),
+            "stock": stock_obj.stock if stock_obj else 0,
+            "disponible": stock_obj.disponible if stock_obj else 0,
+            "repuesto_stock_id": stock_obj.id if stock_obj else None,
+        })
+
+    # Orden: primero los que tienen disponible > 0, luego por stock
+    resultados.sort(key=lambda x: (x["disponible"] > 0, x["stock"]), reverse=True)
+
+    return JsonResponse({"repuestos": resultados})
+
+
+######################
+# 1) repuestos ligados a los componentes seleccionados
+#repuestos_comp = (Repuesto.objects
+#    .filter(componenterepuesto__componente_id__in=componentes_ids)
+#    .distinct())
+#
+# 2) recortar por versión exacta del vehículo (marca/modelo/año)
+#candidates = repuestos_comp
+#if veh_marca and veh_modelo and veh_anio:
+#    version = (VehiculoVersion.objects
+#        .filter(
+#            marca__iexact=(veh_marca or "").strip(),
+#            modelo__iexact=(veh_modelo or "").strip(),
+#            anio_desde__lte=veh_anio,
+#            anio_hasta__gte=veh_anio
+#        )
+#        .first())
+#    if version:
+#        # Intersección: SOLO compatibles con la versión
+#        candidates = repuestos_comp.filter(aplicaciones__version=version).distinct()
+#
+# 3) enriquecer con stock y precio (prioriza disponibles)
+#resultados = []
+#for r in candidates.select_related().order_by("nombre")[:80]:
+#    stock_obj = (r.stocks
+#        .filter(stock__gt=0)         # preferir con stock > 0
+#        .order_by('-ultima_actualizacion')
+#        .first()
+#    ) or r.stocks.order_by('-ultima_actualizacion').first()  # fallback: aunque sea sin stock
+#
+#    resultados.append({
+#        "id": r.id,
+#        "sku": r.sku,
+#        "oem": r.oem,
+#        "nombre": r.nombre,
+#        "posicion": r.posicion,
+#        "precio_venta": float(r.precio_venta or 0),
+#        "stock": stock_obj.stock if stock_obj else 0,
+#        "disponible": stock_obj.disponible if stock_obj else 0,
+#        "repuesto_stock_id": stock_obj.id if stock_obj else None,
+#    })
+#return JsonResponse({"repuestos": resultados})
+#
+#
+######################
 @login_required
 @csrf_exempt
 def agregar_repuesto(request, diagnostico_id):
@@ -1073,10 +1196,14 @@ def lista_trabajos2(request):
 def lista_trabajos(request):
     trabajos = Trabajo.objects.all().select_related(
         'vehiculo__cliente'
+    ).prefetch_related(
+        'acciones__accion',
+        'acciones__componente',
+        'repuestos__repuesto'
     ).order_by('-fecha_inicio')
 
-    # Agregar campos calculados
-    
+    # Los totales se calculan automáticamente mediante las @property del modelo
+    # No necesitamos asignarlos manualmente
 
     return render(request, 'car/trabajo_lista.html', {
         'trabajos': trabajos
@@ -1100,7 +1227,7 @@ def trabajo_detalle(request, pk):
                 trabajo = asignar_form.save(commit=False)
                 if trabajo.estado == "iniciado":
                     trabajo.estado = "trabajando"
-                    trabajo.fecha_inicio = now()
+                    trabajo.fecha_inicio = timezone.now()
                 trabajo.save()
                 asignar_form.save_m2m()
                 messages.success(request, "Mecánicos asignados y trabajo iniciado.")
@@ -1121,21 +1248,21 @@ def trabajo_detalle(request, pk):
             if nuevo_estado in dict(Trabajo.ESTADOS).keys():
                 trabajo.estado = nuevo_estado
                 if nuevo_estado == "trabajando" and not trabajo.fecha_inicio:
-                    trabajo.fecha_inicio = now()
+                    trabajo.fecha_inicio = timezone.now()
                 if nuevo_estado in ["completado", "entregado"]:
-                    trabajo.fecha_fin = now()
+                    trabajo.fecha_fin = timezone.now()
                 else:
                     trabajo.fecha_fin = None
                 trabajo.save()
                 messages.success(request, f"Trabajo actualizado a {trabajo.get_estado_display()}.")
-            return redirect("trabajo_detalle", pk=trabajo.pk)
+            return redirect("panel_principal")
 
         # 🔹 Toggle acción completada / pendiente
         elif "accion_toggle" in request.POST:
             accion_id = request.POST.get("accion_toggle")
             accion = get_object_or_404(TrabajoAccion, id=accion_id, trabajo=trabajo)
             accion.completado = not accion.completado
-            accion.fecha = now() if accion.completado else None
+            accion.fecha = timezone.now() if accion.completado else None
             accion.save()
             messages.success(request, f"Acción '{accion.accion.nombre}' actualizada.")
             return redirect("trabajo_detalle", pk=trabajo.pk)
@@ -1145,7 +1272,7 @@ def trabajo_detalle(request, pk):
             rep_id = request.POST.get("repuesto_toggle")
             rep = get_object_or_404(TrabajoRepuesto, id=rep_id, trabajo=trabajo)
             rep.completado = not rep.completado
-            rep.fecha = now() if rep.completado else None
+            rep.fecha = timezone.now() if rep.completado else None
             rep.save()
             messages.success(request, f"Repuesto '{rep.repuesto.nombre}' actualizado.")
             return redirect("trabajo_detalle", pk=trabajo.pk)
@@ -1173,14 +1300,90 @@ def pizarra_view(request):
 
 @login_required
 def panel_principal(request):
+    """Vista principal que incluye todo el contenido del dashboard"""
+    # Obtener configuración del taller
+    config = AdministracionTaller.get_configuracion_activa()
+    
+    # Estadísticas para el dashboard
+    # Usar la fecha local de Santiago, no UTC
+    ahora_santiago = timezone.localtime(timezone.now())
+    hoy = ahora_santiago.date()
+    
+    # Estadísticas de diagnósticos
+    diagnosticos_total = Diagnostico.objects.count()
+    
+    # Usar timezone-aware para la consulta con fecha local
+    inicio_dia = ahora_santiago.replace(hour=0, minute=0, second=0, microsecond=0)
+    fin_dia = inicio_dia + timedelta(days=1)
+    diagnosticos_hoy = Diagnostico.objects.filter(fecha__gte=inicio_dia, fecha__lt=fin_dia).count()
+    
+    diagnosticos_pendientes = Diagnostico.objects.filter(estado='pendiente').count()
+    
+    
+    # Estadísticas de trabajos
     trabajos = Trabajo.objects.select_related("vehiculo", "vehiculo__cliente")
+    trabajos_activos = trabajos.filter(estado__in=['iniciado', 'trabajando']).count()
+    trabajos_completados_hoy = trabajos.filter(
+        fecha_fin__gte=inicio_dia, 
+        fecha_fin__lt=fin_dia,
+        estado='completado'
+    ).count()
+    
+    # Estadísticas del POS
+    ventas_hoy = VentaPOS.objects.filter(fecha__gte=inicio_dia, fecha__lt=fin_dia).count()
+    total_ventas_hoy = VentaPOS.objects.filter(
+        fecha__gte=inicio_dia, fecha__lt=fin_dia
+    ).aggregate(total=Sum('total'))['total'] or 0
+    
+    # Estadísticas de repuestos
+    repuestos_total = Repuesto.objects.count()
+    repuestos_sin_stock = Repuesto.objects.filter(stock=0).count()
+    
+    
+    # Datos del POS para el template unificado
+    sesion_pos = SesionVenta.objects.filter(
+        usuario=request.user, 
+        activa=True
+    ).first()
+    
+    if not sesion_pos:
+        sesion_pos = SesionVenta.objects.create(
+            usuario=request.user,
+            activa=True
+        )
+    
+    carrito_items = sesion_pos.carrito_items.all().order_by('-agregado_en')
+    subtotal_pos = sum(item.subtotal for item in carrito_items)
+    
     context = {
+        # Trabajos para la pizarra
         "iniciados": trabajos.filter(estado="iniciado"),
         "trabajando": trabajos.filter(estado="trabajando"),
         "completados": trabajos.filter(estado="completado"),
         "entregados": trabajos.filter(estado="entregado"),
+        
+        # Estadísticas del dashboard
+        'hoy': hoy,
+        'diagnosticos_hoy': diagnosticos_hoy,
+        'diagnosticos_total': diagnosticos_total,
+        'diagnosticos_pendientes': diagnosticos_pendientes,
+        'trabajos_activos': trabajos_activos,
+        'trabajos_completados_hoy': trabajos_completados_hoy,
+        'ventas_hoy': ventas_hoy,
+        'total_ventas_hoy': total_ventas_hoy,
+        'repuestos_total': repuestos_total,
+        'repuestos_sin_stock': repuestos_sin_stock,
+        
+        # Datos del POS
+        'sesion': sesion_pos,
+        'carrito_items': carrito_items,
+        'subtotal': subtotal_pos,
+        
+        # Configuración del taller
+        'config': config,
     }
-    return render(request, "car/panel_principal.html", context)
+    
+    return render(request, "car/panel_definitivo.html", context)
 
 
 def venta_crear(request):
@@ -1453,3 +1656,26 @@ class RepuestoUpdateView(UpdateView):
         except Exception:
             pass
         return response
+
+
+@login_required
+def administracion_taller(request):
+    """Vista para configurar la administración del taller"""
+    config = AdministracionTaller.get_configuracion_activa()
+    
+    if request.method == 'POST':
+        form = AdministracionTallerForm(request.POST, request.FILES, instance=config)
+        if form.is_valid():
+            config = form.save(commit=False)
+            config.creado_por = request.user
+            config.save()
+            messages.success(request, "Configuración del taller actualizada correctamente.")
+            return redirect('administracion_taller')
+    else:
+        form = AdministracionTallerForm(instance=config)
+    
+    context = {
+        'form': form,
+        'config': config,
+    }
+    return render(request, 'car/administracion_taller.html', context)

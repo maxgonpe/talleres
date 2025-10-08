@@ -6,7 +6,13 @@ from .models import (
     Componente, Accion, ComponenteAccion,
     Repuesto, RepuestoEnStock, StockMovimiento,
     VehiculoVersion, ComponenteRepuesto, RepuestoAplicacion,
-    Venta, VentaItem, PrefijoRepuesto
+    Venta, VentaItem, PrefijoRepuesto,
+    # Modelos POS
+    SesionVenta, CarritoItem, VentaPOS, VentaPOSItem, ConfiguracionPOS,
+    # Modelos Cotizaciones
+    Cotizacion, CotizacionItem,
+    # Modelos Administración
+    AdministracionTaller
 )
 
 @admin.register(Mecanico)
@@ -137,3 +143,118 @@ admin.site.register(TrabajoFoto)
 admin.site.register(TrabajoRepuesto)
 admin.site.register(Venta)
 admin.site.register(VentaItem)
+
+# ======================
+# ADMIN PARA SISTEMA POS
+# ======================
+
+@admin.register(SesionVenta)
+class SesionVentaAdmin(admin.ModelAdmin):
+    list_display = ('id', 'usuario', 'fecha_inicio', 'fecha_fin', 'activa', 'total_ventas', 'numero_ventas')
+    list_filter = ('activa', 'fecha_inicio', 'usuario')
+    search_fields = ('usuario__username',)
+    readonly_fields = ('fecha_inicio', 'fecha_fin', 'total_ventas', 'numero_ventas')
+
+@admin.register(CarritoItem)
+class CarritoItemAdmin(admin.ModelAdmin):
+    list_display = ('id', 'sesion', 'repuesto', 'cantidad', 'precio_unitario', 'subtotal', 'agregado_en')
+    list_filter = ('sesion__usuario', 'agregado_en')
+    search_fields = ('repuesto__nombre', 'repuesto__sku')
+
+class VentaPOSItemInline(admin.TabularInline):
+    model = VentaPOSItem
+    extra = 0
+    readonly_fields = ('subtotal',)
+
+@admin.register(VentaPOS)
+class VentaPOSAdmin(admin.ModelAdmin):
+    list_display = ('id', 'sesion', 'cliente', 'fecha', 'total', 'metodo_pago', 'pagado')
+    list_filter = ('metodo_pago', 'pagado', 'fecha', 'sesion__usuario')
+    search_fields = ('cliente__nombre', 'id')
+    readonly_fields = ('fecha', 'subtotal', 'total')
+    inlines = [VentaPOSItemInline]
+
+@admin.register(VentaPOSItem)
+class VentaPOSItemAdmin(admin.ModelAdmin):
+    list_display = ('id', 'venta', 'repuesto', 'cantidad', 'precio_unitario', 'subtotal')
+    list_filter = ('venta__fecha', 'venta__sesion__usuario')
+    search_fields = ('repuesto__nombre', 'repuesto__sku')
+
+@admin.register(ConfiguracionPOS)
+class ConfiguracionPOSAdmin(admin.ModelAdmin):
+    list_display = ('id', 'nombre_empresa', 'telefono', 'imprimir_ticket', 'mostrar_descuentos')
+    fieldsets = (
+        ('Información de la Empresa', {
+            'fields': ('nombre_empresa', 'direccion', 'telefono', 'ruc')
+        }),
+        ('Configuración de Ventas', {
+            'fields': ('imprimir_ticket', 'mostrar_descuentos', 'permitir_venta_sin_stock', 'margen_ganancia_default')
+        }),
+    )
+
+# ======================
+# ADMIN PARA COTIZACIONES
+# ======================
+
+class CotizacionItemInline(admin.TabularInline):
+    model = CotizacionItem
+    extra = 0
+    readonly_fields = ('subtotal',)
+
+@admin.register(Cotizacion)
+class CotizacionAdmin(admin.ModelAdmin):
+    list_display = ('id', 'sesion', 'cliente', 'fecha', 'total', 'estado', 'valida_hasta')
+    list_filter = ('estado', 'fecha', 'valida_hasta', 'sesion__usuario')
+    search_fields = ('cliente__nombre', 'id')
+    readonly_fields = ('fecha', 'subtotal', 'total')
+    inlines = [CotizacionItemInline]
+    
+    fieldsets = (
+        ('Información General', {
+            'fields': ('sesion', 'cliente', 'fecha', 'estado')
+        }),
+        ('Detalles Financieros', {
+            'fields': ('subtotal', 'descuento', 'total')
+        }),
+        ('Vigencia', {
+            'fields': ('valida_hasta',)
+        }),
+        ('Observaciones', {
+            'fields': ('observaciones',)
+        }),
+    )
+
+@admin.register(CotizacionItem)
+class CotizacionItemAdmin(admin.ModelAdmin):
+    list_display = ('id', 'cotizacion', 'repuesto', 'cantidad', 'precio_unitario', 'subtotal')
+    list_filter = ('cotizacion__fecha', 'cotizacion__sesion__usuario')
+    search_fields = ('repuesto__nombre', 'repuesto__sku')
+
+
+@admin.register(AdministracionTaller)
+class AdministracionTallerAdmin(admin.ModelAdmin):
+    list_display = ('id', 'nombre_taller', 'telefono', 'email', 'fecha_actualizacion')
+    list_filter = ('fecha_creacion', 'fecha_actualizacion', 'tema_por_defecto')
+    search_fields = ('nombre_taller', 'email', 'telefono')
+    readonly_fields = ('fecha_creacion', 'fecha_actualizacion')
+    
+    fieldsets = (
+        ('Información Básica', {
+            'fields': ('nombre_taller', 'direccion', 'telefono', 'email', 'rut')
+        }),
+        ('Logos y Personalización', {
+            'fields': ('logo_principal_png', 'logo_principal_svg', 'logo_secundario_png', 'imagen_fondo')
+        }),
+        ('Políticas de Seguridad', {
+            'fields': ('sesion_timeout_minutos', 'intentos_login_maximos', 'bloqueo_temporal_horas', 
+                      'requiere_cambio_password', 'dias_validez_password')
+        }),
+        ('Configuraciones del Sistema', {
+            'fields': ('tema_por_defecto', 'mostrar_estadisticas_publicas', 
+                      'permitir_registro_usuarios', 'notificaciones_email')
+        }),
+        ('Metadatos', {
+            'fields': ('fecha_creacion', 'fecha_actualizacion', 'creado_por'),
+            'classes': ('collapse',)
+        }),
+    )

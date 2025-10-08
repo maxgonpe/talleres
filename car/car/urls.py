@@ -11,7 +11,8 @@ from .views import ClienteListView,VehiculoListView,\
                    MecanicoDeleteView,MecanicoCreateView,\
                    MecanicoUpdateView,RepuestoCreateView,\
                    RepuestoUpdateView,RepuestoDeleteView,\
-                   RepuestoListView 
+                   RepuestoListView
+from . import views_pos 
 
 urlpatterns = [
     path("login/", views.login_view, name="login"),
@@ -92,6 +93,30 @@ urlpatterns = [
     # Seguimiento público por placa
     path("tracking/", views.tracking_publico, name="tracking_publico"),
     path("tracking/placa/", views.tracking_publico_preview, name="tracking_publico_preview"),
+
+    # === MÓDULO POS (Point of Sale) ===
+    path("pos/", views_pos.pos_principal, name="pos_principal"),
+    path("pos/buscar/", views_pos.buscar_repuestos_pos, name="pos_buscar_repuestos"),
+    path("pos/agregar-carrito/", views_pos.agregar_al_carrito, name="pos_agregar_carrito"),
+    path("pos/actualizar-carrito/<int:item_id>/", views_pos.actualizar_carrito_item, name="pos_actualizar_carrito"),
+    path("pos/eliminar-carrito/<int:item_id>/", views_pos.eliminar_carrito_item, name="pos_eliminar_carrito"),
+    path("pos/limpiar-carrito/", views_pos.limpiar_carrito, name="pos_limpiar_carrito"),
+    path("pos/procesar-venta/", views_pos.procesar_venta, name="pos_procesar_venta"),
+    path("pos/venta/<int:venta_id>/", views_pos.pos_venta_detalle, name="pos_venta_detalle"),
+    path("pos/historial/", views_pos.pos_historial_ventas, name="pos_historial_ventas"),
+    path("pos/configuracion/", views_pos.pos_configuracion, name="pos_configuracion"),
+    path("pos/crear-cliente/", views_pos.crear_cliente_rapido, name="pos_crear_cliente"),
+    path("pos/cerrar-sesion/", views_pos.cerrar_sesion_pos, name="pos_cerrar_sesion"),
+    path("pos/dashboard/", views_pos.pos_dashboard, name="pos_dashboard"),
+    
+    # === COTIZACIONES ===
+    path("pos/procesar-cotizacion/", views_pos.procesar_cotizacion, name="pos_procesar_cotizacion"),
+    path("pos/cotizacion/<int:cotizacion_id>/", views_pos.pos_cotizacion_detalle, name="pos_cotizacion_detalle"),
+    path("pos/historial-cotizaciones/", views_pos.pos_historial_cotizaciones, name="pos_historial_cotizaciones"),
+    path("pos/convertir-cotizacion/<int:cotizacion_id>/", views_pos.convertir_cotizacion_a_venta, name="convertir_cotizacion_a_venta"),
+    
+    # === ADMINISTRACIÓN DEL TALLER ===
+    path("administracion/", views.administracion_taller, name="administracion_taller"),
 
 ]
 

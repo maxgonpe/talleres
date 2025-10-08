@@ -5,7 +5,18 @@
 <div class="container mt-4">
   <h2>🔧 Trabajo #{{ trabajo.id }} - {{ trabajo.vehiculo }}</h2>
   <p><strong>Estado actual:</strong> 
-    <span class="badge bg-info">{{ trabajo.get_estado_display }}</span>
+    <span class="badge 
+      {% if trabajo.estado == 'iniciado' %}bg-warning
+      {% elif trabajo.estado == 'trabajando' %}bg-primary
+      {% elif trabajo.estado == 'completado' %}bg-success
+      {% elif trabajo.estado == 'entregado' %}bg-dark
+      {% else %}bg-info{% endif %}">
+      {% if trabajo.estado == 'iniciado' %}🟡 Iniciado
+      {% elif trabajo.estado == 'trabajando' %}🔵 Trabajando
+      {% elif trabajo.estado == 'completado' %}🟢 Completado
+      {% elif trabajo.estado == 'entregado' %}⚫ Entregado
+      {% else %}{{ trabajo.get_estado_display }}{% endif %}
+    </span>
   </p>
   <p><strong>Observaciones:</strong> {{ trabajo.observaciones|default:"-" }}</p>
 
@@ -122,15 +133,40 @@
   <hr>
 
   <!-- Botones de estado -->
+  <h4>🔄 Cambiar Estado del Trabajo</h4>
+  <p class="text-muted">Haz clic en el estado al que quieres cambiar este trabajo:</p>
   <form method="post">
     {% csrf_token %}
-    <div class="btn-group" role="group">
-      <button type="submit" name="cambiar_estado" value="iniciado" class="btn btn-outline-warning">🟡 Iniciado</button>
-      <button type="submit" name="cambiar_estado" value="trabajando" class="btn btn-outline-primary">🔵 Trabajando</button>
-      <button type="submit" name="cambiar_estado" value="completado" class="btn btn-outline-success">🟢 Completado</button>
-      <button type="submit" name="cambiar_estado" value="entregado" class="btn btn-outline-dark">⚫ Entregado</button>
+    <div class="row g-2">
+      <div class="col-md-3">
+        <button type="submit" name="cambiar_estado" value="iniciado" 
+                class="btn w-100 {% if trabajo.estado == 'iniciado' %}btn-warning{% else %}btn-outline-warning{% endif %}">
+          🟡 Iniciado
+        </button>
+      </div>
+      <div class="col-md-3">
+        <button type="submit" name="cambiar_estado" value="trabajando" 
+                class="btn w-100 {% if trabajo.estado == 'trabajando' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+          🔵 Trabajando
+        </button>
+      </div>
+      <div class="col-md-3">
+        <button type="submit" name="cambiar_estado" value="completado" 
+                class="btn w-100 {% if trabajo.estado == 'completado' %}btn-success{% else %}btn-outline-success{% endif %}">
+          🟢 Completado
+        </button>
+      </div>
+      <div class="col-md-3">
+        <button type="submit" name="cambiar_estado" value="entregado" 
+                class="btn w-100 {% if trabajo.estado == 'entregado' %}btn-dark{% else %}btn-outline-dark{% endif %}">
+          ⚫ Entregado
+        </button>
+      </div>
     </div>
-    <a href="javascript:history.back()" class="btn btn-sm btn-warning mt-2">Regresar</a>
+    <div class="mt-3">
+      <a href="{% url 'panel_principal' %}" class="btn btn-secondary">🏠 Volver a la Pizarra</a>
+      <a href="javascript:history.back()" class="btn btn-outline-secondary">← Regresar</a>
+    </div>
   </form>
 </div>
 {% endblock %}

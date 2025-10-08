@@ -1,0 +1,625 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Punto de Venta - POS{% endblock %}
+
+{% block extra_head %}
+<script>
+    // Aplicar tema automáticamente al cargar
+    document.addEventListener('DOMContentLoaded', function() {
+        const saved = localStorage.getItem("theme") || "piedra";
+        document.body.className = `theme-${saved}`;
+    });
+</script>
+<style>
+    .pos-container {
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .pos-header {
+        background: linear-gradient(135deg, var(--btn-bg) 0%, var(--muted) 100%);
+        color: var(--btn-fg);
+        padding: 1rem;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+    }
+    
+    .search-container {
+        background: var(--card-bg);
+        border-radius: 10px;
+        padding: 1rem;
+        margin: 1rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .search-results {
+        max-height: 300px;
+        overflow-y: auto;
+        border: 1px solid var(--muted);
+        border-radius: 5px;
+        background: var(--card-bg);
+        position: absolute;
+        width: 100%;
+        z-index: 1000;
+        display: none;
+    }
+    
+    .search-item {
+        padding: 0.75rem;
+        border-bottom: 1px solid var(--muted);
+        cursor: pointer;
+        transition: background-color 0.2s;
+        color: var(--fg);
+    }
+    
+    .search-item .text-muted {
+        color: var(--muted) !important;
+    }
+    
+    .search-item small {
+        color: var(--muted) !important;
+    }
+    
+    .search-item:hover {
+        background-color: var(--hover-bg);
+    }
+    
+    .search-item:last-child {
+        border-bottom: none;
+    }
+    
+    .carrito-container {
+        background: var(--card-bg);
+        border-radius: 10px;
+        margin: 1rem;
+        padding: 1rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .carrito-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        border-bottom: 1px solid #eee;
+        background: #f8f9fa;
+        margin-bottom: 0.5rem;
+        border-radius: 5px;
+    }
+    
+    .carrito-item:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+    
+    .item-info {
+        flex: 1;
+    }
+    
+    .item-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .quantity-input {
+        width: 60px;
+        text-align: center;
+    }
+    
+    .price-input {
+        width: 80px;
+    }
+    
+    .total-container {
+        background: #28a745;
+        color: white;
+        padding: 1rem;
+        margin: 1rem;
+        border-radius: 10px;
+        text-align: center;
+    }
+    
+    .btn-pos {
+        border-radius: 25px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .btn-primary-pos {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+    }
+    
+    .btn-success-pos {
+        background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+        border: none;
+    }
+    
+    .btn-danger-pos {
+        background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+        border: none;
+    }
+    
+    .stats-row {
+        display: flex;
+        justify-content: space-around;
+        margin: 1rem;
+        gap: 0.5rem;
+    }
+    
+    .stat-card {
+        background: var(--card-bg);
+        border-radius: 10px;
+        padding: 1rem;
+        text-align: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        flex: 1;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--btn-bg);
+    }
+    
+    .stat-label {
+        font-size: 0.8rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    @media (max-width: 768px) {
+        .pos-container {
+            padding: 0;
+        }
+        
+        .search-container,
+        .carrito-container,
+        .total-container {
+            margin: 0.5rem;
+        }
+        
+        .stats-row {
+            margin: 0.5rem;
+        }
+        
+        .carrito-item {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.5rem;
+        }
+        
+        .item-controls {
+            justify-content: space-between;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pos-container">
+    <!-- Header -->
+    <div class="pos-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="mb-0">
+                    <span id="modo-titulo">🛒 Punto de Venta</span>
+                </h4>
+                <small>Sesión: {{ sesion.id }} - {{ sesion.fecha_inicio|date:"d/m/Y H:i" }}</small>
+            </div>
+            <div>
+                <button type="button" class="btn btn-light btn-sm me-2" onclick="cambiarModo()">
+                    <span id="modo-boton">📋 Modo Cotización</span>
+                </button>
+                <a href="{% url 'pos_dashboard' %}" class="btn btn-light btn-sm me-2">
+                    📊 Dashboard
+                </a>
+                <a href="{% url 'pos_cerrar_sesion' %}" class="btn btn-outline-light btn-sm">
+                    🔒 Cerrar Sesión
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estadísticas rápidas -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-number">{{ sesion.numero_ventas }}</div>
+            <div class="stat-label">Ventas</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">${{ sesion.total_ventas|floatformat:0 }}</div>
+            <div class="stat-label">Total</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ carrito_items|length }}</div>
+            <div class="stat-label">Items</div>
+        </div>
+    </div>
+
+    <!-- Búsqueda de repuestos -->
+    <div class="search-container">
+        <form id="search-form">
+            {% csrf_token %}
+            <div class="position-relative">
+                <input type="text" 
+                       id="busqueda-repuesto" 
+                       class="form-control form-control-lg" 
+                       placeholder="🔍 Buscar por nombre, SKU, código de barras..."
+                       autocomplete="off">
+                <div id="search-results" class="search-results"></div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Carrito de compras -->
+    <div class="carrito-container">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">🛒 Carrito de Compras</h5>
+            {% if carrito_items %}
+                <button type="button" class="btn btn-outline-danger btn-sm" onclick="limpiarCarrito()">
+                    🗑️ Limpiar
+                </button>
+            {% endif %}
+        </div>
+
+        <div id="carrito-items">
+            {% for item in carrito_items %}
+                <div class="carrito-item" data-item-id="{{ item.id }}">
+                    <div class="item-info">
+                        <div class="fw-bold">{{ item.repuesto.nombre }}</div>
+                        <small class="text-muted">
+                            SKU: {{ item.repuesto.sku|default:"N/A" }} | 
+                            Stock: {{ item.repuesto.stock|default:0 }}
+                        </small>
+                    </div>
+                    <div class="item-controls">
+                        <input type="number" 
+                               class="form-control quantity-input" 
+                               value="{{ item.cantidad }}" 
+                               min="1"
+                               onchange="actualizarCantidad({{ item.id }}, this.value)">
+                        <span class="text-muted">x</span>
+                        <input type="number" 
+                               class="form-control price-input" 
+                               value="{{ item.precio_unitario }}" 
+                               step="0.01"
+                               onchange="actualizarPrecio({{ item.id }}, this.value)">
+                        <span class="fw-bold text-success">${{ item.subtotal|floatformat:2 }}</span>
+                        <button type="button" 
+                                class="btn btn-outline-danger btn-sm" 
+                                onclick="eliminarItem({{ item.id }})">
+                            ❌
+                        </button>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-shopping-cart fa-3x mb-3"></i>
+                    <p>El carrito está vacío</p>
+                    <small>Busca repuestos para agregar al carrito</small>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Total y botones de acción -->
+    {% if carrito_items %}
+        <div class="total-container">
+            <h3 class="mb-2">Total: ${{ subtotal|floatformat:2 }}</h3>
+            <div class="d-grid gap-2">
+                <button type="button" class="btn btn-light btn-pos btn-success-pos" onclick="procesarTransaccion()">
+                    <span id="boton-accion">💳 PROCESAR VENTA</span>
+                </button>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Botones de navegación -->
+    <div class="d-grid gap-2 m-3">
+        <a href="{% url 'pos_historial_ventas' %}" class="btn btn-outline-primary btn-pos">
+            📋 Historial de Ventas
+        </a>
+        <a href="{% url 'pos_configuracion' %}" class="btn btn-outline-secondary btn-pos">
+            ⚙️ Configuración
+        </a>
+    </div>
+</div>
+
+<!-- Modal para crear cliente rápido -->
+<div class="modal fade" id="clienteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Crear Cliente Rápido</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="cliente-form">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Nombre *</label>
+                        <input type="text" class="form-control" name="nombre" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Teléfono</label>
+                        <input type="text" class="form-control" name="telefono">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="crearCliente()">Crear</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let searchTimeout;
+
+// Búsqueda de repuestos
+document.getElementById('busqueda-repuesto').addEventListener('input', function(e) {
+    const query = e.target.value.trim();
+    
+    clearTimeout(searchTimeout);
+    
+    if (query.length < 2) {
+        document.getElementById('search-results').style.display = 'none';
+        return;
+    }
+    
+    searchTimeout = setTimeout(() => {
+        buscarRepuestos(query);
+    }, 300);
+});
+
+function buscarRepuestos(query) {
+    fetch(`{% url 'pos_buscar_repuestos' %}?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+            mostrarResultados(data.repuestos);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}
+
+function mostrarResultados(repuestos) {
+    const resultsContainer = document.getElementById('search-results');
+    
+    if (repuestos.length === 0) {
+        resultsContainer.innerHTML = '<div class="search-item text-muted">No se encontraron repuestos</div>';
+    } else {
+        resultsContainer.innerHTML = repuestos.map(repuesto => `
+            <div class="search-item" onclick="agregarAlCarrito(${repuesto.id}, '${repuesto.nombre}', ${repuesto.precio_venta}, ${repuesto.stock})">
+                <div class="fw-bold">${repuesto.nombre}</div>
+                <small class="text-muted">
+                    SKU: ${repuesto.sku} | Stock: ${repuesto.stock} | $${repuesto.precio_venta}
+                </small>
+            </div>
+        `).join('');
+    }
+    
+    resultsContainer.style.display = 'block';
+}
+
+// Ocultar resultados al hacer clic fuera
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.search-container')) {
+        document.getElementById('search-results').style.display = 'none';
+    }
+});
+
+function agregarAlCarrito(repuestoId, nombre, precio, stock) {
+    if (stock <= 0) {
+        alert('No hay stock disponible para este repuesto');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('repuesto_id', repuestoId);
+    formData.append('cantidad', 1);
+    formData.append('precio_unitario', precio);
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    
+    fetch('{% url "pos_agregar_carrito" %}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al agregar al carrito');
+    });
+}
+
+function actualizarCantidad(itemId, cantidad) {
+    actualizarItem(itemId, 'cantidad', cantidad);
+}
+
+function actualizarPrecio(itemId, precio) {
+    actualizarItem(itemId, 'precio_unitario', precio);
+}
+
+function actualizarItem(itemId, campo, valor) {
+    const formData = new FormData();
+    formData.append(campo, valor);
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    
+    fetch(`{% url "pos_actualizar_carrito" 0 %}`.replace('0', itemId), {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al actualizar item');
+    });
+}
+
+function eliminarItem(itemId) {
+    if (!confirm('¿Eliminar este item del carrito?')) return;
+    
+    fetch(`{% url "pos_eliminar_carrito" 0 %}`.replace('0', itemId), {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al eliminar item');
+    });
+}
+
+function limpiarCarrito() {
+    if (!confirm('¿Limpiar todo el carrito?')) return;
+    
+    fetch('{% url "pos_limpiar_carrito" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            location.reload();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al limpiar carrito');
+    });
+}
+
+function crearCliente() {
+    const form = document.getElementById('cliente-form');
+    const formData = new FormData(form);
+    
+    fetch('{% url "pos_crear_cliente" %}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Cliente creado exitosamente');
+            bootstrap.Modal.getInstance(document.getElementById('clienteModal')).hide();
+            form.reset();
+        } else {
+            alert('Error: ' + JSON.stringify(data.errors));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al crear cliente');
+    });
+}
+
+// Soporte para escáner de código de barras
+document.getElementById('busqueda-repuesto').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        const query = this.value.trim();
+        if (query.length >= 8) { // Códigos de barras suelen ser largos
+            buscarRepuestos(query);
+        }
+    }
+});
+
+// ========================
+// FUNCIONALIDAD DE COTIZACIONES
+// ========================
+
+let modoActual = 'venta'; // 'venta' o 'cotizacion'
+
+function cambiarModo() {
+    if (modoActual === 'venta') {
+        modoActual = 'cotizacion';
+        document.getElementById('modo-titulo').textContent = '📋 Modo Cotización';
+        document.getElementById('modo-boton').textContent = '🛒 Modo Venta';
+        document.getElementById('boton-accion').textContent = '📋 GENERAR COTIZACIÓN';
+        
+        // Cambiar color del header
+        document.querySelector('.pos-header').style.background = 'linear-gradient(135deg, #17a2b8 0%, #138496 100%)';
+        
+        // Mostrar mensaje informativo
+        mostrarMensaje('Modo Cotización activado - No se afectará el stock', 'info');
+    } else {
+        modoActual = 'venta';
+        document.getElementById('modo-titulo').textContent = '🛒 Punto de Venta';
+        document.getElementById('modo-boton').textContent = '📋 Modo Cotización';
+        document.getElementById('boton-accion').textContent = '💳 PROCESAR VENTA';
+        
+        // Restaurar color original
+        document.querySelector('.pos-header').style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+        
+        mostrarMensaje('Modo Venta activado - Se afectará el stock', 'success');
+    }
+}
+
+function procesarTransaccion() {
+    if (modoActual === 'venta') {
+        // Redirigir a procesar venta
+        window.location.href = '{% url "pos_procesar_venta" %}';
+    } else {
+        // Redirigir a procesar cotización
+        window.location.href = '{% url "pos_procesar_cotizacion" %}';
+    }
+}
+
+function mostrarMensaje(texto, tipo) {
+    // Crear elemento de mensaje
+    const mensaje = document.createElement('div');
+    mensaje.className = `alert alert-${tipo} alert-dismissible fade show position-fixed`;
+    mensaje.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    mensaje.innerHTML = `
+        ${texto}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(mensaje);
+    
+    // Auto-remover después de 3 segundos
+    setTimeout(() => {
+        if (mensaje.parentNode) {
+            mensaje.remove();
+        }
+    }, 3000);
+}
+</script>
+{% endblock %}
