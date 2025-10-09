@@ -369,11 +369,28 @@
 <script>
 let searchTimeout;
 
+// Variables para detección de código de barras
+let barcodeBuffer = '';
+let barcodeTimeout;
+let lastBarcodeTime = 0;
+const BARCODE_MIN_LENGTH = 8; // Longitud mínima para considerar código de barras
+const BARCODE_TIMEOUT = 100; // Tiempo máximo entre caracteres para considerar código de barras
+
 // Búsqueda de repuestos
 document.getElementById('busqueda-repuesto').addEventListener('input', function(e) {
     const query = e.target.value.trim();
     
     clearTimeout(searchTimeout);
+    
+    // Detectar si es un código de barras (solo números y longitud mínima)
+    if (query.length >= BARCODE_MIN_LENGTH && /^\d+$/.test(query)) {
+        // Es un código de barras, procesar inmediatamente
+        clearTimeout(barcodeTimeout);
+        barcodeTimeout = setTimeout(() => {
+            procesarCodigoBarras(query);
+        }, BARCODE_TIMEOUT);
+        return;
+    }
     
     if (query.length < 2) {
         document.getElementById('search-results').style.display = 'none';
@@ -384,6 +401,49 @@ document.getElementById('busqueda-repuesto').addEventListener('input', function(
         buscarRepuestos(query);
     }, 300);
 });
+
+// Detectar Enter para códigos de barras
+document.getElementById('busqueda-repuesto').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        const query = e.target.value.trim();
+        
+        // Si es un código de barras, procesarlo
+        if (query.length >= BARCODE_MIN_LENGTH && /^\d+$/.test(query)) {
+            procesarCodigoBarras(query);
+        }
+    }
+});
+
+function procesarCodigoBarras(codigoBarras) {
+    console.log('🔍 Procesando código de barras:', codigoBarras);
+    
+    // Buscar el repuesto por código de barras
+    fetch(`{% url 'pos_buscar_repuestos' %}?q=${encodeURIComponent(codigoBarras)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.repuestos && data.repuestos.length > 0) {
+                const repuesto = data.repuestos[0];
+                
+                // Verificar si hay stock
+                if (repuesto.stock > 0) {
+                    // Agregar directamente al carrito
+                    agregarAlCarritoDirecto(repuesto.id, repuesto.nombre, repuesto.precio_venta, repuesto.stock);
+                } else {
+                    mostrarMensaje(`❌ Sin stock para: ${repuesto.nombre}`, 'warning');
+                    limpiarCampoBusqueda();
+                }
+            } else {
+                mostrarMensaje(`❌ Producto no encontrado: ${codigoBarras}`, 'danger');
+                limpiarCampoBusqueda();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            mostrarMensaje('❌ Error al buscar producto', 'danger');
+            limpiarCampoBusqueda();
+        });
+}
 
 function buscarRepuestos(query) {
     fetch(`{% url 'pos_buscar_repuestos' %}?q=${encodeURIComponent(query)}`)
@@ -422,6 +482,45 @@ document.addEventListener('click', function(e) {
     }
 });
 
+function agregarAlCarritoDirecto(repuestoId, nombre, precio, stock) {
+    console.log('🛒 Agregando directamente al carrito:', nombre);
+    
+    const formData = new FormData();
+    formData.append('repuesto_id', repuestoId);
+    formData.append('cantidad', 1);
+    formData.append('precio_unitario', precio);
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    
+    fetch('{% url "pos_agregar_carrito" %}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            mostrarMensaje(`✅ ${nombre} agregado al carrito`, 'success');
+            limpiarCampoBusqueda();
+            // Recargar la página manteniendo el modo
+            location.reload();
+        } else {
+            mostrarMensaje(`❌ Error: ${data.error}`, 'danger');
+            limpiarCampoBusqueda();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        mostrarMensaje('❌ Error al agregar al carrito', 'danger');
+        limpiarCampoBusqueda();
+    });
+}
+
+function limpiarCampoBusqueda() {
+    const campoBusqueda = document.getElementById('busqueda-repuesto');
+    campoBusqueda.value = '';
+    campoBusqueda.focus();
+    document.getElementById('search-results').style.display = 'none';
+}
+
 function agregarAlCarrito(repuestoId, nombre, precio, stock) {
     if (stock <= 0) {
         alert('No hay stock disponible para este repuesto');
@@ -441,6 +540,13 @@ function agregarAlCarrito(repuestoId, nombre, precio, stock) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
+            // Ocultar resultados de búsqueda
+            document.getElementById('search-results').style.display = 'none';
+            
+            // Limpiar campo de búsqueda
+            document.getElementById('busqueda-repuesto').value = '';
+            
+            // Recargar la página manteniendo el modo
             location.reload();
         } else {
             alert('Error: ' + data.error);
@@ -472,6 +578,7 @@ function actualizarItem(itemId, campo, valor) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
+            // Recargar manteniendo el modo
             location.reload();
         } else {
             alert('Error: ' + data.error);
@@ -495,6 +602,7 @@ function eliminarItem(itemId) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
+            // Recargar manteniendo el modo
             location.reload();
         } else {
             alert('Error: ' + data.error);
@@ -517,6 +625,7 @@ function limpiarCarrito() {
     })
     .then(response => {
         if (response.ok) {
+            // Recargar manteniendo el modo
             location.reload();
         }
     })
@@ -567,9 +676,29 @@ document.getElementById('busqueda-repuesto').addEventListener('keypress', functi
 
 let modoActual = 'venta'; // 'venta' o 'cotizacion'
 
+// Inicializar modo desde localStorage o sesión
+function inicializarModo() {
+    const modoGuardado = localStorage.getItem('pos_modo') || 'venta';
+    modoActual = modoGuardado;
+    aplicarModo();
+}
+
 function cambiarModo() {
     if (modoActual === 'venta') {
         modoActual = 'cotizacion';
+    } else {
+        modoActual = 'venta';
+    }
+    
+    // Guardar en localStorage para persistir entre recargas
+    localStorage.setItem('pos_modo', modoActual);
+    localStorage.setItem('pos_modo_cambiado', 'true'); // Marcar que se cambió manualmente
+    
+    aplicarModo();
+}
+
+function aplicarModo() {
+    if (modoActual === 'cotizacion') {
         document.getElementById('modo-titulo').textContent = '📋 Modo Cotización';
         document.getElementById('modo-boton').textContent = '🛒 Modo Venta';
         document.getElementById('boton-accion').textContent = '📋 GENERAR COTIZACIÓN';
@@ -577,10 +706,12 @@ function cambiarModo() {
         // Cambiar color del header
         document.querySelector('.pos-header').style.background = 'linear-gradient(135deg, #17a2b8 0%, #138496 100%)';
         
-        // Mostrar mensaje informativo
-        mostrarMensaje('Modo Cotización activado - No se afectará el stock', 'info');
+        // Mostrar mensaje informativo solo si se cambió manualmente
+        if (localStorage.getItem('pos_modo_cambiado') === 'true') {
+            mostrarMensaje('Modo Cotización activado - No se afectará el stock', 'info');
+            localStorage.removeItem('pos_modo_cambiado');
+        }
     } else {
-        modoActual = 'venta';
         document.getElementById('modo-titulo').textContent = '🛒 Punto de Venta';
         document.getElementById('modo-boton').textContent = '📋 Modo Cotización';
         document.getElementById('boton-accion').textContent = '💳 PROCESAR VENTA';
@@ -588,7 +719,11 @@ function cambiarModo() {
         // Restaurar color original
         document.querySelector('.pos-header').style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
         
-        mostrarMensaje('Modo Venta activado - Se afectará el stock', 'success');
+        // Mostrar mensaje informativo solo si se cambió manualmente
+        if (localStorage.getItem('pos_modo_cambiado') === 'true') {
+            mostrarMensaje('Modo Venta activado - Se afectará el stock', 'success');
+            localStorage.removeItem('pos_modo_cambiado');
+        }
     }
 }
 
@@ -621,5 +756,16 @@ function mostrarMensaje(texto, tipo) {
         }
     }, 3000);
 }
+
+// Inicializar modo al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    inicializarModo();
+    
+    // Enfocar automáticamente el campo de búsqueda
+    const campoBusqueda = document.getElementById('busqueda-repuesto');
+    if (campoBusqueda) {
+        campoBusqueda.focus();
+    }
+});
 </script>
 {% endblock %}
