@@ -66,13 +66,17 @@ def buscar_repuestos_pos(request):
     if len(query) < 2:
         return JsonResponse({'repuestos': []})
     
-    # Buscar por nombre, SKU, código de barras, OEM
+    # Buscar por nombre, SKU, código de barras, OEM y nuevos campos
     repuestos = Repuesto.objects.filter(
         Q(nombre__icontains=query) |
         Q(sku__icontains=query) |
         Q(codigo_barra__icontains=query) |
         Q(oem__icontains=query) |
-        Q(referencia__icontains=query)
+        Q(referencia__icontains=query) |
+        Q(origen_repuesto__icontains=query) |
+        Q(cod_prov__icontains=query) |
+        Q(marca_veh__icontains=query) |
+        Q(tipo_de_motor__icontains=query)
     ).select_related().prefetch_related('stocks')[:10]
     
     resultados = []

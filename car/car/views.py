@@ -44,7 +44,7 @@ from django.forms import inlineformset_factory
 from .forms import ComponenteForm, ClienteForm, VehiculoForm,\
                    DiagnosticoForm, AccionForm, ComponenteAccionForm,\
                    MecanicoForm, AsignarMecanicosForm, SubirFotoForm,\
-                   VentaForm, VentaItemForm, AdministracionTallerForm
+                   VentaForm, VentaItemForm, AdministracionTallerForm, RepuestoForm
 
 
 import datetime
@@ -1628,8 +1628,7 @@ def clone_repuesto_to_stock(repuesto: Repuesto, deposito: str = "bodega-principa
 # === Vistas: crear/editar Repuesto clonando a RepuestoEnStock ===
 class RepuestoCreateView(CreateView):
     model = Repuesto
-    fields = ["nombre", "marca", "descripcion", "medida", "posicion",
-              "unidad", "precio_costo", "precio_venta", "codigo_barra", "stock"]
+    form_class = RepuestoForm
     template_name = "repuestos/repuesto_form.html"
     success_url = reverse_lazy("repuesto_list")
 
@@ -1644,8 +1643,7 @@ class RepuestoCreateView(CreateView):
 
 class RepuestoUpdateView(UpdateView):
     model = Repuesto
-    fields = ["nombre", "marca", "descripcion", "medida", "posicion",
-              "unidad", "precio_costo", "precio_venta", "codigo_barra", "stock"]
+    form_class = RepuestoForm
     template_name = "repuestos/repuesto_form.html"
     success_url = reverse_lazy("repuesto_list")
 
@@ -1679,3 +1677,5 @@ def administracion_taller(request):
         'config': config,
     }
     return render(request, 'car/administracion_taller.html', context)
+
+

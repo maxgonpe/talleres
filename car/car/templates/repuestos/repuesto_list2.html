@@ -107,26 +107,6 @@
         letter-spacing: 0.5px;
     }
     
-    .table th, .table td {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 150px;
-    }
-    
-    .table th:nth-child(3), .table td:nth-child(3) { /* Nombre */
-        max-width: 200px;
-        white-space: normal;
-    }
-    
-    .table th:nth-child(7), .table td:nth-child(7) { /* Marca Vehículo */
-        max-width: 120px;
-    }
-    
-    .table th:nth-child(10), .table td:nth-child(10) { /* Acciones */
-        max-width: 100px;
-    }
-    
     @media (max-width: 768px) {
         .repuestos-container {
             padding: 0.25rem;
@@ -144,21 +124,7 @@
         }
         
         .table-responsive {
-            font-size: 0.7rem;
-        }
-        
-        .table th, .table td {
-            max-width: 80px;
-            font-size: 0.7rem;
-        }
-        
-        .table th:nth-child(3), .table td:nth-child(3) { /* Nombre */
-            max-width: 120px;
-        }
-        
-        .btn-action {
-            padding: 0.1rem 0.3rem;
-            font-size: 0.6rem;
+            font-size: 0.8rem;
         }
     }
 </style>
@@ -215,7 +181,7 @@
                     <input type="text" 
                            id="search-repuestos" 
                            class="form-control search-input" 
-                           placeholder="Buscar por nombre, SKU, código de barras, OEM, origen, marca vehículo, tipo motor..."
+                           placeholder="Buscar por nombre, SKU, marca o ID..."
                            autocomplete="off">
                 </div>
             </div>
@@ -240,9 +206,6 @@
                         <th>SKU</th>
                         <th>Nombre</th>
                         <th>Marca</th>
-                        <th>OEM</th>
-                        <th>Origen</th>
-                        <th>Marca Vehículo</th>
                         <th>Stock</th>
                         <th>Precio Venta</th>
                         <th>Acciones</th>
@@ -254,20 +217,11 @@
                         data-id="{{ repuesto.id }}"
                         data-sku="{{ repuesto.sku|default:'' }}"
                         data-nombre="{{ repuesto.nombre|lower }}"
-                        data-marca="{{ repuesto.marca|lower }}"
-                        data-oem="{{ repuesto.oem|default:''|lower }}"
-                        data-codigo-barra="{{ repuesto.codigo_barra|default:''|lower }}"
-                        data-origen="{{ repuesto.origen_repuesto|default:''|lower }}"
-                        data-codigo-proveedor="{{ repuesto.cod_prov|default:''|lower }}"
-                        data-marca-vehiculo="{{ repuesto.marca_veh|default:''|lower }}"
-                        data-tipo-motor="{{ repuesto.tipo_de_motor|default:''|lower }}">
+                        data-marca="{{ repuesto.marca|lower }}">
                         <td>{{ repuesto.id }}</td>
                         <td>{{ repuesto.sku|default:"-" }}</td>
                         <td>{{ repuesto.nombre }}</td>
-                        <td>{{ repuesto.marca|default:"-" }}</td>
-                        <td>{{ repuesto.oem|default:"-" }}</td>
-                        <td>{{ repuesto.origen_repuesto|default:"-" }}</td>
-                        <td>{{ repuesto.marca_veh|default:"-" }}</td>
+                        <td>{{ repuesto.marca }}</td>
                         <td>
                             <span class="badge {% if repuesto.stock > 0 %}bg-success{% else %}bg-danger{% endif %}">
                                 {{ repuesto.stock }}
@@ -285,7 +239,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="10" class="text-center text-muted">No hay repuestos registrados.</td>
+                        <td colspan="7" class="text-center text-muted">No hay repuestos registrados.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -313,24 +267,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const sku = row.dataset.sku;
             const nombre = row.dataset.nombre;
             const marca = row.dataset.marca;
-            const oem = row.dataset.oem;
-            const codigoBarra = row.dataset.codigoBarra;
-            const origen = row.dataset.origen;
-            const codigoProveedor = row.dataset.codigoProveedor;
-            const marcaVehiculo = row.dataset.marcaVehiculo;
-            const tipoMotor = row.dataset.tipoMotor;
             
-            // Buscar en todos los campos disponibles
+            // Buscar en ID, SKU, nombre y marca
             const coincide = id.includes(terminoLower) || 
                            sku.includes(terminoLower) || 
                            nombre.includes(terminoLower) || 
-                           marca.includes(terminoLower) ||
-                           oem.includes(terminoLower) ||
-                           codigoBarra.includes(terminoLower) ||
-                           origen.includes(terminoLower) ||
-                           codigoProveedor.includes(terminoLower) ||
-                           marcaVehiculo.includes(terminoLower) ||
-                           tipoMotor.includes(terminoLower);
+                           marca.includes(terminoLower);
             
             if (coincide) {
                 row.style.display = '';
@@ -346,7 +288,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const noResultsRow = document.createElement('tr');
                 noResultsRow.id = 'no-results-message';
                 noResultsRow.innerHTML = `
-                    <td colspan="10" class="text-center text-muted">
+                    <td colspan="7" class="text-center text-muted">
                         🔍 No se encontraron repuestos que coincidan con "${termino}"
                     </td>
                 `;

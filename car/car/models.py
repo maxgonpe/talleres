@@ -278,6 +278,13 @@ class Repuesto(models.Model):
     stock = models.IntegerField(default=0)
     created = models.DateTimeField(auto_now_add=True)
     
+    # Nuevos campos con nombres diferentes
+    origen_repuesto = models.CharField(max_length=100, blank=True, null=True, verbose_name="Origen del Repuesto")
+    cod_prov = models.CharField(max_length=100, blank=True, null=True, verbose_name="Código Proveedor")
+    marca_veh = models.CharField(max_length=100, blank=True, null=True, verbose_name="Marca Vehículo")
+    tipo_de_motor = models.TextField(blank=True, null=True, verbose_name="Tipo de Motor")
+
+    
     def save(self, *args, **kwargs):
         if not self.sku:
             self.sku = self.generate_sku()
@@ -311,6 +318,9 @@ class Repuesto(models.Model):
 
     def __str__(self):
         return f"{self.nombre} ({self.sku or self.oem or 'sin-cod'})"
+
+
+
 
 class VehiculoVersion(models.Model):
     marca = models.CharField(max_length=80)

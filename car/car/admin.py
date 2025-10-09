@@ -119,11 +119,29 @@ class PrefijoRepuestoAdmin(admin.ModelAdmin):
     list_display = ("palabra", "abreviatura")
     search_fields = ("palabra", "abreviatura")
 
+
 @admin.register(Repuesto)
 class RepuestoAdmin(admin.ModelAdmin):
-    list_display = ('id', 'sku', 'oem', 'referencia', 'nombre', 'precio_costo', 'precio_venta')
-    search_fields = ('nombre', 'oem', 'sku','codigo_barra')
-    list_filter = ("marca", "posicion")
+    list_display = ('id', 'sku', 'oem', 'referencia', 'nombre', 'precio_costo', 'precio_venta', 'origen_repuesto', 'marca_veh')
+    search_fields = ('nombre', 'oem', 'sku', 'codigo_barra', 'origen_repuesto', 'cod_prov', 'marca_veh', 'tipo_de_motor')
+    list_filter = ("marca", "posicion", "origen_repuesto", "marca_veh")
+    fieldsets = (
+        ('Información Básica', {
+            'fields': ('sku', 'oem', 'referencia', 'nombre', 'marca', 'descripcion')
+        }),
+        ('Especificaciones', {
+            'fields': ('medida', 'posicion', 'unidad', 'codigo_barra', 'stock')
+        }),
+        ('Precios', {
+            'fields': ('precio_costo', 'precio_venta')
+        }),
+        ('Información Adicional', {
+            'fields': ('origen_repuesto', 'cod_prov', 'marca_veh', 'tipo_de_motor'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
 
 @admin.register(ComponenteRepuesto)
 class ComponenteRepuestoAdmin(admin.ModelAdmin):

@@ -236,7 +236,7 @@
         {% if config %}
           <img src="{{ config.logo_principal_url }}" alt="Logo" style="height: 48px; width: auto;">
         {% else %}
-          <img src="{% static 'images/Logo2.png' %}" alt="Car Icon" style="height: 48px; width: auto;">
+        <img src="{% static 'images/Logo2.png' %}" alt="Car Icon" style="height: 48px; width: auto;">
         {% endif %}
       </a>
 
@@ -349,7 +349,7 @@
     function setTheme(theme) {
       // Limpiar clases previas
       document.body.className = document.body.className.replace(/theme-\w+/g, '').trim();
-      
+
       // Agregar nueva clase
       document.body.classList.add(`theme-${theme}`);
       
