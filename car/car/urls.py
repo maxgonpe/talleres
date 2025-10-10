@@ -78,6 +78,8 @@ urlpatterns = [
     # Trabajos
     path("trabajos/", views.lista_trabajos, name="lista_trabajos"),
     path("trabajos/<int:pk>/", views.trabajo_detalle, name="trabajo_detalle"),
+    path("trabajos/<int:pk>/pdf/", views.trabajo_pdf, name="trabajo_pdf"),
+    path("trabajos/<int:pk>/eliminar/", views.TrabajoDeleteView.as_view(), name="trabajo_delete"),
     # Pizarra
     path("pizarra/", views.pizarra_view, name="pizarra"),
     # Ventas

@@ -1159,6 +1159,12 @@ class MecanicoDeleteView(DeleteView):
     template_name = "car/mecanico_confirm_delete.html"
     success_url = reverse_lazy("mecanico_list")
 
+# ---- TRABAJOS ----
+class TrabajoDeleteView(DeleteView):
+    model = Trabajo
+    template_name = "car/trabajo_confirm_delete.html"
+    success_url = reverse_lazy("lista_trabajos")
+
 @login_required
 def aprobar_diagnostico(request, pk):
     diagnostico = get_object_or_404(Diagnostico, pk=pk)
@@ -1220,8 +1226,22 @@ def trabajo_detalle(request, pk):
     asignar_form = AsignarMecanicosForm(instance=trabajo)
     foto_form = SubirFotoForm()
 
+    # Obtener datos para los formularios de agregar
+    from .models import Componente, Accion, Repuesto
+    componentes_disponibles = Componente.objects.all()
+    acciones_disponibles = Accion.objects.all()
+    repuestos_disponibles = Repuesto.objects.filter(stock__gt=0)
+
     if request.method == "POST":
-        if "asignar_mecanicos" in request.POST:
+        # 🔹 Guardar observaciones
+        if "guardar_observaciones" in request.POST:
+            trabajo.observaciones = request.POST.get("observaciones", "")
+            trabajo.save()
+            messages.success(request, "Observaciones guardadas.")
+            return redirect("trabajo_detalle", pk=trabajo.pk)
+
+        # 🔹 Asignar mecánicos
+        elif "asignar_mecanicos" in request.POST:
             asignar_form = AsignarMecanicosForm(request.POST, instance=trabajo)
             if asignar_form.is_valid():
                 trabajo = asignar_form.save(commit=False)
@@ -1232,17 +1252,119 @@ def trabajo_detalle(request, pk):
                 asignar_form.save_m2m()
                 messages.success(request, "Mecánicos asignados y trabajo iniciado.")
                 return redirect("trabajo_detalle", pk=trabajo.pk)
+
+        # 🔹 Agregar acción
+        elif "agregar_accion" in request.POST:
+            componente_id = request.POST.get("componente")
+            accion_id = request.POST.get("accion")
+            precio_mano_obra = request.POST.get("precio_mano_obra", 0)
+            
+            if componente_id and accion_id:
+                try:
+                    componente = Componente.objects.get(id=componente_id)
+                    accion = Accion.objects.get(id=accion_id)
+                    
+                    TrabajoAccion.objects.create(
+                        trabajo=trabajo,
+                        componente=componente,
+                        accion=accion,
+                        precio_mano_obra=precio_mano_obra or 0
+                    )
+                    messages.success(request, "Acción agregada al trabajo.")
+                except (Componente.DoesNotExist, Accion.DoesNotExist):
+                    messages.error(request, "Error al agregar la acción.")
+            return redirect("trabajo_detalle", pk=trabajo.pk)
+
+        # 🔹 Toggle acción completada / pendiente
+        elif "toggle_accion" in request.POST:
+            accion_id = request.POST.get("accion_id")
+            try:
+                accion = TrabajoAccion.objects.get(id=accion_id, trabajo=trabajo)
+                accion.completado = not accion.completado
+                accion.save()
+                messages.success(request, f"Acción marcada como {'completada' if accion.completado else 'pendiente'}.")
+            except TrabajoAccion.DoesNotExist:
+                messages.error(request, "Acción no encontrada.")
+            return redirect("trabajo_detalle", pk=trabajo.pk)
+
+        # 🔹 Eliminar acción
+        elif "eliminar_accion" in request.POST:
+            accion_id = request.POST.get("accion_id")
+            try:
+                accion = TrabajoAccion.objects.get(id=accion_id, trabajo=trabajo)
+                accion.delete()
+                messages.success(request, "Acción eliminada.")
+            except TrabajoAccion.DoesNotExist:
+                messages.error(request, "Acción no encontrada.")
+            return redirect("trabajo_detalle", pk=trabajo.pk)
+
+        # 🔹 Agregar repuesto
+        elif "agregar_repuesto" in request.POST:
+            repuesto_id = request.POST.get("repuesto")
+            cantidad = request.POST.get("cantidad", 1)
+            precio_unitario = request.POST.get("precio_unitario", 0)
+            
+            if repuesto_id:
+                try:
+                    repuesto = Repuesto.objects.get(id=repuesto_id)
+                    
+                    TrabajoRepuesto.objects.create(
+                        trabajo=trabajo,
+                        repuesto=repuesto,
+                        cantidad=cantidad,
+                        precio_unitario=precio_unitario or repuesto.precio_venta or 0
+                    )
+                    messages.success(request, "Repuesto agregado al trabajo.")
+                except Repuesto.DoesNotExist:
+                    messages.error(request, "Repuesto no encontrado.")
+            return redirect("trabajo_detalle", pk=trabajo.pk)
+
+        # 🔹 Toggle repuesto completado / pendiente
+        elif "toggle_repuesto" in request.POST:
+            repuesto_id = request.POST.get("repuesto_id")
+            try:
+                repuesto = TrabajoRepuesto.objects.get(id=repuesto_id, trabajo=trabajo)
+                repuesto.completado = not repuesto.completado
+                repuesto.save()
+                messages.success(request, f"Repuesto marcado como {'completado' if repuesto.completado else 'pendiente'}.")
+            except TrabajoRepuesto.DoesNotExist:
+                messages.error(request, "Repuesto no encontrado.")
+            return redirect("trabajo_detalle", pk=trabajo.pk)
+
+        # 🔹 Eliminar repuesto
+        elif "eliminar_repuesto" in request.POST:
+            repuesto_id = request.POST.get("repuesto_id")
+            try:
+                repuesto = TrabajoRepuesto.objects.get(id=repuesto_id, trabajo=trabajo)
+                repuesto.delete()
+                messages.success(request, "Repuesto eliminado.")
+            except TrabajoRepuesto.DoesNotExist:
+                messages.error(request, "Repuesto no encontrado.")
+            return redirect("trabajo_detalle", pk=trabajo.pk)
+
         # 🔹 Subir foto
         elif "subir_foto" in request.POST:
             foto_form = SubirFotoForm(request.POST, request.FILES)
             if foto_form.is_valid():
                 foto = foto_form.save(commit=False)
                 foto.trabajo = trabajo
+                foto.descripcion = request.POST.get("descripcion", "")
                 foto.save()
                 messages.success(request, "Foto subida con éxito.")
                 return redirect("trabajo_detalle", pk=trabajo.pk)
 
-        # 🔹 Cambiar estado del trabajo (adelante/atrás)
+        # 🔹 Eliminar foto
+        elif "eliminar_foto" in request.POST:
+            foto_id = request.POST.get("eliminar_foto")
+            try:
+                foto = TrabajoFoto.objects.get(id=foto_id, trabajo=trabajo)
+                foto.delete()
+                messages.success(request, "Foto eliminada.")
+            except TrabajoFoto.DoesNotExist:
+                messages.error(request, "Foto no encontrada.")
+            return redirect("trabajo_detalle", pk=trabajo.pk)
+
+        # 🔹 Cambiar estado del trabajo
         elif "cambiar_estado" in request.POST:
             nuevo_estado = request.POST.get("cambiar_estado")
             if nuevo_estado in dict(Trabajo.ESTADOS).keys():
@@ -1255,9 +1377,9 @@ def trabajo_detalle(request, pk):
                     trabajo.fecha_fin = None
                 trabajo.save()
                 messages.success(request, f"Trabajo actualizado a {trabajo.get_estado_display()}.")
-            return redirect("panel_principal")
+            return redirect("trabajo_detalle", pk=trabajo.pk)
 
-        # 🔹 Toggle acción completada / pendiente
+        # 🔹 Toggle acción completada / pendiente (método anterior)
         elif "accion_toggle" in request.POST:
             accion_id = request.POST.get("accion_toggle")
             accion = get_object_or_404(TrabajoAccion, id=accion_id, trabajo=trabajo)
@@ -1281,8 +1403,131 @@ def trabajo_detalle(request, pk):
         "trabajo": trabajo,
         "asignar_form": asignar_form,
         "foto_form": foto_form,
+        "componentes_disponibles": componentes_disponibles,
+        "acciones_disponibles": acciones_disponibles,
+        "repuestos_disponibles": repuestos_disponibles,
     }
-    return render(request, "car/trabajo_detalle.html", context)
+    return render(request, "car/trabajo_detalle_nuevo.html", context)
+
+
+@login_required
+def trabajo_pdf(request, pk):
+    """Generar PDF del estado del trabajo"""
+    from django.http import HttpResponse
+    from django.template.loader import get_template
+    from django.conf import settings
+    import os
+    
+    trabajo = get_object_or_404(Trabajo, pk=pk)
+    
+    # Crear el PDF usando weasyprint o reportlab
+    try:
+        from weasyprint import HTML, CSS
+        from weasyprint.text.fonts import FontConfiguration
+        
+        # Template para el PDF
+        template = get_template('car/trabajo_pdf.html')
+        
+        # Preparar contexto con URLs absolutas para las imágenes
+        context = {
+            'trabajo': trabajo,
+            'request': request,  # Para generar URLs absolutas
+        }
+        html_content = template.render(context)
+        
+        # Configuración de fuentes
+        font_config = FontConfiguration()
+        
+        # Crear el PDF
+        html_doc = HTML(string=html_content)
+        css = CSS(string='''
+            @page {
+                size: A4;
+                margin: 1cm;
+            }
+            body {
+                font-family: Arial, sans-serif;
+                font-size: 12px;
+            }
+            .header {
+                text-align: center;
+                border-bottom: 2px solid #333;
+                padding-bottom: 10px;
+                margin-bottom: 20px;
+            }
+            .section {
+                margin-bottom: 15px;
+            }
+            .section h3 {
+                background: #f0f0f0;
+                padding: 5px;
+                margin: 0 0 10px 0;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-bottom: 10px;
+            }
+            th, td {
+                border: 1px solid #ddd;
+                padding: 5px;
+                text-align: left;
+            }
+            th {
+                background: #f0f0f0;
+            }
+        ''', font_config=font_config)
+        
+        pdf_file = html_doc.write_pdf(stylesheets=[css], font_config=font_config)
+        
+        response = HttpResponse(pdf_file, content_type='application/pdf')
+        response['Content-Disposition'] = f'inline; filename="trabajo_{trabajo.id}_estado.pdf"'
+        return response
+        
+    except ImportError:
+        # Si weasyprint no está disponible, usar una alternativa simple
+        from django.http import HttpResponse
+        response = HttpResponse(content_type='text/plain')
+        response['Content-Disposition'] = f'attachment; filename="trabajo_{trabajo.id}_estado.txt"'
+        
+        content = f"""
+ESTADO DEL TRABAJO #{trabajo.id}
+===============================
+
+Cliente: {trabajo.vehiculo.cliente.nombre}
+Teléfono: {trabajo.vehiculo.cliente.telefono}
+Vehículo: {trabajo.vehiculo.marca} {trabajo.vehiculo.modelo} {trabajo.vehiculo.anio}
+Placa: {trabajo.vehiculo.placa}
+
+Estado: {trabajo.get_estado_display()}
+Progreso: {trabajo.porcentaje_avance}%
+
+Fecha Inicio: {trabajo.fecha_inicio|date:"d/m/Y H:i" if trabajo.fecha_inicio else "No iniciado"}
+Fecha Fin: {trabajo.fecha_fin|date:"d/m/Y H:i" if trabajo.fecha_fin else "En progreso"}
+
+Observaciones:
+{trabajo.observaciones or "Sin observaciones"}
+
+Mecánicos Asignados:
+"""
+        for mec in trabajo.mecanicos.all():
+            content += f"- {mec.user.get_full_name() or mec.user.first_name} ({mec.especialidad or 'Sin especialidad'})\n"
+        
+        content += "\nAcciones:\n"
+        for accion in trabajo.acciones.all():
+            estado = "✅ Completado" if accion.completado else "⏳ Pendiente"
+            content += f"- {accion.componente.nombre}: {accion.accion.nombre} - {estado}\n"
+        
+        content += "\nRepuestos:\n"
+        for repuesto in trabajo.repuestos.all():
+            estado = "✅ Completado" if repuesto.completado else "⏳ Pendiente"
+            content += f"- {repuesto.repuesto.nombre} (x{repuesto.cantidad}) - {estado}\n"
+        
+        content += f"\nTotal: ${trabajo.total_general or 0}\n"
+        content += f"\nGenerado el: {timezone.now().strftime('%d/%m/%Y %H:%M')}"
+        
+        response.write(content)
+        return response
 
 
 

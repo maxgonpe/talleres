@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Eliminar Trabajo{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">🗑️ Eliminar Trabajo</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <h5>⚠️ Advertencia</h5>
+                        <p>Estás a punto de eliminar permanentemente el siguiente trabajo:</p>
+                    </div>
+                    
+                    <div class="info-card">
+                        <h5>📋 Información del Trabajo</h5>
+                        <p><strong>Cliente:</strong> {{ trabajo.cliente.nombre }}</p>
+                        <p><strong>Vehículo:</strong> {{ trabajo.vehiculo.marca }} {{ trabajo.vehiculo.modelo }}</p>
+                        <p><strong>Placa:</strong> {{ trabajo.vehiculo.placa }}</p>
+                        <p><strong>Fecha Inicio:</strong> {{ trabajo.fecha_inicio|date:"d/m/Y" }}</p>
+                        {% if trabajo.fecha_fin %}
+                        <p><strong>Fecha Fin:</strong> {{ trabajo.fecha_fin|date:"d/m/Y" }}</p>
+                        {% endif %}
+                        <p><strong>Estado:</strong> {{ trabajo.get_estado_display }}</p>
+                        <p><strong>Total:</strong> ${{ trabajo.total_general|default:0|floatformat:0|intcomma }}</p>
+                    </div>
+                    
+                    <div class="alert alert-danger">
+                        <h6>🚨 Esta acción eliminará:</h6>
+                        <ul>
+                            <li>El trabajo completo</li>
+                            <li>Todas las acciones asociadas</li>
+                            <li>Todos los repuestos asociados</li>
+                            <li>Todas las fotos asociadas</li>
+                            <li>El historial completo</li>
+                        </ul>
+                        <p><strong>Esta acción NO se puede deshacer.</strong></p>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-danger">
+                                🗑️ Sí, eliminar trabajo
+                            </button>
+                            <a href="{% url 'lista_trabajos' %}" class="btn btn-secondary">
+                                ❌ Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

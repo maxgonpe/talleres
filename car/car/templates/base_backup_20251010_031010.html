@@ -201,6 +201,31 @@
       color: #1565c0 !important; /* Mismo color que "Salir" */
     }
 
+    /* Tabs del formulario de trabajos - Mejoras visuales */
+    .nav-tabs .nav-link {
+      border-radius: 8px 8px 0 0 !important;
+      border: 2px solid var(--muted) !important;
+      margin-right: 2px !important;
+      transition: all 0.3s ease !important;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+      background-color: var(--card-bg) !important;
+      color: var(--fg) !important;
+    }
+
+    .nav-tabs .nav-link:hover {
+      transform: translateY(-2px) !important;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+      background-color: var(--btn-bg) !important;
+      color: white !important;
+      border-color: var(--btn-bg) !important;
+    }
+
+    .nav-tabs .nav-link.active {
+      background-color: var(--btn-bg) !important;
+      color: white !important;
+      border-color: var(--btn-bg) !important;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+    }
 
     /* Temas claros - Títulos de lista de repuestos en blanco */
     .theme-cyan .table thead th,
@@ -523,36 +548,7 @@
       background-color: rgba(255, 255, 255, 0.1) !important;
     }
 
-    /* === UNIFICACIÓN DE ESTILOS PARA CARDS Y PESTAÑAS === */
-    
-    /* Cards y Action-Cards - Estilos unificados para todos los temas */
-    .card,
-    .card-body,
-    .card-title,
-    .card-text,
-    .info-card,
-    .info-card h5,
-    .info-card p,
-    .info-card strong,
-    .card h5,
-    .card p,
-    .card strong,
-    .card a,
-    .action-card,
-    .action-card .action-icon,
-    .action-card .action-title,
-    .action-card .action-description {
-      color: var(--fg) !important;
-      font-weight: 500 !important;
-      opacity: 1 !important;
-      filter: none !important;
-    }
-
-    /* Esquemas claros - Cards con tonos más oscuros y texto blanco */
-    .theme-cyan .card,
-    .theme-cyan .action-card {
-      background-color: #80cbc4 !important; /* Tono más oscuro del cyan */
-    }
+    /* Esquemas claros - Texto blanco en cards con fondo oscuro */
     .theme-cyan .card,
     .theme-cyan .card-body,
     .theme-cyan .card-title,
@@ -564,18 +560,13 @@
     .theme-cyan .card h5,
     .theme-cyan .card p,
     .theme-cyan .card strong,
-    .theme-cyan .card a,
-    .theme-cyan .action-card,
-    .theme-cyan .action-card .action-icon,
-    .theme-cyan .action-card .action-title,
-    .theme-cyan .action-card .action-description {
-      color: #ffffff !important;
+    .theme-cyan .card a {
+      color: #ffffff !important; /* Blanco para contraste con fondo oscuro */
+      font-weight: 500 !important;
+      opacity: 1 !important;
+      filter: none !important;
     }
 
-    .theme-sand .card,
-    .theme-sand .action-card {
-      background-color: #bcaaa4 !important; /* Tono más oscuro del sand */
-    }
     .theme-sand .card,
     .theme-sand .card-body,
     .theme-sand .card-title,
@@ -587,18 +578,13 @@
     .theme-sand .card h5,
     .theme-sand .card p,
     .theme-sand .card strong,
-    .theme-sand .card a,
-    .theme-sand .action-card,
-    .theme-sand .action-card .action-icon,
-    .theme-sand .action-card .action-title,
-    .theme-sand .action-card .action-description {
-      color: #ffffff !important;
+    .theme-sand .card a {
+      color: #ffffff !important; /* Blanco para contraste con fondo oscuro */
+      font-weight: 500 !important;
+      opacity: 1 !important;
+      filter: none !important;
     }
 
-    .theme-sage .card,
-    .theme-sage .action-card {
-      background-color: #a5d6a7 !important; /* Tono más oscuro del sage */
-    }
     .theme-sage .card,
     .theme-sage .card-body,
     .theme-sage .card-title,
@@ -610,18 +596,13 @@
     .theme-sage .card h5,
     .theme-sage .card p,
     .theme-sage .card strong,
-    .theme-sage .card a,
-    .theme-sage .action-card,
-    .theme-sage .action-card .action-icon,
-    .theme-sage .action-card .action-title,
-    .theme-sage .action-card .action-description {
-      color: #ffffff !important;
+    .theme-sage .card a {
+      color: #ffffff !important; /* Blanco para contraste con fondo oscuro */
+      font-weight: 500 !important;
+      opacity: 1 !important;
+      filter: none !important;
     }
 
-    .theme-sky .card,
-    .theme-sky .action-card {
-      background-color: #90caf9 !important; /* Tono más oscuro del sky */
-    }
     .theme-sky .card,
     .theme-sky .card-body,
     .theme-sky .card-title,
@@ -633,322 +614,11 @@
     .theme-sky .card h5,
     .theme-sky .card p,
     .theme-sky .card strong,
-    .theme-sky .card a,
-    .theme-sky .action-card,
-    .theme-sky .action-card .action-icon,
-    .theme-sky .action-card .action-title,
-    .theme-sky .action-card .action-description {
-      color: #ffffff !important;
-    }
-
-    /* Esquemas claros - Botones con tonos oscuros del mismo color */
-    .theme-cyan .btn,
-    .theme-cyan .btn-primary,
-    .theme-cyan .btn-secondary,
-    .theme-cyan .btn-success,
-    .theme-cyan .btn-info,
-    .theme-cyan .btn-warning,
-    .theme-cyan .btn-danger {
-      background-color: #004d40 !important; /* Tono oscuro del cyan */
-      border-color: #004d40 !important;
-      color: #ffffff !important;
-    }
-
-    .theme-cyan .btn:hover,
-    .theme-cyan .btn-primary:hover,
-    .theme-cyan .btn-secondary:hover,
-    .theme-cyan .btn-success:hover,
-    .theme-cyan .btn-info:hover,
-    .theme-cyan .btn-warning:hover,
-    .theme-cyan .btn-danger:hover {
-      background-color: #00251a !important; /* Tono más oscuro */
-      border-color: #00251a !important;
-      color: #ffffff !important;
-    }
-
-    .theme-sand .btn,
-    .theme-sand .btn-primary,
-    .theme-sand .btn-secondary,
-    .theme-sand .btn-success,
-    .theme-sand .btn-info,
-    .theme-sand .btn-warning,
-    .theme-sand .btn-danger {
-      background-color: #3e2723 !important; /* Tono oscuro del sand */
-      border-color: #3e2723 !important;
-      color: #ffffff !important;
-    }
-
-    .theme-sand .btn:hover,
-    .theme-sand .btn-primary:hover,
-    .theme-sand .btn-secondary:hover,
-    .theme-sand .btn-success:hover,
-    .theme-sand .btn-info:hover,
-    .theme-sand .btn-warning:hover,
-    .theme-sand .btn-danger:hover {
-      background-color: #1a0e0a !important; /* Tono más oscuro */
-      border-color: #1a0e0a !important;
-      color: #ffffff !important;
-    }
-
-    .theme-sage .btn,
-    .theme-sage .btn-primary,
-    .theme-sage .btn-secondary,
-    .theme-sage .btn-success,
-    .theme-sage .btn-info,
-    .theme-sage .btn-warning,
-    .theme-sage .btn-danger {
-      background-color: #1b5e20 !important; /* Tono oscuro del sage */
-      border-color: #1b5e20 !important;
-      color: #ffffff !important;
-    }
-
-    .theme-sage .btn:hover,
-    .theme-sage .btn-primary:hover,
-    .theme-sage .btn-secondary:hover,
-    .theme-sage .btn-success:hover,
-    .theme-sage .btn-info:hover,
-    .theme-sage .btn-warning:hover,
-    .theme-sage .btn-danger:hover {
-      background-color: #0d3e13 !important; /* Tono más oscuro */
-      border-color: #0d3e13 !important;
-      color: #ffffff !important;
-    }
-
-    .theme-sky .btn,
-    .theme-sky .btn-primary,
-    .theme-sky .btn-secondary,
-    .theme-sky .btn-success,
-    .theme-sky .btn-info,
-    .theme-sky .btn-warning,
-    .theme-sky .btn-danger {
-      background-color: #0d47a1 !important; /* Tono oscuro del sky */
-      border-color: #0d47a1 !important;
-      color: #ffffff !important;
-    }
-
-    .theme-sky .btn:hover,
-    .theme-sky .btn-primary:hover,
-    .theme-sky .btn-secondary:hover,
-    .theme-sky .btn-success:hover,
-    .theme-sky .btn-info:hover,
-    .theme-sky .btn-warning:hover,
-    .theme-sky .btn-danger:hover {
-      background-color: #052f6b !important; /* Tono más oscuro */
-      border-color: #052f6b !important;
-      color: #ffffff !important;
-    }
-
-    /* Esquemas oscuros - Botones con tonos claros del mismo color */
-    .theme-piedra .btn,
-    .theme-piedra .btn-primary,
-    .theme-piedra .btn-secondary,
-    .theme-piedra .btn-success,
-    .theme-piedra .btn-info,
-    .theme-piedra .btn-warning,
-    .theme-piedra .btn-danger {
-      background-color: #4a5c7a !important; /* Tono claro del piedra */
-      border-color: #4a5c7a !important;
-      color: #ffffff !important;
-    }
-
-    .theme-piedra .btn:hover,
-    .theme-piedra .btn-primary:hover,
-    .theme-piedra .btn-secondary:hover,
-    .theme-piedra .btn-success:hover,
-    .theme-piedra .btn-info:hover,
-    .theme-piedra .btn-warning:hover,
-    .theme-piedra .btn-danger:hover {
-      background-color: #5a6c8a !important; /* Tono más claro */
-      border-color: #5a6c8a !important;
-      color: #ffffff !important;
-    }
-
-    .theme-charcoal .btn,
-    .theme-charcoal .btn-primary,
-    .theme-charcoal .btn-secondary,
-    .theme-charcoal .btn-success,
-    .theme-charcoal .btn-info,
-    .theme-charcoal .btn-warning,
-    .theme-charcoal .btn-danger {
-      background-color: #374151 !important; /* Tono claro del charcoal */
-      border-color: #374151 !important;
-      color: #ffffff !important;
-    }
-
-    .theme-charcoal .btn:hover,
-    .theme-charcoal .btn-primary:hover,
-    .theme-charcoal .btn-secondary:hover,
-    .theme-charcoal .btn-success:hover,
-    .theme-charcoal .btn-info:hover,
-    .theme-charcoal .btn-warning:hover,
-    .theme-charcoal .btn-danger:hover {
-      background-color: #4b5563 !important; /* Tono más claro */
-      border-color: #4b5563 !important;
-      color: #ffffff !important;
-    }
-
-    .theme-forest .btn,
-    .theme-forest .btn-primary,
-    .theme-forest .btn-secondary,
-    .theme-forest .btn-success,
-    .theme-forest .btn-info,
-    .theme-forest .btn-warning,
-    .theme-forest .btn-danger {
-      background-color: #166534 !important; /* Tono claro del forest */
-      border-color: #166534 !important;
-      color: #ffffff !important;
-    }
-
-    .theme-forest .btn:hover,
-    .theme-forest .btn-primary:hover,
-    .theme-forest .btn-secondary:hover,
-    .theme-forest .btn-success:hover,
-    .theme-forest .btn-info:hover,
-    .theme-forest .btn-warning:hover,
-    .theme-forest .btn-danger:hover {
-      background-color: #15803d !important; /* Tono más claro */
-      border-color: #15803d !important;
-      color: #ffffff !important;
-    }
-
-    .theme-plum .btn,
-    .theme-plum .btn-primary,
-    .theme-plum .btn-secondary,
-    .theme-plum .btn-success,
-    .theme-plum .btn-info,
-    .theme-plum .btn-warning,
-    .theme-plum .btn-danger {
-      background-color: #4c1d5c !important; /* Tono claro del plum */
-      border-color: #4c1d5c !important;
-      color: #ffffff !important;
-    }
-
-    .theme-plum .btn:hover,
-    .theme-plum .btn-primary:hover,
-    .theme-plum .btn-secondary:hover,
-    .theme-plum .btn-success:hover,
-    .theme-plum .btn-info:hover,
-    .theme-plum .btn-warning:hover,
-    .theme-plum .btn-danger:hover {
-      background-color: #5c2d6c !important; /* Tono más claro */
-      border-color: #5c2d6c !important;
-      color: #ffffff !important;
-    }
-
-    /* Esquemas claros - Texto de mecánicos con color de botón */
-    .theme-cyan .info-card h5,
-    .theme-cyan .info-card strong,
-    .theme-cyan .item-card strong,
-    .theme-cyan .item-card small {
-      color: #004d40 !important; /* Color de botón cyan */
-    }
-
-    .theme-sand .info-card h5,
-    .theme-sand .info-card strong,
-    .theme-sand .item-card strong,
-    .theme-sand .item-card small {
-      color: #3e2723 !important; /* Color de botón sand */
-    }
-
-    .theme-sage .info-card h5,
-    .theme-sage .info-card strong,
-    .theme-sage .item-card strong,
-    .theme-sage .item-card small {
-      color: #1b5e20 !important; /* Color de botón sage */
-    }
-
-    .theme-sky .info-card h5,
-    .theme-sky .info-card strong,
-    .theme-sky .item-card strong,
-    .theme-sky .item-card small {
-      color: #0d47a1 !important; /* Color de botón sky */
-    }
-
-    /* Esquemas claros - Checkboxes de mecánicos con color de botón */
-    .theme-cyan input[type="checkbox"]:checked,
-    .theme-cyan input[type="checkbox"]:checked + label,
-    .theme-cyan .form-check-input:checked,
-    .theme-cyan .form-check-input:checked + .form-check-label,
-    .theme-cyan ul li input[type="checkbox"]:checked,
-    .theme-cyan ul li input[type="checkbox"]:checked + label,
-    .theme-cyan .checkbox-row input[type="checkbox"]:checked,
-    .theme-cyan .checkbox-row input[type="checkbox"]:checked + label,
-    .theme-cyan .vCheckboxField input[type="checkbox"]:checked,
-    .theme-cyan .vCheckboxField input[type="checkbox"]:checked + label {
-      background-color: #004d40 !important; /* Color de botón cyan */
-      border-color: #004d40 !important;
-      color: #ffffff !important;
-    }
-
-    .theme-sand input[type="checkbox"]:checked,
-    .theme-sand input[type="checkbox"]:checked + label,
-    .theme-sand .form-check-input:checked,
-    .theme-sand .form-check-input:checked + .form-check-label,
-    .theme-sand ul li input[type="checkbox"]:checked,
-    .theme-sand ul li input[type="checkbox"]:checked + label,
-    .theme-sand .checkbox-row input[type="checkbox"]:checked,
-    .theme-sand .checkbox-row input[type="checkbox"]:checked + label,
-    .theme-sand .vCheckboxField input[type="checkbox"]:checked,
-    .theme-sand .vCheckboxField input[type="checkbox"]:checked + label {
-      background-color: #3e2723 !important; /* Color de botón sand */
-      border-color: #3e2723 !important;
-      color: #ffffff !important;
-    }
-
-    .theme-sage input[type="checkbox"]:checked,
-    .theme-sage input[type="checkbox"]:checked + label,
-    .theme-sage .form-check-input:checked,
-    .theme-sage .form-check-input:checked + .form-check-label,
-    .theme-sage ul li input[type="checkbox"]:checked,
-    .theme-sage ul li input[type="checkbox"]:checked + label,
-    .theme-sage .checkbox-row input[type="checkbox"]:checked,
-    .theme-sage .checkbox-row input[type="checkbox"]:checked + label,
-    .theme-sage .vCheckboxField input[type="checkbox"]:checked,
-    .theme-sage .vCheckboxField input[type="checkbox"]:checked + label {
-      background-color: #1b5e20 !important; /* Color de botón sage */
-      border-color: #1b5e20 !important;
-      color: #ffffff !important;
-    }
-
-    .theme-sky input[type="checkbox"]:checked,
-    .theme-sky input[type="checkbox"]:checked + label,
-    .theme-sky .form-check-input:checked,
-    .theme-sky .form-check-input:checked + .form-check-label,
-    .theme-sky ul li input[type="checkbox"]:checked,
-    .theme-sky ul li input[type="checkbox"]:checked + label,
-    .theme-sky .checkbox-row input[type="checkbox"]:checked,
-    .theme-sky .checkbox-row input[type="checkbox"]:checked + label,
-    .theme-sky .vCheckboxField input[type="checkbox"]:checked,
-    .theme-sky .vCheckboxField input[type="checkbox"]:checked + label {
-      background-color: #0d47a1 !important; /* Color de botón sky */
-      border-color: #0d47a1 !important;
-      color: #ffffff !important;
-    }
-
-    /* Pestañas - Estilos unificados para todos los temas */
-    .nav-tabs .nav-link {
-      border-radius: 8px 8px 0 0 !important;
-      border: 2px solid var(--muted) !important;
-      margin-right: 2px !important;
-      transition: all 0.3s ease !important;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
-      background-color: var(--card-bg) !important;
-      color: var(--fg) !important;
-    }
-
-    .nav-tabs .nav-link:hover {
-      transform: translateY(-2px) !important;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
-      background-color: var(--btn-bg) !important;
-      color: white !important;
-      border-color: var(--btn-bg) !important;
-    }
-
-    .nav-tabs .nav-link.active {
-      background-color: var(--btn-bg) !important;
-      color: white !important;
-      border-color: var(--btn-bg) !important;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+    .theme-sky .card a {
+      color: #ffffff !important; /* Blanco para contraste con fondo oscuro */
+      font-weight: 500 !important;
+      opacity: 1 !important;
+      filter: none !important;
     }
 
 
@@ -1097,6 +767,13 @@
       font-weight: 700;
     }
 
+    .theme-cyan .nav-tabs .nav-link,
+    .theme-sand .nav-tabs .nav-link,
+    .theme-sage .nav-tabs .nav-link,
+    .theme-sky .nav-tabs .nav-link {
+      color: var(--muted) !important;
+      font-weight: 600;
+    }
 
     .theme-cyan .vehiculo-cliente,
     .theme-sand .vehiculo-cliente,

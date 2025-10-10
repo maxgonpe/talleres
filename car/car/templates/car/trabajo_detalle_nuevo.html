@@ -1,0 +1,823 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Trabajo #{{ trabajo.id }} - {{ trabajo.vehiculo }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .trabajo-container {
+        max-width: 100%;
+        margin: 0;
+        padding: 0.5rem;
+    }
+    
+    .trabajo-header {
+        background: linear-gradient(135deg, var(--btn-bg) 0%, var(--muted) 100%);
+        color: var(--btn-fg);
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+        text-align: center;
+    }
+    
+    .estado-badge {
+        font-size: 1.1rem;
+        padding: 0.5rem 1rem;
+        border-radius: 25px;
+        font-weight: 600;
+        margin: 0.5rem;
+        display: inline-block;
+        min-width: 120px;
+    }
+    
+    .estado-iniciado { background: #ffc107; color: #000; }
+    .estado-trabajando { background: #0d6efd; color: #fff; }
+    .estado-completado { background: #198754; color: #fff; }
+    .estado-entregado { background: #6c757d; color: #fff; }
+    
+    .tab-container {
+        background: var(--card-bg);
+        border-radius: 10px;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    /* Esquemas claros - Tab-container con tonos más oscuros para mejor contraste */
+    .theme-cyan .tab-container {
+        background-color: #b2dfdb !important; /* Tono más oscuro del cyan */
+    }
+    
+    .theme-sand .tab-container {
+        background-color: #d7ccc8 !important; /* Tono más oscuro del sand */
+    }
+    
+    .theme-sage .tab-container {
+        background-color: #c8e6c9 !important; /* Tono más oscuro del sage */
+    }
+    
+    .theme-sky .tab-container {
+        background-color: #bbdefb !important; /* Tono más oscuro del sky */
+    }
+    
+    .tab-nav {
+        display: flex;
+        background: var(--muted);
+        border-radius: 10px 10px 0 0;
+        overflow-x: auto;
+    }
+    
+    .tab-btn {
+        flex: 1;
+        padding: 0.75rem;
+        border: none;
+        background: transparent;
+        color: var(--fg);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+        min-width: 80px;
+    }
+    
+    .tab-btn.active {
+        background: var(--btn-bg);
+        color: var(--btn-fg);
+    }
+    
+    .tab-content {
+        padding: 1rem;
+        display: none;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+    
+    .info-card {
+        background: var(--card-bg);
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    /* Esquemas claros - Cards con tonos más oscuros para mejor contraste */
+    .theme-cyan .info-card {
+        background-color: #b2dfdb !important; /* Tono más oscuro del cyan */
+    }
+    
+    .theme-sand .info-card {
+        background-color: #d7ccc8 !important; /* Tono más oscuro del sand */
+    }
+    
+    .theme-sage .info-card {
+        background-color: #c8e6c9 !important; /* Tono más oscuro del sage */
+    }
+    
+    .theme-sky .info-card {
+        background-color: #bbdefb !important; /* Tono más oscuro del sky */
+    }
+    
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid var(--muted);
+    }
+    
+    .info-row:last-child {
+        border-bottom: none;
+    }
+    
+    .info-label {
+        font-weight: 600;
+        color: var(--btn-bg);
+    }
+    
+    .info-value {
+        color: var(--fg);
+        text-align: right;
+    }
+    
+    .btn-action {
+        border-radius: 25px;
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+        margin: 0.25rem;
+        min-width: 100px;
+        font-size: 0.9rem;
+    }
+    
+    .btn-mobile {
+        width: 100%;
+        padding: 1rem;
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    
+    .form-control {
+        background: var(--card-bg);
+        border: 2px solid var(--muted);
+        color: var(--fg);
+        border-radius: 8px;
+        padding: 0.75rem;
+    }
+    
+    .form-control:focus {
+        border-color: var(--btn-bg);
+        box-shadow: 0 0 0 0.2rem rgba(var(--btn-bg), 0.25);
+    }
+    
+    /* Esquemas claros - Selector de mecánicos con color de botón */
+    .theme-cyan input[type="checkbox"]:checked,
+    .theme-cyan input[type="checkbox"]:checked + label,
+    .theme-cyan ul li input[type="checkbox"]:checked,
+    .theme-cyan ul li input[type="checkbox"]:checked + label {
+        background-color: #004d40 !important; /* Color de botón cyan */
+        border-color: #004d40 !important;
+        color: #ffffff !important;
+    }
+    
+    .theme-sand input[type="checkbox"]:checked,
+    .theme-sand input[type="checkbox"]:checked + label,
+    .theme-sand ul li input[type="checkbox"]:checked,
+    .theme-sand ul li input[type="checkbox"]:checked + label {
+        background-color: #3e2723 !important; /* Color de botón sand */
+        border-color: #3e2723 !important;
+        color: #ffffff !important;
+    }
+    
+    .theme-sage input[type="checkbox"]:checked,
+    .theme-sage input[type="checkbox"]:checked + label,
+    .theme-sage ul li input[type="checkbox"]:checked,
+    .theme-sage ul li input[type="checkbox"]:checked + label {
+        background-color: #1b5e20 !important; /* Color de botón sage */
+        border-color: #1b5e20 !important;
+        color: #ffffff !important;
+    }
+    
+    .theme-sky input[type="checkbox"]:checked,
+    .theme-sky input[type="checkbox"]:checked + label,
+    .theme-sky ul li input[type="checkbox"]:checked,
+    .theme-sky ul li input[type="checkbox"]:checked + label {
+        background-color: #0d47a1 !important; /* Color de botón sky */
+        border-color: #0d47a1 !important;
+        color: #ffffff !important;
+    }
+    
+    .item-list {
+        background: var(--card-bg);
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .item-card {
+        background: var(--muted);
+        border-radius: 8px;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    /* Esquemas claros - Item-cards con tonos más oscuros para mejor contraste */
+    .theme-cyan .item-card {
+        background-color: #b2dfdb !important; /* Tono más oscuro del cyan */
+    }
+    
+    .theme-sand .item-card {
+        background-color: #d7ccc8 !important; /* Tono más oscuro del sand */
+    }
+    
+    .theme-sage .item-card {
+        background-color: #c8e6c9 !important; /* Tono más oscuro del sage */
+    }
+    
+    .theme-sky .item-card {
+        background-color: #bbdefb !important; /* Tono más oscuro del sky */
+    }
+    
+    .item-card.completado {
+        background: #d4edda;
+        border-left: 4px solid #198754;
+    }
+    
+    .item-card.pendiente {
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+    }
+    
+    .toggle-btn {
+        border: none;
+        border-radius: 20px;
+        padding: 0.25rem 0.75rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .toggle-btn.completado {
+        background: #198754;
+        color: white;
+    }
+    
+    .toggle-btn.pendiente {
+        background: #ffc107;
+        color: #000;
+    }
+    
+    .progress-container {
+        background: var(--card-bg);
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .progress-bar-custom {
+        height: 25px;
+        background: var(--muted);
+        border-radius: 15px;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #ffc107 0%, #198754 100%);
+        border-radius: 15px;
+        transition: width 0.5s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+    }
+    
+    .foto-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+    
+    .foto-item {
+        aspect-ratio: 1;
+        border-radius: 8px;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .foto-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .foto-item .delete-btn {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        background: rgba(220, 53, 69, 0.8);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        font-size: 0.7rem;
+        cursor: pointer;
+    }
+    
+    .add-form {
+        background: var(--muted);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        display: none;
+    }
+    
+    .add-form.active {
+        display: block;
+    }
+    
+    .btn-toggle-form {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+    
+    @media (max-width: 768px) {
+        .trabajo-container {
+            padding: 0.25rem;
+        }
+        
+        .tab-nav {
+            flex-direction: column;
+        }
+        
+        .tab-btn {
+            border-bottom: 1px solid var(--muted);
+        }
+        
+        .tab-btn:last-child {
+            border-bottom: none;
+        }
+        
+        .info-row {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .info-value {
+            text-align: left;
+            margin-top: 0.25rem;
+        }
+        
+        .btn-action {
+            width: 100%;
+            margin: 0.25rem 0;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="trabajo-container">
+    <!-- Header del Trabajo -->
+    <div class="trabajo-header">
+        <h2>🔧 Trabajo #{{ trabajo.id }}</h2>
+        <h4>{{ trabajo.vehiculo }}</h4>
+        <p class="mb-0">{{ trabajo.vehiculo.cliente.nombre }} - {{ trabajo.vehiculo.cliente.telefono }}</p>
+    </div>
+
+    <!-- Estado Actual -->
+    <div class="info-card text-center">
+        <h5>Estado Actual</h5>
+        <div class="estado-badge estado-{{ trabajo.estado }}">
+            {% if trabajo.estado == 'iniciado' %}🟡 Iniciado
+            {% elif trabajo.estado == 'trabajando' %}🔵 Trabajando
+            {% elif trabajo.estado == 'completado' %}🟢 Completado
+            {% elif trabajo.estado == 'entregado' %}⚫ Entregado
+            {% endif %}
+        </div>
+        
+        <!-- Barra de Progreso -->
+        <div class="progress-container">
+            <div class="progress-bar-custom">
+                <div class="progress-fill" style="width: {{ trabajo.porcentaje_avance }}%;">
+                    {{ trabajo.porcentaje_avance }}%
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navegación por Pestañas -->
+    <div class="tab-container">
+        <div class="tab-nav">
+            <button class="tab-btn active" onclick="showTab('info')">📋 Info</button>
+            <button class="tab-btn" onclick="showTab('acciones')">🛠️ Acciones</button>
+            <button class="tab-btn" onclick="showTab('repuestos')">🔧 Repuestos</button>
+            <button class="tab-btn" onclick="showTab('fotos')">📷 Fotos</button>
+            <button class="tab-btn" onclick="showTab('estado')">⚡ Estado</button>
+        </div>
+
+        <!-- Pestaña: Información -->
+        <div id="tab-info" class="tab-content active">
+            <div class="info-card">
+                <h5>📋 Información del Trabajo</h5>
+                
+                <div class="info-row">
+                    <span class="info-label">Cliente:</span>
+                    <span class="info-value">{{ trabajo.vehiculo.cliente.nombre }}</span>
+                </div>
+                
+                <div class="info-row">
+                    <span class="info-label">Teléfono:</span>
+                    <span class="info-value">{{ trabajo.vehiculo.cliente.telefono }}</span>
+                </div>
+                
+                <div class="info-row">
+                    <span class="info-label">Vehículo:</span>
+                    <span class="info-value">{{ trabajo.vehiculo.marca }} {{ trabajo.vehiculo.modelo }} {{ trabajo.vehiculo.anio }}</span>
+                </div>
+                
+                <div class="info-row">
+                    <span class="info-label">Placa:</span>
+                    <span class="info-value">{{ trabajo.vehiculo.placa }}</span>
+                </div>
+                
+                <div class="info-row">
+                    <span class="info-label">Fecha Inicio:</span>
+                    <span class="info-value">{{ trabajo.fecha_inicio|date:"d/m/Y H:i"|default:"No iniciado" }}</span>
+                </div>
+                
+                <div class="info-row">
+                    <span class="info-label">Fecha Fin:</span>
+                    <span class="info-value">{{ trabajo.fecha_fin|date:"d/m/Y H:i"|default:"En progreso" }}</span>
+                </div>
+                
+                <div class="info-row">
+                    <span class="info-label">Total:</span>
+                    <span class="info-value">${{ trabajo.total_general|default:0|floatformat:0 }}</span>
+                </div>
+            </div>
+
+            <!-- Campo Observaciones -->
+            <div class="info-card">
+                <h5>📝 Observaciones</h5>
+                <form method="post" id="observaciones-form">
+                    {% csrf_token %}
+                    <textarea name="observaciones" class="form-control" rows="4" 
+                              placeholder="Agregar observaciones sobre el trabajo...">{{ trabajo.observaciones|default:"" }}</textarea>
+                    <button type="submit" name="guardar_observaciones" class="btn btn-primary btn-action mt-2">
+                        💾 Guardar Observaciones
+                    </button>
+                </form>
+            </div>
+
+            <!-- Mecánicos Asignados -->
+            <div class="info-card">
+                <h5>👷 Mecánicos Asignados</h5>
+                {% if trabajo.mecanicos.exists %}
+                    {% for mec in trabajo.mecanicos.all %}
+                        <div class="item-card">
+                            <div>
+                                <strong>{{ mec.user.get_full_name|default:mec.user.first_name }}</strong>
+                                {% if mec.especialidad %}
+                                    <br><small>{{ mec.especialidad }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">No hay mecánicos asignados</p>
+                {% endif %}
+                
+                <form method="post">
+                    {% csrf_token %}
+                    {{ asignar_form.as_p }}
+                    <button type="submit" name="asignar_mecanicos" class="btn btn-primary btn-action">
+                        👷 Asignar Mecánicos
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Pestaña: Acciones -->
+        <div id="tab-acciones" class="tab-content">
+            <div class="info-card">
+                <h5>🛠️ Acciones del Trabajo</h5>
+                
+                <!-- Botón para agregar acción -->
+                <button class="btn btn-success btn-toggle-form" onclick="toggleAddForm('accion')">
+                    ➕ Agregar Acción
+                </button>
+                
+                <!-- Formulario para agregar acción -->
+                <div id="add-accion-form" class="add-form">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label>Componente:</label>
+                            <select name="componente" class="form-control" required>
+                                <option value="">Seleccionar componente...</option>
+                                {% for componente in componentes_disponibles %}
+                                    <option value="{{ componente.id }}">{{ componente.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Acción:</label>
+                            <select name="accion" class="form-control" required>
+                                <option value="">Seleccionar acción...</option>
+                                {% for accion in acciones_disponibles %}
+                                    <option value="{{ accion.id }}">{{ accion.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Precio Mano de Obra:</label>
+                            <input type="number" name="precio_mano_obra" class="form-control" step="0.01" min="0">
+                        </div>
+                        <button type="submit" name="agregar_accion" class="btn btn-primary btn-action">
+                            ➕ Agregar
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-action" onclick="toggleAddForm('accion')">
+                            ❌ Cancelar
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Lista de acciones -->
+                {% for accion in trabajo.acciones.all %}
+                    <div class="item-card {% if accion.completado %}completado{% else %}pendiente{% endif %}">
+                        <div>
+                            <strong>{{ accion.componente.nombre }}</strong><br>
+                            <small>{{ accion.accion.nombre }}</small>
+                            {% if accion.precio_mano_obra %}
+                                <br><small class="text-success">${{ accion.precio_mano_obra }}</small>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <form method="post" style="display: inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="accion_id" value="{{ accion.id }}">
+                                <button type="submit" name="toggle_accion" 
+                                        class="toggle-btn {% if accion.completado %}completado{% else %}pendiente{% endif %}">
+                                    {% if accion.completado %}✅ Completado{% else %}⏳ Pendiente{% endif %}
+                                </button>
+                            </form>
+                            <form method="post" style="display: inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="accion_id" value="{{ accion.id }}">
+                                <button type="submit" name="eliminar_accion" class="btn btn-danger btn-sm" 
+                                        onclick="return confirm('¿Eliminar esta acción?')">
+                                    🗑️
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="text-muted">No hay acciones registradas</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Pestaña: Repuestos -->
+        <div id="tab-repuestos" class="tab-content">
+            <div class="info-card">
+                <h5>🔧 Repuestos del Trabajo</h5>
+                
+                <!-- Botón para agregar repuesto -->
+                <button class="btn btn-success btn-toggle-form" onclick="toggleAddForm('repuesto')">
+                    ➕ Agregar Repuesto
+                </button>
+                
+                <!-- Formulario para agregar repuesto -->
+                <div id="add-repuesto-form" class="add-form">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label>Repuesto:</label>
+                            <select name="repuesto" class="form-control" required>
+                                <option value="">Seleccionar repuesto...</option>
+                                {% for repuesto in repuestos_disponibles %}
+                                    <option value="{{ repuesto.id }}">{{ repuesto.nombre }} - ${{ repuesto.precio_venta|default:0 }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Cantidad:</label>
+                            <input type="number" name="cantidad" class="form-control" min="1" value="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Precio Unitario:</label>
+                            <input type="number" name="precio_unitario" class="form-control" step="0.01" min="0">
+                        </div>
+                        <button type="submit" name="agregar_repuesto" class="btn btn-primary btn-action">
+                            ➕ Agregar
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-action" onclick="toggleAddForm('repuesto')">
+                            ❌ Cancelar
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Lista de repuestos -->
+                {% for repuesto in trabajo.repuestos.all %}
+                    <div class="item-card {% if repuesto.completado %}completado{% else %}pendiente{% endif %}">
+                        <div>
+                            <strong>{{ repuesto.repuesto.nombre }}</strong><br>
+                            <small>Cantidad: {{ repuesto.cantidad }}</small>
+                            {% if repuesto.precio_unitario %}
+                                <br><small class="text-success">${{ repuesto.precio_unitario }} c/u</small>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <form method="post" style="display: inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="repuesto_id" value="{{ repuesto.id }}">
+                                <button type="submit" name="toggle_repuesto" 
+                                        class="toggle-btn {% if repuesto.completado %}completado{% else %}pendiente{% endif %}">
+                                    {% if repuesto.completado %}✅ Completado{% else %}⏳ Pendiente{% endif %}
+                                </button>
+                            </form>
+                            <form method="post" style="display: inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="repuesto_id" value="{{ repuesto.id }}">
+                                <button type="submit" name="eliminar_repuesto" class="btn btn-danger btn-sm" 
+                                        onclick="return confirm('¿Eliminar este repuesto?')">
+                                    🗑️
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="text-muted">No hay repuestos registrados</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Pestaña: Fotos -->
+        <div id="tab-fotos" class="tab-content">
+            <div class="info-card">
+                <h5>📷 Fotos del Progreso</h5>
+                
+                <!-- Formulario para subir foto -->
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <input type="file" name="imagen" class="form-control" accept="image/*" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" name="descripcion" class="form-control" placeholder="Descripción de la foto (opcional)">
+                    </div>
+                    <button type="submit" name="subir_foto" class="btn btn-primary btn-action">
+                        📷 Subir Foto
+                    </button>
+                </form>
+                
+                <!-- Grid de fotos -->
+                <div class="foto-grid">
+                    {% for foto in trabajo.fotos.all %}
+                        <div class="foto-item">
+                            <img src="{{ foto.imagen.url }}" alt="{{ foto.descripcion|default:'Foto del trabajo' }}">
+                            <button class="delete-btn" onclick="eliminarFoto({{ foto.id }})" title="Eliminar foto">×</button>
+                        </div>
+                    {% empty %}
+                        <p class="text-muted">No hay fotos subidas</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Pestaña: Estado -->
+        <div id="tab-estado" class="tab-content">
+            <div class="info-card">
+                <h5>⚡ Cambiar Estado del Trabajo</h5>
+                <p class="text-muted">Selecciona el nuevo estado para este trabajo:</p>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <button type="submit" name="cambiar_estado" value="iniciado" 
+                                    class="btn btn-mobile {% if trabajo.estado == 'iniciado' %}btn-warning{% else %}btn-outline-warning{% endif %}">
+                                🟡 Iniciado
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button type="submit" name="cambiar_estado" value="trabajando" 
+                                    class="btn btn-mobile {% if trabajo.estado == 'trabajando' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                                🔵 Trabajando
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button type="submit" name="cambiar_estado" value="completado" 
+                                    class="btn btn-mobile {% if trabajo.estado == 'completado' %}btn-success{% else %}btn-outline-success{% endif %}">
+                                🟢 Completado
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button type="submit" name="cambiar_estado" value="entregado" 
+                                    class="btn btn-mobile {% if trabajo.estado == 'entregado' %}btn-dark{% else %}btn-outline-dark{% endif %}">
+                                ⚫ Entregado
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Botones de Acción -->
+            <div class="info-card">
+                <h5>📄 Acciones Adicionales</h5>
+                
+                <a href="{% url 'trabajo_pdf' trabajo.pk %}" class="btn btn-info btn-mobile" target="_blank">
+                    📄 Generar PDF de Estado
+                </a>
+                
+                <a href="{% url 'panel_principal' %}" class="btn btn-secondary btn-mobile">
+                    🏠 Volver a la Pizarra
+                </a>
+                
+                <a href="javascript:history.back()" class="btn btn-outline-secondary btn-mobile">
+                    ← Regresar
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Funciones para las pestañas
+function showTab(tabName) {
+    // Ocultar todas las pestañas
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Remover clase active de todos los botones
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Mostrar la pestaña seleccionada
+    document.getElementById('tab-' + tabName).classList.add('active');
+    
+    // Activar el botón correspondiente
+    event.target.classList.add('active');
+}
+
+// Funciones para formularios de agregar
+function toggleAddForm(type) {
+    const form = document.getElementById('add-' + type + '-form');
+    form.classList.toggle('active');
+}
+
+// Función para eliminar foto
+function eliminarFoto(fotoId) {
+    if (confirm('¿Eliminar esta foto?')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.innerHTML = `
+            {% csrf_token %}
+            <input type="hidden" name="eliminar_foto" value="${fotoId}">
+        `;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Función para generar PDF
+function generarPDF() {
+    // Aquí implementaremos la generación de PDF
+    alert('Función de PDF en desarrollo...');
+}
+
+// Auto-guardar observaciones
+document.addEventListener('DOMContentLoaded', function() {
+    const observacionesTextarea = document.querySelector('textarea[name="observaciones"]');
+    if (observacionesTextarea) {
+        let timeout;
+        observacionesTextarea.addEventListener('input', function() {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                // Auto-guardar después de 2 segundos de inactividad
+                const form = document.getElementById('observaciones-form');
+                if (form) {
+                    form.submit();
+                }
+            }, 2000);
+        });
+    }
+});
+</script>
+{% endblock %}
