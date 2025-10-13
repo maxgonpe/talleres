@@ -5,7 +5,7 @@ from django.utils.timezone import now
 from django.shortcuts import redirect
 from .import views
 from .views_api import vehiculo_lookup
-from .views import ClienteListView,VehiculoListView,\
+from .views import ClienteListView, ClienteTallerListView, ClienteTallerCreateView, ClienteTallerUpdateView, ClienteTallerDeleteView, cliente_taller_lookup, VehiculoListView,\
                    VehiculoCreateView,VehiculoUpdateView,\
                    VehiculoDeleteView,MecanicoListView,\
                    MecanicoDeleteView,MecanicoCreateView,\
@@ -65,11 +65,18 @@ urlpatterns = [
     path("mecanicos/nuevo/", views.MecanicoCreateView.as_view(), name="mecanico_create"),
     path("mecanicos/<int:pk>/editar/", views.MecanicoUpdateView.as_view(), name="mecanico_update"),
     path("mecanicos/<int:pk>/eliminar/", views.MecanicoDeleteView.as_view(), name="mecanico_delete"),
-    # Clientes
+    # Clientes (legacy)
     path("clientes/", ClienteListView.as_view(), name="cliente_list"),
     path("clientes/nuevo/", views.ClienteCreateView.as_view(), name="cliente_create"),
     path("clientes/<int:pk>/editar/", views.ClienteUpdateView.as_view(), name="cliente_update"),
     path("clientes/<int:pk>/eliminar/", views.ClienteDeleteView.as_view(), name="cliente_delete"),
+    
+    # Clientes del Taller (nuevo sistema)
+    path("clientes-taller/", ClienteTallerListView.as_view(), name="cliente_taller_list"),
+    path("clientes-taller/nuevo/", ClienteTallerCreateView.as_view(), name="cliente_taller_create"),
+    path("clientes-taller/<str:pk>/editar/", ClienteTallerUpdateView.as_view(), name="cliente_taller_update"),
+    path("clientes-taller/<str:pk>/eliminar/", ClienteTallerDeleteView.as_view(), name="cliente_taller_delete"),
+    path("clientes-taller/lookup/", cliente_taller_lookup, name="cliente_taller_lookup"),
     # Vehículos
     path("vehiculos/", VehiculoListView.as_view(), name="vehiculo_list"),
     path("vehiculos/nuevo/", VehiculoCreateView.as_view(), name="vehiculo_create"),

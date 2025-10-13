@@ -357,11 +357,13 @@ def crear_cliente_rapido(request):
     form = ClienteRapidoForm(request.POST)
     
     if form.is_valid():
-        cliente = form.save()
+        cliente = form.save(commit=False)
+        cliente.activo = True  # Asegurar que el cliente esté activo
+        cliente.save()
         return JsonResponse({
             'success': True,
             'cliente': {
-                'id': cliente.id,
+                'id': cliente.rut,
                 'nombre': cliente.nombre,
                 'telefono': cliente.telefono or ''
             }

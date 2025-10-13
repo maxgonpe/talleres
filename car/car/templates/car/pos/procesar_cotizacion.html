@@ -282,7 +282,7 @@ function crearCliente() {
             // Agregar el nuevo cliente al select
             const select = document.getElementById('id_cliente');
             const option = document.createElement('option');
-            option.value = data.cliente.id;
+            option.value = data.cliente.rut;
             option.textContent = data.cliente.nombre;
             option.selected = true;
             select.appendChild(option);

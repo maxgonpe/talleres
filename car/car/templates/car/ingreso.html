@@ -16,9 +16,9 @@
       <select id="cliente_existente" name="cliente_existente" class="form-select">
         <option value="">-- Nuevo cliente --</option>
         {% for cliente in clientes_existentes %}
-          <option value="{{ cliente.id }}"
-            {% if selected_cliente and selected_cliente|stringformat:"s" == cliente.id|stringformat:"s" %} selected {% endif %}>
-            {{ cliente.nombre }} - {{ cliente.telefono }}
+          <option value="{{ cliente.rut }}"
+            {% if selected_cliente and selected_cliente|stringformat:"s" == cliente.rut|stringformat:"s" %} selected {% endif %}>
+            {{ cliente.nombre }} ({{ cliente.rut }}) - {{ cliente.telefono|default:"Sin teléfono" }}
           </option>
         {% endfor %}
       </select>

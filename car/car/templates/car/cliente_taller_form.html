@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class="container py-4">
+  <h2>
+    {% if object %}
+      ✏️ Editar Cliente: {{ object.nombre }}
+    {% else %}
+      ➕ Nuevo Cliente del Taller
+    {% endif %}
+  </h2>
+  
+  <div class="row">
+    <div class="col-md-8">
+      <form method="post" novalidate>
+        {% csrf_token %}
+        
+        <!-- Información básica -->
+        <div class="card mb-3">
+          <div class="card-header">
+            <h5 class="mb-0">📋 Información Básica</h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                {{ form.rut|as_crispy_field }}
+              </div>
+              <div class="col-md-6">
+                {{ form.nombre|as_crispy_field }}
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6">
+                {{ form.telefono|as_crispy_field }}
+              </div>
+              <div class="col-md-6">
+                {{ form.email|as_crispy_field }}
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-12">
+                {{ form.direccion|as_crispy_field }}
+              </div>
+            </div>
+            {% if object %}
+            <div class="row">
+              <div class="col-12">
+                {{ form.activo|as_crispy_field }}
+              </div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Botones de acción -->
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-primary">
+            {% if object %}💾 Actualizar Cliente{% else %}➕ Crear Cliente{% endif %}
+          </button>
+          <a href="{% url 'cliente_taller_list' %}" class="btn btn-secondary">❌ Cancelar</a>
+        </div>
+      </form>
+    </div>
+    
+    <!-- Panel de ayuda -->
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">
+          <h6 class="mb-0">ℹ️ Información</h6>
+        </div>
+        <div class="card-body">
+          <h6>RUT</h6>
+          <p class="small text-muted">
+            El RUT es el identificador único del cliente. Debe tener el formato: 12345678-9
+          </p>
+          
+          <h6>Campos obligatorios</h6>
+          <ul class="small">
+            <li>RUT (único)</li>
+            <li>Nombre</li>
+          </ul>
+          
+          <h6>Campos opcionales</h6>
+          <ul class="small">
+            <li>Teléfono</li>
+            <li>Email</li>
+            <li>Dirección</li>
+          </ul>
+          
+          {% if object %}
+          <hr>
+          <h6>Información del cliente</h6>
+          <p class="small">
+            <strong>Registrado:</strong> {{ object.fecha_registro|date:"d/m/Y H:i" }}<br>
+            <strong>Estado:</strong> 
+            {% if object.activo %}
+              <span class="badge bg-success">Activo</span>
+            {% else %}
+              <span class="badge bg-danger">Inactivo</span>
+            {% endif %}
+          </p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Validación de RUT en tiempo real
+document.addEventListener('DOMContentLoaded', function() {
+    const rutInput = document.querySelector('#id_rut');
+    if (rutInput) {
+        rutInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/[^0-9kK]/g, '');
+            if (value.length > 1) {
+                value = value.slice(0, -1) + '-' + value.slice(-1);
+            }
+            e.target.value = value;
+        });
+    }
+});
+</script>
+{% endblock %}

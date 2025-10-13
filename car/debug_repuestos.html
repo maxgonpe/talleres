@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Repuestos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>🔍 Debug de Funcionalidad Repuestos</h2>
+        
+        <!-- Test de búsqueda -->
+        <div class="mb-3">
+            <label for="search-test" class="form-label">Test de Búsqueda:</label>
+            <input type="text" id="search-test" class="form-control" placeholder="Escribe algo para probar...">
+        </div>
+        
+        <!-- Test de botones -->
+        <div class="mb-3">
+            <button class="btn btn-primary" onclick="testToggleStats()">Test Toggle Estadísticas</button>
+            <button class="btn btn-info" onclick="testMostrarFicha()">Test Mostrar Ficha</button>
+        </div>
+        
+        <!-- Test de datos -->
+        <div class="mb-3">
+            <button class="btn btn-success" onclick="testDatosRepuestos()">Test Datos Repuestos</button>
+        </div>
+        
+        <!-- Resultados -->
+        <div id="debug-results" class="alert alert-info" style="display: none;">
+            <h5>Resultados del Debug:</h5>
+            <div id="debug-content"></div>
+        </div>
+        
+        <!-- Tabla de prueba -->
+        <table class="table" id="test-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="repuesto-row" data-id="1" data-nombre="repuesto prueba">
+                    <td>1</td>
+                    <td>Repuesto de Prueba</td>
+                    <td>
+                        <button class="btn btn-info btn-sm" onclick="mostrarFicha(1)">👁️</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Datos de prueba
+        const repuestosData = {
+            1: {
+                id: 1,
+                nombre: "Repuesto de Prueba",
+                sku: "SKU001",
+                marca: "Marca Test"
+            }
+        };
+
+        // Función de debug
+        function debugLog(message) {
+            console.log('🔍 DEBUG:', message);
+            const results = document.getElementById('debug-results');
+            const content = document.getElementById('debug-content');
+            results.style.display = 'block';
+            content.innerHTML += '<p>' + message + '</p>';
+        }
+
+        // Test de toggle estadísticas
+        function testToggleStats() {
+            debugLog('✅ Función testToggleStats ejecutada');
+        }
+
+        // Test de mostrar ficha
+        function testMostrarFicha() {
+            debugLog('✅ Función testMostrarFicha ejecutada');
+            mostrarFicha(1);
+        }
+
+        // Test de datos
+        function testDatosRepuestos() {
+            debugLog('✅ Datos de repuestos: ' + JSON.stringify(repuestosData));
+        }
+
+        // Función mostrar ficha (simplificada)
+        function mostrarFicha(id) {
+            debugLog('✅ Función mostrarFicha llamada con ID: ' + id);
+            const repuesto = repuestosData[id];
+            if (repuesto) {
+                debugLog('✅ Repuesto encontrado: ' + repuesto.nombre);
+                alert('Ficha del repuesto: ' + repuesto.nombre);
+            } else {
+                debugLog('❌ Repuesto no encontrado');
+            }
+        }
+
+        // Test de búsqueda
+        document.addEventListener('DOMContentLoaded', function() {
+            debugLog('✅ DOM cargado correctamente');
+            
+            const searchInput = document.getElementById('search-test');
+            if (searchInput) {
+                debugLog('✅ Input de búsqueda encontrado');
+                
+                searchInput.addEventListener('input', function() {
+                    debugLog('✅ Evento input disparado: ' + this.value);
+                });
+            } else {
+                debugLog('❌ Input de búsqueda NO encontrado');
+            }
+            
+            // Test de elementos
+            const rows = document.querySelectorAll('.repuesto-row');
+            debugLog('✅ Filas encontradas: ' + rows.length);
+            
+            const buttons = document.querySelectorAll('button');
+            debugLog('✅ Botones encontrados: ' + buttons.length);
+        });
+
+        // Test de errores
+        window.addEventListener('error', function(e) {
+            debugLog('❌ ERROR JavaScript: ' + e.message + ' en ' + e.filename + ':' + e.lineno);
+        });
+    </script>
+</body>
+</html>
+

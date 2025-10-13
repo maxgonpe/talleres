@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import (
-    Cliente, Vehiculo, Mecanico,
+    Cliente, Cliente_Taller, Vehiculo, Mecanico,
     Diagnostico, DiagnosticoComponenteAccion, DiagnosticoRepuesto,
     Trabajo, TrabajoAccion, TrabajoRepuesto,TrabajoFoto,
     Componente, Accion, ComponenteAccion,
@@ -27,6 +27,27 @@ class MecanicoAdmin(admin.ModelAdmin):
 class ClienteAdmin(admin.ModelAdmin):
     list_display = ('id', 'nombre', 'telefono')
     search_fields = ('nombre', 'telefono')
+
+
+@admin.register(Cliente_Taller)
+class ClienteTallerAdmin(admin.ModelAdmin):
+    list_display = ('rut', 'nombre', 'telefono', 'email', 'fecha_registro', 'activo')
+    search_fields = ('rut', 'nombre', 'telefono', 'email')
+    list_filter = ('activo', 'fecha_registro')
+    readonly_fields = ('fecha_registro',)
+    fieldsets = (
+        ('Información Básica', {
+            'fields': ('rut', 'nombre', 'telefono', 'email')
+        }),
+        ('Información Adicional', {
+            'fields': ('direccion', 'activo'),
+            'classes': ('collapse',)
+        }),
+        ('Metadatos', {
+            'fields': ('fecha_registro',),
+            'classes': ('collapse',)
+        }),
+    )
 
 
 @admin.register(Vehiculo)
@@ -130,7 +151,7 @@ class RepuestoAdmin(admin.ModelAdmin):
             'fields': ('sku', 'oem', 'referencia', 'nombre', 'marca', 'descripcion')
         }),
         ('Especificaciones', {
-            'fields': ('medida', 'posicion', 'unidad', 'codigo_barra', 'stock')
+            'fields': ('medida', 'posicion', 'unidad', 'codigo_barra')
         }),
         ('Precios', {
             'fields': ('precio_costo', 'precio_venta')

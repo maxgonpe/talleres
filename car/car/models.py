@@ -28,8 +28,27 @@ class Cliente(models.Model):
         return self.nombre
 
 
+class Cliente_Taller(models.Model):
+    """Nuevo modelo de cliente con RUT como clave primaria para evitar duplicados"""
+    rut = models.CharField(max_length=12, primary_key=True, verbose_name="RUT")
+    nombre = models.CharField(max_length=100)
+    telefono = models.CharField(max_length=20, blank=True, null=True)
+    email = models.EmailField(blank=True, null=True)
+    direccion = models.TextField(blank=True, null=True)
+    fecha_registro = models.DateTimeField(auto_now_add=True)
+    activo = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = "Cliente del Taller"
+        verbose_name_plural = "Clientes del Taller"
+        ordering = ['nombre']
+
+    def __str__(self):
+        return f"{self.nombre} ({self.rut})"
+
+
 class Vehiculo(models.Model):
-    cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE)
+    cliente = models.ForeignKey(Cliente_Taller, on_delete=models.CASCADE)
     marca = models.CharField(max_length=50)
     modelo = models.CharField(max_length=50)
     anio = models.PositiveIntegerField()
@@ -58,7 +77,7 @@ class Componente(models.Model):
     activo = models.BooleanField(default=True)
     padre = models.ForeignKey(
         'self',
-        on_delete=models.CASCADE,            # <- eliminará el subárbol completo
+        on_delete=models.PROTECT,            # <- PROTECT: Evita eliminación si tiene hijos
         null=True, blank=True,
         related_name='hijos'
     )
@@ -111,6 +130,38 @@ class Componente(models.Model):
         # Si cambió el nombre o el padre, hay que propagar a los hijos
         if self.pk and (old_parent_id != self.padre_id or old_nombre != self.nombre):
             self._update_descendant_codes()
+    
+    def eliminar_seguro(self):
+        """
+        Elimina el componente de forma segura usando soft delete.
+        Primero desactiva el componente y luego verifica si se puede eliminar.
+        """
+        # Verificar si tiene hijos activos
+        hijos_activos = self.hijos.filter(activo=True).exists()
+        if hijos_activos:
+            raise ValueError(f"No se puede eliminar '{self.nombre}' porque tiene componentes hijos activos.")
+        
+        # Verificar si está siendo usado en diagnósticos o trabajos
+        from django.db.models import Q
+        en_uso = (
+            self.diagnosticos.exists() or 
+            self.trabajos.exists() or
+            self.componenteaccion_set.exists() or
+            self.diagnosticocomponenteaccion_set.exists() or
+            self.trabajoaccion_set.exists() or
+            self.componenterepuesto_set.exists() or
+            self.trabajorepuesto_set.exists()
+        )
+        
+        if en_uso:
+            # Soft delete: solo desactivar
+            self.activo = False
+            self.save()
+            return False  # No se eliminó físicamente
+        else:
+            # Hard delete: eliminar físicamente
+            super().delete()
+            return True  # Se eliminó físicamente
 
 
 class Diagnostico(models.Model):
@@ -264,10 +315,10 @@ class PrefijoRepuesto(models.Model):
 
 class Repuesto(models.Model):
     sku = models.CharField(max_length=64, unique=True, blank=True, null=True)  # código interno
-    oem = models.CharField(max_length=64, blank=True, null=True)               # OEM / fabricante
-    referencia = models.CharField(max_length=128, blank=True, null=True)       # ref proveedor
+    oem = models.CharField(max_length=64, blank=True, null=True, default='oem')               # OEM / fabricante
+    referencia = models.CharField(max_length=128, blank=True, null=True, default='no-tiene')       # ref proveedor
     nombre = models.CharField(max_length=250)
-    marca = models.CharField(max_length=120, blank=True)
+    marca = models.CharField(max_length=120, blank=True, default='general')
     descripcion = models.TextField(blank=True)
     medida = models.CharField(max_length=80, blank=True)   # ej. "258x22mm"
     posicion = models.CharField(max_length=80, blank=True) # ej. "freno delantero"
@@ -275,49 +326,90 @@ class Repuesto(models.Model):
     precio_costo = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     precio_venta = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     codigo_barra = models.CharField(max_length=100, blank=True, null=True, unique=True)
-    stock = models.IntegerField(default=0)
+    stock = models.IntegerField(default=0)  # Mantener para compatibilidad con datos existentes
     created = models.DateTimeField(auto_now_add=True)
     
-    # Nuevos campos con nombres diferentes
-    origen_repuesto = models.CharField(max_length=100, blank=True, null=True, verbose_name="Origen del Repuesto")
+    # Nuevos campos con nombres diferentes y valores por defecto
+    origen_repuesto = models.CharField(max_length=100, blank=True, null=True, default='sin-origen', verbose_name="Origen del Repuesto")
     cod_prov = models.CharField(max_length=100, blank=True, null=True, verbose_name="Código Proveedor")
-    marca_veh = models.CharField(max_length=100, blank=True, null=True, verbose_name="Marca Vehículo")
-    tipo_de_motor = models.TextField(blank=True, null=True, verbose_name="Tipo de Motor")
+    marca_veh = models.CharField(max_length=100, blank=True, null=True, default='xxx', verbose_name="Marca Vehículo")
+    tipo_de_motor = models.TextField(blank=True, null=True, default='zzzzzz', verbose_name="Tipo de Motor")
 
     
     def save(self, *args, **kwargs):
+        # Generar SKU si no existe
         if not self.sku:
             self.sku = self.generate_sku()
+        else:
+            # Verificar si los campos relevantes han cambiado
+            if self.pk:  # Solo para objetos existentes
+                try:
+                    old_instance = Repuesto.objects.get(pk=self.pk)
+                    # Campos que afectan la generación del SKU
+                    campos_relevantes = ['nombre', 'marca_veh', 'tipo_de_motor']
+                    
+                    # Verificar si algún campo relevante cambió
+                    if any(getattr(self, campo) != getattr(old_instance, campo) for campo in campos_relevantes):
+                        # Regenerar SKU si cambió algún campo relevante
+                        self.sku = self.generate_sku()
+                except Repuesto.DoesNotExist:
+                    # Si no existe el objeto anterior, generar SKU
+                    self.sku = self.generate_sku()
+            else:
+                # Para objetos nuevos, generar SKU
+                self.sku = self.generate_sku()
+        
         super().save(*args, **kwargs)
 
     def generate_sku(self):
-        # Texto base donde buscamos coincidencias
-        base_text = f"{self.nombre} {self.posicion}".lower()
-
-        # Buscar en la base de datos PrefijoRepuesto
-        tipo = None
-        for prefijo in PrefijoRepuesto.objects.all():
-            if prefijo.palabra.lower() in base_text:
-                tipo = prefijo.abreviatura.upper()
-                break
-
-        if not tipo:
-            # Si no hay prefijo definido, usar primeras 3 letras del nombre
-            tipo = (self.nombre[:3].upper() if self.nombre else "GEN")
-
-        # Marca abreviada
-        marca = (self.marca[:3].upper() if self.marca else "GEN")
-
-        # Posición abreviada
-        comp = (self.posicion[:3].upper() if self.posicion else "REP")
-
-        # Secuencia aleatoria numérica
-        referencia = get_random_string(length=4, allowed_chars="0123456789")
-
-        return f"{tipo}-{marca}-{comp}-{referencia}"
+        # 1. Primeros 5 caracteres del nombre
+        nombre_part = (self.nombre[:5].upper() if self.nombre else "REPUE")
+        
+        # 2. Primeros 4 caracteres de marca_veh (mejorar detección de valores por defecto)
+        marca_veh_part = "XXXX"  # Valor por defecto
+        if self.marca_veh and self.marca_veh.lower() not in ['xxx', 'xxxx', '']:
+            marca_veh_part = self.marca_veh[:4].upper()
+        
+        # 3. Primer grupo de tipo_de_motor (6-7 caracteres)
+        tipo_motor_part = "ZZZZZZ"  # Valor por defecto
+        
+        if self.tipo_de_motor and self.tipo_de_motor.lower() not in ['zzzzzz', 'zzzz', '']:
+            # Tomar el primer grupo antes del primer guión
+            primer_grupo = self.tipo_de_motor.split(' - ')[0].strip()
+            if primer_grupo and primer_grupo.lower() not in ['zzzzzz', 'zzzz']:
+                # Limitar a 6-7 caracteres máximo
+                tipo_motor_part = primer_grupo[:7].upper()
+                # Si es muy corto, rellenar con 'Z'
+                if len(tipo_motor_part) < 6:
+                    tipo_motor_part = tipo_motor_part.ljust(6, 'Z')
+        
+        # 4. Número aleatorio de 4 dígitos
+        numero_aleatorio = get_random_string(length=4, allowed_chars="0123456789")
+        
+        # Formato final: NOMBRE-MARCA-MOTOR-NUMERO
+        return f"{nombre_part}-{marca_veh_part}-{tipo_motor_part}-{numero_aleatorio}"
 
     def __str__(self):
         return f"{self.nombre} ({self.sku or self.oem or 'sin-cod'})"
+    
+    @property
+    def stock_total(self):
+        """Obtiene el stock total de todos los depósitos"""
+        from django.db.models import Sum
+        total = self.stocks.aggregate(total=Sum('stock'))['total']
+        return total or 0
+    
+    @property
+    def stock_disponible(self):
+        """Obtiene el stock disponible (total - reservado)"""
+        from django.db.models import Sum
+        total_stock = self.stocks.aggregate(total=Sum('stock'))['total'] or 0
+        total_reservado = self.stocks.aggregate(total=Sum('reservado'))['total'] or 0
+        return total_stock - total_reservado
+    
+    def tiene_stock_suficiente(self, cantidad):
+        """Verifica si hay stock suficiente para la cantidad solicitada"""
+        return self.stock_disponible >= cantidad
 
 
 
@@ -491,7 +583,7 @@ class TrabajoRepuesto(models.Model):
 
 class Venta(models.Model):
     fecha = models.DateTimeField(auto_now_add=True)
-    cliente = models.ForeignKey(Cliente, null=True, blank=True, on_delete=models.SET_NULL)
+    cliente = models.ForeignKey(Cliente_Taller, null=True, blank=True, on_delete=models.SET_NULL)
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
     total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     pagado = models.BooleanField(default=False)
@@ -515,17 +607,36 @@ class VentaItem(models.Model):
     def save(self, *args, **kwargs):
         self.subtotal = (self.cantidad * self.precio_unitario)
         super().save(*args, **kwargs)
+        
+        # NOTA: El stock se actualiza en la vista de venta usando actualizar_stock_venta()
+        # para evitar race conditions y problemas de transacciones
 
-        # Descontar stock al guardar (solo si es nueva venta)
-        if self.venta.pagado:
-            self.repuesto_stock.stock -= self.cantidad
-            self.repuesto_stock.save()
-            StockMovimiento.objects.create(
-                repuesto_stock=self.repuesto_stock,
-                tipo="salida",
-                cantidad=self.cantidad,
-                motivo=f"Venta #{self.venta.id}"
-            )
+
+def actualizar_stock_venta(venta):
+    """
+    Actualiza el stock de forma segura después de confirmar una venta.
+    Debe llamarse dentro de una transacción atómica.
+    """
+    if not venta.pagado:
+        return  # Solo actualizar stock si la venta está pagada
+    
+    for item in venta.items.all():
+        # Verificar stock disponible antes de descontar
+        if not item.repuesto_stock.repuesto.tiene_stock_suficiente(item.cantidad):
+            raise ValueError(f"Stock insuficiente para {item.repuesto_stock.repuesto.nombre}")
+        
+        # Descontar stock
+        item.repuesto_stock.stock -= item.cantidad
+        item.repuesto_stock.save()
+        
+        # Registrar movimiento
+        StockMovimiento.objects.create(
+            repuesto_stock=item.repuesto_stock,
+            tipo="salida",
+            cantidad=item.cantidad,
+            motivo=f"Venta #{venta.id}",
+            usuario=venta.usuario
+        )
 
 # ========================
 # MÓDULO POS (Point of Sale)
@@ -562,7 +673,7 @@ class CarritoItem(models.Model):
 class VentaPOS(models.Model):
     """Ventas realizadas desde el POS"""
     sesion = models.ForeignKey(SesionVenta, on_delete=models.CASCADE, related_name='ventas')
-    cliente = models.ForeignKey(Cliente, on_delete=models.SET_NULL, null=True, blank=True)
+    cliente = models.ForeignKey(Cliente_Taller, on_delete=models.SET_NULL, null=True, blank=True)
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     fecha = models.DateTimeField(auto_now_add=True)
     subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=0)
@@ -592,29 +703,45 @@ class VentaPOSItem(models.Model):
         self.subtotal = self.cantidad * self.precio_unitario
         super().save(*args, **kwargs)
         
-        # Actualizar stock
-        if self.venta.pagado:
-            # Buscar el stock disponible
-            stock_disponible = RepuestoEnStock.objects.filter(
-                repuesto=self.repuesto,
-                stock__gte=self.cantidad
-            ).first()
-            
-            if stock_disponible:
-                stock_disponible.stock -= self.cantidad
-                stock_disponible.save()
-                
-                # Registrar movimiento
-                StockMovimiento.objects.create(
-                    repuesto_stock=stock_disponible,
-                    tipo="salida",
-                    cantidad=self.cantidad,
-                    motivo=f"Venta POS #{self.venta.id}",
-                    usuario=self.venta.usuario
-                )
+        # NOTA: El stock se actualiza en la vista POS usando actualizar_stock_venta_pos()
+        # para evitar race conditions y problemas de transacciones
+
+
+def actualizar_stock_venta_pos(venta_pos):
+    """
+    Actualiza el stock de forma segura después de confirmar una venta POS.
+    Debe llamarse dentro de una transacción atómica.
+    """
+    if not venta_pos.pagado:
+        return  # Solo actualizar stock si la venta está pagada
     
-    def __str__(self):
-        return f"{self.repuesto.nombre} x{self.cantidad}"
+    for item in venta_pos.items.all():
+        # Verificar stock disponible antes de descontar
+        if not item.repuesto.tiene_stock_suficiente(item.cantidad):
+            raise ValueError(f"Stock insuficiente para {item.repuesto.nombre}")
+        
+        # Buscar el stock disponible
+        stock_disponible = RepuestoEnStock.objects.filter(
+            repuesto=item.repuesto,
+            stock__gte=item.cantidad
+        ).first()
+        
+        if stock_disponible:
+            # Descontar stock
+            stock_disponible.stock -= item.cantidad
+            stock_disponible.save()
+            
+            # Registrar movimiento
+            StockMovimiento.objects.create(
+                repuesto_stock=stock_disponible,
+                tipo="salida",
+                cantidad=item.cantidad,
+                motivo=f"Venta POS #{venta_pos.id}",
+                usuario=venta_pos.usuario
+            )
+        else:
+            raise ValueError(f"No hay stock disponible para {item.repuesto.nombre}")
+
 
 class ConfiguracionPOS(models.Model):
     """Configuraciones del sistema POS"""
@@ -641,7 +768,7 @@ class ConfiguracionPOS(models.Model):
 class Cotizacion(models.Model):
     """Cotizaciones del POS (no afectan stock)"""
     sesion = models.ForeignKey(SesionVenta, on_delete=models.CASCADE, related_name='cotizaciones')
-    cliente = models.ForeignKey(Cliente, on_delete=models.SET_NULL, null=True, blank=True)
+    cliente = models.ForeignKey(Cliente_Taller, on_delete=models.SET_NULL, null=True, blank=True)
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     fecha = models.DateTimeField(auto_now_add=True)
     subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=0)

@@ -27,7 +27,16 @@ DEBUG = True
 
 
 #ALLOWED_HOSTS = ['94.72.119.222']
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'netgogo.cl',
+    'www.netgogo.cl',
+    '.netgogo.cl',
+    '94.72.119.222',
+    'localhost',
+    '127.0.0.1',
+    '172.18.0.11',  # IP del contenedor Docker
+    '*'  # Para desarrollo - remover en producción
+]
 
 
 # Application definition

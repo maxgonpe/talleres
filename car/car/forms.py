@@ -1,5 +1,5 @@
 from django import forms
-from .models import Componente, Cliente, Vehiculo,\
+from .models import Componente, Cliente, Cliente_Taller, Vehiculo,\
                     Diagnostico,Accion, ComponenteAccion,\
                     Mecanico, Trabajo, TrabajoFoto,\
                     Venta, VentaItem, Repuesto, SesionVenta,\
@@ -16,6 +16,94 @@ class ClienteForm(forms.ModelForm):
     class Meta:
         model = Cliente
         fields = ['nombre', 'telefono']
+
+
+class ClienteTallerForm(forms.ModelForm):
+    """Formulario para el nuevo modelo Cliente_Taller con validación de RUT"""
+    class Meta:
+        model = Cliente_Taller
+        fields = ['rut', 'nombre', 'telefono', 'email', 'direccion']
+        widgets = {
+            'rut': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: 12345678-9',
+                'pattern': '[0-9]{7,8}-[0-9Kk]',
+                'title': 'Formato: 12345678-9'
+            }),
+            'nombre': forms.TextInput(attrs={'class': 'form-control'}),
+            'telefono': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'direccion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'activo': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+    def clean_rut(self):
+        rut = self.cleaned_data.get('rut')
+        if rut:
+            # Validación básica de RUT chileno
+            rut = rut.strip().upper()
+            if not self._validar_rut(rut):
+                raise forms.ValidationError("RUT inválido. Formato: 12345678-9")
+        return rut
+
+    def _validar_rut(self, rut):
+        """Valida RUT chileno"""
+        try:
+            rut = rut.replace('-', '')
+            if len(rut) < 8:
+                return False
+            
+            cuerpo = rut[:-1]
+            dv = rut[-1]
+            
+            # Validar que el cuerpo sean solo números
+            if not cuerpo.isdigit():
+                return False
+            
+            # Calcular dígito verificador
+            suma = 0
+            multiplicador = 2
+            
+            for i in reversed(cuerpo):
+                suma += int(i) * multiplicador
+                multiplicador = multiplicador + 1 if multiplicador < 7 else 2
+            
+            resto = suma % 11
+            dv_calculado = 11 - resto
+            
+            if dv_calculado == 11:
+                dv_calculado = '0'
+            elif dv_calculado == 10:
+                dv_calculado = 'K'
+            else:
+                dv_calculado = str(dv_calculado)
+            
+            return dv == dv_calculado
+        except:
+            return False
+
+
+class ClienteTallerRapidoForm(forms.ModelForm):
+    """Formulario rápido para crear cliente desde POS"""
+    class Meta:
+        model = Cliente_Taller
+        fields = ['rut', 'nombre', 'telefono']
+        widgets = {
+            'rut': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'RUT (12345678-9)',
+                'required': True
+            }),
+            'nombre': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nombre del cliente',
+                'required': True
+            }),
+            'telefono': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Teléfono (opcional)'
+            }),
+        }
 
 class VehiculoForm(forms.ModelForm):
     class Meta:
@@ -144,8 +232,8 @@ class RepuestoForm(forms.ModelForm):
         fields = [
             "sku", "oem", "referencia", "nombre", "marca",
             "descripcion", "medida", "posicion", "unidad",
-            "precio_costo", "precio_venta", "codigo_barra", "stock",
-            "origen_repuesto", "cod_prov", "marca_veh", "tipo_de_motor"
+            "precio_costo", "precio_venta", "codigo_barra",
+            "stock", "origen_repuesto", "cod_prov", "marca_veh", "tipo_de_motor"
         ]
         widgets = {
             "descripcion": forms.Textarea(attrs={"rows": 3, "class": "form-control"}),
@@ -239,9 +327,14 @@ class ConfiguracionPOSForm(forms.ModelForm):
 class ClienteRapidoForm(forms.ModelForm):
     """Formulario rápido para crear cliente desde POS"""
     class Meta:
-        model = Cliente
-        fields = ['nombre', 'telefono']
+        model = Cliente_Taller
+        fields = ['rut', 'nombre', 'telefono']
         widgets = {
+            'rut': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'RUT (12345678-9)',
+                'required': True
+            }),
             'nombre': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Nombre del cliente'

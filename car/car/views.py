@@ -33,7 +33,7 @@ from django.db.models import Sum
 from django.views.decorators.http import require_http_methods
 
 
-from .models import Diagnostico, Cliente, Vehiculo,\
+from .models import Diagnostico, Cliente_Taller, Vehiculo,\
                     Componente, Accion, ComponenteAccion,\
                     DiagnosticoComponenteAccion, Repuesto, VehiculoVersion,\
                     DiagnosticoRepuesto, Trabajo, Mecanico, TrabajoFoto,TrabajoRepuesto,\
@@ -41,7 +41,7 @@ from .models import Diagnostico, Cliente, Vehiculo,\
                     VentaPOS, SesionVenta, CarritoItem, AdministracionTaller
 from django.forms import modelformset_factory
 from django.forms import inlineformset_factory
-from .forms import ComponenteForm, ClienteForm, VehiculoForm,\
+from .forms import ComponenteForm, ClienteTallerForm, ClienteTallerRapidoForm, VehiculoForm,\
                    DiagnosticoForm, AccionForm, ComponenteAccionForm,\
                    MecanicoForm, AsignarMecanicosForm, SubirFotoForm,\
                    VentaForm, VentaItemForm, AdministracionTallerForm, RepuestoForm
@@ -95,14 +95,14 @@ def componente_list(request):
 @login_required
 @transaction.atomic
 def ingreso_view(request):
-    clientes_existentes = Cliente.objects.all().order_by('nombre')
+    clientes_existentes = Cliente_Taller.objects.filter(activo=True).order_by('nombre')
 
     selected_cliente = None
     selected_vehiculo = None
     selected_componentes_ids = []
 
     if request.method == 'POST':
-        cliente_form = ClienteForm(request.POST, prefix='cliente')
+        cliente_form = ClienteTallerForm(request.POST, prefix='cliente')
         vehiculo_form = VehiculoForm(request.POST, prefix='vehiculo')
         diagnostico_form = DiagnosticoForm(request.POST, prefix='diag')
 
@@ -114,14 +114,16 @@ def ingreso_view(request):
         cliente = None
         if cliente_id:
             try:
-                cliente = Cliente.objects.get(pk=cliente_id)
-                selected_cliente = cliente.pk
-            except Cliente.DoesNotExist:
+                cliente = Cliente_Taller.objects.get(rut=cliente_id)
+                selected_cliente = cliente.rut
+            except Cliente_Taller.DoesNotExist:
                 cliente_form.add_error(None, "El cliente seleccionado no existe.")
         else:
             if cliente_form.is_valid():
-                cliente = cliente_form.save()
-                selected_cliente = cliente.pk
+                cliente = cliente_form.save(commit=False)
+                cliente.activo = True  # Asegurar que el cliente esté activo
+                cliente.save()
+                selected_cliente = cliente.rut
 
         # --- Vehículo ---
         vehiculo = None
@@ -230,7 +232,7 @@ def ingreso_view(request):
         # else → si hay errores, sigue abajo y vuelve a renderizar
 
     else:
-        cliente_form = ClienteForm(prefix='cliente')
+        cliente_form = ClienteTallerForm(prefix='cliente')
         vehiculo_form = VehiculoForm(prefix='vehiculo')
         diagnostico_form = DiagnosticoForm(prefix='diag')
 
@@ -407,7 +409,7 @@ def seleccionar_componente(request, codigo):
 
 @login_required
 def get_vehiculos_por_cliente(request, cliente_id):
-    vehiculos = Vehiculo.objects.filter(cliente_id=cliente_id).order_by('placa')
+    vehiculos = Vehiculo.objects.filter(cliente__rut=cliente_id).order_by('placa')
     data = [
         {
             "id": v.id,
@@ -1092,26 +1094,24 @@ def exportar_diagnostico_pdf(request, pk):
 
 # ---- CLIENTES ----
 class ClienteListView(ListView):
-    model = Cliente
-    template_name = "car/cliente_list.html"
-    context_object_name = "clientes"
+    """Redirige a la nueva vista de Cliente_Taller"""
+    def get(self, request, *args, **kwargs):
+        return redirect('cliente_taller_list')
 
 class ClienteCreateView(CreateView):
-    model = Cliente
-    fields = ["nombre", "telefono"]
-    template_name = "car/cliente_form.html"
-    success_url = reverse_lazy("cliente_list")
+    """Redirige a la nueva vista de Cliente_Taller"""
+    def get(self, request, *args, **kwargs):
+        return redirect('cliente_taller_create')
 
 class ClienteUpdateView(UpdateView):
-    model = Cliente
-    fields = ["nombre", "telefono"]
-    template_name = "car/cliente_form.html"
-    success_url = reverse_lazy("cliente_list")
+    """Redirige a la nueva vista de Cliente_Taller"""
+    def get(self, request, *args, **kwargs):
+        return redirect('cliente_taller_list')
 
 class ClienteDeleteView(DeleteView):
-    model = Cliente
-    template_name = "car/cliente_confirm_delete.html"
-    success_url = reverse_lazy("cliente_list")
+    """Redirige a la nueva vista de Cliente_Taller"""
+    def get(self, request, *args, **kwargs):
+        return redirect('cliente_taller_list')
 
 # ---- VEHICULOS ----
 class VehiculoListView(ListView):
@@ -1230,7 +1230,8 @@ def trabajo_detalle(request, pk):
     from .models import Componente, Accion, Repuesto
     componentes_disponibles = Componente.objects.all()
     acciones_disponibles = Accion.objects.all()
-    repuestos_disponibles = Repuesto.objects.filter(stock__gt=0)
+    # Usar el nuevo sistema de stock unificado
+    repuestos_disponibles = Repuesto.objects.all()
 
     if request.method == "POST":
         # 🔹 Guardar observaciones
@@ -1582,7 +1583,8 @@ def panel_principal(request):
     
     # Estadísticas de repuestos
     repuestos_total = Repuesto.objects.count()
-    repuestos_sin_stock = Repuesto.objects.filter(stock=0).count()
+    # Usar el nuevo sistema de stock unificado
+    repuestos_sin_stock = 0  # Se calculará en el template usando las propiedades del modelo
     
     
     # Datos del POS para el template unificado
@@ -1745,14 +1747,32 @@ def repuesto_lookup(request):
     results = []
 
     if q:
+        # Búsqueda básica
         repuestos = RepuestoEnStock.objects.select_related("repuesto").filter(
             Q(repuesto__nombre__icontains=q) |
             Q(repuesto__sku__icontains=q) |
             Q(repuesto__oem__icontains=q) |
             Q(repuesto__codigo_barra__icontains=q) |
             Q(repuesto__marca__icontains=q) |
-            Q(repuesto__descripcion__icontains=q)
+            Q(repuesto__descripcion__icontains=q) |
+            Q(repuesto__marca_veh__icontains=q) |
+            Q(repuesto__tipo_de_motor__icontains=q) |
+            Q(repuesto__cod_prov__icontains=q) |
+            Q(repuesto__origen_repuesto__icontains=q)
         )[:20]  # limitar a 20 resultados para que sea rápido
+        
+        # Si no hay resultados y el término contiene guiones, buscar por partes del SKU
+        if not repuestos.exists() and '-' in q:
+            partes = q.split('-')
+            if len(partes) > 1:
+                # Buscar SKUs que contengan todas las partes
+                sku_filter = Q()
+                for parte in partes:
+                    if parte.strip():  # Ignorar partes vacías
+                        sku_filter &= Q(repuesto__sku__icontains=parte.strip())
+                
+                if sku_filter:
+                    repuestos = RepuestoEnStock.objects.select_related("repuesto").filter(sku_filter)[:20]
 
         for r in repuestos:
             text = f"{r.repuesto.sku or '-'} | {r.repuesto.nombre} | {r.repuesto.marca or ''} | Stock: {r.stock}"
@@ -1773,12 +1793,16 @@ class RepuestoListView(ListView):
     model = Repuesto
     template_name = "repuestos/repuesto_list.html"
     context_object_name = "repuestos"
+    
+    def get_queryset(self):
+        # Solo seleccionar campos que existen en la base de datos
+        return Repuesto.objects.all().select_related()
 
 '''
 class RepuestoCreateView(CreateView):
     model = Repuesto
     fields = ["nombre", "marca", "descripcion", "medida", "posicion",
-              "unidad", "precio_costo", "precio_venta", "codigo_barra", "stock"]
+              "unidad", "precio_costo", "precio_venta", "codigo_barra"]
     template_name = "repuestos/repuesto_form.html"
     success_url = reverse_lazy("repuesto_list")
 
@@ -1786,7 +1810,7 @@ class RepuestoCreateView(CreateView):
 class RepuestoUpdateView(UpdateView):
     model = Repuesto
     fields = ["nombre", "marca", "descripcion", "medida", "posicion",
-              "unidad", "precio_costo", "precio_venta", "codigo_barra", "stock"]
+              "unidad", "precio_costo", "precio_venta", "codigo_barra"]
     template_name = "repuestos/repuesto_form.html"
     success_url = reverse_lazy("repuesto_list")
 '''
@@ -1846,7 +1870,7 @@ def clone_repuesto_to_stock(repuesto: Repuesto, deposito: str = "bodega-principa
     Retorna la instancia de RepuestoEnStock creada/actualizada.
     """
     defaults = {
-        "stock": repuesto.stock or 0,
+        "stock": 0,  # Stock inicial por defecto
         "reservado": 0,
         "precio_compra": repuesto.precio_costo,
         "precio_venta": repuesto.precio_venta,
@@ -1860,7 +1884,8 @@ def clone_repuesto_to_stock(repuesto: Repuesto, deposito: str = "bodega-principa
     )
 
     if not created:
-        repstk.stock = repuesto.stock if repuesto.stock is not None else repstk.stock
+        # Mantener el stock existente si no se especifica uno nuevo
+        pass
         if repuesto.precio_costo is not None:
             repstk.precio_compra = repuesto.precio_costo
         if repuesto.precio_venta is not None:
@@ -1922,5 +1947,96 @@ def administracion_taller(request):
         'config': config,
     }
     return render(request, 'car/administracion_taller.html', context)
+
+
+# ======================
+# VISTAS PARA CLIENTE_TALLER
+# ======================
+
+class ClienteTallerListView(ListView):
+    """Lista de clientes del taller con RUT como identificador único"""
+    model = Cliente_Taller
+    template_name = "car/cliente_taller_list.html"
+    context_object_name = "clientes"
+    paginate_by = 20
+
+    def get_queryset(self):
+        queryset = Cliente_Taller.objects.filter(activo=True)
+        search = self.request.GET.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(nombre__icontains=search) | 
+                Q(rut__icontains=search) | 
+                Q(telefono__icontains=search)
+            )
+        return queryset.order_by('nombre')
+
+
+class ClienteTallerCreateView(CreateView):
+    """Crear nuevo cliente del taller"""
+    model = Cliente_Taller
+    form_class = ClienteTallerForm
+    template_name = "car/cliente_taller_form.html"
+    success_url = reverse_lazy("cliente_taller_list")
+
+    def form_valid(self, form):
+        # Asegurar que el cliente esté activo por defecto
+        form.instance.activo = True
+        messages.success(self.request, f"Cliente {form.instance.nombre} creado correctamente.")
+        return super().form_valid(form)
+
+
+class ClienteTallerUpdateView(UpdateView):
+    """Editar cliente del taller existente"""
+    model = Cliente_Taller
+    form_class = ClienteTallerForm
+    template_name = "car/cliente_taller_form.html"
+    success_url = reverse_lazy("cliente_taller_list")
+
+    def form_valid(self, form):
+        messages.success(self.request, f"Cliente {form.instance.nombre} actualizado correctamente.")
+        return super().form_valid(form)
+
+
+class ClienteTallerDeleteView(DeleteView):
+    """Eliminar cliente del taller (soft delete)"""
+    model = Cliente_Taller
+    template_name = "car/cliente_taller_confirm_delete.html"
+    success_url = reverse_lazy("cliente_taller_list")
+
+    def delete(self, request, *args, **kwargs):
+        cliente = self.get_object()
+        cliente.activo = False
+        cliente.save()
+        messages.success(request, f"Cliente {cliente.nombre} desactivado correctamente.")
+        return redirect(self.success_url)
+
+
+@login_required
+def cliente_taller_lookup(request):
+    """API para búsqueda de clientes del taller (para AJAX)"""
+    query = request.GET.get('q', '')
+    if len(query) < 2:
+        return JsonResponse({'results': []})
+    
+    clientes = Cliente_Taller.objects.filter(
+        activo=True
+    ).filter(
+        Q(nombre__icontains=query) | 
+        Q(rut__icontains=query) | 
+        Q(telefono__icontains=query)
+    )[:10]
+    
+    results = []
+    for cliente in clientes:
+        results.append({
+            'id': cliente.rut,
+            'text': f"{cliente.nombre} ({cliente.rut})",
+            'nombre': cliente.nombre,
+            'rut': cliente.rut,
+            'telefono': cliente.telefono or '',
+        })
+    
+    return JsonResponse({'results': results})
 
 

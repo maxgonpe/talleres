@@ -322,8 +322,8 @@
                             class="form-select mb-2">
                         <option value="">Selecciona un cliente...</option>
                         {% for choice in form.cliente.field.queryset %}
-                            <option value="{{ choice.pk }}" 
-                                    {% if form.cliente.value == choice.pk %}selected{% endif %}>
+                            <option value="{{ choice.rut }}" 
+                                    {% if form.cliente.value == choice.rut %}selected{% endif %}>
                                 {{ choice.nombre }} - {{ choice.telefono }}
                             </option>
                         {% endfor %}
@@ -610,8 +610,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 // Agregar nuevo cliente al select
                 const option = document.createElement('option');
-                option.value = data.cliente_id;
-                option.textContent = `${data.cliente_nombre} - ${data.cliente_telefono}`;
+                option.value = data.cliente.id;
+                option.textContent = `${data.cliente.nombre} - ${data.cliente.telefono}`;
                 option.selected = true;
                 
                 selectCliente.appendChild(option);
