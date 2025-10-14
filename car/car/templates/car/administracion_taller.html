@@ -160,6 +160,39 @@
                     </div>
                 </div>
 
+                <!-- Herramientas Avanzadas -->
+                <div class="card mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="fas fa-tools"></i> Herramientas Avanzadas</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="d-grid">
+                                    <a href="{% url 'relacionar_repuestos_componentes' %}" class="btn btn-outline-primary">
+                                        <i class="fas fa-brain"></i>
+                                        Algoritmo de Relación Inteligente
+                                    </a>
+                                    <small class="text-muted mt-2">
+                                        Relaciona automáticamente repuestos con componentes usando IA
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-grid">
+                                    <a href="{% url 'exportar_componentes_excel' %}" class="btn btn-outline-success">
+                                        <i class="fas fa-file-excel"></i>
+                                        Exportar Componentes
+                                    </a>
+                                    <small class="text-muted mt-2">
+                                        Descarga listas de componentes y acciones en Excel/PDF
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Botones de Acción -->
                 <div class="d-flex justify-content-between">
                     <a href="{% url 'panel_principal' %}" class="btn btn-secondary">

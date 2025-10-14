@@ -114,21 +114,71 @@ class Componente(models.Model):
 
     def save(self, *args, **kwargs):
         # Detectar si cambia padre o nombre (para decidir si propagamos)
-        old_parent_id = None
         old_nombre = None
+        old_parent_id = None
         if self.pk:
-            prev = type(self).objects.get(pk=self.pk)
-            old_parent_id = prev.padre_id
-            old_nombre = prev.nombre
+            try:
+                prev = type(self).objects.get(pk=self.pk)
+                old_parent_id = prev.padre_id
+                old_nombre = prev.nombre
+            except type(self).DoesNotExist:
+                # Si no existe el objeto anterior, es un objeto nuevo
+                pass
 
-        # Siempre recalculamos el código antes de guardar
-        self.codigo = self.build_codigo()
+        # Normalizar el nombre
         if self.nombre:
             self.nombre = self.nombre.lower()
+        
+        # Verificar restricción unique_together (padre, nombre)
+        if self.pk:
+            # Para objetos existentes, excluir el propio objeto
+            existe_nombre = Componente.objects.filter(
+                padre=self.padre, 
+                nombre=self.nombre
+            ).exclude(pk=self.pk).exists()
+        else:
+            # Para objetos nuevos, verificar si existe
+            existe_nombre = Componente.objects.filter(
+                padre=self.padre, 
+                nombre=self.nombre
+            ).exists()
+        
+        if existe_nombre:
+            # Si el nombre ya existe bajo el mismo padre, agregar un sufijo numérico
+            contador = 1
+            nombre_base = self.nombre
+            while Componente.objects.filter(
+                padre=self.padre, 
+                nombre=self.nombre
+            ).exclude(pk=self.pk if self.pk else None).exists():
+                self.nombre = f"{nombre_base}-{contador}"
+                contador += 1
+
+        # Siempre recalculamos el código antes de guardar
+        nuevo_codigo = self.build_codigo()
+        
+        # Verificar si el nuevo código ya existe en otro componente
+        if self.pk:
+            # Para objetos existentes, excluir el propio objeto
+            existe_codigo = Componente.objects.filter(codigo=nuevo_codigo).exclude(pk=self.pk).exists()
+        else:
+            # Para objetos nuevos, verificar si existe
+            existe_codigo = Componente.objects.filter(codigo=nuevo_codigo).exists()
+        
+        if existe_codigo:
+            # Si el código ya existe, agregar un sufijo numérico
+            contador = 1
+            codigo_base = nuevo_codigo
+            while Componente.objects.filter(codigo=nuevo_codigo).exclude(pk=self.pk if self.pk else None).exists():
+                nuevo_codigo = f"{codigo_base}-{contador}"
+                contador += 1
+        
+        self.codigo = nuevo_codigo
+        
         super().save(*args, **kwargs)
 
         # Si cambió el nombre o el padre, hay que propagar a los hijos
-        if self.pk and (old_parent_id != self.padre_id or old_nombre != self.nombre):
+        if self.pk and old_parent_id is not None and (old_parent_id != self.padre_id or old_nombre != self.nombre):
             self._update_descendant_codes()
     
     def eliminar_seguro(self):
@@ -350,8 +400,10 @@ class Repuesto(models.Model):
                     
                     # Verificar si algún campo relevante cambió
                     if any(getattr(self, campo) != getattr(old_instance, campo) for campo in campos_relevantes):
-                        # Regenerar SKU si cambió algún campo relevante
-                        self.sku = self.generate_sku()
+                        # Solo regenerar SKU automáticamente si el SKU actual parece generado automáticamente
+                        # (contiene el patrón de generación automática)
+                        if self._is_auto_generated_sku(self.sku):
+                            self.sku = self.generate_sku()
                 except Repuesto.DoesNotExist:
                     # Si no existe el objeto anterior, generar SKU
                     self.sku = self.generate_sku()
@@ -360,6 +412,23 @@ class Repuesto(models.Model):
                 self.sku = self.generate_sku()
         
         super().save(*args, **kwargs)
+    
+    def _is_auto_generated_sku(self, sku):
+        """Verifica si un SKU fue generado automáticamente por el sistema"""
+        if not sku:
+            return False
+        
+        # Patrón: NOMBRE-MARCA-MOTOR-NUMERO (ej: ACEIT-XXXX-ZZZZZZ-1234)
+        parts = sku.split('-')
+        if len(parts) != 4:
+            return False
+        
+        # Verificar que el último segmento sea numérico (4 dígitos)
+        try:
+            int(parts[3])
+            return len(parts[3]) == 4
+        except ValueError:
+            return False
 
     def generate_sku(self):
         # 1. Primeros 5 caracteres del nombre

@@ -25,6 +25,9 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from reportlab.lib.units import inch
+from difflib import SequenceMatcher
+import re
+from collections import defaultdict
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
 from reportlab.lib.styles import ParagraphStyle
@@ -691,19 +694,21 @@ def sugerir_repuestos(request, diagnostico_id=None):
     Sugerir repuestos en base a:
     1) Componentes seleccionados (ComponenteRepuesto)
     2) Compatibilidad exacta con la versión del vehículo (VehiculoVersion + RepuestoAplicacion)
-       - Si hay versión, se usa INTERSECCIÓN (solo compatibles con esa versión)
-       - Si no hay versión, se queda solo con los de componentes
-    3) Priorizar filas con stock disponible en RepuestoEnStock
+    3) Filtro inteligente por características del vehículo (marca_veh, tipo_de_motor)
+    4) Priorizar filas con stock disponible en RepuestoEnStock
     """
+    from django.db.models import Q
+    
     componentes_ids = []
-    veh_marca = veh_modelo = None
-    veh_anio = None
+    veh_marca = veh_modelo = veh_anio = None
+    veh_motor = None
 
     # MODO "DIAGNÓSTICO GUARDADO"
     if diagnostico_id:
         diag = get_object_or_404(Diagnostico, pk=diagnostico_id)
         veh = diag.vehiculo
         veh_marca, veh_modelo, veh_anio = veh.marca, veh.modelo, veh.anio
+        veh_motor = veh.descripcion_motor  # Campo del motor del vehículo
         componentes_ids = list(diag.componentes.values_list('id', flat=True))
 
     # MODO "PREVIEW" (sin guardar)
@@ -712,6 +717,7 @@ def sugerir_repuestos(request, diagnostico_id=None):
         veh_marca = (request.GET.get("marca") or "").strip()
         veh_modelo = (request.GET.get("modelo") or "").strip()
         veh_anio_raw = (request.GET.get("anio") or "").strip()
+        veh_motor = (request.GET.get("motor") or "").strip()
         try:
             veh_anio = int(veh_anio_raw) if veh_anio_raw else None
         except ValueError:
@@ -740,29 +746,108 @@ def sugerir_repuestos(request, diagnostico_id=None):
         if version:
             candidates = repuestos_comp.filter(aplicaciones__version=version).distinct()
 
-    # 3) Enriquecer con stock, priorizando disponibles
+    # 3) FILTRO INTELIGENTE POR CARACTERÍSTICAS DEL VEHÍCULO
+    if veh_marca or veh_motor:
+        filtro_vehiculo = Q()
+        
+        # Filtrar por marca del vehículo
+        if veh_marca:
+            # Buscar repuestos que coincidan con la marca del vehículo
+            filtro_vehiculo |= Q(marca_veh__icontains=veh_marca)
+            # También buscar por marca general si no hay marca específica
+            filtro_vehiculo |= Q(marca_veh__in=['general', 'xxx', ''])
+        
+        # Filtrar por tipo de motor
+        if veh_motor:
+            # Buscar repuestos que coincidan con el tipo de motor
+            filtro_vehiculo |= Q(tipo_de_motor__icontains=veh_motor)
+            # También incluir repuestos generales
+            filtro_vehiculo |= Q(tipo_de_motor__in=['zzzzzz', ''])
+        
+        # Aplicar filtro de vehículo
+        candidates = candidates.filter(filtro_vehiculo).distinct()
+
+    # 4) Enriquecer con stock y calcular compatibilidad
     resultados = []
     for r in candidates.select_related().order_by("nombre")[:80]:
         stock_obj = (
             r.stocks.filter(stock__gt=0).order_by('-ultima_actualizacion').first()
             or r.stocks.order_by('-ultima_actualizacion').first()
         )
+        
+        # Calcular nivel de compatibilidad
+        compatibilidad = calcular_compatibilidad_repuesto(r, veh_marca, veh_motor)
+        
         resultados.append({
             "id": r.id,
             "sku": r.sku,
             "oem": r.oem,
             "nombre": r.nombre,
             "posicion": r.posicion,
+            "marca_veh": r.marca_veh,
+            "tipo_motor": r.tipo_de_motor,
             "precio_venta": float(r.precio_venta or 0),
             "stock": stock_obj.stock if stock_obj else 0,
             "disponible": stock_obj.disponible if stock_obj else 0,
             "repuesto_stock_id": stock_obj.id if stock_obj else None,
+            "compatibilidad": compatibilidad,
+            "compatibilidad_texto": obtener_texto_compatibilidad(compatibilidad),
         })
 
-    # Orden: primero los que tienen disponible > 0, luego por stock
-    resultados.sort(key=lambda x: (x["disponible"] > 0, x["stock"]), reverse=True)
+    # Orden: primero por compatibilidad, luego por stock disponible
+    resultados.sort(key=lambda x: (x["compatibilidad"], x["disponible"] > 0, x["stock"]), reverse=True)
 
     return JsonResponse({"repuestos": resultados})
+
+
+def calcular_compatibilidad_repuesto(repuesto, veh_marca, veh_motor):
+    """
+    Calcula el nivel de compatibilidad de un repuesto con el vehículo
+    Retorna un score de 0-100
+    """
+    score = 0
+    
+    # Compatibilidad por marca del vehículo (40 puntos)
+    if veh_marca and repuesto.marca_veh:
+        if repuesto.marca_veh.lower() == veh_marca.lower():
+            score += 40  # Coincidencia exacta
+        elif veh_marca.lower() in repuesto.marca_veh.lower():
+            score += 30  # Contiene la marca
+        elif repuesto.marca_veh in ['general', 'xxx', '']:
+            score += 20  # Repuesto general
+    
+    # Compatibilidad por tipo de motor (30 puntos)
+    if veh_motor and repuesto.tipo_de_motor:
+        if repuesto.tipo_de_motor.lower() == veh_motor.lower():
+            score += 30  # Coincidencia exacta
+        elif veh_motor.lower() in repuesto.tipo_de_motor.lower():
+            score += 20  # Contiene el tipo de motor
+        elif repuesto.tipo_de_motor in ['zzzzzz', '']:
+            score += 15  # Repuesto general
+    
+    # Bonus por tener stock (20 puntos)
+    if repuesto.stock_total > 0:
+        score += 20
+    
+    # Bonus por tener precio (10 puntos)
+    if repuesto.precio_venta and repuesto.precio_venta > 0:
+        score += 10
+    
+    return min(score, 100)  # Máximo 100
+
+
+def obtener_texto_compatibilidad(score):
+    """Convierte el score de compatibilidad en texto descriptivo"""
+    if score >= 80:
+        return "🟢 Excelente compatibilidad"
+    elif score >= 60:
+        return "🟡 Buena compatibilidad"
+    elif score >= 40:
+        return "🟠 Compatibilidad media"
+    elif score >= 20:
+        return "🔴 Baja compatibilidad"
+    else:
+        return "⚫ Sin compatibilidad verificada"
 
 
 ######################

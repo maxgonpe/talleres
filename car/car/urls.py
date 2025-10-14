@@ -13,7 +13,8 @@ from .views import ClienteListView, ClienteTallerListView, ClienteTallerCreateVi
                    RepuestoUpdateView,RepuestoDeleteView,\
                    RepuestoListView
 from . import views_pos
-from . import views_compras 
+from . import views_compras
+from . import views_algoritmo 
 
 urlpatterns = [
     path("login/", views.login_view, name="login"),
@@ -150,6 +151,9 @@ urlpatterns = [
     path("compras/item/<int:pk>/eliminar/", views_compras.compra_item_delete, name="compra_item_delete"),
     path("compras/item/<int:pk>/recibir/", views_compras.compra_item_recibir, name="compra_item_recibir"),
     path("api/buscar-repuestos-compra/", views_compras.buscar_repuestos_compra, name="buscar_repuestos_compra"),
+    
+    # === Algoritmo de Relación Inteligente ===
+    path('algoritmo/relacionar/', views_algoritmo.relacionar_repuestos_componentes, name='relacionar_repuestos_componentes'),
 
 ]
 

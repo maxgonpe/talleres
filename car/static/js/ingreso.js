@@ -189,12 +189,14 @@ document.addEventListener('DOMContentLoaded', function () {
       const marca = document.getElementById("id_marca")?.value || "";
       const modelo = document.getElementById("id_modelo")?.value || "";
       const anio = document.getElementById("id_anio")?.value || "";
+      const motor = document.getElementById("id_descripcion_motor")?.value || "";
 
       const params = new URLSearchParams();
       compIds.forEach(c => params.append("componentes_ids", c));
       if (marca) params.append("marca", marca);
       if (modelo) params.append("modelo", modelo);
       if (anio) params.append("anio", anio);
+      if (motor) params.append("motor", motor);
 
       url = cont.dataset.previewUrl + "?" + params.toString();
     }
@@ -214,6 +216,16 @@ document.addEventListener('DOMContentLoaded', function () {
         data.repuestos.forEach(r => {
           const div = document.createElement("div");
           div.classList.add("card", "mb-2", "p-2");
+          
+          // Determinar clase CSS basada en compatibilidad
+          let compatibilidadClass = "border-secondary";
+          if (r.compatibilidad >= 80) compatibilidadClass = "border-success";
+          else if (r.compatibilidad >= 60) compatibilidadClass = "border-warning";
+          else if (r.compatibilidad >= 40) compatibilidadClass = "border-info";
+          else if (r.compatibilidad >= 20) compatibilidadClass = "border-danger";
+          
+          div.classList.add(compatibilidadClass);
+          
           div.innerHTML = `
   <label class="form-check">
     <input type="checkbox"
@@ -223,9 +235,23 @@ document.addEventListener('DOMContentLoaded', function () {
            data-precio="${r.precio_venta || 0}"
            data-nombre="${escapeHtml(r.nombre)}"
            data-oem="${escapeHtml(r.oem || '')}">
-    <b>${escapeHtml(r.nombre)}</b> (${escapeHtml(r.oem || "sin OEM")})<br>
-    <small>${escapeHtml(r.sku || "")} • ${escapeHtml(r.posicion || "")}</small><br>
-    Stock: ${r.disponible} – 💰 $${(r.precio_venta || 0).toFixed(0)}
+    <div class="d-flex justify-content-between align-items-start">
+      <div class="flex-grow-1">
+        <b>${escapeHtml(r.nombre)}</b> (${escapeHtml(r.oem || "sin OEM")})<br>
+        <small class="text-muted">
+          ${escapeHtml(r.sku || "")} • ${escapeHtml(r.posicion || "")}
+          ${r.marca_veh ? `• Marca: ${escapeHtml(r.marca_veh)}` : ''}
+          ${r.tipo_motor ? `• Motor: ${escapeHtml(r.tipo_motor)}` : ''}
+        </small><br>
+        <small>Stock: ${r.disponible} – 💰 $${(r.precio_venta || 0).toFixed(0)}</small>
+      </div>
+      <div class="text-end">
+        <small class="badge ${r.compatibilidad >= 80 ? 'bg-success' : r.compatibilidad >= 60 ? 'bg-warning' : r.compatibilidad >= 40 ? 'bg-info' : r.compatibilidad >= 20 ? 'bg-danger' : 'bg-secondary'}">
+          ${r.compatibilidad}%
+        </small><br>
+        <small class="text-muted">${r.compatibilidad_texto || ''}</small>
+      </div>
+    </div>
   </label>
   <div class="mt-1">
       <label class="form-label small mb-0">Cantidad</label>
