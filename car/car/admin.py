@@ -195,6 +195,64 @@ class SesionVentaAdmin(admin.ModelAdmin):
     list_filter = ('activa', 'fecha_inicio', 'usuario')
     search_fields = ('usuario__username',)
     readonly_fields = ('fecha_inicio', 'fecha_fin', 'total_ventas', 'numero_ventas')
+    actions = ['cerrar_sesiones_activas', 'limpiar_sesiones_antiguas', 'limpiar_todas_las_sesiones']
+    
+    def cerrar_sesiones_activas(self, request, queryset):
+        """Cerrar todas las sesiones activas"""
+        from django.utils import timezone
+        sesiones_cerradas = 0
+        for sesion in SesionVenta.objects.filter(activa=True):
+            sesion.activa = False
+            sesion.fecha_fin = timezone.now()
+            sesion.save()
+            sesiones_cerradas += 1
+        
+        self.message_user(request, f'{sesiones_cerradas} sesiones activas cerradas.')
+    cerrar_sesiones_activas.short_description = "Cerrar sesiones activas"
+    
+    def limpiar_sesiones_antiguas(self, request, queryset):
+        """Limpiar sesiones inactivas de más de 1 día"""
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        fecha_limite = timezone.now() - timedelta(days=1)
+        sesiones_antiguas = SesionVenta.objects.filter(
+            activa=False,
+            fecha_fin__lt=fecha_limite
+        )
+        
+        carritos_eliminados = 0
+        for sesion in sesiones_antiguas:
+            carritos_eliminados += sesion.carrito_items.count()
+            sesion.carrito_items.all().delete()
+        
+        sesiones_eliminadas = sesiones_antiguas.count()
+        sesiones_antiguas.delete()
+        
+        self.message_user(request, f'{sesiones_eliminadas} sesiones antiguas eliminadas y {carritos_eliminados} carritos limpiados.')
+    limpiar_sesiones_antiguas.short_description = "Limpiar sesiones antiguas (más de 1 día)"
+    
+    def limpiar_todas_las_sesiones(self, request, queryset):
+        """Limpiar TODAS las sesiones y carritos"""
+        from django.utils import timezone
+        
+        # Cerrar sesiones activas
+        sesiones_activas = SesionVenta.objects.filter(activa=True)
+        for sesion in sesiones_activas:
+            sesion.activa = False
+            sesion.fecha_fin = timezone.now()
+            sesion.save()
+        
+        # Contar antes de eliminar
+        carritos_totales = CarritoItem.objects.count()
+        sesiones_totales = SesionVenta.objects.count()
+        
+        # Eliminar todo
+        CarritoItem.objects.all().delete()
+        SesionVenta.objects.all().delete()
+        
+        self.message_user(request, f'Limpieza completa: {sesiones_totales} sesiones y {carritos_totales} carritos eliminados.')
+    limpiar_todas_las_sesiones.short_description = "⚠️ LIMPIAR TODO (sesiones + carritos)"
 
 @admin.register(CarritoItem)
 class CarritoItemAdmin(admin.ModelAdmin):

@@ -4,6 +4,8 @@
 
 <div class="d-flex gap-2 mb-2">
   <a href="{% url 'accion_create' %}" class="btn btn-success mt-2">Nueva acción</a>
+  <a href="{% url 'exportar_acciones_excel' %}" class="btn btn-info mt-2">📊 Excel</a>
+  <a href="{% url 'exportar_acciones_pdf' %}" class="btn btn-danger mt-2">📄 PDF</a>
   <a href="{% url 'comp_accion_list' %}" class="btn btn-outline-primary mt-2">Ir a Componente + Acción</a>
   <a href="javascript:history.back()" class="btn btn-sm btn-warning mt-2">⬅️ Volver al panel</a>
 </div>

@@ -49,6 +49,14 @@ urlpatterns = [
     path('componente-acciones/nuevo/', views.comp_accion_create, name='comp_accion_create'),
     path('componente-acciones/<int:pk>/editar/', views.comp_accion_update, name='comp_accion_update'),
     path('componente-acciones/<int:pk>/eliminar/', views.comp_accion_delete, name='comp_accion_delete'),
+    
+    # === Exportaciones ===
+    path('exportar/componentes/excel/', views.exportar_componentes_excel, name='exportar_componentes_excel'),
+    path('exportar/componentes/pdf/', views.exportar_componentes_pdf, name='exportar_componentes_pdf'),
+    path('exportar/acciones/excel/', views.exportar_acciones_excel, name='exportar_acciones_excel'),
+    path('exportar/acciones/pdf/', views.exportar_acciones_pdf, name='exportar_acciones_pdf'),
+    path('exportar/precios/excel/', views.exportar_precios_excel, name='exportar_precios_excel'),
+    path('exportar/precios/pdf/', views.exportar_precios_pdf, name='exportar_precios_pdf'),
 
     # === Repuestos sugeridos ===
     path('diagnostico/sugerir-repuestos/', views.sugerir_repuestos, name='sugerir_repuestos_preview'),

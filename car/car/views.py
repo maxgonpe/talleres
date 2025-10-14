@@ -18,10 +18,13 @@ from django.db import transaction
 from django.http import HttpResponse
 from django.db.models import Sum
 from django.db.models import Q
-from reportlab.lib.pagesizes import A4
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-from reportlab.lib.styles import getSampleStyleSheet
+import pandas as pd
+from io import BytesIO
+from reportlab.lib.pagesizes import letter, A4
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
+from reportlab.lib.units import inch
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django.urls import reverse_lazy
 from reportlab.lib.styles import ParagraphStyle
@@ -2038,5 +2041,225 @@ def cliente_taller_lookup(request):
         })
     
     return JsonResponse({'results': results})
+
+
+# ========================
+# FUNCIONES DE EXPORTACIÓN
+# ========================
+
+@login_required
+def exportar_componentes_excel(request):
+    """Exportar lista de componentes a Excel"""
+    componentes = Componente.objects.filter(padre__isnull=True).order_by('padre__nombre', 'nombre')
+    
+    data = []
+    for comp in componentes:
+        data.append({
+            'Código': comp.codigo or '',
+            'Nombre': comp.nombre,
+            'Estado': 'Activo' if comp.activo else 'Inactivo',
+            'Familia': comp.padre.nombre if comp.padre else 'Principal',
+            'Hijos': comp.hijos.count(),
+        })
+    
+    df = pd.DataFrame(data)
+    
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename="componentes.xlsx"'
+    
+    with pd.ExcelWriter(response, engine='openpyxl') as writer:
+        df.to_excel(writer, sheet_name='Componentes', index=False)
+    
+    return response
+
+@login_required
+def exportar_componentes_pdf(request):
+    """Exportar lista de componentes a PDF"""
+    componentes = Componente.objects.filter(padre__isnull=True).order_by('padre__nombre', 'nombre')
+    
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'inline; filename="componentes.pdf"'
+    
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    styles = getSampleStyleSheet()
+    
+    # Título
+    title = Paragraph("Lista de Componentes", styles['Title'])
+    
+    # Datos de la tabla
+    data = [['Código', 'Nombre', 'Estado', 'Familia', 'Hijos']]
+    
+    for comp in componentes:
+        data.append([
+            comp.codigo or '',
+            comp.nombre,
+            'Activo' if comp.activo else 'Inactivo',
+            comp.padre.nombre if comp.padre else 'Principal',
+            str(comp.hijos.count())
+        ])
+    
+    table = Table(data)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+    ]))
+    
+    elements = [title, Spacer(1, 12), table]
+    doc.build(elements)
+    
+    pdf = buffer.getvalue()
+    buffer.close()
+    response.write(pdf)
+    
+    return response
+
+@login_required
+def exportar_acciones_excel(request):
+    """Exportar lista de acciones a Excel"""
+    acciones = Accion.objects.all().order_by('nombre')
+    
+    data = []
+    for accion in acciones:
+        data.append({
+            'Nombre': accion.nombre,
+            'ID': accion.id,
+            'Usos': accion.componenteaccion_set.count(),
+        })
+    
+    df = pd.DataFrame(data)
+    
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename="acciones.xlsx"'
+    
+    with pd.ExcelWriter(response, engine='openpyxl') as writer:
+        df.to_excel(writer, sheet_name='Acciones', index=False)
+    
+    return response
+
+@login_required
+def exportar_acciones_pdf(request):
+    """Exportar lista de acciones a PDF"""
+    acciones = Accion.objects.all().order_by('nombre')
+    
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'inline; filename="acciones.pdf"'
+    
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    styles = getSampleStyleSheet()
+    
+    # Título
+    title = Paragraph("Lista de Acciones", styles['Title'])
+    
+    # Datos de la tabla
+    data = [['Nombre', 'ID', 'Usos']]
+    
+    for accion in acciones:
+        data.append([
+            accion.nombre,
+            str(accion.id),
+            str(accion.componenteaccion_set.count())
+        ])
+    
+    table = Table(data)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 12),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+    ]))
+    
+    elements = [title, Spacer(1, 12), table]
+    doc.build(elements)
+    
+    pdf = buffer.getvalue()
+    buffer.close()
+    response.write(pdf)
+    
+    return response
+
+@login_required
+def exportar_precios_excel(request):
+    """Exportar lista de precios (ComponenteAccion) a Excel"""
+    items = ComponenteAccion.objects.select_related("componente", "accion").order_by("componente__padre__nombre", "componente__nombre", "accion__nombre")
+    
+    data = []
+    for item in items:
+        data.append({
+            'Componente': item.componente.nombre,
+            'Acción': item.accion.nombre,
+            'Precio Mano de Obra': f"${item.precio_mano_obra:,.0f}" if item.precio_mano_obra else '$0',
+            'Familia': item.componente.padre.nombre if item.componente.padre else 'Principal',
+            'ID': item.id,
+        })
+    
+    df = pd.DataFrame(data)
+    
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename="lista_precios.xlsx"'
+    
+    with pd.ExcelWriter(response, engine='openpyxl') as writer:
+        df.to_excel(writer, sheet_name='Lista de Precios', index=False)
+    
+    return response
+
+@login_required
+def exportar_precios_pdf(request):
+    """Exportar lista de precios (ComponenteAccion) a PDF"""
+    items = ComponenteAccion.objects.select_related("componente", "accion").order_by("componente__padre__nombre", "componente__nombre", "accion__nombre")
+    
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'inline; filename="lista_precios.pdf"'
+    
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    styles = getSampleStyleSheet()
+    
+    # Título
+    title = Paragraph("Lista de Precios - Componentes y Acciones", styles['Title'])
+    
+    # Datos de la tabla
+    data = [['Componente', 'Acción', 'Precio Mano de Obra', 'Familia']]
+    
+    for item in items:
+        data.append([
+            item.componente.nombre,
+            item.accion.nombre,
+            f"${item.precio_mano_obra:,.0f}" if item.precio_mano_obra else '$0',
+            item.componente.padre.nombre if item.componente.padre else 'Principal'
+        ])
+    
+    table = Table(data)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('FONTSIZE', (0, 1), (-1, -1), 8),
+    ]))
+    
+    elements = [title, Spacer(1, 12), table]
+    doc.build(elements)
+    
+    pdf = buffer.getvalue()
+    buffer.close()
+    response.write(pdf)
+    
+    return response
 
 
