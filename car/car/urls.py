@@ -111,6 +111,7 @@ urlpatterns = [
     path("pos/actualizar-carrito/<int:item_id>/", views_pos.actualizar_carrito_item, name="pos_actualizar_carrito"),
     path("pos/eliminar-carrito/<int:item_id>/", views_pos.eliminar_carrito_item, name="pos_eliminar_carrito"),
     path("pos/limpiar-carrito/", views_pos.limpiar_carrito, name="pos_limpiar_carrito"),
+    path("pos/limpiar-sesiones/", views_pos.limpiar_sesiones_pos, name="pos_limpiar_sesiones"),
     path("pos/procesar-venta/", views_pos.procesar_venta, name="pos_procesar_venta"),
     path("pos/venta/<int:venta_id>/", views_pos.pos_venta_detalle, name="pos_venta_detalle"),
     path("pos/historial/", views_pos.pos_historial_ventas, name="pos_historial_ventas"),

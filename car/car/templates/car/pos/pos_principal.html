@@ -266,11 +266,16 @@
     <div class="carrito-container">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="mb-0">🛒 Carrito de Compras</h5>
-            {% if carrito_items %}
-                <button type="button" class="btn btn-outline-danger btn-sm" onclick="limpiarCarrito()">
-                    🗑️ Limpiar
+            <div class="btn-group" role="group">
+                {% if carrito_items %}
+                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="limpiarCarrito()">
+                        🗑️ Limpiar Carrito
+                    </button>
+                {% endif %}
+                <button type="button" class="btn btn-outline-warning btn-sm" onclick="limpiarSesiones()">
+                    🔄 Nueva Sesión
                 </button>
-            {% endif %}
+            </div>
         </div>
 
         <div id="carrito-items">
@@ -634,6 +639,12 @@ function limpiarCarrito() {
         console.error('Error:', error);
         alert('Error al limpiar carrito');
     });
+}
+
+function limpiarSesiones() {
+    if (!confirm('¿Limpiar todas las sesiones y comenzar desde cero?\n\nEsto cerrará todas las sesiones activas y limpiará carritos antiguos.')) return;
+    
+    window.location.href = '{% url "pos_limpiar_sesiones" %}';
 }
 
 function crearCliente() {

@@ -425,6 +425,36 @@ def cerrar_sesion_pos(request):
     return redirect('pos_principal')
 
 @login_required
+def limpiar_sesiones_pos(request):
+    """Limpiar todas las sesiones inactivas y crear una nueva sesión limpia"""
+    # Cerrar todas las sesiones activas del usuario
+    sesiones_activas = SesionVenta.objects.filter(
+        usuario=request.user, 
+        activa=True
+    )
+    
+    for sesion in sesiones_activas:
+        sesion.activa = False
+        sesion.fecha_fin = timezone.now()
+        sesion.save()
+    
+    # Limpiar carritos de sesiones inactivas (más de 1 día)
+    from datetime import timedelta
+    fecha_limite = timezone.now() - timedelta(days=1)
+    
+    sesiones_antiguas = SesionVenta.objects.filter(
+        usuario=request.user,
+        activa=False,
+        fecha_fin__lt=fecha_limite
+    )
+    
+    for sesion in sesiones_antiguas:
+        sesion.carrito_items.all().delete()
+    
+    messages.success(request, 'Sesiones limpiadas. Nueva sesión iniciada.')
+    return redirect('pos_principal')
+
+@login_required
 def pos_dashboard(request):
     """Dashboard con estadísticas del POS"""
     # Estadísticas del día
