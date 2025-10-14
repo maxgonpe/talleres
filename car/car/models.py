@@ -397,7 +397,10 @@ class Repuesto(models.Model):
         """Obtiene el stock total de todos los depósitos"""
         from django.db.models import Sum
         total = self.stocks.aggregate(total=Sum('stock'))['total']
-        return total or 0
+        # Si no hay stock en RepuestoEnStock, usar el stock del modelo Repuesto
+        if total == 0 or total is None:
+            return self.stock or 0
+        return total
     
     @property
     def stock_disponible(self):
@@ -405,6 +408,11 @@ class Repuesto(models.Model):
         from django.db.models import Sum
         total_stock = self.stocks.aggregate(total=Sum('stock'))['total'] or 0
         total_reservado = self.stocks.aggregate(total=Sum('reservado'))['total'] or 0
+        
+        # Si no hay stock en RepuestoEnStock, usar el stock del modelo Repuesto
+        if total_stock == 0:
+            total_stock = self.stock or 0
+            
         return total_stock - total_reservado
     
     def tiene_stock_suficiente(self, cantidad):
@@ -948,4 +956,134 @@ class AdministracionTaller(models.Model):
                 creado_por=None
             )
         return config
+
+
+# ========================
+# SISTEMA DE COMPRAS
+# ========================
+
+class Compra(models.Model):
+    """Modelo para registrar compras de repuestos"""
+    ESTADOS = [
+        ('borrador', 'Borrador'),
+        ('confirmada', 'Confirmada'),
+        ('recibida', 'Recibida'),
+        ('cancelada', 'Cancelada'),
+    ]
+    
+    numero_compra = models.CharField(max_length=20, unique=True, blank=True)
+    proveedor = models.CharField(max_length=200, help_text="Nombre del proveedor")
+    fecha_compra = models.DateField(default=now)
+    fecha_recibida = models.DateField(null=True, blank=True, help_text="Fecha cuando se recibió la mercancía")
+    estado = models.CharField(max_length=20, choices=ESTADOS, default='borrador')
+    total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    observaciones = models.TextField(blank=True, help_text="Observaciones sobre la compra")
+    creado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-fecha_compra', '-creado_en']
+        verbose_name = "Compra"
+        verbose_name_plural = "Compras"
+    
+    def __str__(self):
+        return f"Compra #{self.numero_compra} - {self.proveedor}"
+    
+    def save(self, *args, **kwargs):
+        if not self.numero_compra:
+            # Generar número de compra automático
+            ultima_compra = Compra.objects.order_by('-id').first()
+            if ultima_compra and ultima_compra.numero_compra:
+                try:
+                    ultimo_numero = int(ultima_compra.numero_compra.split('-')[-1])
+                    nuevo_numero = ultimo_numero + 1
+                except:
+                    nuevo_numero = 1
+            else:
+                nuevo_numero = 1
+            
+            self.numero_compra = f"COMP-{nuevo_numero:04d}"
+        
+        super().save(*args, **kwargs)
+    
+    def calcular_total(self):
+        """Calcula el total de la compra sumando todos los items"""
+        total = self.items.aggregate(
+            total=models.Sum(models.F('cantidad') * models.F('precio_unitario'))
+        )['total'] or 0
+        self.total = total
+        self.save(update_fields=['total'])
+        return total
+
+
+class CompraItem(models.Model):
+    """Items de una compra"""
+    compra = models.ForeignKey(Compra, on_delete=models.CASCADE, related_name='items')
+    repuesto = models.ForeignKey(Repuesto, on_delete=models.PROTECT)
+    cantidad = models.PositiveIntegerField(help_text="Cantidad comprada")
+    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2, help_text="Precio por unidad")
+    subtotal = models.DecimalField(max_digits=12, decimal_places=2, help_text="Cantidad × Precio unitario")
+    recibido = models.BooleanField(default=False, help_text="¿Ya se recibió este item?")
+    fecha_recibido = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        verbose_name = "Item de Compra"
+        verbose_name_plural = "Items de Compra"
+        unique_together = ['compra', 'repuesto']
+    
+    def __str__(self):
+        return f"{self.repuesto.nombre} - {self.cantidad} unidades"
+    
+    def save(self, *args, **kwargs):
+        # Calcular subtotal automáticamente
+        self.subtotal = self.cantidad * self.precio_unitario
+        super().save(*args, **kwargs)
+        
+        # Actualizar total de la compra
+        self.compra.calcular_total()
+    
+    def recibir_item(self, usuario=None):
+        """Marca el item como recibido y actualiza el stock"""
+        if not self.recibido:
+            self.recibido = True
+            self.fecha_recibido = now()
+            self.save()
+            
+            # Actualizar stock del repuesto
+            repuesto = self.repuesto
+            
+            # Buscar si existe stock en RepuestoEnStock
+            stock_obj = RepuestoEnStock.objects.filter(
+                repuesto=repuesto,
+                deposito='bodega-principal'
+            ).first()
+            
+            if stock_obj:
+                # Actualizar stock existente
+                stock_obj.stock += self.cantidad
+                stock_obj.save()
+            else:
+                # Crear nuevo registro de stock
+                RepuestoEnStock.objects.create(
+                    repuesto=repuesto,
+                    deposito='bodega-principal',
+                    stock=self.cantidad,
+                    precio_compra=self.precio_unitario,
+                    precio_venta=repuesto.precio_venta
+                )
+            
+            # También actualizar el stock general del repuesto
+            repuesto.stock += self.cantidad
+            repuesto.save()
+            
+            # Registrar movimiento de stock
+            StockMovimiento.objects.create(
+                repuesto_stock=stock_obj or RepuestoEnStock.objects.filter(repuesto=repuesto).first(),
+                tipo='ingreso',
+                cantidad=self.cantidad,
+                motivo=f'Compra #{self.compra.numero_compra}',
+                referencia=self.compra.numero_compra,
+                usuario=usuario
+            )
 

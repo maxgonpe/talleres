@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Recibir Item{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-6 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">Recibir Item</h4>
+                </div>
+                <div class="card-body">
+                    <p>¿Estás seguro de que quieres recibir este item?</p>
+                    
+                    <div class="alert alert-info">
+                        <strong>Repuesto:</strong> {{ item.repuesto.nombre }}<br>
+                        <strong>Cantidad:</strong> {{ item.cantidad }}<br>
+                        <strong>Precio Unitario:</strong> ${{ item.precio_unitario|floatformat:0|intcomma }}<br>
+                        <strong>Subtotal:</strong> ${{ item.subtotal|floatformat:0|intcomma }}
+                    </div>
+                    
+                    <div class="alert alert-success">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Información:</strong> Al recibir este item, se actualizará automáticamente el stock del repuesto.
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'compra_detail' compra.pk %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-check me-2"></i>Recibir Item
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

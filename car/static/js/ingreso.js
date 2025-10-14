@@ -125,28 +125,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ==================== INTERACTIVIDAD SVG ====================
   const planoContainer = document.getElementById('plano-container');
-  console.log("🔍 planoContainer encontrado:", planoContainer);
-  
   if (planoContainer) {
-    console.log("✅ Agregando event listener al plano SVG");
-    
     planoContainer.addEventListener('click', function (ev) {
-      console.log("🖱️ Click en plano SVG:", ev.target);
       const target = ev.target.closest('[id]');
-      console.log("🎯 Target con ID:", target);
-      
-      if (!target || !planoContainer.contains(target)) {
-        console.log("❌ No hay target válido");
-        return;
-      }
-      
+      if (!target || !planoContainer.contains(target)) return;
       const codigo = target.id;
-      console.log("🔍 Código del elemento:", codigo);
-      
       fetch(`/car/componentes-lookup/?part=${encodeURIComponent(codigo)}`)
         .then(r => r.json())
         .then(data => {
-          console.log("📡 Respuesta de componentes-lookup:", data);
           if (!data) return;
           if (data.found) {
             const compId = data.parent.id;
@@ -183,19 +169,9 @@ document.addEventListener('DOMContentLoaded', function () {
       const cont = document.getElementById("plano-container");
       if (!cont) return;
       const url = cont.dataset.inicialUrl;
-      console.log("🔄 Reseteando plano a:", url);
       cont.innerHTML = `<object type="image/svg+xml" data="${url}" class="w-100"></object>`;
     });
   }
-  
-  // Debug: Verificar contenido del SVG
-  setTimeout(() => {
-    const svgElements = planoContainer?.querySelectorAll('[id]');
-    console.log("🔍 Elementos SVG con ID encontrados:", svgElements?.length || 0);
-    if (svgElements && svgElements.length > 0) {
-      console.log("📋 IDs encontrados:", Array.from(svgElements).map(el => el.id).slice(0, 10));
-    }
-  }, 1000);
 
   // ================= REPUESTOS =================
   window.cargarRepuestos = function () {

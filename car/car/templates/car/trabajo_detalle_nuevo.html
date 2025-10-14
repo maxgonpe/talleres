@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load humanize %}
 
 {% block title %}Trabajo #{{ trabajo.id }} - {{ trabajo.vehiculo }}{% endblock %}
 
@@ -464,7 +465,7 @@
                 
                 <div class="info-row">
                     <span class="info-label">Total:</span>
-                    <span class="info-value">${{ trabajo.total_general|default:0|floatformat:0 }}</span>
+                    <span class="info-value">${{ trabajo.total_general|default:0|floatformat:0|intcomma }}</span>
                 </div>
             </div>
 
@@ -561,7 +562,7 @@
                             <strong>{{ accion.componente.nombre }}</strong><br>
                             <small>{{ accion.accion.nombre }}</small>
                             {% if accion.precio_mano_obra %}
-                                <br><small class="text-success">${{ accion.precio_mano_obra }}</small>
+                                <br><small class="text-success">${{ accion.precio_mano_obra|floatformat:0|intcomma }}</small>
                             {% endif %}
                         </div>
                         <div>
@@ -608,7 +609,7 @@
                             <select name="repuesto" class="form-control" required>
                                 <option value="">Seleccionar repuesto...</option>
                                 {% for repuesto in repuestos_disponibles %}
-                                    <option value="{{ repuesto.id }}">{{ repuesto.nombre }} - ${{ repuesto.precio_venta|default:0 }}</option>
+                                    <option value="{{ repuesto.id }}">{{ repuesto.nombre }} - ${{ repuesto.precio_venta|default:0|floatformat:0|intcomma }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -636,7 +637,7 @@
                             <strong>{{ repuesto.repuesto.nombre }}</strong><br>
                             <small>Cantidad: {{ repuesto.cantidad }}</small>
                             {% if repuesto.precio_unitario %}
-                                <br><small class="text-success">${{ repuesto.precio_unitario }} c/u</small>
+                                <br><small class="text-success">${{ repuesto.precio_unitario|floatformat:0|intcomma }} c/u</small>
                             {% endif %}
                         </div>
                         <div>

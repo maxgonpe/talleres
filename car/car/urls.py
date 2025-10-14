@@ -12,7 +12,8 @@ from .views import ClienteListView, ClienteTallerListView, ClienteTallerCreateVi
                    MecanicoUpdateView,RepuestoCreateView,\
                    RepuestoUpdateView,RepuestoDeleteView,\
                    RepuestoListView
-from . import views_pos 
+from . import views_pos
+from . import views_compras 
 
 urlpatterns = [
     path("login/", views.login_view, name="login"),
@@ -126,6 +127,20 @@ urlpatterns = [
     
     # === ADMINISTRACIÓN DEL TALLER ===
     path("administracion/", views.administracion_taller, name="administracion_taller"),
+    
+    # === COMPRAS ===
+    path("compras/", views_compras.compra_dashboard, name="compra_dashboard"),
+    path("compras/lista/", views_compras.compra_list, name="compra_list"),
+    path("compras/nueva/", views_compras.compra_create, name="compra_create"),
+    path("compras/<int:pk>/", views_compras.compra_detail, name="compra_detail"),
+    path("compras/<int:pk>/editar/", views_compras.compra_edit, name="compra_edit"),
+    path("compras/<int:pk>/confirmar/", views_compras.compra_confirmar, name="compra_confirmar"),
+    path("compras/<int:pk>/cancelar/", views_compras.compra_cancelar, name="compra_cancelar"),
+    path("compras/<int:pk>/recibir/", views_compras.compra_recibir, name="compra_recibir"),
+    path("compras/item/<int:pk>/editar/", views_compras.compra_item_edit, name="compra_item_edit"),
+    path("compras/item/<int:pk>/eliminar/", views_compras.compra_item_delete, name="compra_item_delete"),
+    path("compras/item/<int:pk>/recibir/", views_compras.compra_item_recibir, name="compra_item_recibir"),
+    path("api/buscar-repuestos-compra/", views_compras.buscar_repuestos_compra, name="buscar_repuestos_compra"),
 
 ]
 

@@ -4,7 +4,8 @@ from .models import Componente, Cliente, Cliente_Taller, Vehiculo,\
                     Mecanico, Trabajo, TrabajoFoto,\
                     Venta, VentaItem, Repuesto, SesionVenta,\
                     CarritoItem, VentaPOS, VentaPOSItem, ConfiguracionPOS,\
-                    Cotizacion, CotizacionItem, AdministracionTaller
+                    Cotizacion, CotizacionItem, AdministracionTaller,\
+                    Compra, CompraItem
 
 class MecanicoForm(forms.ModelForm):
     class Meta:
@@ -409,3 +410,77 @@ class AdministracionTallerForm(forms.ModelForm):
         self.fields['logo_principal_svg'].required = False
         self.fields['logo_secundario_png'].required = False
         self.fields['imagen_fondo'].required = False
+
+
+# ========================
+# FORMULARIOS PARA COMPRAS
+# ========================
+
+class CompraForm(forms.ModelForm):
+    """Formulario para crear/editar compras"""
+    class Meta:
+        model = Compra
+        fields = ['proveedor', 'fecha_compra', 'fecha_recibida', 'estado', 'observaciones']
+        widgets = {
+            'proveedor': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nombre del proveedor'
+            }),
+            'fecha_compra': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'fecha_recibida': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'estado': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'observaciones': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Observaciones sobre la compra (opcional)'
+            }),
+        }
+
+
+class CompraItemForm(forms.ModelForm):
+    """Formulario para agregar items a una compra"""
+    class Meta:
+        model = CompraItem
+        fields = ['repuesto', 'cantidad', 'precio_unitario']
+        widgets = {
+            'repuesto': forms.Select(attrs={
+                'class': 'form-select',
+                'id': 'id_repuesto'
+            }),
+            'cantidad': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': '1',
+                'step': '1'
+            }),
+            'precio_unitario': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': '0',
+                'step': '0.01'
+            }),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Ordenar repuestos por nombre
+        self.fields['repuesto'].queryset = Repuesto.objects.all().order_by('nombre')
+
+
+class CompraItemInlineForm(forms.ModelForm):
+    """Formulario inline para items de compra"""
+    class Meta:
+        model = CompraItem
+        fields = ['repuesto', 'cantidad', 'precio_unitario', 'recibido']
+        widgets = {
+            'repuesto': forms.Select(attrs={'class': 'form-select'}),
+            'cantidad': forms.NumberInput(attrs={'class': 'form-control', 'min': '1'}),
+            'precio_unitario': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'recibido': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }

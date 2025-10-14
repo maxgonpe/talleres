@@ -1658,15 +1658,15 @@ def venta_crear(request):
             with transaction.atomic():
                 venta = form.save(commit=False)
                 venta.usuario = request.user
-                venta.total = Decimal("0.00")
+                venta.total = Decimal("0")
                 venta.save()
 
-                total = Decimal("0.00")
+                total = Decimal("0")
                 for idx, it in enumerate(cart):
                     try:
                         repuesto_stock_id = int(it.get("repuesto_stock_id"))
                         cantidad = int(it.get("cantidad", 1))
-                        precio_unitario = Decimal(str(it.get("precio_unitario", "0")))
+                        precio_unitario = round(Decimal(str(it.get("precio_unitario", "0"))))
                     except (ValueError, TypeError, InvalidOperation) as e:
                         raise ValueError(f"Datos inválidos en item #{idx+1}: {e}")
 
@@ -1713,9 +1713,9 @@ def venta_crear(request):
     # ---- cálculo de arqueo ----
     ventas_hoy = Venta.objects.filter(fecha__date=filtro_fecha, pagado=True)
 
-    total_efectivo = ventas_hoy.filter(metodo_pago="efectivo").aggregate(s=Sum("total"))["s"] or Decimal("0.00")
-    total_tarjeta = ventas_hoy.filter(metodo_pago="tarjeta").aggregate(s=Sum("total"))["s"] or Decimal("0.00")
-    total_transferencia = ventas_hoy.filter(metodo_pago="transferencia").aggregate(s=Sum("total"))["s"] or Decimal("0.00")
+    total_efectivo = ventas_hoy.filter(metodo_pago="efectivo").aggregate(s=Sum("total"))["s"] or Decimal("0")
+    total_tarjeta = ventas_hoy.filter(metodo_pago="tarjeta").aggregate(s=Sum("total"))["s"] or Decimal("0")
+    total_transferencia = ventas_hoy.filter(metodo_pago="transferencia").aggregate(s=Sum("total"))["s"] or Decimal("0")
     total_general = total_efectivo + total_tarjeta + total_transferencia
 
     context = {

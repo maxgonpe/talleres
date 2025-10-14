@@ -11,7 +11,7 @@ from decimal import Decimal
 from .models import (
     Repuesto, RepuestoEnStock, Cliente, SesionVenta, 
     CarritoItem, VentaPOS, VentaPOSItem, ConfiguracionPOS,
-    Cotizacion, CotizacionItem
+    Cotizacion, CotizacionItem, StockMovimiento
 )
 from .forms import (
     BuscarRepuestoForm, CarritoItemForm, VentaPOSForm, 
@@ -86,6 +86,10 @@ def buscar_repuestos_pos(request):
             repuesto=repuesto
         ).aggregate(total=Sum('stock'))['total'] or 0
         
+        # Si no hay stock en RepuestoEnStock, usar el stock del modelo Repuesto
+        if stock_total == 0:
+            stock_total = repuesto.stock or 0
+        
         # Precio de venta
         precio_venta = repuesto.precio_venta or 0
         
@@ -110,7 +114,7 @@ def agregar_al_carrito(request):
     
     repuesto_id = request.POST.get('repuesto_id')
     cantidad = int(request.POST.get('cantidad', 1))
-    precio_unitario = Decimal(request.POST.get('precio_unitario', 0))
+    precio_unitario = round(Decimal(request.POST.get('precio_unitario', 0)))
     
     try:
         repuesto = Repuesto.objects.get(id=repuesto_id)
@@ -169,7 +173,7 @@ def actualizar_carrito_item(request, item_id):
         if cantidad:
             item.cantidad = int(cantidad)
         if precio_unitario:
-            item.precio_unitario = Decimal(precio_unitario)
+            item.precio_unitario = round(Decimal(precio_unitario))
         
         item.save()
         
@@ -242,7 +246,7 @@ def procesar_venta(request):
                 venta.total = subtotal - descuento
                 venta.save()
                 
-                # Crear items de la venta
+                # Crear items de la venta y actualizar stock
                 for carrito_item in sesion.carrito_items.all():
                     VentaPOSItem.objects.create(
                         venta=venta,
@@ -251,6 +255,35 @@ def procesar_venta(request):
                         precio_unitario=carrito_item.precio_unitario,
                         subtotal=carrito_item.subtotal
                     )
+                    
+                    # Actualizar stock en RepuestoEnStock
+                    stock_disponible = RepuestoEnStock.objects.filter(
+                        repuesto=carrito_item.repuesto,
+                        stock__gte=carrito_item.cantidad
+                    ).first()
+                    
+                    if stock_disponible:
+                        # Descontar stock
+                        stock_disponible.stock -= carrito_item.cantidad
+                        stock_disponible.save()
+                        
+                        # Registrar movimiento de stock
+                        StockMovimiento.objects.create(
+                            repuesto_stock=stock_disponible,
+                            tipo="salida",
+                            cantidad=carrito_item.cantidad,
+                            motivo=f"Venta POS #{venta.id}",
+                            referencia=str(venta.id),
+                            usuario=request.user
+                        )
+                    else:
+                        # Si no hay stock específico, actualizar el stock general del repuesto
+                        repuesto = carrito_item.repuesto
+                        if repuesto.stock >= carrito_item.cantidad:
+                            repuesto.stock -= carrito_item.cantidad
+                            repuesto.save()
+                        else:
+                            raise ValueError(f"Stock insuficiente para {repuesto.nombre}")
                 
                 # Limpiar carrito
                 sesion.carrito_items.all().delete()
@@ -567,7 +600,7 @@ def convertir_cotizacion_a_venta(request, cotizacion_id):
                 metodo_pago='efectivo'  # Por defecto, se puede cambiar
             )
             
-            # Crear items de la venta
+            # Crear items de la venta y actualizar stock
             for item in cotizacion.items.all():
                 VentaPOSItem.objects.create(
                     venta=venta,
@@ -576,6 +609,35 @@ def convertir_cotizacion_a_venta(request, cotizacion_id):
                     precio_unitario=item.precio_unitario,
                     subtotal=item.subtotal
                 )
+                
+                # Actualizar stock en RepuestoEnStock
+                stock_disponible = RepuestoEnStock.objects.filter(
+                    repuesto=item.repuesto,
+                    stock__gte=item.cantidad
+                ).first()
+                
+                if stock_disponible:
+                    # Descontar stock
+                    stock_disponible.stock -= item.cantidad
+                    stock_disponible.save()
+                    
+                    # Registrar movimiento de stock
+                    StockMovimiento.objects.create(
+                        repuesto_stock=stock_disponible,
+                        tipo="salida",
+                        cantidad=item.cantidad,
+                        motivo=f"Venta POS #{venta.id} (desde cotización #{cotizacion.id})",
+                        referencia=str(venta.id),
+                        usuario=request.user
+                    )
+                else:
+                    # Si no hay stock específico, actualizar el stock general del repuesto
+                    repuesto = item.repuesto
+                    if repuesto.stock >= item.cantidad:
+                        repuesto.stock -= item.cantidad
+                        repuesto.save()
+                    else:
+                        raise ValueError(f"Stock insuficiente para {repuesto.nombre}")
             
             # Actualizar estado de la cotización
             cotizacion.estado = 'convertida'

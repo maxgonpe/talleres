@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load humanize %}
 
 {% block title %}Punto de Venta - POS{% endblock %}
 
@@ -237,7 +238,7 @@
             <div class="stat-label">Ventas</div>
         </div>
         <div class="stat-card">
-            <div class="stat-number">${{ sesion.total_ventas|floatformat:0 }}</div>
+            <div class="stat-number">${{ sesion.total_ventas|floatformat:0|intcomma }}</div>
             <div class="stat-label">Total</div>
         </div>
         <div class="stat-card">
@@ -279,7 +280,7 @@
                         <div class="fw-bold">{{ item.repuesto.nombre }}</div>
                         <small class="text-muted">
                             SKU: {{ item.repuesto.sku|default:"N/A" }} | 
-                            Stock: {{ item.repuesto.stock|default:0 }}
+                            Stock: {{ item.repuesto.stock_total|default:0 }}
                         </small>
                     </div>
                     <div class="item-controls">
@@ -294,7 +295,7 @@
                                value="{{ item.precio_unitario }}" 
                                step="0.01"
                                onchange="actualizarPrecio({{ item.id }}, this.value)">
-                        <span class="fw-bold text-success">${{ item.subtotal|floatformat:2 }}</span>
+                        <span class="fw-bold text-success">${{ item.subtotal|floatformat:0|intcomma }}</span>
                         <button type="button" 
                                 class="btn btn-outline-danger btn-sm" 
                                 onclick="eliminarItem({{ item.id }})">
@@ -315,7 +316,7 @@
     <!-- Total y botones de acción -->
     {% if carrito_items %}
         <div class="total-container">
-            <h3 class="mb-2">Total: ${{ subtotal|floatformat:2 }}</h3>
+            <h3 class="mb-2">Total: ${{ subtotal|floatformat:0|intcomma }}</h3>
             <div class="d-grid gap-2">
                 <button type="button" class="btn btn-light btn-pos btn-success-pos" onclick="procesarTransaccion()">
                     <span id="boton-accion">💳 PROCESAR VENTA</span>

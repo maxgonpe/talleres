@@ -41,7 +41,7 @@
 
   <div class="d-flex justify-content-between align-items-center mt-3">
     <div><small class="text-muted">Puedes buscar y agregar varios productos. La venta será procesada al guardar el formulario.</small></div>
-    <div><h4>Total: $ <span id="total">0.00</span></h4></div>
+    <div><h4>Total: $ <span id="total">0</span></h4></div>
   </div>
 
   <div class="mt-3">
@@ -68,7 +68,7 @@ $(function(){
   function calcularTotal() {
     let total = 0;
     cart.forEach(it => { total += parseFloat(it.subtotal || 0); });
-    $('#total').text(total.toFixed(2));
+    $('#total').text(Math.round(total));
   }
 
   function renderTable() {
@@ -81,13 +81,13 @@ $(function(){
         let q = parseInt($(this).val() || 0);
         if (q < 1) { q = 1; $(this).val(q); }
         it.cantidad = q;
-        it.subtotal = (parseFloat(it.precio_unitario) * q).toFixed(2);
+        it.subtotal = Math.round(parseFloat(it.precio_unitario) * q);
         updateHiddenCart();
         renderTable();
       });
       const qtyCol = $('<td/>').append(qtyInput);
-      const priceCol = $('<td/>').text(parseFloat(it.precio_unitario).toFixed(2));
-      const subtotalInput = $('<input type="text" readonly class="form-control form-control-sm subtotal" style="width:120px">').val(parseFloat(it.subtotal).toFixed(2));
+      const priceCol = $('<td/>').text(Math.round(parseFloat(it.precio_unitario)));
+      const subtotalInput = $('<input type="text" readonly class="form-control form-control-sm subtotal" style="width:120px">').val(Math.round(parseFloat(it.subtotal)));
       const subCol = $('<td/>').append(subtotalInput);
       const delBtn = $('<button type="button" class="btn btn-danger btn-sm">✖</button>');
       delBtn.on('click', function(){
@@ -132,15 +132,15 @@ $(function(){
     const existing = cart.find(c => String(c.repuesto_stock_id) === String(sel.id));
     if (existing) {
       existing.cantidad = (existing.cantidad || 0) + 1;
-      existing.subtotal = (parseFloat(existing.precio_unitario) * existing.cantidad).toFixed(2);
+      existing.subtotal = Math.round(parseFloat(existing.precio_unitario) * existing.cantidad);
     } else {
       // precio_venta debería venir como string/num desde el lookup
       const precio = (sel.precio_venta !== undefined) ? parseFloat(String(sel.precio_venta)) : 0;
       cart.push({
         repuesto_stock_id: sel.id,
         cantidad: 1,
-        precio_unitario: precio.toFixed(2),
-        subtotal: precio.toFixed(2),
+        precio_unitario: Math.round(precio),
+        subtotal: Math.round(precio),
         repuesto_nombre: sel.repuesto_nombre || sel.text,
         text: sel.text || "",
         stock: sel.stock || 0,

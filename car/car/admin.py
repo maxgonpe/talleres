@@ -12,7 +12,9 @@ from .models import (
     # Modelos Cotizaciones
     Cotizacion, CotizacionItem,
     # Modelos Administración
-    AdministracionTaller
+    AdministracionTaller,
+    # Modelos Compras
+    Compra, CompraItem
 )
 
 @admin.register(Mecanico)
@@ -297,3 +299,48 @@ class AdministracionTallerAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
+
+
+# ======================
+# ADMIN PARA COMPRAS
+# ======================
+
+class CompraItemInline(admin.TabularInline):
+    model = CompraItem
+    extra = 0
+    readonly_fields = ('subtotal',)
+    fields = ('repuesto', 'cantidad', 'precio_unitario', 'subtotal', 'recibido')
+
+@admin.register(Compra)
+class CompraAdmin(admin.ModelAdmin):
+    list_display = ('numero_compra', 'proveedor', 'fecha_compra', 'estado', 'total', 'creado_por')
+    list_filter = ('estado', 'fecha_compra', 'fecha_recibida', 'creado_por')
+    search_fields = ('numero_compra', 'proveedor', 'observaciones')
+    readonly_fields = ('numero_compra', 'creado_en', 'actualizado_en', 'total')
+    inlines = [CompraItemInline]
+    
+    fieldsets = (
+        ('Información General', {
+            'fields': ('numero_compra', 'proveedor', 'fecha_compra', 'estado')
+        }),
+        ('Detalles Financieros', {
+            'fields': ('total',)
+        }),
+        ('Recepción', {
+            'fields': ('fecha_recibida',)
+        }),
+        ('Observaciones', {
+            'fields': ('observaciones',)
+        }),
+        ('Metadatos', {
+            'fields': ('creado_por', 'creado_en', 'actualizado_en'),
+            'classes': ('collapse',)
+        }),
+    )
+
+@admin.register(CompraItem)
+class CompraItemAdmin(admin.ModelAdmin):
+    list_display = ('id', 'compra', 'repuesto', 'cantidad', 'precio_unitario', 'subtotal', 'recibido', 'fecha_recibido')
+    list_filter = ('recibido', 'compra__estado', 'compra__fecha_compra')
+    search_fields = ('repuesto__nombre', 'repuesto__sku', 'compra__numero_compra')
+    readonly_fields = ('subtotal', 'fecha_recibido')

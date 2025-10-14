@@ -1,43 +1,127 @@
 :root {
-  /* Paleta boutique cálida */
+  /* 🎨 Paleta boutique cálida */
   --color-blush-rose: #F7C6C7;
   --color-champagne-cream: #FDE8C9;
   --color-apricot-glow: #F9D3A8;
   --color-soft-coral: #F8B6A4;
   --color-warm-gray: #B8A9A1;
 
-  /* Derivados útiles */
+  /* 🔧 Color activo del tema (se actualiza dinámicamente) */
+  --color-accent: var(--color-soft-coral);
+
+  /* Derivados globales */
   --color-bg: var(--color-champagne-cream);
-  --color-primary: var(--color-soft-coral);
-  --color-accent: var(--color-apricot-glow);
   --color-text: #3E3E3E;
   --color-muted: var(--color-warm-gray);
 }
 
-/* Aplicación base */
+/* 🌿 Aplicación general */
 body {
   background-color: var(--color-bg);
   color: var(--color-text);
   font-family: "Poppins", "Helvetica Neue", sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Botones */
-button, .btn {
-  background-color: var(--color-primary);
+/* 🌈 Navbar usa el color-accent */
+.navbar {
+  background-color: var(--color-accent) !important;
+  color: white !important;
+  transition: background-color 0.3s ease;
+}
+
+.navbar .nav-link,
+.navbar .navbar-brand {
+  color: white !important;
+}
+
+.navbar .nav-link:hover {
+  opacity: 0.8;
+}
+
+/* 🟠 Botones */
+button,
+.btn {
+  background-color: var(--color-accent) !important;
   border: none;
   border-radius: 8px;
   color: white;
   padding: 0.6em 1.2em;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-button:hover, .btn:hover {
-  background-color: var(--color-soft-coral);
+button:hover,
+.btn:hover {
+  background-color: var(--color-soft-coral) !important;
+  transform: scale(1.05);
 }
 
-/* Tarjetas o contenedores */
-.card, .box, .panel {
+/* 🎯 Botones de acción específicos - mantener colores Bootstrap */
+.btn-warning {
+  background-color: #ffc107 !important;
+  color: #000 !important;
+}
+
+.btn-warning:hover {
+  background-color: #e0a800 !important;
+  color: #000 !important;
+}
+
+.btn-danger {
+  background-color: #dc3545 !important;
+  color: #fff !important;
+}
+
+.btn-danger:hover {
+  background-color: #c82333 !important;
+  color: #fff !important;
+}
+
+.btn-info {
+  background-color: #0dcaf0 !important;
+  color: #000 !important;
+}
+
+.btn-info:hover {
+  background-color: #31d2f2 !important;
+  color: #000 !important;
+}
+
+.btn-success {
+  background-color: #198754 !important;
+  color: #fff !important;
+}
+
+.btn-success:hover {
+  background-color: #157347 !important;
+  color: #fff !important;
+}
+
+.btn-primary {
+  background-color: #0d6efd !important;
+  color: #fff !important;
+}
+
+.btn-primary:hover {
+  background-color: #0b5ed7 !important;
+  color: #fff !important;
+}
+
+.btn-secondary {
+  background-color: #6c757d !important;
+  color: #fff !important;
+}
+
+.btn-secondary:hover {
+  background-color: #5c636a !important;
+  color: #fff !important;
+}
+
+/* 🧱 Tarjetas o contenedores */
+.card,
+.box,
+.panel {
   background-color: white;
   border: 1px solid var(--color-muted);
   border-radius: 12px;
@@ -45,17 +129,26 @@ button:hover, .btn:hover {
   box-shadow: 0 2px 6px rgba(0,0,0,0.05);
 }
 
-/* Encabezados */
-h1, h2, h3 {
-  color: var(--color-primary);
+/* 🔠 Encabezados */
+h1,
+h2,
+h3 {
+  color: var(--color-accent);
 }
 
-/* Links */
+/* 🔗 Enlaces */
 a {
-  color: var(--color-soft-coral);
+  color: var(--color-accent);
   text-decoration: none;
+  transition: color 0.2s ease;
 }
 
 a:hover {
-  color: var(--color-apricot-glow);
+  color: var(--color-soft-coral);
+}
+
+/* ⚙️ Footer */
+footer {
+  background-color: var(--color-warm-gray);
+  color: white;
 }

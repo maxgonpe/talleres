@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load humanize %}
 {% block content %}
 <h2>Diagnosticos</h2>
 
@@ -33,14 +34,14 @@
                         <strong>{{ dca.componente.nombre }}</strong> — {{ dca.accion.nombre }}
                     </span>
                     <span class="badge bg-primary rounded-pill">
-                        ${{ dca.precio_mano_obra|floatformat:0 }}
+                        ${{ dca.precio_mano_obra|floatformat:0|intcomma }}
                     </span>
                 </li>
             {% endfor %}
         </ul>
         <div class="text-end fw-bold">
             Total mano de obra: 
-            ${{ diagnostico.total_mano_obra|default:0|floatformat:0 }}
+            ${{ diagnostico.total_mano_obra|default:0|floatformat:0|intcomma }}
         </div>
     {% else %}
         <span class="text-muted">No se registraron acciones</span>

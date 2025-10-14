@@ -41,7 +41,7 @@
       <small class="text-muted">Puedes buscar y agregar varios productos. La venta será procesada al guardar el formulario.</small>
     </div>
     <div>
-      <h4>Total: $ <span id="total">0.00</span></h4>
+      <h4>Total: $ <span id="total">0</span></h4>
     </div>
   </div>
 
@@ -103,7 +103,7 @@ $(document).ready(function() {
     $('.subtotal').each(function(){
       total += parseFloat($(this).val() || 0);
     });
-    $('#total').text(total.toFixed(2));
+    $('#total').text(Math.round(total));
   }
 
   /* ---------- agregar fila desde objeto JSON ---------- */
@@ -121,7 +121,7 @@ $(document).ready(function() {
       let newQty = parseInt(qtyInput.val() || 0) + 1;
       qtyInput.val(newQty);
       let price = parseFloat(found.find('.precio').val() || 0);
-      found.find('.subtotal').val((price * newQty).toFixed(2));
+      found.find('.subtotal').val(Math.round(price * newQty));
       calcularTotal();
       return;
     }
@@ -143,7 +143,7 @@ $(document).ready(function() {
     let colCant = $(`<td><input type="number" name="${prefix}cantidad" value="1" min="1" class="form-control cantidad" style="width:100px"></td>`);
 
     // precio_unitario
-    let precioVal = (data.precio || 0).toFixed(2);
+    let precioVal = Math.round(data.precio || 0);
     let colPrecio = $(`<td><input type="text" name="${prefix}precio_unitario" value="${precioVal}" readonly class="form-control precio" style="width:120px"></td>`);
 
     // subtotal
@@ -189,7 +189,7 @@ $(document).ready(function() {
     let row = $(this).closest('tr');
     let cantidad = parseInt($(this).val() || 0);
     let precio = parseFloat(row.find('.precio').val() || 0);
-    row.find('.subtotal').val((precio * cantidad).toFixed(2));
+    row.find('.subtotal').val(Math.round(precio * cantidad));
     calcularTotal();
   });
 

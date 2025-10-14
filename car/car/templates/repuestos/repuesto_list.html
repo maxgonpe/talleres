@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load humanize %}
 
 {% block title %}NetGoGo - Inventario de Repuestos{% endblock %}
 
@@ -423,7 +424,7 @@
                                 {{ repuesto.stock_total }}
                             </span>
                         </td>
-                        <td>${{ repuesto.precio_venta|default:"0" }}</td>
+                        <td>${{ repuesto.precio_venta|default:"0"|floatformat:0|intcomma }}</td>
                         <td>
                             <div class="btn-group" role="group">
                                 <a href="{% url 'repuesto_update' repuesto.pk %}" class="btn btn-warning btn-action" title="Editar">
@@ -479,8 +480,8 @@ const repuestosData = {
         medida: "{{ repuesto.medida|default:'-' }}",
         posicion: "{{ repuesto.posicion|default:'-' }}",
         unidad: "{{ repuesto.unidad|default:'-' }}",
-        precio_costo: "{{ repuesto.precio_costo|default:'0' }}",
-        precio_venta: "{{ repuesto.precio_venta|default:'0' }}",
+        precio_costo: "{{ repuesto.precio_costo|default:'0'|floatformat:0|intcomma }}",
+        precio_venta: "{{ repuesto.precio_venta|default:'0'|floatformat:0|intcomma }}",
         codigo_barra: "{{ repuesto.codigo_barra|default:'-' }}",
         origen_repuesto: "{{ repuesto.origen_repuesto|default:'-' }}",
         cod_prov: "{{ repuesto.cod_prov|default:'-' }}",

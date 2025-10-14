@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+{% load humanize %}
+
+{% block title %}Recibir Compra{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">Recibir Compra {{ compra.numero_compra }}</h4>
+                </div>
+                <div class="card-body">
+                    <p>¿Estás seguro de que quieres recibir todos los items pendientes de esta compra?</p>
+                    
+                    <div class="alert alert-info">
+                        <strong>Proveedor:</strong> {{ compra.proveedor }}<br>
+                        <strong>Total:</strong> ${{ compra.total|floatformat:0|intcomma }}
+                    </div>
+                    
+                    <h5>Items a recibir:</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Repuesto</th>
+                                    <th>Cantidad</th>
+                                    <th>Precio Unitario</th>
+                                    <th>Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in compra.items.all %}
+                                    {% if not item.recibido %}
+                                    <tr>
+                                        <td>{{ item.repuesto.nombre }}</td>
+                                        <td>{{ item.cantidad }}</td>
+                                        <td>${{ item.precio_unitario|floatformat:0|intcomma }}</td>
+                                        <td>${{ item.subtotal|floatformat:0|intcomma }}</td>
+                                    </tr>
+                                    {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Importante:</strong> Al recibir los items, se actualizará automáticamente el stock de los repuestos.
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'compra_detail' compra.pk %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-truck me-2"></i>Recibir Items
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

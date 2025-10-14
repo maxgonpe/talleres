@@ -1,6 +1,7 @@
 <!--  hola -->
 {% extends "base.html" %}
 {% load static %}
+{% load humanize %}
 {% block content %}
 <div class="container mt-4">
 
@@ -52,7 +53,7 @@
 
         <div class="d-flex justify-content-between align-items-center mt-3">
           <small class="text-muted">Puedes buscar y agregar varios productos antes de guardar.</small>
-          <h4>Total: $ <span id="total">0.00</span></h4>
+          <h4>Total: $ <span id="total">0</span></h4>
         </div>
 
         <div class="mt-3 text-end">
@@ -87,7 +88,7 @@
           <div class="card bg-light border-success">
             <div class="card-body">
               <h6 class="text-muted">Efectivo</h6>
-              <h4 class="text-success">${{ total_efectivo|default:"0.00" }}</h4>
+              <h4 class="text-success">${{ total_efectivo|default:"0"|floatformat:0|intcomma }}</h4>
             </div>
           </div>
         </div>
@@ -95,7 +96,7 @@
           <div class="card bg-light border-info">
             <div class="card-body">
               <h6 class="text-muted">Tarjeta</h6>
-              <h4 class="text-info">${{ total_tarjeta|default:"0.00" }}</h4>
+              <h4 class="text-info">${{ total_tarjeta|default:"0"|floatformat:0|intcomma }}</h4>
             </div>
           </div>
         </div>
@@ -103,7 +104,7 @@
           <div class="card bg-light border-warning">
             <div class="card-body">
               <h6 class="text-muted">Transferencia</h6>
-              <h4 class="text-warning">${{ total_transferencia|default:"0.00" }}</h4>
+              <h4 class="text-warning">${{ total_transferencia|default:"0"|floatformat:0|intcomma }}</h4>
             </div>
           </div>
         </div>
@@ -111,7 +112,7 @@
           <div class="card bg-light border-dark">
             <div class="card-body">
               <h6 class="text-muted">Total General</h6>
-              <h4 class="text-dark">${{ total_general|default:"0.00" }}</h4>
+              <h4 class="text-dark">${{ total_general|default:"0"|floatformat:0|intcomma }}</h4>
             </div>
           </div>
         </div>
@@ -138,7 +139,7 @@ $(function() {
   function calcularTotal() {
     let total = 0;
     cart.forEach(it => { total += parseFloat(it.subtotal || 0); });
-    $('#total').text(total.toFixed(2));
+    $('#total').text(Math.round(total));
   }
 
   function renderTable() {
@@ -151,13 +152,13 @@ $(function() {
         let q = parseInt($(this).val() || 0);
         if (q < 1) { q = 1; $(this).val(q); }
         it.cantidad = q;
-        it.subtotal = (parseFloat(it.precio_unitario) * q).toFixed(2);
+        it.subtotal = Math.round(parseFloat(it.precio_unitario) * q);
         updateHiddenCart();
         renderTable();
       });
       const qtyCol = $('<td/>').append(qtyInput);
-      const priceCol = $('<td/>').text(parseFloat(it.precio_unitario).toFixed(2));
-      const subtotalInput = $('<input type="text" readonly class="form-control form-control-sm subtotal" style="width:120px">').val(parseFloat(it.subtotal).toFixed(2));
+      const priceCol = $('<td/>').text(Math.round(parseFloat(it.precio_unitario)));
+      const subtotalInput = $('<input type="text" readonly class="form-control form-control-sm subtotal" style="width:120px">').val(Math.round(parseFloat(it.subtotal)));
       const subCol = $('<td/>').append(subtotalInput);
       const delBtn = $('<button type="button" class="btn btn-danger btn-sm">✖</button>');
       delBtn.on('click', function() {
@@ -211,14 +212,14 @@ $(function() {
     const existing = cart.find(c => String(c.repuesto_stock_id) === String(selectedItem.id));
     if (existing) {
       existing.cantidad = (existing.cantidad || 0) + 1;
-      existing.subtotal = (parseFloat(existing.precio_unitario) * existing.cantidad).toFixed(2);
+      existing.subtotal = Math.round(parseFloat(existing.precio_unitario) * existing.cantidad);
     } else {
       const precio = (selectedItem.precio_venta !== undefined) ? parseFloat(String(selectedItem.precio_venta)) : 0;
       cart.push({
         repuesto_stock_id: selectedItem.id,
         cantidad: 1,
-        precio_unitario: precio.toFixed(2),
-        subtotal: precio.toFixed(2),
+        precio_unitario: Math.round(precio),
+        subtotal: Math.round(precio),
         repuesto_nombre: selectedItem.repuesto_nombre || selectedItem.text,
         text: selectedItem.text || "",
         stock: selectedItem.stock || 0,

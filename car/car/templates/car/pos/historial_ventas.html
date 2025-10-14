@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load humanize %}
 
 {% block title %}Historial de Ventas - POS{% endblock %}
 
@@ -188,7 +189,7 @@
             </div>
             <div class="col-4">
                 <div class="stat-item">
-                    <div class="stat-number">${{ page_obj|length|floatformat:0 }}</div>
+                    <div class="stat-number">${{ page_obj|length|floatformat:0|intcomma }}</div>
                     <div class="stat-label">Esta Página</div>
                 </div>
             </div>
@@ -235,13 +236,13 @@
                         </div>
                         <div class="venta-metodo">{{ venta.get_metodo_pago_display }}</div>
                     </div>
-                    <div class="venta-total">${{ venta.total|floatformat:2 }}</div>
+                    <div class="venta-total">${{ venta.total|floatformat:0|intcomma }}</div>
                 </div>
                 
                 <div class="d-flex justify-content-between align-items-center">
                     <small class="text-muted">
                         {% if venta.descuento > 0 %}
-                            Descuento: ${{ venta.descuento|floatformat:2 }}
+                            Descuento: ${{ venta.descuento|floatformat:0|intcomma }}
                         {% endif %}
                     </small>
                     <a href="{% url 'pos_venta_detalle' venta.id %}" class="btn-ver">

@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load humanize %}
 {% block content %}
 <h2>Componente + Acción (precios)</h2>
 
@@ -19,7 +20,7 @@
         <div class="text-muted small">ID: {{ it.id }}</div>
       </div>
       <div class="text-end">
-        <div class="fw-bold">${{ it.precio_mano_obra|floatformat:0 }}</div>
+        <div class="fw-bold">${{ it.precio_mano_obra|floatformat:0|intcomma }}</div>
         <div class="mt-1">
           <a href="{% url 'comp_accion_update' it.pk %}" class="btn btn-sm btn-secondary">Editar</a>
           <a href="{% url 'comp_accion_delete' it.pk %}" class="btn btn-sm btn-danger">Eliminar</a>

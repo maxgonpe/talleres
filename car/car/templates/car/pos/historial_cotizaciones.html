@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load humanize %}
 
 {% block title %}Historial de Cotizaciones - POS{% endblock %}
 
@@ -275,14 +276,14 @@
                             {{ cotizacion.get_estado_display }}
                         </div>
                     </div>
-                    <div class="cotizacion-total">${{ cotizacion.total|floatformat:2 }}</div>
+                    <div class="cotizacion-total">${{ cotizacion.total|floatformat:0|intcomma }}</div>
                 </div>
                 
                 <div class="d-flex justify-content-between align-items-center">
                     <small class="text-muted">
                         Válida hasta: {{ cotizacion.valida_hasta|date:"d/m/Y" }}
                         {% if cotizacion.descuento > 0 %}
-                            | Descuento: ${{ cotizacion.descuento|floatformat:2 }}
+                            | Descuento: ${{ cotizacion.descuento|floatformat:0|intcomma }}
                         {% endif %}
                     </small>
                     <a href="{% url 'pos_cotizacion_detalle' cotizacion.id %}" class="btn-ver">

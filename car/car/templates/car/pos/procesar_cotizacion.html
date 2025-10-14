@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load humanize %}
 
 {% block title %}Procesar Cotización - POS{% endblock %}
 
@@ -120,15 +121,15 @@
             <div class="resumen-item">
                 <div>
                     <div class="fw-bold">{{ item.repuesto.nombre }}</div>
-                    <small class="text-muted">{{ item.cantidad }} x ${{ item.precio_unitario|floatformat:2 }}</small>
+                    <small class="text-muted">{{ item.cantidad }} x ${{ item.precio_unitario|floatformat:0|intcomma }}</small>
                 </div>
-                <div class="fw-bold">${{ item.subtotal|floatformat:2 }}</div>
+                <div class="fw-bold">${{ item.subtotal|floatformat:0|intcomma }}</div>
             </div>
         {% endfor %}
         
         <div class="resumen-item">
             <div>Subtotal:</div>
-            <div>${{ subtotal|floatformat:2 }}</div>
+            <div>${{ subtotal|floatformat:0|intcomma }}</div>
         </div>
     </div>
 
@@ -225,7 +226,7 @@ document.getElementById('id_descuento').addEventListener('input', function() {
     // Actualizar el total en pantalla si hay un elemento para mostrarlo
     const totalElement = document.querySelector('.total-final');
     if (totalElement) {
-        totalElement.textContent = `$${total.toFixed(2)}`;
+        totalElement.textContent = `$${Math.round(total).toLocaleString()}`;
     }
 });
 

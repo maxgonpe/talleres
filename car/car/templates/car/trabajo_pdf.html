@@ -1,3 +1,4 @@
+{% load humanize %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -342,7 +343,7 @@
                             </td>
                             <td>
                                 {% if accion.precio_mano_obra %}
-                                    ${{ accion.precio_mano_obra|floatformat:0 }}
+                                    ${{ accion.precio_mano_obra|floatformat:0|intcomma }}
                                 {% else %}
                                     -
                                 {% endif %}
@@ -377,14 +378,14 @@
                             <td>{{ repuesto.cantidad }}</td>
                             <td>
                                 {% if repuesto.precio_unitario %}
-                                    ${{ repuesto.precio_unitario|floatformat:0 }}
+                                    ${{ repuesto.precio_unitario|floatformat:0|intcomma }}
                                 {% else %}
                                     -
                                 {% endif %}
                             </td>
                             <td>
                                 {% if repuesto.precio_unitario %}
-                                    ${{ repuesto.subtotal|floatformat:0 }}
+                                    ${{ repuesto.subtotal|floatformat:0|intcomma }}
                                 {% else %}
                                     -
                                 {% endif %}
@@ -425,7 +426,7 @@
     <!-- Total -->
     <div class="total-section">
         <h3>💰 Total del Trabajo</h3>
-        <div class="total-amount">${{ trabajo.total_general|default:0|floatformat:0 }}</div>
+        <div class="total-amount">${{ trabajo.total_general|default:0|floatformat:0|intcomma }}</div>
     </div>
 
     <!-- Footer -->
