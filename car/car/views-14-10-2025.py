@@ -168,7 +168,7 @@ def ingreso_view(request):
                         except (TypeError, ValueError):
                             continue
 
-                        precio_mano_obra = (it.get("precio_mano_obra") or "").strip()
+                        precio = (it.get("precio") or "").strip()
 
                         if not diagnostico.componentes.filter(id=comp_id).exists():
                             continue  # ignora acciones de componentes no seleccionados
@@ -178,8 +178,8 @@ def ingreso_view(request):
                             componente_id=comp_id,
                             accion_id=acc_id,
                         )
-                        if precio_mano_obra and precio_mano_obra not in ("0", "0.00"):
-                            dca.precio_mano_obra = precio_mano_obra
+                        if precio and precio not in ("0", "0.00"):
+                            dca.precio_mano_obra = precio
                         dca.save()
                 except json.JSONDecodeError:
                     pass
@@ -1309,10 +1309,6 @@ def lista_trabajos(request):
 @login_required
 def trabajo_detalle(request, pk):
     trabajo = get_object_or_404(Trabajo, pk=pk)
-    
-    # 🔹 Helper para redirects con pestaña activa
-    def redirect_with_tab(tab_name):
-        return redirect(f"trabajo_detalle", pk=trabajo.pk) + f"?tab={tab_name}"
 
     # Formularios
     asignar_form = AsignarMecanicosForm(instance=trabajo)
@@ -1322,33 +1318,8 @@ def trabajo_detalle(request, pk):
     from .models import Componente, Accion, Repuesto
     componentes_disponibles = Componente.objects.all()
     acciones_disponibles = Accion.objects.all()
-    
-    # 🔹 FILTRO INTELIGENTE DE REPUESTOS basado en el vehículo del trabajo
+    # Usar el nuevo sistema de stock unificado
     repuestos_disponibles = Repuesto.objects.all()
-    if trabajo.vehiculo:
-        veh = trabajo.vehiculo
-        veh_marca = veh.marca
-        veh_motor = veh.descripcion_motor
-        
-        # Aplicar filtro inteligente por características del vehículo
-        if veh_marca or veh_motor:
-            filtro_vehiculo = Q()
-            
-            # Filtrar por marca del vehículo
-            if veh_marca:
-                filtro_vehiculo |= Q(marca_veh__icontains=veh_marca)
-                filtro_vehiculo |= Q(marca_veh__in=['general', 'xxx', ''])
-            
-            # Filtrar por tipo de motor
-            if veh_motor:
-                filtro_vehiculo |= Q(tipo_de_motor__icontains=veh_motor)
-                filtro_vehiculo |= Q(tipo_de_motor__in=['zzzzzz', ''])
-            
-            # Aplicar filtro y ordenar por compatibilidad
-            repuestos_disponibles = repuestos_disponibles.filter(filtro_vehiculo).distinct()
-            
-            # Ordenar por stock disponible y precio
-            repuestos_disponibles = repuestos_disponibles.order_by('-stock', 'precio_venta', 'nombre')
 
     if request.method == "POST":
         # 🔹 Guardar observaciones
@@ -1391,7 +1362,7 @@ def trabajo_detalle(request, pk):
                     messages.success(request, "Acción agregada al trabajo.")
                 except (Componente.DoesNotExist, Accion.DoesNotExist):
                     messages.error(request, "Error al agregar la acción.")
-            return redirect_with_tab("acciones")
+            return redirect("trabajo_detalle", pk=trabajo.pk)
 
         # 🔹 Toggle acción completada / pendiente
         elif "toggle_accion" in request.POST:
@@ -1426,20 +1397,16 @@ def trabajo_detalle(request, pk):
                 try:
                     repuesto = Repuesto.objects.get(id=repuesto_id)
                     
-                    precio_final = precio_unitario or repuesto.precio_venta or 0
-                    subtotal = float(precio_final) * int(cantidad)
-                    
                     TrabajoRepuesto.objects.create(
                         trabajo=trabajo,
                         repuesto=repuesto,
                         cantidad=cantidad,
-                        precio_unitario=precio_final,
-                        subtotal=subtotal
+                        precio_unitario=precio_unitario or repuesto.precio_venta or 0
                     )
                     messages.success(request, "Repuesto agregado al trabajo.")
                 except Repuesto.DoesNotExist:
                     messages.error(request, "Repuesto no encontrado.")
-            return redirect_with_tab("repuestos")
+            return redirect("trabajo_detalle", pk=trabajo.pk)
 
         # 🔹 Toggle repuesto completado / pendiente
         elif "toggle_repuesto" in request.POST:
@@ -1521,9 +1488,6 @@ def trabajo_detalle(request, pk):
             messages.success(request, f"Repuesto '{rep.repuesto.nombre}' actualizado.")
             return redirect("trabajo_detalle", pk=trabajo.pk)
 
-    # 🔹 Detectar pestaña activa desde parámetros URL
-    active_tab = request.GET.get('tab', 'info')
-    
     context = {
         "trabajo": trabajo,
         "asignar_form": asignar_form,
@@ -1531,7 +1495,6 @@ def trabajo_detalle(request, pk):
         "componentes_disponibles": componentes_disponibles,
         "acciones_disponibles": acciones_disponibles,
         "repuestos_disponibles": repuestos_disponibles,
-        "active_tab": active_tab,
     }
     return render(request, "car/trabajo_detalle_nuevo.html", context)
 

@@ -42,7 +42,7 @@ urlpatterns = [
     path('acciones/nueva/', views.accion_create, name='accion_create'),
     path('acciones/<int:pk>/editar/', views.accion_update, name='accion_update'),
     path('acciones/<int:pk>/eliminar/', views.accion_delete, name='accion_delete'),
-    path('car/acciones-lookup/<int:componente_id>/', views.acciones_por_componente, name='acciones_por_componente'),
+    path('acciones-lookup/<int:componente_id>/', views.acciones_por_componente, name='acciones_por_componente'),
     path("vehiculo_lookup/", vehiculo_lookup, name="vehiculo_lookup"),
 
     # === Componente + Acción (precios) ===

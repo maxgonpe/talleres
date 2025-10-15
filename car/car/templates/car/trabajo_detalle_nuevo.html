@@ -226,33 +226,137 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        color: #2c3e50 !important; /* Texto oscuro para mejor contraste */
+    }
+    
+    .item-card strong {
+        color: #1a252f !important; /* Texto más oscuro para títulos */
+    }
+    
+    .item-card small {
+        color: #34495e !important; /* Texto oscuro para subtítulos */
     }
     
     /* Esquemas claros - Item-cards con tonos más oscuros para mejor contraste */
     .theme-cyan .item-card {
         background-color: #b2dfdb !important; /* Tono más oscuro del cyan */
+        color: #004d40 !important; /* Texto verde oscuro para cyan */
+    }
+    
+    .theme-cyan .item-card strong {
+        color: #00251a !important; /* Título más oscuro para cyan */
+    }
+    
+    .theme-cyan .item-card small {
+        color: #00695c !important; /* Subtítulo oscuro para cyan */
     }
     
     .theme-sand .item-card {
         background-color: #d7ccc8 !important; /* Tono más oscuro del sand */
+        color: #3e2723 !important; /* Texto marrón oscuro para sand */
+    }
+    
+    .theme-sand .item-card strong {
+        color: #1c0e0a !important; /* Título más oscuro para sand */
+    }
+    
+    .theme-sand .item-card small {
+        color: #5d4037 !important; /* Subtítulo oscuro para sand */
     }
     
     .theme-sage .item-card {
         background-color: #c8e6c9 !important; /* Tono más oscuro del sage */
+        color: #1b5e20 !important; /* Texto verde oscuro para sage */
+    }
+    
+    .theme-sage .item-card strong {
+        color: #0d3a0f !important; /* Título más oscuro para sage */
+    }
+    
+    .theme-sage .item-card small {
+        color: #2e7d32 !important; /* Subtítulo oscuro para sage */
     }
     
     .theme-sky .item-card {
         background-color: #bbdefb !important; /* Tono más oscuro del sky */
+        color: #0d47a1 !important; /* Texto azul oscuro para sky */
+    }
+    
+    .theme-sky .item-card strong {
+        color: #051f4a !important; /* Título más oscuro para sky */
+    }
+    
+    .theme-sky .item-card small {
+        color: #1565c0 !important; /* Subtítulo oscuro para sky */
     }
     
     .item-card.completado {
         background: #d4edda;
         border-left: 4px solid #198754;
+        color: #155724 !important; /* Texto verde oscuro para completado */
+    }
+    
+    .item-card.completado strong {
+        color: #0d4a1a !important; /* Título más oscuro para completado */
+    }
+    
+    .item-card.completado small {
+        color: #1e7e34 !important; /* Subtítulo oscuro para completado */
     }
     
     .item-card.pendiente {
         background: #fff3cd;
         border-left: 4px solid #ffc107;
+        color: #856404 !important; /* Texto amarillo oscuro para pendiente */
+    }
+    
+    .item-card.pendiente strong {
+        color: #533f03 !important; /* Título más oscuro para pendiente */
+    }
+    
+    .item-card.pendiente small {
+        color: #6c5a04 !important; /* Subtítulo oscuro para pendiente */
+    }
+    
+    /* Estilos específicos para completado y pendiente en cada tema */
+    .theme-cyan .item-card.completado {
+        background: #a5d6a7 !important; /* Verde más oscuro para cyan */
+        color: #1b5e20 !important;
+    }
+    
+    .theme-cyan .item-card.pendiente {
+        background: #fff9c4 !important; /* Amarillo más oscuro para cyan */
+        color: #f57f17 !important;
+    }
+    
+    .theme-sand .item-card.completado {
+        background: #a5d6a7 !important; /* Verde más oscuro para sand */
+        color: #1b5e20 !important;
+    }
+    
+    .theme-sand .item-card.pendiente {
+        background: #fff9c4 !important; /* Amarillo más oscuro para sand */
+        color: #f57f17 !important;
+    }
+    
+    .theme-sage .item-card.completado {
+        background: #a5d6a7 !important; /* Verde más oscuro para sage */
+        color: #1b5e20 !important;
+    }
+    
+    .theme-sage .item-card.pendiente {
+        background: #fff9c4 !important; /* Amarillo más oscuro para sage */
+        color: #f57f17 !important;
+    }
+    
+    .theme-sky .item-card.completado {
+        background: #a5d6a7 !important; /* Verde más oscuro para sky */
+        color: #1b5e20 !important;
+    }
+    
+    .theme-sky .item-card.pendiente {
+        background: #fff9c4 !important; /* Amarillo más oscuro para sky */
+        color: #f57f17 !important;
     }
     
     .toggle-btn {
@@ -421,15 +525,15 @@
     <!-- Navegación por Pestañas -->
     <div class="tab-container">
         <div class="tab-nav">
-            <button class="tab-btn active" onclick="showTab('info')">📋 Info</button>
-            <button class="tab-btn" onclick="showTab('acciones')">🛠️ Acciones</button>
-            <button class="tab-btn" onclick="showTab('repuestos')">🔧 Repuestos</button>
-            <button class="tab-btn" onclick="showTab('fotos')">📷 Fotos</button>
-            <button class="tab-btn" onclick="showTab('estado')">⚡ Estado</button>
+            <button class="tab-btn {% if active_tab == 'info' %}active{% endif %}" onclick="showTab('info')">📋 Info</button>
+            <button class="tab-btn {% if active_tab == 'acciones' %}active{% endif %}" onclick="showTab('acciones')">🛠️ Acciones</button>
+            <button class="tab-btn {% if active_tab == 'repuestos' %}active{% endif %}" onclick="showTab('repuestos')">🔧 Repuestos</button>
+            <button class="tab-btn {% if active_tab == 'fotos' %}active{% endif %}" onclick="showTab('fotos')">📷 Fotos</button>
+            <button class="tab-btn {% if active_tab == 'estado' %}active{% endif %}" onclick="showTab('estado')">⚡ Estado</button>
         </div>
 
         <!-- Pestaña: Información -->
-        <div id="tab-info" class="tab-content active">
+        <div id="tab-info" class="tab-content {% if active_tab == 'info' %}active{% endif %}">
             <div class="info-card">
                 <h5>📋 Información del Trabajo</h5>
                 
@@ -511,7 +615,7 @@
         </div>
 
         <!-- Pestaña: Acciones -->
-        <div id="tab-acciones" class="tab-content">
+        <div id="tab-acciones" class="tab-content {% if active_tab == 'acciones' %}active{% endif %}">
             <div class="info-card">
                 <h5>🛠️ Acciones del Trabajo</h5>
                 
@@ -591,9 +695,20 @@
         </div>
 
         <!-- Pestaña: Repuestos -->
-        <div id="tab-repuestos" class="tab-content">
+        <div id="tab-repuestos" class="tab-content {% if active_tab == 'repuestos' %}active{% endif %}">
             <div class="info-card">
                 <h5>🔧 Repuestos del Trabajo</h5>
+                
+                <!-- Información del filtro inteligente -->
+                <div class="alert alert-info mb-3">
+                    <small>
+                        <strong>🧠 Filtro Inteligente Activo:</strong> 
+                        Los repuestos mostrados están filtrados automáticamente por las características del vehículo 
+                        (marca: <strong>{{ trabajo.vehiculo.marca|default:"No especificada" }}</strong>, 
+                        motor: <strong>{{ trabajo.vehiculo.descripcion_motor|default:"No especificado" }}</strong>).
+                        Solo se muestran repuestos compatibles o de uso general.
+                    </small>
+                </div>
                 
                 <!-- Botón para agregar repuesto -->
                 <button class="btn btn-success btn-toggle-form" onclick="toggleAddForm('repuesto')">
@@ -609,7 +724,14 @@
                             <select name="repuesto" class="form-control" required>
                                 <option value="">Seleccionar repuesto...</option>
                                 {% for repuesto in repuestos_disponibles %}
-                                    <option value="{{ repuesto.id }}">{{ repuesto.nombre }} - ${{ repuesto.precio_venta|default:0|floatformat:0|intcomma }}</option>
+                                    <option value="{{ repuesto.id }}" 
+                                            data-marca="{{ repuesto.marca_veh|default:'General' }}"
+                                            data-motor="{{ repuesto.tipo_de_motor|default:'General' }}"
+                                            data-stock="{{ repuesto.stock|default:0 }}">
+                                        {{ repuesto.nombre }} - ${{ repuesto.precio_venta|default:0|floatformat:0|intcomma }}
+                                        {% if repuesto.marca_veh %} ({{ repuesto.marca_veh }}){% endif %}
+                                        {% if repuesto.stock > 0 %} - Stock: {{ repuesto.stock }}{% endif %}
+                                    </option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -619,7 +741,7 @@
                         </div>
                         <div class="form-group">
                             <label>Precio Unitario:</label>
-                            <input type="number" name="precio_unitario" class="form-control" step="0.01" min="0">
+                            <input type="number" name="precio_unitario" id="precio-unitario" class="form-control" step="0.01" min="0" placeholder="Se llena automáticamente">
                         </div>
                         <button type="submit" name="agregar_repuesto" class="btn btn-primary btn-action">
                             ➕ Agregar
@@ -666,7 +788,7 @@
         </div>
 
         <!-- Pestaña: Fotos -->
-        <div id="tab-fotos" class="tab-content">
+        <div id="tab-fotos" class="tab-content {% if active_tab == 'fotos' %}active{% endif %}">
             <div class="info-card">
                 <h5>📷 Fotos del Progreso</h5>
                 
@@ -699,7 +821,7 @@
         </div>
 
         <!-- Pestaña: Estado -->
-        <div id="tab-estado" class="tab-content">
+        <div id="tab-estado" class="tab-content {% if active_tab == 'estado' %}active{% endif %}">
             <div class="info-card">
                 <h5>⚡ Cambiar Estado del Trabajo</h5>
                 <p class="text-muted">Selecciona el nuevo estado para este trabajo:</p>
@@ -774,8 +896,22 @@ function showTab(tabName) {
     document.getElementById('tab-' + tabName).classList.add('active');
     
     // Activar el botón correspondiente
-    event.target.classList.add('active');
+    if (event && event.target) {
+        event.target.classList.add('active');
+    } else {
+        // Si no hay event (llamada programática), buscar el botón correcto
+        document.querySelector(`[onclick="showTab('${tabName}')"]`).classList.add('active');
+    }
 }
+
+// 🔹 Inicializar pestaña activa al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const activeTab = urlParams.get('tab');
+    if (activeTab) {
+        showTab(activeTab);
+    }
+});
 
 // Funciones para formularios de agregar
 function toggleAddForm(type) {
@@ -818,6 +954,109 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }, 2000);
         });
+    }
+    
+    // 🔹 FILTRO INTELIGENTE: Mostrar información de compatibilidad al seleccionar repuesto
+    const repuestoSelect = document.querySelector('select[name="repuesto"]');
+    if (repuestoSelect) {
+        // Crear elemento para mostrar información de compatibilidad
+        const infoDiv = document.createElement('div');
+        infoDiv.id = 'repuesto-compatibilidad-info';
+        infoDiv.className = 'mt-2 p-2 bg-light rounded';
+        infoDiv.style.display = 'none';
+        repuestoSelect.parentNode.appendChild(infoDiv);
+        
+        repuestoSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            if (selectedOption.value) {
+                const marca = selectedOption.dataset.marca;
+                const motor = selectedOption.dataset.motor;
+                const stock = selectedOption.dataset.stock;
+                
+                // 🔹 Llenar automáticamente el precio unitario
+                const precioInput = document.getElementById('precio-unitario');
+                if (precioInput) {
+                    // Extraer precio del texto de la opción (formato: "Nombre - $precio")
+                    const optionText = selectedOption.textContent;
+                    const precioMatch = optionText.match(/\$([0-9,]+)/);
+                    if (precioMatch) {
+                        const precio = precioMatch[1].replace(/,/g, '');
+                        precioInput.value = precio;
+                    }
+                }
+                
+                let compatibilidadText = '';
+                let compatibilidadClass = 'bg-secondary';
+                
+                // Calcular compatibilidad básica
+                if (marca && marca !== 'General') {
+                    compatibilidadText += `✅ Marca específica: ${marca}<br>`;
+                    compatibilidadClass = 'bg-success';
+                } else {
+                    compatibilidadText += `⚠️ Marca general<br>`;
+                }
+                
+                if (motor && motor !== 'General') {
+                    compatibilidadText += `✅ Motor específico: ${motor}<br>`;
+                    if (compatibilidadClass === 'bg-secondary') compatibilidadClass = 'bg-warning';
+                } else {
+                    compatibilidadText += `⚠️ Motor general<br>`;
+                }
+                
+                if (parseInt(stock) > 0) {
+                    compatibilidadText += `✅ Stock disponible: ${stock} unidades`;
+                } else {
+                    compatibilidadText += `❌ Sin stock disponible`;
+                    compatibilidadClass = 'bg-danger';
+                }
+                
+                infoDiv.innerHTML = `
+                    <small class="text-muted">
+                        <strong>Compatibilidad:</strong><br>
+                        ${compatibilidadText}
+                    </small>
+                `;
+                infoDiv.className = `mt-2 p-2 rounded ${compatibilidadClass} text-white`;
+                infoDiv.style.display = 'block';
+            } else {
+                infoDiv.style.display = 'none';
+            }
+        });
+    }
+    
+    // 🔹 Calcular subtotal automáticamente
+    const cantidadInput = document.querySelector('input[name="cantidad"]');
+    const precioInput = document.getElementById('precio-unitario');
+    
+    function calcularSubtotal() {
+        if (cantidadInput && precioInput) {
+            const cantidad = parseInt(cantidadInput.value) || 0;
+            const precio = parseFloat(precioInput.value) || 0;
+            const subtotal = cantidad * precio;
+            
+            // Mostrar subtotal en algún lugar (opcional)
+            let subtotalDiv = document.getElementById('subtotal-preview');
+            if (!subtotalDiv) {
+                subtotalDiv = document.createElement('div');
+                subtotalDiv.id = 'subtotal-preview';
+                subtotalDiv.className = 'mt-2 p-2 bg-info text-white rounded';
+                precioInput.parentNode.appendChild(subtotalDiv);
+            }
+            
+            if (subtotal > 0) {
+                subtotalDiv.innerHTML = `<small><strong>Subtotal: $${subtotal.toLocaleString()}</strong></small>`;
+                subtotalDiv.style.display = 'block';
+            } else {
+                subtotalDiv.style.display = 'none';
+            }
+        }
+    }
+    
+    if (cantidadInput) {
+        cantidadInput.addEventListener('input', calcularSubtotal);
+    }
+    if (precioInput) {
+        precioInput.addEventListener('input', calcularSubtotal);
     }
 });
 </script>

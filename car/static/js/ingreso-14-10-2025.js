@@ -189,14 +189,12 @@ document.addEventListener('DOMContentLoaded', function () {
       const marca = document.getElementById("id_marca")?.value || "";
       const modelo = document.getElementById("id_modelo")?.value || "";
       const anio = document.getElementById("id_anio")?.value || "";
-      const motor = document.getElementById("id_descripcion_motor")?.value || "";
 
       const params = new URLSearchParams();
       compIds.forEach(c => params.append("componentes_ids", c));
       if (marca) params.append("marca", marca);
       if (modelo) params.append("modelo", modelo);
       if (anio) params.append("anio", anio);
-      if (motor) params.append("motor", motor);
 
       url = cont.dataset.previewUrl + "?" + params.toString();
     }
@@ -216,16 +214,6 @@ document.addEventListener('DOMContentLoaded', function () {
         data.repuestos.forEach(r => {
           const div = document.createElement("div");
           div.classList.add("card", "mb-2", "p-2");
-          
-          // Clase CSS basada en compatibilidad
-          let compatibilidadClass = "border-secondary";
-          if (r.compatibilidad >= 80) compatibilidadClass = "border-success";
-          else if (r.compatibilidad >= 60) compatibilidadClass = "border-warning";
-          else if (r.compatibilidad >= 40) compatibilidadClass = "border-info";
-          else if (r.compatibilidad >= 20) compatibilidadClass = "border-danger";
-          
-          div.classList.add(compatibilidadClass);
-          
           div.innerHTML = `
   <label class="form-check">
     <input type="checkbox"
@@ -237,22 +225,16 @@ document.addEventListener('DOMContentLoaded', function () {
            data-oem="${escapeHtml(r.oem || '')}">
     <b>${escapeHtml(r.nombre)}</b> (${escapeHtml(r.oem || "sin OEM")})<br>
     <small>${escapeHtml(r.sku || "")} • ${escapeHtml(r.posicion || "")}</small><br>
-    Stock: ${r.disponible} – 💰 $${(r.precio_venta || 0).toFixed(0)}<br>
-    ${r.compatibilidad_texto ? `<small class="text-muted">${r.compatibilidad_texto} (${r.compatibilidad}%)</small>` : ''}
+    Stock: ${r.disponible} – 💰 $${(r.precio_venta || 0).toFixed(0)}
   </label>
-  <div class="mt-1 d-flex justify-content-between align-items-center">
-      <div>
-        <label class="form-label small mb-0">Cantidad</label>
-        <input type="number"
-               class="form-control form-control-sm repuesto-cantidad"
-               data-id="${r.id}"
-               min="1"
-               value="1"
-               style="max-width:80px;">
-      </div>
-      <button type="button" class="btn btn-sm btn-outline-danger" onclick="descartarRepuesto(this)">
-        ✕
-      </button>
+  <div class="mt-1">
+      <label class="form-label small mb-0">Cantidad</label>
+      <input type="number"
+             class="form-control form-control-sm repuesto-cantidad"
+             data-id="${r.id}"
+             min="1"
+             value="1"
+             style="max-width:80px;">
     </div>
   </div>
 `;
@@ -567,11 +549,6 @@ if (form) {
 // ---------------------- BUSCAR VEHICULO POR PLACA ----------------------
 
 
-
-// Función para descartar repuestos
-window.descartarRepuesto = function(boton) {
-  boton.closest('.card').remove();
-};
 
 //
 }); // fin DOMContentLoaded
