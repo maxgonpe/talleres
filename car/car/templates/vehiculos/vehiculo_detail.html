@@ -1,0 +1,367 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}{{ vehiculo.marca }} {{ vehiculo.modelo }} - Compatibilidad - NetGoGo{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-container {
+        max-width: 1000px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: var(--card-bg);
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--card-shadow);
+    }
+    
+    .detail-header {
+        background: var(--gradient);
+        color: var(--btn-fg);
+        padding: 2rem;
+        text-align: center;
+        border-radius: var(--border-radius-lg);
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .detail-header h2 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .detail-header .year-badge {
+        background: rgba(255,255,255,0.2);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        display: inline-block;
+        margin-top: 0.5rem;
+    }
+    
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .info-card {
+        background: var(--hover-bg);
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        border-left: 4px solid var(--accent);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .info-card h5 {
+        color: var(--accent);
+        margin-bottom: 1rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+    }
+    
+    .info-card h5 i {
+        margin-right: 0.5rem;
+    }
+    
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid var(--muted);
+    }
+    
+    .info-item:last-child {
+        border-bottom: none;
+    }
+    
+    .info-label {
+        color: var(--muted);
+        font-weight: 500;
+    }
+    
+    .info-value {
+        color: var(--fg);
+        font-weight: 600;
+    }
+    
+    .repuestos-section {
+        background: var(--hover-bg);
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        border-left: 4px solid #28a745;
+        margin-bottom: 2rem;
+    }
+    
+    .repuestos-section h5 {
+        color: #28a745;
+        margin-bottom: 1rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+    }
+    
+    .repuestos-section h5 i {
+        margin-right: 0.5rem;
+    }
+    
+    .repuestos-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1rem;
+    }
+    
+    .repuesto-card {
+        background: var(--bg);
+        padding: 1rem;
+        border-radius: var(--border-radius);
+        border: 1px solid var(--muted);
+        transition: var(--transition);
+    }
+    
+    .repuesto-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .repuesto-name {
+        font-weight: 600;
+        color: var(--accent);
+        margin-bottom: 0.5rem;
+    }
+    
+    .repuesto-details {
+        font-size: 0.9rem;
+        color: var(--fg);
+        margin-bottom: 0.5rem;
+    }
+    
+    .repuesto-position {
+        font-size: 0.8rem;
+        color: var(--muted);
+        font-style: italic;
+    }
+    
+    .no-repuestos {
+        text-align: center;
+        color: var(--muted);
+        padding: 2rem;
+        font-style: italic;
+    }
+    
+    .actions-section {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid var(--muted);
+    }
+    
+    .btn-action {
+        border-radius: var(--border-radius);
+        padding: 0.75rem 1.5rem;
+        font-size: 1rem;
+        font-weight: 600;
+        transition: var(--transition);
+        border: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+    }
+    
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        text-decoration: none;
+    }
+    
+    .btn-warning {
+        background: #ffc107;
+        color: #212529;
+    }
+    
+    .btn-warning:hover {
+        background: #e0a800;
+        color: #212529;
+    }
+    
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .btn-danger:hover {
+        background: #c82333;
+        color: white;
+    }
+    
+    .btn-secondary {
+        background: var(--muted);
+        color: var(--btn-fg);
+    }
+    
+    .btn-secondary:hover {
+        background: var(--muted);
+        color: var(--btn-fg);
+        opacity: 0.8;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .detail-container {
+            margin: 1rem;
+            padding: 1rem;
+        }
+        
+        .detail-header h2 {
+            font-size: 1.8rem;
+        }
+        
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .repuestos-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .actions-section {
+            flex-direction: column;
+        }
+        
+        .btn-action {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="detail-container">
+    <!-- Header -->
+    <div class="detail-header">
+        <h2 class="mb-0">{{ vehiculo.marca }} {{ vehiculo.modelo }}</h2>
+        <div class="year-badge">{{ vehiculo.anio_desde }}-{{ vehiculo.anio_hasta }}</div>
+    </div>
+
+    <!-- Información del vehículo -->
+    <div class="info-grid">
+        <div class="info-card">
+            <h5><i class="fas fa-car"></i>Información General</h5>
+            <div class="info-item">
+                <span class="info-label">ID:</span>
+                <span class="info-value">{{ vehiculo.id }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Marca:</span>
+                <span class="info-value">{{ vehiculo.marca }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Modelo:</span>
+                <span class="info-value">{{ vehiculo.modelo }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Período:</span>
+                <span class="info-value">{{ vehiculo.anio_desde }} - {{ vehiculo.anio_hasta }}</span>
+            </div>
+        </div>
+        
+        <div class="info-card">
+            <h5><i class="fas fa-chart-bar"></i>Estadísticas</h5>
+            <div class="info-item">
+                <span class="info-label">Repuestos Compatibles:</span>
+                <span class="info-value">{{ repuestos_compatibles.count }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Años de Producción:</span>
+                <span class="info-value">{{ vehiculo.anio_hasta|add:"-"|add:vehiculo.anio_desde|add:"+1" }} años</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Estado:</span>
+                <span class="info-value">
+                    {% if repuestos_compatibles.count > 0 %}
+                        <span style="color: #28a745;">Activo</span>
+                    {% else %}
+                        <span style="color: #6c757d;">Sin repuestos</span>
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Repuestos compatibles -->
+    <div class="repuestos-section">
+        <h5><i class="fas fa-cogs"></i>Repuestos Compatibles ({{ repuestos_compatibles.count }})</h5>
+        
+        {% if repuestos_compatibles %}
+            <div class="repuestos-grid">
+                {% for aplicacion in repuestos_compatibles %}
+                <div class="repuesto-card">
+                    <div class="repuesto-name">{{ aplicacion.repuesto.nombre }}</div>
+                    <div class="repuesto-details">
+                        <strong>SKU:</strong> {{ aplicacion.repuesto.sku|default:"N/A" }}<br>
+                        <strong>Marca:</strong> {{ aplicacion.repuesto.marca|default:"N/A" }}<br>
+                        <strong>Precio:</strong> ${{ aplicacion.repuesto.precio_venta|default:"0"|floatformat:0|intcomma }}
+                    </div>
+                    {% if aplicacion.posicion %}
+                        <div class="repuesto-position">
+                            <i class="fas fa-map-marker-alt me-1"></i>{{ aplicacion.posicion }}
+                        </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-repuestos">
+                <i class="fas fa-info-circle fa-2x mb-2"></i><br>
+                Este vehículo aún no tiene repuestos compatibles registrados.<br>
+                <a href="{% url 'repuesto_list' %}" class="btn btn-primary btn-sm mt-2">
+                    <i class="fas fa-plus me-1"></i>Agregar Compatibilidad
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Acciones -->
+    <div class="actions-section">
+        <a href="{% url 'vehiculo_compatibilidad_update' vehiculo.pk %}" class="btn btn-warning btn-action">
+            <i class="fas fa-edit me-2"></i>Editar Vehículo Compatible
+        </a>
+        <a href="{% url 'vehiculo_compatibilidad_delete' vehiculo.pk %}" class="btn btn-danger btn-action">
+            <i class="fas fa-trash me-2"></i>Eliminar Vehículo Compatible
+        </a>
+        <a href="{% url 'vehiculo_compatibilidad_list' %}" class="btn btn-secondary btn-action">
+            <i class="fas fa-arrow-left me-2"></i>Volver al Listado
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Agregar efectos de hover a las tarjetas de repuestos
+    const repuestoCards = document.querySelectorAll('.repuesto-card');
+    
+    repuestoCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.borderColor = 'var(--accent)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.borderColor = 'var(--muted)';
+        });
+    });
+});
+</script>
+{% endblock %}

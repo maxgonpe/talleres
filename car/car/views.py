@@ -41,7 +41,7 @@ from django.views.decorators.http import require_http_methods
 
 from .models import Diagnostico, Cliente_Taller, Vehiculo,\
                     Componente, Accion, ComponenteAccion,\
-                    DiagnosticoComponenteAccion, Repuesto, VehiculoVersion,\
+                    DiagnosticoComponenteAccion, Repuesto, VehiculoVersion, RepuestoAplicacion,\
                     DiagnosticoRepuesto, Trabajo, Mecanico, TrabajoFoto,TrabajoRepuesto,\
                     TrabajoAccion, Venta, VentaItem, RepuestoEnStock, StockMovimiento,\
                     VentaPOS, SesionVenta, CarritoItem, AdministracionTaller
@@ -2384,4 +2384,48 @@ def exportar_precios_pdf(request):
     
     return response
 
+
+
+
+@login_required
+def repuesto_compatibilidad(request, pk):
+    """Vista para gestionar la compatibilidad de un repuesto con vehículos"""
+    repuesto = get_object_or_404(Repuesto, pk=pk)
+    
+    # Obtener aplicaciones existentes
+    aplicaciones_existentes = RepuestoAplicacion.objects.filter(repuesto=repuesto).select_related("version")
+    
+    # Obtener todas las versiones de vehículos disponibles
+    versiones_disponibles = VehiculoVersion.objects.all().order_by("marca", "modelo", "anio_desde")
+    
+    if request.method == "POST":
+        # Procesar el formulario
+        versiones_seleccionadas = request.POST.getlist("versiones")
+        
+        # Eliminar aplicaciones existentes
+        RepuestoAplicacion.objects.filter(repuesto=repuesto).delete()
+        
+        # Crear nuevas aplicaciones
+        for version_id in versiones_seleccionadas:
+            try:
+                version = VehiculoVersion.objects.get(id=version_id)
+                posicion = request.POST.get(f"posicion_{version_id}", "")
+                RepuestoAplicacion.objects.create(
+                    repuesto=repuesto,
+                    version=version,
+                    posicion=posicion
+                )
+            except VehiculoVersion.DoesNotExist:
+                continue
+        
+        messages.success(request, f"Compatibilidad actualizada para {repuesto.nombre}")
+        return redirect("repuesto_compatibilidad", pk=repuesto.pk)
+    
+    context = {
+        "repuesto": repuesto,
+        "aplicaciones_existentes": aplicaciones_existentes,
+        "versiones_disponibles": versiones_disponibles,
+    }
+    
+    return render(request, "repuestos/repuesto_compatibilidad.html", context)
 

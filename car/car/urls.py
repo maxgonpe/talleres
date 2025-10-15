@@ -14,7 +14,8 @@ from .views import ClienteListView, ClienteTallerListView, ClienteTallerCreateVi
                    RepuestoListView
 from . import views_pos
 from . import views_compras
-from . import views_algoritmo 
+from . import views_algoritmo
+from . import views_vehiculos 
 
 urlpatterns = [
     path("login/", views.login_view, name="login"),
@@ -109,6 +110,7 @@ urlpatterns = [
     path("repuestos/nuevo/", RepuestoCreateView.as_view(), name="repuesto_create"),
     path("repuestos/<int:pk>/editar/", RepuestoUpdateView.as_view(), name="repuesto_update"),
     path("repuestos/<int:pk>/eliminar/", RepuestoDeleteView.as_view(), name="repuesto_delete"),
+    path("repuestos/<int:pk>/compatibilidad/", views.repuesto_compatibilidad, name="repuesto_compatibilidad"),
     # Seguimiento público por placa
     path("tracking/", views.tracking_publico, name="tracking_publico"),
     path("tracking/placa/", views.tracking_publico_preview, name="tracking_publico_preview"),
@@ -154,6 +156,13 @@ urlpatterns = [
     
     # === Algoritmo de Relación Inteligente ===
     path('algoritmo/relacionar/', views_algoritmo.relacionar_repuestos_componentes, name='relacionar_repuestos_componentes'),
+    
+    # === Gestión de Compatibilidad de Vehículos ===
+    path("vehiculos-compatibilidad/", views_vehiculos.vehiculo_list, name="vehiculo_compatibilidad_list"),
+    path("vehiculos-compatibilidad/crear/", views_vehiculos.vehiculo_create, name="vehiculo_compatibilidad_create"),
+    path("vehiculos-compatibilidad/<int:pk>/", views_vehiculos.vehiculo_detail, name="vehiculo_compatibilidad_detail"),
+    path("vehiculos-compatibilidad/<int:pk>/editar/", views_vehiculos.vehiculo_update, name="vehiculo_compatibilidad_update"),
+    path("vehiculos-compatibilidad/<int:pk>/eliminar/", views_vehiculos.vehiculo_delete, name="vehiculo_compatibilidad_delete"),
 
 ]
 

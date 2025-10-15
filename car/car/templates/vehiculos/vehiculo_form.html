@@ -1,0 +1,359 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Compatibilidad - NetGoGo{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: var(--card-bg);
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--card-shadow);
+    }
+    
+    .form-header {
+        background: var(--gradient);
+        color: var(--btn-fg);
+        padding: 1.5rem;
+        text-align: center;
+        border-radius: var(--border-radius-lg);
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .form-header h2 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: var(--accent);
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    
+    .form-control {
+        border-radius: var(--border-radius);
+        border: 2px solid var(--muted);
+        background: var(--bg);
+        color: var(--fg);
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        transition: var(--transition);
+    }
+    
+    .form-control:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 0.2rem rgba(var(--accent), 0.25);
+        outline: none;
+        background: var(--input-bg);
+    }
+    
+    .form-control::placeholder {
+        color: var(--muted);
+        opacity: 0.8;
+    }
+    
+    .form-text {
+        color: var(--muted);
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+    
+    .btn-form {
+        border-radius: var(--border-radius);
+        padding: 0.75rem 2rem;
+        font-size: 1rem;
+        font-weight: 600;
+        transition: var(--transition);
+        border: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        min-width: 120px;
+    }
+    
+    .btn-form:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    }
+    
+    .btn-primary {
+        background: var(--accent);
+        color: var(--btn-fg);
+    }
+    
+    .btn-secondary {
+        background: var(--muted);
+        color: var(--btn-fg);
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid var(--muted);
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+    
+    .alert {
+        border-radius: var(--border-radius);
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        border: none;
+    }
+    
+    .alert-danger {
+        background: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+        border-left: 4px solid #dc3545;
+    }
+    
+    .alert-success {
+        background: rgba(25, 135, 84, 0.1);
+        color: #198754;
+        border-left: 4px solid #198754;
+    }
+    
+    .help-text {
+        background: var(--hover-bg);
+        padding: 1rem;
+        border-radius: var(--border-radius);
+        margin-bottom: 1.5rem;
+        border-left: 4px solid var(--accent);
+    }
+    
+    .help-text h6 {
+        color: var(--accent);
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+    
+    .help-text p {
+        color: var(--fg);
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+    
+    .help-text ul {
+        color: var(--fg);
+        margin-bottom: 0;
+        padding-left: 1.5rem;
+    }
+    
+    .help-text li {
+        margin-bottom: 0.25rem;
+        font-size: 0.9rem;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .form-container {
+            margin: 1rem;
+            padding: 1rem;
+        }
+        
+        .form-header h2 {
+            font-size: 1.5rem;
+        }
+        
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+        }
+        
+        .btn-form {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <!-- Header -->
+    <div class="form-header">
+        <h2 class="mb-0">{{ title }}</h2>
+        <p class="mb-0">Gestiona la información del vehículo</p>
+    </div>
+
+    <!-- Ayuda -->
+    <div class="help-text">
+        <h6><i class="fas fa-info-circle me-2"></i>Vehículo para Compatibilidad de Repuestos</h6>
+        <p>Completa los siguientes campos para registrar un vehículo en la base de datos de compatibilidad:</p>
+        <ul>
+            <li><strong>Marca:</strong> Fabricante del vehículo (ej: Toyota, Honda, Nissan)</li>
+            <li><strong>Modelo:</strong> Modelo específico (ej: Corolla, Civic, Sentra)</li>
+            <li><strong>Año desde:</strong> Año de inicio de producción</li>
+            <li><strong>Año hasta:</strong> Año final de producción</li>
+        </ul>
+        <p><strong>Nota:</strong> Este vehículo se usará para determinar qué repuestos son compatibles, no es un vehículo de cliente del taller.</p>
+    </div>
+
+    <!-- Formulario -->
+    <form method="post" novalidate>
+        {% csrf_token %}
+        
+        <!-- Mostrar errores generales -->
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                {{ form.non_field_errors.0 }}
+            </div>
+        {% endif %}
+        
+        <!-- Marca y Modelo -->
+        <div class="form-row">
+            <div class="form-group">
+                <label for="{{ form.marca.id_for_label }}" class="form-label">
+                    <i class="fas fa-car me-2"></i>{{ form.marca.label }}
+                </label>
+                {{ form.marca }}
+                {% if form.marca.help_text %}
+                    <div class="form-text">{{ form.marca.help_text }}</div>
+                {% endif %}
+                {% if form.marca.errors %}
+                    <div class="text-danger mt-1">
+                        {% for error in form.marca.errors %}
+                            <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.modelo.id_for_label }}" class="form-label">
+                    <i class="fas fa-tag me-2"></i>{{ form.modelo.label }}
+                </label>
+                {{ form.modelo }}
+                {% if form.modelo.help_text %}
+                    <div class="form-text">{{ form.modelo.help_text }}</div>
+                {% endif %}
+                {% if form.modelo.errors %}
+                    <div class="text-danger mt-1">
+                        {% for error in form.modelo.errors %}
+                            <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Años -->
+        <div class="form-row">
+            <div class="form-group">
+                <label for="{{ form.anio_desde.id_for_label }}" class="form-label">
+                    <i class="fas fa-calendar-alt me-2"></i>{{ form.anio_desde.label }}
+                </label>
+                {{ form.anio_desde }}
+                {% if form.anio_desde.help_text %}
+                    <div class="form-text">{{ form.anio_desde.help_text }}</div>
+                {% endif %}
+                {% if form.anio_desde.errors %}
+                    <div class="text-danger mt-1">
+                        {% for error in form.anio_desde.errors %}
+                            <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.anio_hasta.id_for_label }}" class="form-label">
+                    <i class="fas fa-calendar-check me-2"></i>{{ form.anio_hasta.label }}
+                </label>
+                {{ form.anio_hasta }}
+                {% if form.anio_hasta.help_text %}
+                    <div class="form-text">{{ form.anio_hasta.help_text }}</div>
+                {% endif %}
+                {% if form.anio_hasta.errors %}
+                    <div class="text-danger mt-1">
+                        {% for error in form.anio_hasta.errors %}
+                            <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Acciones -->
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-form">
+                <i class="fas fa-save me-2"></i>{{ action }}
+            </button>
+            <a href="{% url 'vehiculo_compatibilidad_list' %}" class="btn btn-secondary btn-form">
+                <i class="fas fa-times me-2"></i>Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-focus en el primer campo
+    const firstInput = document.querySelector('input[type="text"]');
+    if (firstInput) {
+        firstInput.focus();
+    }
+    
+    // Validación en tiempo real para años
+    const anioDesde = document.getElementById('{{ form.anio_desde.id_for_label }}');
+    const anioHasta = document.getElementById('{{ form.anio_hasta.id_for_label }}');
+    
+    function validarAnios() {
+        if (anioDesde.value && anioHasta.value) {
+            if (parseInt(anioDesde.value) > parseInt(anioHasta.value)) {
+                anioHasta.setCustomValidity('El año final debe ser mayor o igual al año inicial');
+            } else {
+                anioHasta.setCustomValidity('');
+            }
+        }
+    }
+    
+    if (anioDesde && anioHasta) {
+        anioDesde.addEventListener('input', validarAnios);
+        anioHasta.addEventListener('input', validarAnios);
+    }
+    
+    // Auto-completar sugerencias para marcas comunes
+    const marcaInput = document.getElementById('{{ form.marca.id_for_label }}');
+    const marcasComunes = [
+        'Toyota', 'Honda', 'Nissan', 'Chevrolet', 'Ford', 'Volkswagen',
+        'Hyundai', 'Kia', 'Mazda', 'Subaru', 'Mitsubishi', 'Suzuki',
+        'BMW', 'Mercedes-Benz', 'Audi', 'Volvo', 'Peugeot', 'Renault'
+    ];
+    
+    if (marcaInput) {
+        marcaInput.addEventListener('input', function() {
+            const valor = this.value.toLowerCase();
+            const sugerencias = marcasComunes.filter(marca => 
+                marca.toLowerCase().includes(valor)
+            );
+            
+            // Aquí podrías implementar un dropdown de sugerencias
+            // Por ahora solo validamos que sea una marca conocida
+        });
+    }
+});
+</script>
+{% endblock %}

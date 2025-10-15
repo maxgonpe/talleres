@@ -1,0 +1,297 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Eliminar Vehículo Compatible - NetGoGo{% endblock %}
+
+{% block extra_css %}
+<style>
+    .delete-container {
+        max-width: 600px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: var(--card-bg);
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--card-shadow);
+    }
+    
+    .delete-header {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+        color: white;
+        padding: 1.5rem;
+        text-align: center;
+        border-radius: var(--border-radius-lg);
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+    }
+    
+    .delete-header h2 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .vehiculo-info {
+        background: var(--hover-bg);
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        margin-bottom: 2rem;
+        border-left: 4px solid var(--accent);
+    }
+    
+    .vehiculo-info h4 {
+        color: var(--accent);
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+    
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    
+    .info-item {
+        background: var(--bg);
+        padding: 1rem;
+        border-radius: var(--border-radius);
+        text-align: center;
+        border: 1px solid var(--muted);
+    }
+    
+    .info-label {
+        font-size: 0.8rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+    
+    .info-value {
+        font-size: 1.1rem;
+        color: var(--fg);
+        font-weight: 600;
+    }
+    
+    .warning-box {
+        background: rgba(255, 193, 7, 0.1);
+        border: 1px solid #ffc107;
+        border-left: 4px solid #ffc107;
+        padding: 1rem;
+        border-radius: var(--border-radius);
+        margin-bottom: 2rem;
+    }
+    
+    .warning-box h5 {
+        color: #856404;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+    
+    .warning-box p {
+        color: #856404;
+        margin-bottom: 0;
+        font-size: 0.9rem;
+    }
+    
+    .btn-delete {
+        border-radius: var(--border-radius);
+        padding: 0.75rem 2rem;
+        font-size: 1rem;
+        font-weight: 600;
+        transition: var(--transition);
+        border: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        min-width: 120px;
+    }
+    
+    .btn-delete:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    }
+    
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .btn-danger:hover {
+        background: #c82333;
+        color: white;
+    }
+    
+    .btn-secondary {
+        background: var(--muted);
+        color: var(--btn-fg);
+    }
+    
+    .btn-secondary:hover {
+        background: var(--muted);
+        color: var(--btn-fg);
+        opacity: 0.8;
+    }
+    
+    .delete-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid var(--muted);
+    }
+    
+    .impact-list {
+        background: rgba(220, 53, 69, 0.05);
+        border: 1px solid rgba(220, 53, 69, 0.2);
+        border-left: 4px solid #dc3545;
+        padding: 1rem;
+        border-radius: var(--border-radius);
+        margin-bottom: 2rem;
+    }
+    
+    .impact-list h6 {
+        color: #dc3545;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+    
+    .impact-list ul {
+        color: var(--fg);
+        margin-bottom: 0;
+        padding-left: 1.5rem;
+    }
+    
+    .impact-list li {
+        margin-bottom: 0.25rem;
+        font-size: 0.9rem;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .delete-container {
+            margin: 1rem;
+            padding: 1rem;
+        }
+        
+        .delete-header h2 {
+            font-size: 1.5rem;
+        }
+        
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .delete-actions {
+            flex-direction: column;
+        }
+        
+        .btn-delete {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="delete-container">
+    <!-- Header -->
+    <div class="delete-header">
+        <h2 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación</h2>
+        <p class="mb-0">Esta acción no se puede deshacer</p>
+    </div>
+
+    <!-- Información del vehículo -->
+    <div class="vehiculo-info">
+        <h4><i class="fas fa-car me-2"></i>Vehículo Compatible a Eliminar</h4>
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">ID</div>
+                <div class="info-value">{{ vehiculo.id }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Marca</div>
+                <div class="info-value">{{ vehiculo.marca }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Modelo</div>
+                <div class="info-value">{{ vehiculo.modelo }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Años</div>
+                <div class="info-value">{{ vehiculo.anio_desde }}-{{ vehiculo.anio_hasta }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advertencia -->
+    <div class="warning-box">
+        <h5><i class="fas fa-exclamation-triangle me-2"></i>¡Atención!</h5>
+        <p>Estás a punto de eliminar permanentemente este vehículo de la base de datos de compatibilidad. Esta acción afectará:</p>
+    </div>
+
+    <!-- Impacto -->
+    <div class="impact-list">
+        <h6><i class="fas fa-list me-2"></i>Impacto de la Eliminación</h6>
+        <ul>
+            <li><strong>Compatibilidad de Repuestos:</strong> Se eliminarán todas las relaciones de compatibilidad con repuestos</li>
+            <li><strong>Filtros Inteligentes:</strong> Este vehículo ya no aparecerá en las sugerencias de diagnósticos y trabajos</li>
+            <li><strong>Historial:</strong> Se perderá el historial de compatibilidad asociado</li>
+            <li><strong>Reportes:</strong> Los reportes futuros no incluirán este vehículo</li>
+        </ul>
+    </div>
+
+    <!-- Formulario de confirmación -->
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="delete-actions">
+            <button type="submit" class="btn btn-danger btn-delete">
+                <i class="fas fa-trash me-2"></i>Eliminar Definitivamente
+            </button>
+            <a href="{% url 'vehiculo_list' %}" class="btn btn-secondary btn-delete">
+                <i class="fas fa-times me-2"></i>Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Confirmación adicional con JavaScript
+    const deleteButton = document.querySelector('.btn-danger');
+    const form = document.querySelector('form');
+    
+    if (deleteButton && form) {
+        deleteButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const vehiculoInfo = "{{ vehiculo.marca }} {{ vehiculo.modelo }} ({{ vehiculo.anio_desde }}-{{ vehiculo.anio_hasta }})";
+            const confirmMessage = `¿Estás completamente seguro de que quieres eliminar el vehículo "${vehiculoInfo}"?\n\nEsta acción es IRREVERSIBLE y afectará:\n• Compatibilidad de repuestos\n• Filtros inteligentes\n• Historial de datos\n\nEscribe "ELIMINAR" para confirmar:`;
+            
+            const userInput = prompt(confirmMessage);
+            
+            if (userInput === "ELIMINAR") {
+                // Mostrar loading en el botón
+                deleteButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Eliminando...';
+                deleteButton.disabled = true;
+                
+                // Enviar formulario
+                form.submit();
+            } else if (userInput !== null) {
+                alert('❌ Confirmación incorrecta. La eliminación ha sido cancelada.');
+            }
+        });
+    }
+    
+    // Prevenir envío accidental con teclado
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && e.target.tagName !== 'INPUT') {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}

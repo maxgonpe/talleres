@@ -1,6 +1,34 @@
 {% extends 'base.html' %}
 {% load humanize %}
 {% block content %}
+
+<style>
+/* 🎨 Mejorar contraste del texto de componentes en diagnósticos */
+.diagnostico-card .list-group-item strong {
+    color: #1a252f !important; /* Texto muy oscuro para componentes */
+}
+
+.diagnostico-card .list-group-item {
+    color: #2c3e50 !important; /* Texto oscuro para descripciones */
+}
+
+/* Específico para temas claros */
+.theme-cyan .diagnostico-card .list-group-item strong {
+    color: #00251a !important; /* Verde muy oscuro para cyan */
+}
+
+.theme-sand .diagnostico-card .list-group-item strong {
+    color: #1c0e0a !important; /* Marrón muy oscuro para sand */
+}
+
+.theme-sage .diagnostico-card .list-group-item strong {
+    color: #0d3a0f !important; /* Verde muy oscuro para sage */
+}
+
+.theme-sky .diagnostico-card .list-group-item strong {
+    color: #051f4a !important; /* Azul muy oscuro para sky */
+}
+</style>
 <h2>Diagnosticos</h2>
 
 <a href="" class="btn  btn-success mb-3">Descargar Excel</a>
@@ -10,7 +38,7 @@
 <input type="text" id="filterInput" class="form-control my-2" placeholder="Buscar por vehiculo, cliente, telefono, diagnostico, partes...">
 
 {% for diagnostico in diagnosticos %}
-<div class="card mb-2">
+<div class="card mb-2 diagnostico-card">
     <div class="card-body">
         <strong>Vehiculo:</strong> {{ diagnostico.vehiculo }}<br>
         <strong>Cliente:</strong> {{ diagnostico.vehiculo.cliente.nombre }}<br>

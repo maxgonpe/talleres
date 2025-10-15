@@ -5,7 +5,7 @@ from .models import Componente, Cliente, Cliente_Taller, Vehiculo,\
                     Venta, VentaItem, Repuesto, SesionVenta,\
                     CarritoItem, VentaPOS, VentaPOSItem, ConfiguracionPOS,\
                     Cotizacion, CotizacionItem, AdministracionTaller,\
-                    Compra, CompraItem
+                    Compra, CompraItem, VehiculoVersion
 
 class MecanicoForm(forms.ModelForm):
     class Meta:
@@ -484,3 +484,44 @@ class CompraItemInlineForm(forms.ModelForm):
             'precio_unitario': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             'recibido': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
+
+class VehiculoVersionForm(forms.ModelForm):
+    """Formulario para crear y editar vehículos"""
+    class Meta:
+        model = VehiculoVersion
+        fields = ['marca', 'modelo', 'anio_desde', 'anio_hasta']
+        widgets = {
+            'marca': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: Toyota, Honda, Nissan...',
+                'autocomplete': 'off'
+            }),
+            'modelo': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: Corolla, Civic, Sentra...',
+                'autocomplete': 'off'
+            }),
+            'anio_desde': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: 2015',
+                'min': '1900',
+                'max': '2030'
+            }),
+            'anio_hasta': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: 2020',
+                'min': '1900',
+                'max': '2030'
+            }),
+        }
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        anio_desde = cleaned_data.get('anio_desde')
+        anio_hasta = cleaned_data.get('anio_hasta')
+        
+        if anio_desde and anio_hasta:
+            if anio_desde > anio_hasta:
+                raise forms.ValidationError('El año de inicio no puede ser mayor al año final.')
+        
+        return cleaned_data

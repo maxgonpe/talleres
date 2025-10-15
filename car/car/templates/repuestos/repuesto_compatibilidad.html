@@ -1,0 +1,488 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Compatibilidad - {{ repuesto.nombre }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .compatibilidad-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 1rem;
+    }
+    
+    .compatibilidad-header {
+        background: var(--gradient);
+        color: var(--btn-fg);
+        padding: 2rem;
+        text-align: center;
+        border-radius: var(--border-radius-lg);
+        margin-bottom: 2rem;
+        box-shadow: var(--card-shadow);
+    }
+    
+    .compatibilidad-header h2 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .repuesto-info {
+        background: var(--card-bg);
+        border-radius: var(--border-radius-lg);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--card-shadow);
+    }
+    
+    .repuesto-info h4 {
+        color: var(--accent);
+        margin-bottom: 1rem;
+    }
+    
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    
+    .info-item {
+        background: var(--hover-bg);
+        padding: 0.75rem;
+        border-radius: var(--border-radius);
+        border-left: 3px solid var(--accent);
+    }
+    
+    .info-label {
+        font-weight: bold;
+        color: var(--accent);
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .info-value {
+        color: var(--fg);
+        font-size: 1rem;
+    }
+    
+    .compatibilidad-form {
+        background: var(--card-bg);
+        border-radius: var(--border-radius-lg);
+        padding: 2rem;
+        box-shadow: var(--card-shadow);
+    }
+    
+    .form-section {
+        margin-bottom: 2rem;
+    }
+    
+    .form-section h4 {
+        color: var(--accent);
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--accent);
+    }
+    
+    .vehiculos-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1rem;
+        max-height: 400px;
+        overflow-y: auto;
+        border: 1px solid var(--muted);
+        border-radius: var(--border-radius);
+        padding: 1rem;
+    }
+    
+    .vehiculo-item {
+        background: var(--hover-bg);
+        border: 2px solid var(--muted);
+        border-radius: var(--border-radius);
+        padding: 1rem;
+        transition: var(--transition);
+        cursor: pointer;
+    }
+    
+    .vehiculo-item:hover {
+        border-color: var(--accent);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .vehiculo-item.selected {
+        border-color: var(--accent);
+        background: var(--accent);
+        color: var(--btn-fg);
+    }
+    
+    .vehiculo-checkbox {
+        margin-right: 0.5rem;
+    }
+    
+    .vehiculo-info {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .vehiculo-marca {
+        font-weight: bold;
+        font-size: 1.1rem;
+    }
+    
+    .vehiculo-modelo {
+        font-size: 1rem;
+        opacity: 0.9;
+    }
+    
+    .vehiculo-anios {
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+    
+    .posicion-input {
+        margin-top: 0.5rem;
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid var(--muted);
+        border-radius: var(--border-radius);
+        background: var(--bg);
+        color: var(--fg);
+        font-size: 0.9rem;
+    }
+    
+    .posicion-input:focus {
+        border-color: var(--accent);
+        outline: none;
+        box-shadow: 0 0 0 0.2rem rgba(var(--accent), 0.25);
+    }
+    
+    .aplicaciones-actuales {
+        background: var(--card-bg);
+        border-radius: var(--border-radius-lg);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--card-shadow);
+    }
+    
+    .aplicacion-item {
+        background: var(--hover-bg);
+        border-left: 4px solid var(--accent);
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+        border-radius: var(--border-radius);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .aplicacion-info {
+        flex: 1;
+    }
+    
+    .aplicacion-vehiculo {
+        font-weight: bold;
+        color: var(--accent);
+        margin-bottom: 0.25rem;
+    }
+    
+    .aplicacion-posicion {
+        color: var(--fg);
+        font-size: 0.9rem;
+        opacity: 0.8;
+    }
+    
+    .btn-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 2rem;
+    }
+    
+    .btn-action {
+        padding: 0.75rem 2rem;
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        text-decoration: none;
+        transition: var(--transition);
+        border: none;
+        cursor: pointer;
+    }
+    
+    .btn-primary {
+        background: var(--accent);
+        color: var(--btn-fg);
+    }
+    
+    .btn-primary:hover {
+        background: var(--soft-coral);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    
+    .btn-secondary {
+        background: var(--muted);
+        color: var(--fg);
+    }
+    
+    .btn-secondary:hover {
+        background: var(--warm-gray);
+        transform: translateY(-2px);
+    }
+    
+    .search-vehiculos {
+        margin-bottom: 1rem;
+    }
+    
+    .search-input {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid var(--muted);
+        border-radius: var(--border-radius);
+        background: var(--bg);
+        color: var(--fg);
+        font-size: 1rem;
+    }
+    
+    .search-input:focus {
+        border-color: var(--accent);
+        outline: none;
+        box-shadow: 0 0 0 0.2rem rgba(var(--accent), 0.25);
+    }
+    
+    .no-aplicaciones {
+        text-align: center;
+        color: var(--muted);
+        font-style: italic;
+        padding: 2rem;
+    }
+    
+    @media (max-width: 768px) {
+        .compatibilidad-container {
+            padding: 0.5rem;
+        }
+        
+        .vehiculos-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .btn-actions {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="compatibilidad-container">
+    <!-- Header -->
+    <div class="compatibilidad-header">
+        <h2>🔗 Gestión de Compatibilidad</h2>
+        <p class="mb-0">Define qué vehículos son compatibles con este repuesto</p>
+    </div>
+
+    <!-- Información del Repuesto -->
+    <div class="repuesto-info">
+        <h4>📦 Información del Repuesto</h4>
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">Nombre</div>
+                <div class="info-value">{{ repuesto.nombre }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">SKU</div>
+                <div class="info-value">{{ repuesto.sku|default:"-" }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Marca</div>
+                <div class="info-value">{{ repuesto.marca|default:"-" }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Marca Vehículo</div>
+                <div class="info-value">{{ repuesto.marca_veh|default:"-" }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Aplicaciones Actuales -->
+    {% if aplicaciones_existentes %}
+    <div class="aplicaciones-actuales">
+        <h4>🚗 Vehículos Actualmente Compatibles</h4>
+        {% for aplicacion in aplicaciones_existentes %}
+        <div class="aplicacion-item">
+            <div class="aplicacion-info">
+                <div class="aplicacion-vehiculo">
+                    {{ aplicacion.version.marca }} {{ aplicacion.version.modelo }}
+                </div>
+                <div class="aplicacion-posicion">
+                    Años: {{ aplicacion.version.anio_desde }}-{{ aplicacion.version.anio_hasta }}
+                    {% if aplicacion.posicion %} • Posición: {{ aplicacion.posicion }}{% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="aplicaciones-actuales">
+        <h4>🚗 Vehículos Actualmente Compatibles</h4>
+        <div class="no-aplicaciones">
+            No hay vehículos configurados como compatibles para este repuesto.
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Formulario de Compatibilidad -->
+    <div class="compatibilidad-form">
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="form-section">
+                <h4>🔧 Seleccionar Vehículos Compatibles</h4>
+                
+                <!-- Búsqueda de vehículos -->
+                <div class="search-vehiculos">
+                    <input type="text" 
+                           id="search-vehiculos" 
+                           class="search-input" 
+                           placeholder="🔍 Buscar vehículos por marca, modelo o año..."
+                           autocomplete="off">
+                </div>
+                
+                <!-- Grid de vehículos -->
+                <div class="vehiculos-grid" id="vehiculos-grid">
+                    {% for version in versiones_disponibles %}
+                    <div class="vehiculo-item" 
+                         data-marca="{{ version.marca|lower }}" 
+                         data-modelo="{{ version.modelo|lower }}"
+                         data-anios="{{ version.anio_desde }}-{{ version.anio_hasta }}">
+                        <label style="display: flex; align-items: flex-start; cursor: pointer; width: 100%;">
+                            <input type="checkbox" 
+                                   name="versiones" 
+                                   value="{{ version.id }}" 
+                                   class="vehiculo-checkbox"
+                                   {% for aplicacion in aplicaciones_existentes %}
+                                       {% if aplicacion.version.id == version.id %}checked{% endif %}
+                                   {% endfor %}>
+                            <div class="vehiculo-info">
+                                <div class="vehiculo-marca">{{ version.marca }}</div>
+                                <div class="vehiculo-modelo">{{ version.modelo }}</div>
+                                <div class="vehiculo-anios">{{ version.anio_desde }} - {{ version.anio_hasta }}</div>
+                                <input type="text" 
+                                       name="posicion_{{ version.id }}" 
+                                       class="posicion-input" 
+                                       placeholder="Posición (opcional)"
+                                       {% for aplicacion in aplicaciones_existentes %}
+                                           {% if aplicacion.version.id == version.id %}value="{{ aplicacion.posicion }}"{% endif %}
+                                       {% endfor %}>
+                            </div>
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Botones de acción -->
+            <div class="btn-actions">
+                <button type="submit" class="btn-action btn-primary">
+                    💾 Guardar Compatibilidad
+                </button>
+                <a href="{% url 'repuesto_list' %}" class="btn-action btn-secondary">
+                    ← Volver al Listado
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('search-vehiculos');
+    const vehiculosGrid = document.getElementById('vehiculos-grid');
+    const vehiculoItems = vehiculosGrid.querySelectorAll('.vehiculo-item');
+    
+    // Función para filtrar vehículos
+    function filtrarVehiculos(termino) {
+        const terminoLower = termino.toLowerCase();
+        let vehiculosVisibles = 0;
+        
+        vehiculoItems.forEach(item => {
+            const marca = item.dataset.marca;
+            const modelo = item.dataset.modelo;
+            const anios = item.dataset.anios;
+            
+            const coincide = marca.includes(terminoLower) || 
+                           modelo.includes(terminoLower) || 
+                           anios.includes(terminoLower);
+            
+            if (coincide) {
+                item.style.display = 'block';
+                vehiculosVisibles++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+        
+        // Mostrar mensaje si no hay resultados
+        if (vehiculosVisibles === 0 && termino.length > 0) {
+            if (!document.getElementById('no-results-message')) {
+                const noResultsDiv = document.createElement('div');
+                noResultsDiv.id = 'no-results-message';
+                noResultsDiv.className = 'no-aplicaciones';
+                noResultsDiv.innerHTML = `🔍 No se encontraron vehículos que coincidan con "${termino}"`;
+                vehiculosGrid.appendChild(noResultsDiv);
+            }
+        } else {
+            const noResultsMessage = document.getElementById('no-results-message');
+            if (noResultsMessage) {
+                noResultsMessage.remove();
+            }
+        }
+    }
+    
+    // Event listener para la búsqueda
+    let searchTimeout;
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            const termino = this.value.trim();
+            filtrarVehiculos(termino);
+        }, 150);
+    });
+    
+    // Limpiar búsqueda con Escape
+    searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            this.value = '';
+            filtrarVehiculos('');
+            this.blur();
+        }
+    });
+    
+    // Auto-focus en la búsqueda
+    searchInput.focus();
+    
+    // Marcar items seleccionados visualmente
+    vehiculoItems.forEach(item => {
+        const checkbox = item.querySelector('input[type="checkbox"]');
+        if (checkbox.checked) {
+            item.classList.add('selected');
+        }
+        
+        checkbox.addEventListener('change', function() {
+            if (this.checked) {
+                item.classList.add('selected');
+            } else {
+                item.classList.remove('selected');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
