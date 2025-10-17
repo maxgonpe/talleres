@@ -77,9 +77,11 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.static',
             ],
         },
     },
@@ -155,3 +157,22 @@ MEDIA_ROOT = BASE_DIR / 'media'  # Ruta en el sistema de archivos
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Session configuration
+SESSION_COOKIE_AGE = 86400  # 24 horas
+SESSION_SAVE_EVERY_REQUEST = True  # Guardar sesión en cada request
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'  # Guardar sesiones en BD
+SESSION_COOKIE_NAME = 'talleres_sessionid'  # Nombre único para talleres
+SESSION_COOKIE_DOMAIN = None  # No compartir entre dominios
+
+# CSRF configuration
+CSRF_COOKIE_HTTPONLY = False  # Permitir acceso JS al token
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_NAME = 'talleres_csrftoken'  # Nombre único para talleres
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+    'https://*.netgogo.cl',
+]

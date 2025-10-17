@@ -98,3 +98,5 @@ class Command(BaseCommand):
                 f'   - Total carritos: {carritos_totales}'
             )
         )
+
+

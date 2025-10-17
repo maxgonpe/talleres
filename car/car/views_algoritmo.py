@@ -38,3 +38,5 @@ def ejecutar_algoritmo_relacion(request, umbral=0.6):
         'umbral': umbral,
         'ejecutado': True
     })
+
+

@@ -15,12 +15,11 @@
   <!-- CSS de colores -->
   <link rel="stylesheet" href="{% static 'css/colors.css' %}">
 
-  <!-- Aplicar tema inmediatamente -->
+  <!-- Evitar error antes de cargar body -->
   <script>
+    // Solo aplica color base para evitar parpadeo visual, sin usar document.body
     (function() {
       const saved = localStorage.getItem("theme") || "piedra";
-      document.body.className = `theme-${saved}`;
-      
       const themes = {
         piedra: { bg: "#2a374e", fg: "#e6e6e6" },
         charcoal: { bg: "#111827", fg: "#e5e7eb" },
@@ -31,10 +30,9 @@
         sage: { bg: "#f1f8e9", fg: "#1b5e20" },
         sky: { bg: "#e3f2fd", fg: "#0d47a1" }
       };
-      
       const theme = themes[saved] || themes.piedra;
-      document.body.style.backgroundColor = theme.bg;
-      document.body.style.color = theme.fg;
+      document.documentElement.style.backgroundColor = theme.bg;
+      document.documentElement.style.color = theme.fg;
     })();
   </script>
 
@@ -1235,24 +1233,17 @@
   <!-- jQuery -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
+  <!-- Script de temas seguro -->
   <script>
-    // Función para cambiar tema
     function setTheme(theme) {
-      // Limpiar clases previas
       document.body.className = document.body.className.replace(/theme-\w+/g, '').trim();
-
-      // Agregar nueva clase
       document.body.classList.add(`theme-${theme}`);
-      
-      // Guardar en localStorage
       localStorage.setItem("theme", theme);
-      
-      // Marcar botón activo
+
       document.querySelectorAll('.theme-btn').forEach(btn => {
         btn.style.border = '2px solid rgba(255,255,255,.85)';
         btn.style.transform = 'scale(1)';
       });
-      
       const activeBtn = document.querySelector(`.theme-btn.${theme}`);
       if (activeBtn) {
         activeBtn.style.border = '3px solid var(--btn-bg)';
@@ -1260,7 +1251,6 @@
       }
     }
 
-    // Aplicar tema al cargar
     document.addEventListener("DOMContentLoaded", function() {
       const saved = localStorage.getItem("theme") || "piedra";
       setTheme(saved);
