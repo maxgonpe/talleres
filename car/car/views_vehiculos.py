@@ -8,8 +8,9 @@ from .forms import VehiculoVersionForm
 
 @login_required
 def vehiculo_list(request):
-    """Lista todos los vehículos con búsqueda y paginación"""
+    """Lista todos los vehículos agrupados por marca con pestañas"""
     search_query = request.GET.get('search', '')
+    marca_activa = request.GET.get('marca', '')
     
     # Obtener todos los vehículos
     vehiculos = VehiculoVersion.objects.all().order_by('marca', 'modelo', 'anio_desde')
@@ -23,13 +24,42 @@ def vehiculo_list(request):
             Q(anio_hasta__icontains=search_query)
         )
     
-    # Paginación
-    paginator = Paginator(vehiculos, 20)  # 20 vehículos por página
+    # Agrupar por marca
+    marcas_data = {}
+    marcas_count = {}
+    for vehiculo in vehiculos:
+        marca = vehiculo.marca
+        if marca not in marcas_data:
+            marcas_data[marca] = []
+            marcas_count[marca] = 0
+        marcas_data[marca].append(vehiculo)
+        marcas_count[marca] += 1
+    
+    # Ordenar marcas alfabéticamente y crear lista con conteos
+    marcas_ordenadas = sorted(marcas_data.keys())
+    marcas_con_conteos = [(marca, marcas_count[marca]) for marca in marcas_ordenadas]
+    
+    # Si hay una marca activa específica, filtrar solo esa marca
+    if marca_activa and marca_activa in marcas_data:
+        vehiculos_filtrados = marcas_data[marca_activa]
+        marca_activa = marca_activa
+    else:
+        # Si no hay marca específica, mostrar todos los vehículos
+        vehiculos_filtrados = list(vehiculos)
+        marca_activa = None
+    
+    # Paginación para los vehículos filtrados
+    paginator = Paginator(vehiculos_filtrados, 20)  # 20 vehículos por página
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
     context = {
         'vehiculos': page_obj,
+        'marcas_data': marcas_data,
+        'marcas_count': marcas_count,
+        'marcas_ordenadas': marcas_ordenadas,
+        'marcas_con_conteos': marcas_con_conteos,
+        'marca_activa': marca_activa,
         'search_query': search_query,
         'total_vehiculos': vehiculos.count(),
     }

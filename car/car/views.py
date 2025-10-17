@@ -2398,6 +2398,21 @@ def repuesto_compatibilidad(request, pk):
     # Obtener todas las versiones de vehículos disponibles
     versiones_disponibles = VehiculoVersion.objects.all().order_by("marca", "modelo", "anio_desde")
     
+    # Agrupar por marca
+    marcas_data = {}
+    marcas_count = {}
+    for version in versiones_disponibles:
+        marca = version.marca
+        if marca not in marcas_data:
+            marcas_data[marca] = []
+            marcas_count[marca] = 0
+        marcas_data[marca].append(version)
+        marcas_count[marca] += 1
+    
+    # Ordenar marcas alfabéticamente y crear lista con conteos
+    marcas_ordenadas = sorted(marcas_data.keys())
+    marcas_con_conteos = [(marca, marcas_count[marca]) for marca in marcas_ordenadas]
+    
     if request.method == "POST":
         # Procesar el formulario
         versiones_seleccionadas = request.POST.getlist("versiones")
@@ -2425,6 +2440,10 @@ def repuesto_compatibilidad(request, pk):
         "repuesto": repuesto,
         "aplicaciones_existentes": aplicaciones_existentes,
         "versiones_disponibles": versiones_disponibles,
+        "marcas_data": marcas_data,
+        "marcas_count": marcas_count,
+        "marcas_ordenadas": marcas_ordenadas,
+        "marcas_con_conteos": marcas_con_conteos,
     }
     
     return render(request, "repuestos/repuesto_compatibilidad.html", context)

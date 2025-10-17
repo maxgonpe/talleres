@@ -84,6 +84,62 @@
         border-bottom: 2px solid var(--accent);
     }
     
+    .tab-nav-container {
+        margin-bottom: 1.5rem;
+        background: var(--card-bg);
+        border-radius: var(--border-radius-lg);
+        padding: 1rem;
+        box-shadow: var(--card-shadow);
+    }
+
+    .tab-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        border-bottom: 2px solid var(--muted);
+        padding-bottom: 0.5rem;
+    }
+
+    .tab-btn {
+        padding: 0.75rem 1.25rem;
+        border: none;
+        background-color: var(--hover-bg);
+        color: var(--fg);
+        cursor: pointer;
+        border-radius: var(--border-radius);
+        transition: all 0.3s ease;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+    }
+
+    .tab-btn:hover {
+        background-color: var(--accent);
+        color: var(--btn-fg);
+        transform: translateY(-2px);
+        box-shadow: var(--card-shadow);
+    }
+
+    .tab-btn.active {
+        background-color: var(--accent);
+        color: var(--btn-fg);
+        box-shadow: var(--card-shadow);
+    }
+
+    .tab-count {
+        background-color: rgba(255, 255, 255, 0.2);
+        color: var(--btn-fg);
+        padding: 0.2em 0.6em;
+        border-radius: 1em;
+        font-size: 0.8em;
+    }
+
+    .vehiculos-content {
+        margin-top: 1.5rem;
+    }
+
     .vehiculos-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -353,36 +409,62 @@
                            autocomplete="off">
                 </div>
                 
-                <!-- Grid de vehículos -->
-                <div class="vehiculos-grid" id="vehiculos-grid">
-                    {% for version in versiones_disponibles %}
-                    <div class="vehiculo-item" 
-                         data-marca="{{ version.marca|lower }}" 
-                         data-modelo="{{ version.modelo|lower }}"
-                         data-anios="{{ version.anio_desde }}-{{ version.anio_hasta }}">
-                        <label style="display: flex; align-items: flex-start; cursor: pointer; width: 100%;">
-                            <input type="checkbox" 
-                                   name="versiones" 
-                                   value="{{ version.id }}" 
-                                   class="vehiculo-checkbox"
-                                   {% for aplicacion in aplicaciones_existentes %}
-                                       {% if aplicacion.version.id == version.id %}checked{% endif %}
-                                   {% endfor %}>
-                            <div class="vehiculo-info">
-                                <div class="vehiculo-marca">{{ version.marca }}</div>
-                                <div class="vehiculo-modelo">{{ version.modelo }}</div>
-                                <div class="vehiculo-anios">{{ version.anio_desde }} - {{ version.anio_hasta }}</div>
-                                <input type="text" 
-                                       name="posicion_{{ version.id }}" 
-                                       class="posicion-input" 
-                                       placeholder="Posición (opcional)"
-                                       {% for aplicacion in aplicaciones_existentes %}
-                                           {% if aplicacion.version.id == version.id %}value="{{ aplicacion.posicion }}"{% endif %}
-                                       {% endfor %}>
-                            </div>
-                        </label>
+                <!-- Pestañas de Marcas -->
+                <div class="tab-nav-container">
+                    <div class="tab-nav">
+                        <button type="button" 
+                                class="tab-btn active" 
+                                data-marca="todos"
+                                onclick="mostrarMarca('todos')">
+                            <i class="fas fa-list"></i>
+                            Todos los Vehículos
+                            <span class="tab-count">{{ versiones_disponibles|length }}</span>
+                        </button>
+                        {% for marca, count in marcas_con_conteos %}
+                        <button type="button" 
+                                class="tab-btn" 
+                                data-marca="{{ marca|lower }}"
+                                onclick="mostrarMarca('{{ marca|lower }}')">
+                            <i class="fas fa-car"></i>
+                            {{ marca }}
+                            <span class="tab-count">{{ count }}</span>
+                        </button>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
+                </div>
+                
+                <!-- Contenido de vehículos -->
+                <div class="vehiculos-content">
+                    <div class="vehiculos-grid" id="vehiculos-grid">
+                        {% for version in versiones_disponibles %}
+                        <div class="vehiculo-item" 
+                             data-marca="{{ version.marca|lower }}" 
+                             data-modelo="{{ version.modelo|lower }}"
+                             data-anios="{{ version.anio_desde }}-{{ version.anio_hasta }}">
+                            <label style="display: flex; align-items: flex-start; cursor: pointer; width: 100%;">
+                                <input type="checkbox" 
+                                       name="versiones" 
+                                       value="{{ version.id }}" 
+                                       class="vehiculo-checkbox"
+                                       {% for aplicacion in aplicaciones_existentes %}
+                                           {% if aplicacion.version.id == version.id %}checked{% endif %}
+                                       {% endfor %}>
+                                <div class="vehiculo-info">
+                                    <div class="vehiculo-marca">{{ version.marca }}</div>
+                                    <div class="vehiculo-modelo">{{ version.modelo }}</div>
+                                    <div class="vehiculo-anios">{{ version.anio_desde }} - {{ version.anio_hasta }}</div>
+                                    <input type="text" 
+                                           name="posicion_{{ version.id }}" 
+                                           class="posicion-input" 
+                                           placeholder="Posición (opcional)"
+                                           {% for aplicacion in aplicaciones_existentes %}
+                                               {% if aplicacion.version.id == version.id %}value="{{ aplicacion.posicion }}"{% endif %}
+                                           {% endfor %}>
+                                </div>
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
             
@@ -402,14 +484,31 @@
 
 {% block extra_js %}
 <script>
+let currentMarca = 'todos';
+let currentSearchTerm = '';
+
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('search-vehiculos');
     const vehiculosGrid = document.getElementById('vehiculos-grid');
     const vehiculoItems = vehiculosGrid.querySelectorAll('.vehiculo-item');
     
-    // Función para filtrar vehículos
-    function filtrarVehiculos(termino) {
-        const terminoLower = termino.toLowerCase();
+    // Función para mostrar marca específica
+    window.mostrarMarca = function(marca) {
+        currentMarca = marca;
+        
+        // Actualizar pestañas activas
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-marca="${marca}"]`).classList.add('active');
+        
+        // Aplicar filtros
+        aplicarFiltros();
+    };
+    
+    // Función para aplicar filtros (marca + búsqueda)
+    function aplicarFiltros() {
+        const terminoLower = currentSearchTerm.toLowerCase();
         let vehiculosVisibles = 0;
         
         vehiculoItems.forEach(item => {
@@ -417,11 +516,16 @@ document.addEventListener('DOMContentLoaded', function() {
             const modelo = item.dataset.modelo;
             const anios = item.dataset.anios;
             
-            const coincide = marca.includes(terminoLower) || 
-                           modelo.includes(terminoLower) || 
-                           anios.includes(terminoLower);
+            // Filtro por marca
+            const coincideMarca = currentMarca === 'todos' || marca === currentMarca;
             
-            if (coincide) {
+            // Filtro por búsqueda
+            const coincideBusqueda = currentSearchTerm === '' || 
+                                   marca.includes(terminoLower) || 
+                                   modelo.includes(terminoLower) || 
+                                   anios.includes(terminoLower);
+            
+            if (coincideMarca && coincideBusqueda) {
                 item.style.display = 'block';
                 vehiculosVisibles++;
             } else {
@@ -430,20 +534,31 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         // Mostrar mensaje si no hay resultados
-        if (vehiculosVisibles === 0 && termino.length > 0) {
-            if (!document.getElementById('no-results-message')) {
+        const noResultsMessage = document.getElementById('no-results-message');
+        if (vehiculosVisibles === 0 && (currentSearchTerm.length > 0 || currentMarca !== 'todos')) {
+            if (!noResultsMessage) {
                 const noResultsDiv = document.createElement('div');
                 noResultsDiv.id = 'no-results-message';
                 noResultsDiv.className = 'no-aplicaciones';
-                noResultsDiv.innerHTML = `🔍 No se encontraron vehículos que coincidan con "${termino}"`;
+                let messageText = '🔍 No se encontraron vehículos';
+                if (currentSearchTerm.length > 0) {
+                    messageText += ` que coincidan con "${currentSearchTerm}"`;
+                }
+                if (currentMarca !== 'todos') {
+                    messageText += ` en la marca "${currentMarca}"`;
+                }
+                noResultsDiv.innerHTML = messageText;
                 vehiculosGrid.appendChild(noResultsDiv);
             }
-        } else {
-            const noResultsMessage = document.getElementById('no-results-message');
-            if (noResultsMessage) {
-                noResultsMessage.remove();
-            }
+        } else if (noResultsMessage) {
+            noResultsMessage.remove();
         }
+    }
+    
+    // Función para filtrar vehículos (mantener compatibilidad)
+    function filtrarVehiculos(termino) {
+        currentSearchTerm = termino;
+        aplicarFiltros();
     }
     
     // Event listener para la búsqueda
