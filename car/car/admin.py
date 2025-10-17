@@ -145,7 +145,7 @@ class PrefijoRepuestoAdmin(admin.ModelAdmin):
 
 @admin.register(Repuesto)
 class RepuestoAdmin(admin.ModelAdmin):
-    list_display = ('id', 'sku', 'oem', 'referencia', 'nombre', 'precio_costo', 'precio_venta', 'origen_repuesto', 'marca_veh')
+    list_display = ('id', 'sku', 'oem', 'referencia', 'nombre', 'precio_costo', 'precio_venta', 'stock', 'origen_repuesto', 'marca_veh')
     search_fields = ('nombre', 'oem', 'sku', 'codigo_barra', 'origen_repuesto', 'cod_prov', 'marca_veh', 'tipo_de_motor')
     list_filter = ("marca", "posicion", "origen_repuesto", "marca_veh")
     fieldsets = (
@@ -155,8 +155,8 @@ class RepuestoAdmin(admin.ModelAdmin):
         ('Especificaciones', {
             'fields': ('medida', 'posicion', 'unidad', 'codigo_barra')
         }),
-        ('Precios', {
-            'fields': ('precio_costo', 'precio_venta')
+        ('Precios y Stock', {
+            'fields': ('precio_costo', 'precio_venta', 'stock')
         }),
         ('Información Adicional', {
             'fields': ('origen_repuesto', 'cod_prov', 'marca_veh', 'tipo_de_motor'),
@@ -175,10 +175,62 @@ class TrabajoAccionAdmin(admin.ModelAdmin):
     list_display = ('id', 'trabajo','componente', 'accion', 'precio_mano_obra')
 
 
-admin.site.register(RepuestoEnStock)
+@admin.register(RepuestoAplicacion)
+class RepuestoAplicacionAdmin(admin.ModelAdmin):
+    list_display = ('id', 'repuesto', 'version', 'posicion', 'motor', 'carroceria')
+    list_filter = ('repuesto__marca_veh', 'version__marca', 'version__modelo', 'motor', 'carroceria')
+    search_fields = ('repuesto__nombre', 'repuesto__sku', 'version__marca', 'version__modelo', 'posicion', 'motor', 'carroceria')
+    autocomplete_fields = ['repuesto', 'version']
+    
+    fieldsets = (
+        ('Información Básica', {
+            'fields': ('repuesto', 'version')
+        }),
+        ('Detalles de Aplicación', {
+            'fields': ('posicion', 'motor', 'carroceria')
+        }),
+    )
+
+@admin.register(VehiculoVersion)
+class VehiculoVersionAdmin(admin.ModelAdmin):
+    list_display = ('id', 'marca', 'modelo', 'anio_desde', 'anio_hasta')
+    list_filter = ('marca', 'anio_desde', 'anio_hasta')
+    search_fields = ('marca', 'modelo')
+    ordering = ('marca', 'modelo', 'anio_desde')
+    
+    fieldsets = (
+        ('Información del Vehículo', {
+            'fields': ('marca', 'modelo')
+        }),
+        ('Años de Aplicación', {
+            'fields': ('anio_desde', 'anio_hasta')
+        }),
+    )
+
+@admin.register(RepuestoEnStock)
+class RepuestoEnStockAdmin(admin.ModelAdmin):
+    list_display = ('id', 'repuesto', 'deposito', 'proveedor', 'stock', 'reservado', 'stock_disponible', 'precio_compra', 'precio_venta')
+    list_filter = ('deposito', 'proveedor', 'repuesto__marca_veh')
+    search_fields = ('repuesto__nombre', 'repuesto__sku', 'deposito', 'proveedor')
+    autocomplete_fields = ['repuesto']
+    
+    fieldsets = (
+        ('Información Básica', {
+            'fields': ('repuesto', 'deposito', 'proveedor')
+        }),
+        ('Stock', {
+            'fields': ('stock', 'reservado')
+        }),
+        ('Precios', {
+            'fields': ('precio_compra', 'precio_venta')
+        }),
+    )
+    
+    def stock_disponible(self, obj):
+        return obj.stock - obj.reservado
+    stock_disponible.short_description = 'Stock Disponible'
+
 admin.site.register(StockMovimiento)
-admin.site.register(VehiculoVersion)
-admin.site.register(RepuestoAplicacion)
 #admin.site.register(TrabajoAccion)
 admin.site.register(TrabajoFoto)
 admin.site.register(TrabajoRepuesto)

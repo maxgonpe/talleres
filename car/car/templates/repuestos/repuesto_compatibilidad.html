@@ -197,8 +197,14 @@
         opacity: 0.8;
     }
     
-    .posicion-input {
+    .campos-compatibilidad {
         margin-top: 0.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .posicion-input {
         width: 100%;
         padding: 0.5rem;
         border: 1px solid var(--muted);
@@ -378,6 +384,8 @@
                 <div class="aplicacion-posicion">
                     Años: {{ aplicacion.version.anio_desde }}-{{ aplicacion.version.anio_hasta }}
                     {% if aplicacion.posicion %} • Posición: {{ aplicacion.posicion }}{% endif %}
+                    {% if aplicacion.motor %} • Motor: {{ aplicacion.motor }}{% endif %}
+                    {% if aplicacion.carroceria %} • Carrocería: {{ aplicacion.carroceria }}{% endif %}
                 </div>
             </div>
         </div>
@@ -453,13 +461,32 @@
                                     <div class="vehiculo-marca">{{ version.marca }}</div>
                                     <div class="vehiculo-modelo">{{ version.modelo }}</div>
                                     <div class="vehiculo-anios">{{ version.anio_desde }} - {{ version.anio_hasta }}</div>
-                                    <input type="text" 
-                                           name="posicion_{{ version.id }}" 
-                                           class="posicion-input" 
-                                           placeholder="Posición (opcional)"
-                                           {% for aplicacion in aplicaciones_existentes %}
-                                               {% if aplicacion.version.id == version.id %}value="{{ aplicacion.posicion }}"{% endif %}
-                                           {% endfor %}>
+                                    
+                                    <div class="campos-compatibilidad">
+                                        <input type="text" 
+                                               name="posicion_{{ version.id }}" 
+                                               class="posicion-input" 
+                                               placeholder="Posición (opcional)"
+                                               {% for aplicacion in aplicaciones_existentes %}
+                                                   {% if aplicacion.version.id == version.id %}value="{{ aplicacion.posicion }}"{% endif %}
+                                               {% endfor %}>
+                                        
+                                        <input type="text" 
+                                               name="motor_{{ version.id }}" 
+                                               class="posicion-input" 
+                                               placeholder="Motor (opcional)"
+                                               {% for aplicacion in aplicaciones_existentes %}
+                                                   {% if aplicacion.version.id == version.id %}value="{{ aplicacion.motor }}"{% endif %}
+                                               {% endfor %}>
+                                        
+                                        <input type="text" 
+                                               name="carroceria_{{ version.id }}" 
+                                               class="posicion-input" 
+                                               placeholder="Carrocería (opcional)"
+                                               {% for aplicacion in aplicaciones_existentes %}
+                                                   {% if aplicacion.version.id == version.id %}value="{{ aplicacion.carroceria }}"{% endif %}
+                                               {% endfor %}>
+                                    </div>
                                 </div>
                             </label>
                         </div>

@@ -190,6 +190,132 @@
 
 
 
+<!-- ---------------- CSS PARA ACORDEÓN ---------------- -->
+<style>
+/* Mejorar contraste del acordeón en temas oscuros */
+.accordion-button {
+    color: #2c3e50 !important; /* Texto oscuro para mejor contraste */
+    background-color: var(--bs-accordion-bg, #fff);
+}
+
+.accordion-button:not(.collapsed) {
+    color: #1a252f !important; /* Texto más oscuro cuando está expandido */
+    background-color: var(--bs-accordion-active-bg, #e7f1ff);
+}
+
+.accordion-button:focus {
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.accordion-body {
+    color: #2c3e50 !important; /* Texto oscuro en el cuerpo del acordeón */
+    background-color: var(--bs-accordion-bg, #fff);
+}
+
+.form-check-label {
+    color: #2c3e50 !important; /* Texto oscuro para las etiquetas de checkboxes */
+}
+
+.text-muted {
+    color: #6c757d !important; /* Color para texto secundario */
+}
+
+/* Asegurar que el texto sea visible en temas oscuros */
+[data-bs-theme="dark"] .accordion-button {
+    color: #2c3e50 !important;
+    background-color: #f8f9fa !important;
+}
+
+[data-bs-theme="dark"] .accordion-button:not(.collapsed) {
+    color: #1a252f !important;
+    background-color: #e9ecef !important;
+}
+
+[data-bs-theme="dark"] .accordion-body {
+    color: #2c3e50 !important;
+    background-color: #f8f9fa !important;
+}
+
+[data-bs-theme="dark"] .form-check-label {
+    color: #2c3e50 !important;
+}
+
+[data-bs-theme="dark"] .text-muted {
+    color: #6c757d !important;
+}
+
+/* Extender el texto negro a todos los elementos dentro del acordeón - MÁS AGRESIVO */
+[data-bs-theme="dark"] .accordion-body,
+[data-bs-theme="dark"] .accordion-body *,
+[data-bs-theme="dark"] .accordion-body p,
+[data-bs-theme="dark"] .accordion-body div,
+[data-bs-theme="dark"] .accordion-body span,
+[data-bs-theme="dark"] .accordion-body label,
+[data-bs-theme="dark"] .accordion-body .form-check,
+[data-bs-theme="dark"] .accordion-body .form-check-label {
+    color: #2c3e50 !important;
+    background-color: #f8f9fa !important;
+}
+
+[data-bs-theme="dark"] .accordion-body .form-check-input {
+    background-color: #fff !important;
+    border-color: #6c757d !important;
+}
+
+[data-bs-theme="dark"] .accordion-body .form-check-input:checked {
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+}
+
+[data-bs-theme="dark"] .accordion-body .form-check-input:focus {
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+}
+
+/* Forzar texto negro en temas oscuros - MÁXIMA PRIORIDAD */
+body[data-bs-theme="dark"] .accordion-body * {
+    color: #2c3e50 !important;
+}
+
+body[data-bs-theme="dark"] .accordion-body .form-check-label {
+    color: #2c3e50 !important;
+    background-color: transparent !important;
+}
+
+/* Asegurar que el texto sea visible incluso si hay otros estilos */
+.accordion-body .form-check-label {
+    color: #2c3e50 !important;
+}
+
+[data-bs-theme="dark"] .accordion-body .form-check-label {
+    color: #2c3e50 !important;
+    background-color: transparent !important;
+}
+
+/* CSS adicional para forzar visibilidad del texto */
+.accordion-body .form-check-label,
+.accordion-body label[for^="comp-"] {
+    color: #2c3e50 !important;
+    font-weight: normal !important;
+}
+
+/* Sobrescribir cualquier estilo que pueda estar ocultando el texto */
+.accordion-body * {
+    color: inherit !important;
+}
+
+.accordion-body .form-check-label {
+    color: #2c3e50 !important;
+}
+
+/* Para temas oscuros, forzar texto negro */
+[data-bs-theme="dark"] .accordion-body .form-check-label,
+[data-bs-theme="dark"] .accordion-body label {
+    color: #2c3e50 !important;
+    background-color: transparent !important;
+    text-shadow: none !important;
+}
+</style>
+
 <!-- ---------------- SCRIPTS (TODO integrado aquí) ---------------- -->
 <script src="{% static 'js/ingreso.js' %}"></script>
 <script src="{% static 'js/plano-interactivo.js' %}"></script>

@@ -516,6 +516,8 @@ class RepuestoAplicacion(models.Model):
     repuesto = models.ForeignKey(Repuesto, on_delete=models.CASCADE, related_name="aplicaciones")
     version = models.ForeignKey(VehiculoVersion, on_delete=models.CASCADE)
     posicion = models.CharField(max_length=80, blank=True)  # opcional, sinon usar repuesto.posicion
+    motor = models.CharField(max_length=100, blank=True, null=True, verbose_name="Motor")
+    carroceria = models.CharField(max_length=100, blank=True, null=True, verbose_name="Carrocería")
 
     class Meta:
         unique_together = ("repuesto", "version")

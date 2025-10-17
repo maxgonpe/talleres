@@ -525,3 +525,44 @@ class VehiculoVersionForm(forms.ModelForm):
                 raise forms.ValidationError('El año de inicio no puede ser mayor al año final.')
         
         return cleaned_data
+
+
+class RepuestoForm(forms.ModelForm):
+    """Formulario para Repuesto con sincronización automática de stock"""
+    class Meta:
+        model = Repuesto
+        fields = ['nombre', 'marca', 'descripcion', 'sku', 'oem', 'codigo_barra', 
+                 'referencia', 'cod_prov', 'medida', 'posicion', 'unidad', 
+                 'origen_repuesto', 'marca_veh', 'tipo_de_motor', 'precio_costo', 
+                 'precio_venta', 'stock']
+        widgets = {
+            'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del repuesto'}),
+            'marca': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Marca del repuesto'}),
+            'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Descripción detallada'}),
+            'sku': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Se genera automáticamente'}),
+            'oem': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Código del fabricante'}),
+            'codigo_barra': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Código de barras'}),
+            'referencia': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Referencia del proveedor'}),
+            'cod_prov': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Código del proveedor'}),
+            'medida': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: 258x22mm, 10x1.25'}),
+            'posicion': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: freno delantero, motor'}),
+            'unidad': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'pieza, metro, litro, etc.'}),
+            'origen_repuesto': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Original, Alternativo, Reconstruido'}),
+            'marca_veh': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Toyota, Honda, Ford'}),
+            'tipo_de_motor': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '1.6L, 2.0L Turbo, V6, etc.'}),
+            'precio_costo': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': '0.00'}),
+            'precio_venta': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': '0.00'}),
+            'stock': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'placeholder': '0'}),
+        }
+    
+    def save(self, commit=True):
+        """Guarda el repuesto y sincroniza automáticamente el stock"""
+        repuesto = super().save(commit=commit)
+        
+        if commit:
+            # Importar aquí para evitar importaciones circulares
+            from .views import clone_repuesto_to_stock
+            # Sincronizar automáticamente con RepuestoEnStock
+            clone_repuesto_to_stock(repuesto)
+        
+        return repuesto

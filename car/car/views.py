@@ -18,6 +18,7 @@ from django.db import transaction
 from django.http import HttpResponse
 from django.db.models import Sum
 from django.db.models import Q
+from .forms import RepuestoForm
 import pandas as pd
 from io import BytesIO
 from reportlab.lib.pagesizes import letter, A4
@@ -1923,22 +1924,18 @@ class RepuestoListView(ListView):
         # Solo seleccionar campos que existen en la base de datos
         return Repuesto.objects.all().select_related()
 
-'''
 class RepuestoCreateView(CreateView):
     model = Repuesto
-    fields = ["nombre", "marca", "descripcion", "medida", "posicion",
-              "unidad", "precio_costo", "precio_venta", "codigo_barra"]
+    form_class = RepuestoForm
     template_name = "repuestos/repuesto_form.html"
     success_url = reverse_lazy("repuesto_list")
 
 
 class RepuestoUpdateView(UpdateView):
     model = Repuesto
-    fields = ["nombre", "marca", "descripcion", "medida", "posicion",
-              "unidad", "precio_costo", "precio_venta", "codigo_barra"]
+    form_class = RepuestoForm
     template_name = "repuestos/repuesto_form.html"
     success_url = reverse_lazy("repuesto_list")
-'''
 
 class RepuestoDeleteView(DeleteView):
     model = Repuesto
@@ -1995,7 +1992,7 @@ def clone_repuesto_to_stock(repuesto: Repuesto, deposito: str = "bodega-principa
     Retorna la instancia de RepuestoEnStock creada/actualizada.
     """
     defaults = {
-        "stock": 0,  # Stock inicial por defecto
+        "stock": repuesto.stock or 0,  # Usar el stock del repuesto, o 0 si es None
         "reservado": 0,
         "precio_compra": repuesto.precio_costo,
         "precio_venta": repuesto.precio_venta,
@@ -2009,46 +2006,55 @@ def clone_repuesto_to_stock(repuesto: Repuesto, deposito: str = "bodega-principa
     )
 
     if not created:
-        # Mantener el stock existente si no se especifica uno nuevo
-        pass
+        # Actualizar precios si han cambiado
         if repuesto.precio_costo is not None:
             repstk.precio_compra = repuesto.precio_costo
         if repuesto.precio_venta is not None:
             repstk.precio_venta = repuesto.precio_venta
+        
+        # SIEMPRE sincronizar el stock - esto es lo que queremos para simplificar
+        if repuesto.stock is not None:
+            repstk.stock = repuesto.stock
+            
         repstk.save()
 
     return repstk
 
 
+def sincronizar_stock_repuestos():
+    """
+    Función para sincronizar el stock de repuestos existentes que no tienen
+    registro en RepuestoEnStock o que tienen stock diferente.
+    """
+    repuestos_sin_stock = Repuesto.objects.filter(stocks__isnull=True)
+    repuestos_con_stock_diferente = []
+    
+    for repuesto in Repuesto.objects.all():
+        if repuesto.stocks.exists():
+            from django.db.models import Sum
+            stock_total = repuesto.stocks.aggregate(total=Sum('stock'))['total'] or 0
+            if repuesto.stock != stock_total:
+                repuestos_con_stock_diferente.append(repuesto)
+    
+    print(f"Repuestos sin registro en RepuestoEnStock: {repuestos_sin_stock.count()}")
+    print(f"Repuestos con stock desincronizado: {len(repuestos_con_stock_diferente)}")
+    
+    # Crear registros faltantes
+    for repuesto in repuestos_sin_stock:
+        if repuesto.stock and repuesto.stock > 0:
+            clone_repuesto_to_stock(repuesto)
+            print(f"Creado RepuestoEnStock para: {repuesto.nombre} (stock: {repuesto.stock})")
+    
+    # Sincronizar stocks diferentes
+    for repuesto in repuestos_con_stock_diferente:
+        stock_obj = repuesto.stocks.first()
+        if stock_obj:
+            stock_obj.stock = repuesto.stock
+            stock_obj.save()
+            print(f"Sincronizado stock para: {repuesto.nombre} (stock: {repuesto.stock})")
+
+
 # === Vistas: crear/editar Repuesto clonando a RepuestoEnStock ===
-class RepuestoCreateView(CreateView):
-    model = Repuesto
-    form_class = RepuestoForm
-    template_name = "repuestos/repuesto_form.html"
-    success_url = reverse_lazy("repuesto_list")
-
-    def form_valid(self, form):
-        response = super().form_valid(form)
-        try:
-            clone_repuesto_to_stock(self.object)
-        except Exception:
-            pass
-        return response
-
-
-class RepuestoUpdateView(UpdateView):
-    model = Repuesto
-    form_class = RepuestoForm
-    template_name = "repuestos/repuesto_form.html"
-    success_url = reverse_lazy("repuesto_list")
-
-    def form_valid(self, form):
-        response = super().form_valid(form)
-        try:
-            clone_repuesto_to_stock(self.object)
-        except Exception:
-            pass
-        return response
 
 
 @login_required
@@ -2425,10 +2431,14 @@ def repuesto_compatibilidad(request, pk):
             try:
                 version = VehiculoVersion.objects.get(id=version_id)
                 posicion = request.POST.get(f"posicion_{version_id}", "")
+                motor = request.POST.get(f"motor_{version_id}", "")
+                carroceria = request.POST.get(f"carroceria_{version_id}", "")
                 RepuestoAplicacion.objects.create(
                     repuesto=repuesto,
                     version=version,
-                    posicion=posicion
+                    posicion=posicion,
+                    motor=motor,
+                    carroceria=carroceria
                 )
             except VehiculoVersion.DoesNotExist:
                 continue
