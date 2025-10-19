@@ -1471,7 +1471,7 @@ def trabajo_detalle(request, pk):
                 messages.success(request, f"Acción marcada como {'completada' if accion.completado else 'pendiente'}.")
             except TrabajoAccion.DoesNotExist:
                 messages.error(request, "Acción no encontrada.")
-            return redirect("trabajo_detalle", pk=trabajo.pk)
+            return redirect_with_tab("acciones")
 
         # 🔹 Eliminar acción
         elif "eliminar_accion" in request.POST:
@@ -1482,7 +1482,7 @@ def trabajo_detalle(request, pk):
                 messages.success(request, "Acción eliminada.")
             except TrabajoAccion.DoesNotExist:
                 messages.error(request, "Acción no encontrada.")
-            return redirect("trabajo_detalle", pk=trabajo.pk)
+            return redirect_with_tab("acciones")
 
         # 🔹 Agregar repuesto
         elif "agregar_repuesto" in request.POST:
@@ -1519,7 +1519,7 @@ def trabajo_detalle(request, pk):
                 messages.success(request, f"Repuesto marcado como {'completado' if repuesto.completado else 'pendiente'}.")
             except TrabajoRepuesto.DoesNotExist:
                 messages.error(request, "Repuesto no encontrado.")
-            return redirect("trabajo_detalle", pk=trabajo.pk)
+            return redirect_with_tab("repuestos")
 
         # 🔹 Eliminar repuesto
         elif "eliminar_repuesto" in request.POST:
@@ -1530,7 +1530,7 @@ def trabajo_detalle(request, pk):
                 messages.success(request, "Repuesto eliminado.")
             except TrabajoRepuesto.DoesNotExist:
                 messages.error(request, "Repuesto no encontrado.")
-            return redirect("trabajo_detalle", pk=trabajo.pk)
+            return redirect_with_tab("repuestos")
 
         # 🔹 Subir foto
         elif "subir_foto" in request.POST:
@@ -1541,7 +1541,7 @@ def trabajo_detalle(request, pk):
                 foto.descripcion = request.POST.get("descripcion", "")
                 foto.save()
                 messages.success(request, "Foto subida con éxito.")
-                return redirect("trabajo_detalle", pk=trabajo.pk)
+                return redirect_with_tab("fotos")
 
         # 🔹 Eliminar foto
         elif "eliminar_foto" in request.POST:
@@ -1552,7 +1552,7 @@ def trabajo_detalle(request, pk):
                 messages.success(request, "Foto eliminada.")
             except TrabajoFoto.DoesNotExist:
                 messages.error(request, "Foto no encontrada.")
-            return redirect("trabajo_detalle", pk=trabajo.pk)
+            return redirect_with_tab("fotos")
 
         # 🔹 Cambiar estado del trabajo
         elif "cambiar_estado" in request.POST:
@@ -1567,7 +1567,7 @@ def trabajo_detalle(request, pk):
                     trabajo.fecha_fin = None
                 trabajo.save()
                 messages.success(request, f"Trabajo actualizado a {trabajo.get_estado_display()}.")
-            return redirect("trabajo_detalle", pk=trabajo.pk)
+            return redirect_with_tab("estado")
 
         # 🔹 Toggle acción completada / pendiente (método anterior)
         elif "accion_toggle" in request.POST:
