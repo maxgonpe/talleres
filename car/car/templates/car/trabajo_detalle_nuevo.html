@@ -619,47 +619,83 @@
             <div class="info-card">
                 <h5>🛠️ Acciones del Trabajo</h5>
                 
-                <!-- Botón para agregar acción -->
-                <button class="btn btn-success btn-toggle-form" onclick="toggleAddForm('accion')">
-                    ➕ Agregar Acción
-                </button>
-                
-                <!-- Formulario para agregar acción -->
-                <div id="add-accion-form" class="add-form">
-                    <form method="post">
-                        {% csrf_token %}
-                        <div class="form-group">
-                            <label>Componente:</label>
-                            <select name="componente" class="form-control" required>
-                                <option value="">Seleccionar componente...</option>
-                                {% for componente in componentes_disponibles %}
-                                    <option value="{{ componente.id }}">{{ componente.nombre }}</option>
-                                {% endfor %}
-                            </select>
+                <!-- Acordeón de Componentes (como en ingreso.html) -->
+                <h6 class="mt-3 mb-2">📋 Seleccionar Componentes</h6>
+                <div class="accordion" id="componentesAccordion">
+                    {% for padre in componentes %}
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="heading-{{ padre.id }}">
+                                <button class="accordion-button collapsed" type="button"
+                                        data-bs-toggle="collapse" data-bs-target="#collapse-{{ padre.id }}"
+                                        aria-expanded="false" aria-controls="collapse-{{ padre.id }}">
+                                    {{ padre.nombre }}
+                                </button>
+                            </h2>
+                            <div id="collapse-{{ padre.id }}" class="accordion-collapse collapse"
+                                 aria-labelledby="heading-{{ padre.id }}" data-bs-parent="#componentesAccordion">
+                                <div class="accordion-body">
+                                    {% for hijo in padre.hijos.all %}
+                                        <div class="form-check">
+                                            <input class="form-check-input componente-checkbox"
+                                                   type="checkbox"
+                                                   name="componentes_seleccionados"
+                                                   value="{{ hijo.id }}"
+                                                   id="comp-{{ hijo.id }}"
+                                                   data-componente-id="{{ hijo.id }}"
+                                                   data-componente-nombre="{{ hijo.nombre }}"
+                                                   onclick="console.log('🎯 CLICK EN CHECKBOX:', this.id, this.dataset.componenteId, this.dataset.componenteNombre, 'Checked:', this.checked); if(this.checked) { agregarComponenteSeleccionado(this.dataset.componenteId, this.dataset.componenteNombre); } else { removerComponenteSeleccionado(this.dataset.componenteId); }">
+                                            <label class="form-check-label" for="comp-{{ hijo.id }}">
+                                                {{ hijo.nombre }}
+                                            </label>
+                                        </div>
+                                    {% empty %}
+                                        <p class="text-muted small">No hay subcomponentes registrados.</p>
+                                    {% endfor %}
+                                </div>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label>Acción:</label>
-                            <select name="accion" class="form-control" required>
-                                <option value="">Seleccionar acción...</option>
-                                {% for accion in acciones_disponibles %}
-                                    <option value="{{ accion.id }}">{{ accion.nombre }}</option>
-                                {% endfor %}
-                            </select>
+                    {% empty %}
+                        <div class="alert alert-warning">
+                            <strong>⚠️ Sin componentes disponibles</strong><br>
+                            No hay componentes activos en el sistema.
                         </div>
-                        <div class="form-group">
-                            <label>Precio Mano de Obra:</label>
-                            <input type="number" name="precio_mano_obra" class="form-control" step="0.01" min="0">
-                        </div>
-                        <button type="submit" name="agregar_accion" class="btn btn-primary btn-action">
-                            ➕ Agregar
-                        </button>
-                        <button type="button" class="btn btn-secondary btn-action" onclick="toggleAddForm('accion')">
-                            ❌ Cancelar
-                        </button>
-                    </form>
+                    {% endfor %}
                 </div>
                 
-                <!-- Lista de acciones -->
+                <!-- 🔽 Lista de componentes elegidos (como en ingreso.html) -->
+                <div id="componentes-seleccionados" class="mt-3">
+                    <h6>📋 Componentes seleccionados:</h6>
+                    <ul id="lista-seleccionados" class="list-group small"></ul>
+                    
+                    <!-- ====== BLOQUE ACCIONES ====== -->
+                    <div class="card mt-2">
+                        <div class="card-body p-2">
+                            <h3 class="h6">🛠️ Acciones para componentes seleccionados</h3>
+                            <ul id="acciones-para-componentes" class="list-group list-group-flush small"></ul>
+                            <input type="hidden" id="acciones_componentes_json" name="acciones_componentes_json" value="[]">
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <div>
+                                    <button type="button" class="btn btn-success btn-sm" id="guardar-acciones-btn" onclick="guardarAccionesSeleccionadas()">
+                                        💾 Guardar Acciones Seleccionadas
+                                    </button>
+                                    <button type="button" class="btn btn-secondary btn-sm ms-2" onclick="limpiarSeleccion()">
+                                        🗑️ Limpiar Selección
+                                    </button>
+                                </div>
+                                <div class="text-end">
+                                    <div class="small text-muted">Total mano de obra</div>
+                                    <div class="fw-bold" id="total_mano_obra">$0</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- ====== FIN BLOQUE ACCIONES ====== -->
+                </div>
+                
+                <hr class="my-4">
+                
+                <!-- Lista de acciones existentes -->
+                <h6>🛠️ Acciones Registradas</h6>
                 {% for accion in trabajo.acciones.all %}
                     <div class="item-card {% if accion.completado %}completado{% else %}pendiente{% endif %}">
                         <div>
@@ -1058,6 +1094,386 @@ document.addEventListener('DOMContentLoaded', function() {
     if (precioInput) {
         precioInput.addEventListener('input', calcularSubtotal);
     }
+    
+    // 🔹 FUNCIÓN PARA CAMBIAR DE PESTAÑA
+    window.showTab = function(tabName) {
+        // Ocultar todas las pestañas
+        const allTabs = document.querySelectorAll('.tab-content');
+        allTabs.forEach(tab => {
+            tab.classList.remove('active');
+        });
+        
+        // Desactivar todos los botones
+        const allButtons = document.querySelectorAll('.tab-btn');
+        allButtons.forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // Mostrar la pestaña seleccionada
+        const selectedTab = document.getElementById('tab-' + tabName);
+        if (selectedTab) {
+            selectedTab.classList.add('active');
+        }
+        
+        // Activar el botón correspondiente
+        const buttons = document.querySelectorAll('.tab-btn');
+        buttons.forEach(btn => {
+            if (btn.getAttribute('onclick').includes(tabName)) {
+                btn.classList.add('active');
+            }
+        });
+    };
+    
+    // 🔹 FUNCIONALIDAD PARA COMPONENTES SELECCIONADOS (como en ingreso.html)
+    console.log('🚀 SCRIPT INICIADO - Variables globales definidas');
+    let componentesSeleccionados = new Set();
+    const ACC = {}; // Objeto para almacenar acciones
+    const CLP = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
+    console.log('✅ Variables globales inicializadas:', { componentesSeleccionados, ACC, CLP });
+    
+    // Función para cargar acciones de un componente
+    async function cargarAccionesComponente(componenteId, componenteNombre) {
+        console.log(`🔄 cargarAccionesComponente llamado: ${componenteId} - ${componenteNombre}`);
+        
+        try {
+            const url = `/car/acciones-lookup/${componenteId}/`;
+            console.log(`📡 Haciendo fetch a: ${url}`);
+            
+            const response = await fetch(url);
+            console.log(`📡 Respuesta recibida:`, response);
+            console.log(`📡 Status: ${response.status}`);
+            
+            const data = await response.json();
+            console.log(`📡 Datos recibidos:`, data);
+            
+            if (!data.ok || !data.acciones || data.acciones.length === 0) {
+                console.log(`⚠️ No hay acciones disponibles para componente ${componenteId}`);
+                console.log(`   - data.ok: ${data.ok}`);
+                console.log(`   - data.acciones:`, data.acciones);
+                return;
+            }
+            
+            console.log(`✅ Se encontraron ${data.acciones.length} acciones para el componente ${componenteId}`);
+            
+            const ulAcciones = document.getElementById('acciones-para-componentes');
+            console.log(`🔍 Buscando elemento 'acciones-para-componentes':`, ulAcciones);
+            
+            if (!ulAcciones) {
+                console.error(`❌ No se encontró el elemento 'acciones-para-componentes'`);
+                return;
+            }
+            
+            console.log(`✅ Elemento 'acciones-para-componentes' encontrado, agregando acciones...`);
+            
+            // Crear un elemento por cada acción disponible
+            data.acciones.forEach(accion => {
+                const accionKey = `${componenteId}-${accion.accion_id}`;
+                ACC[accionKey] = ACC[accionKey] || { 
+                    componente_id: componenteId,
+                    nombre: componenteNombre, 
+                    accion_id: accion.accion_id, 
+                    accion_nombre: accion.accion_nombre,
+                    precio: accion.precio_base || '',
+                    seleccionado: false
+                };
+                
+                const li = document.createElement('li');
+                li.className = 'list-group-item';
+                li.setAttribute('data-componente-id', componenteId);
+                li.setAttribute('data-accion-id', accion.accion_id);
+                li.setAttribute('data-accion-key', accionKey);
+                
+                const precioBase = parseFloat(accion.precio_base || 0);
+                const precioFormateado = precioBase > 0 ? CLP.format(precioBase) : 'Sin precio base';
+                
+                li.innerHTML = `
+                    <div class="row g-2 align-items-center">
+                        <div class="col-1">
+                            <input type="checkbox" class="form-check-input accion-checkbox" 
+                                   data-accion-key="${accionKey}" 
+                                   ${ACC[accionKey].seleccionado ? 'checked' : ''}>
+                        </div>
+                        <div class="col-12 col-md-5">
+                            <div class="fw-semibold">${componenteNombre}</div>
+                            <div class="text-primary small">${accion.accion_nombre}</div>
+                            <div class="text-muted small">ID: ${componenteId} • Acción: ${accion.accion_id}</div>
+                        </div>
+                        <div class="col-8 col-md-4">
+                            <label class="form-label mb-0 small">Precio personalizado</label>
+                            <input type="number" step="0.01" class="form-control form-control-sm accion-precio" 
+                                   placeholder="${precioBase > 0 ? precioBase : '0.00'}" 
+                                   value="${ACC[accionKey].precio || ''}"
+                                   data-accion-key="${accionKey}">
+                            <small class="text-muted">Base: ${precioFormateado}</small>
+                        </div>
+                        <div class="col-4 col-md-2 text-end">
+                            <div class="fw-bold text-success" data-precio-display="${accionKey}">
+                                ${ACC[accionKey].seleccionado ? (ACC[accionKey].precio ? CLP.format(parseFloat(ACC[accionKey].precio)) : precioFormateado) : '$0'}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                ulAcciones.appendChild(li);
+                
+                // Event listeners
+                const checkbox = li.querySelector('.accion-checkbox');
+                const precioInput = li.querySelector('.accion-precio');
+                const precioDisplay = li.querySelector('[data-precio-display]');
+                
+                checkbox.addEventListener('change', () => {
+                    ACC[accionKey].seleccionado = checkbox.checked;
+                    if (checkbox.checked && !ACC[accionKey].precio && precioBase > 0) {
+                        ACC[accionKey].precio = precioBase.toString();
+                        precioInput.value = precioBase;
+                    }
+                    actualizarPrecioDisplay(accionKey, precioDisplay, checkbox.checked);
+                    actualizarTotalManoObra();
+                });
+                
+                precioInput.addEventListener('input', () => {
+                    ACC[accionKey].precio = precioInput.value;
+                    actualizarPrecioDisplay(accionKey, precioDisplay, ACC[accionKey].seleccionado);
+                    actualizarTotalManoObra();
+                });
+                
+                // Inicializar display de precio
+                actualizarPrecioDisplay(accionKey, precioDisplay, checkbox.checked);
+            });
+            
+            console.log(`✅ Se agregaron ${data.acciones.length} acciones al DOM`);
+            
+        } catch (error) {
+            console.error('❌ Error cargando acciones:', error);
+            console.error('❌ Stack trace:', error.stack);
+        }
+    }
+    
+    // Función para actualizar el display del precio
+    function actualizarPrecioDisplay(accionKey, precioDisplay, isSelected) {
+        if (!precioDisplay) return;
+        
+        if (!isSelected) {
+            precioDisplay.textContent = '$0';
+            precioDisplay.className = 'fw-bold text-muted';
+            return;
+        }
+        
+        const accion = ACC[accionKey];
+        if (accion && accion.precio) {
+            precioDisplay.textContent = CLP.format(parseFloat(accion.precio));
+            precioDisplay.className = 'fw-bold text-success';
+        }
+    }
+    
+    // Función para actualizar el total de mano de obra
+    function actualizarTotalManoObra() {
+        const totalDiv = document.getElementById('total_mano_obra');
+        if (!totalDiv) return;
+        
+        const total = Object.values(ACC)
+            .filter(a => a.seleccionado && a.precio)
+            .reduce((sum, a) => sum + parseFloat(a.precio || 0), 0);
+        
+        totalDiv.textContent = CLP.format(total);
+    }
+    
+    // Función para agregar componente a la lista de seleccionados
+    window.agregarComponenteSeleccionado = async function(componenteId, componenteNombre) {
+        console.log(`🔧 agregarComponenteSeleccionado llamado: ${componenteId} - ${componenteNombre}`);
+        
+        if (componentesSeleccionados.has(componenteId)) {
+            console.log(`⚠️ Componente ${componenteId} ya está seleccionado`);
+            return; // Ya está seleccionado
+        }
+        
+        componentesSeleccionados.add(componenteId);
+        console.log(`✅ Componente ${componenteId} agregado a componentesSeleccionados`);
+        
+        // Agregar a la lista visual
+        const lista = document.getElementById('lista-seleccionados');
+        console.log(`🔍 Buscando elemento 'lista-seleccionados':`, lista);
+        
+        if (lista) {
+            console.log(`✅ Elemento encontrado, agregando componente...`);
+            const li = document.createElement('li');
+            li.className = 'list-group-item d-flex justify-content-between align-items-center';
+            li.id = `comp-seleccionado-${componenteId}`;
+            li.innerHTML = `
+                <span>${componenteNombre}</span>
+                <button type="button" class="btn btn-sm btn-danger" onclick="removerComponenteSeleccionado(${componenteId})">
+                    ❌
+                </button>
+            `;
+            lista.appendChild(li);
+            console.log(`✅ Componente ${componenteId} agregado visualmente a la lista`);
+        } else {
+            console.error(`❌ No se encontró el elemento 'lista-seleccionados'`);
+        }
+        
+        // Cargar acciones para este componente
+        console.log(`🔄 Llamando a cargarAccionesComponente para ${componenteId}...`);
+        await cargarAccionesComponente(componenteId, componenteNombre);
+    }
+    
+    // Función para remover componente de la lista de seleccionados
+    window.removerComponenteSeleccionado = function(componenteId) {
+        console.log(`🗑️ removerComponenteSeleccionado llamado: ${componenteId}`);
+        componentesSeleccionados.delete(componenteId);
+        
+        // Remover de la lista visual
+        const li = document.getElementById(`comp-seleccionado-${componenteId}`);
+        if (li) {
+            li.remove();
+        }
+        
+        // Remover todas las acciones de este componente
+        const ulAcciones = document.getElementById('acciones-para-componentes');
+        if (ulAcciones) {
+            const accionesDelComponente = ulAcciones.querySelectorAll(`li[data-componente-id="${componenteId}"]`);
+            accionesDelComponente.forEach(accionLi => accionLi.remove());
+        }
+        
+        // Limpiar del objeto ACC
+        Object.keys(ACC).forEach(key => {
+            if (key.startsWith(`${componenteId}-`)) {
+                delete ACC[key];
+            }
+        });
+        
+        // Actualizar total
+        actualizarTotalManoObra();
+        
+        // Desmarcar checkbox
+        const checkbox = document.getElementById(`comp-${componenteId}`);
+        if (checkbox) {
+            checkbox.checked = false;
+        }
+    };
+    
+    // 🔹 INICIALIZAR EVENTOS DE CHECKBOXES
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🔍 DOMContentLoaded ejecutado - Inicializando eventos de checkboxes...');
+        
+        // Agregar event listeners a todos los checkboxes de componentes
+        const checkboxes = document.querySelectorAll('.componente-checkbox');
+        console.log(`🔍 Encontrados ${checkboxes.length} checkboxes de componentes`);
+        
+        checkboxes.forEach((checkbox, index) => {
+            console.log(`🔧 Configurando checkbox ${index + 1}:`, checkbox);
+            console.log(`   - ID: ${checkbox.id}`);
+            console.log(`   - Value: ${checkbox.value}`);
+            console.log(`   - data-componente-id: ${checkbox.dataset.componenteId}`);
+            console.log(`   - data-componente-nombre: ${checkbox.dataset.componenteNombre}`);
+            
+            checkbox.addEventListener('change', function() {
+                console.log('🎯 CHECKBOX CAMBIADO:', this);
+                console.log('   - Checked:', this.checked);
+                console.log('   - Componente ID:', this.dataset.componenteId);
+                console.log('   - Componente Nombre:', this.dataset.componenteNombre);
+                
+                const componenteId = this.dataset.componenteId;
+                const componenteNombre = this.dataset.componenteNombre;
+                
+                if (this.checked) {
+                    console.log(`✅ Agregando componente: ${componenteId} - ${componenteNombre}`);
+                    agregarComponenteSeleccionado(componenteId, componenteNombre);
+                } else {
+                    console.log(`❌ Removiendo componente: ${componenteId}`);
+                    removerComponenteSeleccionado(componenteId);
+                }
+            });
+            
+            console.log(`✅ Event listener agregado al checkbox ${checkbox.id}`);
+        });
+        
+        console.log('🎉 Inicialización de checkboxes completada');
+    });
+    
+    // 🔹 FUNCIÓN PARA GUARDAR ACCIONES SELECCIONADAS
+    window.guardarAccionesSeleccionadas = async function() {
+        console.log('💾 guardarAccionesSeleccionadas llamado');
+        
+        // Obtener todas las acciones seleccionadas
+        const accionesSeleccionadas = Object.values(ACC).filter(a => a.seleccionado && a.precio);
+        console.log('📋 Acciones seleccionadas:', accionesSeleccionadas);
+        
+        if (accionesSeleccionadas.length === 0) {
+            alert('⚠️ No hay acciones seleccionadas para guardar');
+            return;
+        }
+        
+        // Preparar datos para enviar
+        const datosAcciones = accionesSeleccionadas.map(accion => ({
+            componente_id: parseInt(accion.componente_id),
+            accion_id: parseInt(accion.accion_id),
+            precio_mano_obra: parseFloat(accion.precio) || 0
+        }));
+        
+        console.log('📤 Datos a enviar:', datosAcciones);
+        
+        try {
+            // Crear formulario para enviar datos
+            const formData = new FormData();
+            formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+            formData.append('acciones_json', JSON.stringify(datosAcciones));
+            formData.append('agregar_acciones_multiples', 'true');
+            
+            const response = await fetch(window.location.href, {
+                method: 'POST',
+                body: formData
+            });
+            
+            console.log('📡 Respuesta del servidor:', response);
+            
+            if (response.ok || response.status === 302) {
+                console.log('✅ Acciones guardadas exitosamente');
+                alert('✅ Acciones guardadas exitosamente');
+                
+                // Recargar la página manteniendo la pestaña de acciones activa
+                window.location.href = window.location.pathname + '?tab=acciones';
+            } else {
+                console.error('❌ Error al guardar acciones:', response.status);
+                alert('❌ Error al guardar las acciones');
+            }
+            
+        } catch (error) {
+            console.error('❌ Error en la petición:', error);
+            alert('❌ Error al guardar las acciones');
+        }
+    };
+    
+    // 🔹 FUNCIÓN PARA LIMPIAR SELECCIÓN
+    window.limpiarSeleccion = function() {
+        console.log('🗑️ limpiarSeleccion llamado');
+        
+        // Limpiar todas las acciones del DOM
+        const ulAcciones = document.getElementById('acciones-para-componentes');
+        if (ulAcciones) {
+            ulAcciones.innerHTML = '';
+        }
+        
+        // Limpiar lista de componentes seleccionados
+        const listaSeleccionados = document.getElementById('lista-seleccionados');
+        if (listaSeleccionados) {
+            listaSeleccionados.innerHTML = '';
+        }
+        
+        // Limpiar objetos JavaScript
+        componentesSeleccionados.clear();
+        Object.keys(ACC).forEach(key => delete ACC[key]);
+        
+        // Desmarcar todos los checkboxes
+        const checkboxes = document.querySelectorAll('.componente-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        
+        // Actualizar total
+        actualizarTotalManoObra();
+        
+        console.log('✅ Selección limpiada completamente');
+    };
 });
 </script>
 {% endblock %}

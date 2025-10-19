@@ -1313,7 +1313,8 @@ def trabajo_detalle(request, pk):
     
     # 🔹 Helper para redirects con pestaña activa
     def redirect_with_tab(tab_name):
-        return redirect(f"trabajo_detalle", pk=trabajo.pk) + f"?tab={tab_name}"
+        from django.http import HttpResponseRedirect
+        return HttpResponseRedirect(f"/car/trabajos/{trabajo.pk}/?tab={tab_name}")
 
     # Formularios
     asignar_form = AsignarMecanicosForm(instance=trabajo)
@@ -1321,8 +1322,12 @@ def trabajo_detalle(request, pk):
 
     # Obtener datos para los formularios de agregar
     from .models import Componente, Accion, Repuesto
-    componentes_disponibles = Componente.objects.all()
+    from django.db.models import Q
     acciones_disponibles = Accion.objects.all()
+    
+    # 🔹 COMPONENTES DISPONIBLES (igual que en ingreso.html - solo componentes padre)
+    # Los componentes no tienen compatibilidad específica por vehículo, son genéricos
+    componentes = Componente.objects.filter(padre__isnull=True, activo=True)
     
     # 🔹 FILTRO INTELIGENTE DE REPUESTOS basado en el vehículo del trabajo
     repuestos_disponibles = Repuesto.objects.all()
@@ -1372,7 +1377,7 @@ def trabajo_detalle(request, pk):
                 messages.success(request, "Mecánicos asignados y trabajo iniciado.")
                 return redirect("trabajo_detalle", pk=trabajo.pk)
 
-        # 🔹 Agregar acción
+        # 🔹 Agregar acción (método tradicional)
         elif "agregar_accion" in request.POST:
             componente_id = request.POST.get("componente")
             accion_id = request.POST.get("accion")
@@ -1392,6 +1397,68 @@ def trabajo_detalle(request, pk):
                     messages.success(request, "Acción agregada al trabajo.")
                 except (Componente.DoesNotExist, Accion.DoesNotExist):
                     messages.error(request, "Error al agregar la acción.")
+            return redirect_with_tab("acciones")
+
+        # 🔹 Agregar múltiples acciones (nuevo método)
+        elif "agregar_acciones_multiples" in request.POST:
+            import json
+            acciones_json = request.POST.get("acciones_json", "")
+            
+            print(f"DEBUG: acciones_json recibido: {acciones_json}")
+            
+            if acciones_json:
+                try:
+                    acciones_data = json.loads(acciones_json)
+                    print(f"DEBUG: acciones_data parseado: {acciones_data}")
+                    acciones_creadas = 0
+                    
+                    for accion_data in acciones_data:
+                        try:
+                            componente_id = int(accion_data.get("componente_id"))
+                            accion_id = int(accion_data.get("accion_id"))
+                            precio_mano_obra = accion_data.get("precio", "0")
+                            
+                            print(f"DEBUG: Procesando - componente_id: {componente_id}, accion_id: {accion_id}, precio: {precio_mano_obra}")
+                            
+                            componente = Componente.objects.get(id=componente_id)
+                            accion = Accion.objects.get(id=accion_id)
+                            
+                            # Verificar si ya existe esta combinación
+                            if not TrabajoAccion.objects.filter(
+                                trabajo=trabajo,
+                                componente=componente,
+                                accion=accion
+                            ).exists():
+                                TrabajoAccion.objects.create(
+                                    trabajo=trabajo,
+                                    componente=componente,
+                                    accion=accion,
+                                    precio_mano_obra=precio_mano_obra or 0
+                                )
+                                acciones_creadas += 1
+                                print(f"DEBUG: Acción creada exitosamente")
+                            else:
+                                print(f"DEBUG: Acción ya existe, saltando")
+                                
+                        except (ValueError, Componente.DoesNotExist, Accion.DoesNotExist) as e:
+                            print(f"DEBUG: Error en acción individual: {str(e)}")
+                            continue
+                    
+                    if acciones_creadas > 0:
+                        messages.success(request, f"{acciones_creadas} acción(es) agregada(s) al trabajo.")
+                    else:
+                        messages.info(request, "No se agregaron acciones nuevas (posiblemente ya existían).")
+                        
+                except json.JSONDecodeError as e:
+                    print(f"DEBUG: Error JSON: {str(e)}")
+                    messages.error(request, f"Error al procesar las acciones: {str(e)}")
+                except Exception as e:
+                    print(f"DEBUG: Error general: {str(e)}")
+                    messages.error(request, f"Error al agregar las acciones: {str(e)}")
+            else:
+                print("DEBUG: No se recibió acciones_json")
+                messages.error(request, "No se recibieron acciones para agregar.")
+            
             return redirect_with_tab("acciones")
 
         # 🔹 Toggle acción completada / pendiente
@@ -1525,11 +1592,15 @@ def trabajo_detalle(request, pk):
     # 🔹 Detectar pestaña activa desde parámetros URL
     active_tab = request.GET.get('tab', 'info')
     
+    # 🔹 Obtener componentes ya seleccionados en el trabajo
+    componentes_trabajo = trabajo.acciones.values_list('componente_id', flat=True).distinct()
+    
     context = {
         "trabajo": trabajo,
         "asignar_form": asignar_form,
         "foto_form": foto_form,
-        "componentes_disponibles": componentes_disponibles,
+        "componentes": componentes,
+        "componentes_trabajo": componentes_trabajo,  # IDs de componentes ya en el trabajo
         "acciones_disponibles": acciones_disponibles,
         "repuestos_disponibles": repuestos_disponibles,
         "active_tab": active_tab,
