@@ -1150,6 +1150,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log(`⚠️ No hay acciones disponibles para componente ${componenteId}`);
                 console.log(`   - data.ok: ${data.ok}`);
                 console.log(`   - data.acciones:`, data.acciones);
+                
+                // Mostrar mensaje al usuario
+                if (data.mensaje) {
+                    alert(`⚠️ ${data.mensaje}`);
+                } else {
+                    alert(`⚠️ El componente "${componenteNombre}" no tiene acciones asociadas.`);
+                }
+                
+                // Remover el componente de la lista de seleccionados
+                removerComponenteSeleccionado(componenteId);
                 return;
             }
             

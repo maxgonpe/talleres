@@ -481,13 +481,13 @@ def acciones_por_componente(request, componente_id: int):
         for ca in qs
     ]
 
-    # Si no hay catálogo cargado, al menos devolvemos la lista de acciones globales
+    # Si no hay catálogo cargado, devolvemos mensaje específico
     if not data:
-        acciones = Accion.objects.all().order_by("nombre")
-        data = [
-            {"accion_id": a.id, "accion_nombre": a.nombre, "precio_base": None}
-            for a in acciones
-        ]
+        return JsonResponse({
+            "ok": False, 
+            "mensaje": "Este componente no tiene acciones específicas asociadas. Contacta al administrador para configurar las acciones disponibles para este componente.",
+            "acciones": []
+        })
 
     return JsonResponse({"ok": True, "acciones": data})
 
