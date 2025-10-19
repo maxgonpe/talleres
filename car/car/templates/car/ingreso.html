@@ -314,6 +314,46 @@ body[data-bs-theme="dark"] .accordion-body .form-check-label {
     background-color: transparent !important;
     text-shadow: none !important;
 }
+
+/* Estilos para la nueva estructura de acciones múltiples */
+.accion-checkbox {
+    transform: scale(1.2);
+    margin-top: 0.1rem;
+}
+
+.accion-precio {
+    font-size: 0.85rem;
+}
+
+.accion-item-selected {
+    background-color: rgba(13, 110, 253, 0.1) !important;
+    border-left: 4px solid #0d6efd !important;
+}
+
+.accion-item-unselected {
+    background-color: rgba(108, 117, 125, 0.05) !important;
+    border-left: 4px solid transparent !important;
+}
+
+/* Animación suave para cambios de estado */
+.list-group-item {
+    transition: all 0.3s ease;
+}
+
+/* Mejorar contraste para precios */
+[data-bs-theme="dark"] .text-success {
+    color: #20c997 !important;
+}
+
+[data-bs-theme="dark"] .text-muted {
+    color: #adb5bd !important;
+}
+
+/* Estilo para acciones sin precio */
+.precio-sin-base {
+    color: #6c757d;
+    font-style: italic;
+}
 </style>
 
 <!-- ---------------- SCRIPTS (TODO integrado aquí) ---------------- -->

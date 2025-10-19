@@ -496,6 +496,8 @@ class VehiculoVersion(models.Model):
     modelo = models.CharField(max_length=120)
     anio_desde = models.IntegerField()
     anio_hasta = models.IntegerField()
+    motor = models.CharField(max_length=100, blank=True, null=True, verbose_name="Motor")
+    carroceria = models.CharField(max_length=100, blank=True, null=True, verbose_name="Carrocería")
     # opcionales: engine_code, trim, etc.
 
     class Meta:

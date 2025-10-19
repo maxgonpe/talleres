@@ -170,3 +170,5 @@ def algoritmo_relacion_inteligente(umbral=0.6, solo_analizar=False, ejecutar=Fal
 
 
 
+
+

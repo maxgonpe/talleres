@@ -489,7 +489,7 @@ class VehiculoVersionForm(forms.ModelForm):
     """Formulario para crear y editar vehículos"""
     class Meta:
         model = VehiculoVersion
-        fields = ['marca', 'modelo', 'anio_desde', 'anio_hasta']
+        fields = ['marca', 'modelo', 'anio_desde', 'anio_hasta', 'motor', 'carroceria']
         widgets = {
             'marca': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -512,6 +512,16 @@ class VehiculoVersionForm(forms.ModelForm):
                 'placeholder': 'Ej: 2020',
                 'min': '1900',
                 'max': '2030'
+            }),
+            'motor': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: 1.6L, 2.0L Turbo, V6...',
+                'autocomplete': 'off'
+            }),
+            'carroceria': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: Sedán, Hatchback, SUV...',
+                'autocomplete': 'off'
             }),
         }
     

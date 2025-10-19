@@ -193,9 +193,9 @@ class RepuestoAplicacionAdmin(admin.ModelAdmin):
 
 @admin.register(VehiculoVersion)
 class VehiculoVersionAdmin(admin.ModelAdmin):
-    list_display = ('id', 'marca', 'modelo', 'anio_desde', 'anio_hasta')
-    list_filter = ('marca', 'anio_desde', 'anio_hasta')
-    search_fields = ('marca', 'modelo')
+    list_display = ('id', 'marca', 'modelo', 'anio_desde', 'anio_hasta', 'motor', 'carroceria')
+    list_filter = ('marca', 'anio_desde', 'anio_hasta', 'motor', 'carroceria')
+    search_fields = ('marca', 'modelo', 'motor', 'carroceria')
     ordering = ('marca', 'modelo', 'anio_desde')
     
     fieldsets = (
@@ -204,6 +204,10 @@ class VehiculoVersionAdmin(admin.ModelAdmin):
         }),
         ('Años de Aplicación', {
             'fields': ('anio_desde', 'anio_hasta')
+        }),
+        ('Especificaciones Técnicas', {
+            'fields': ('motor', 'carroceria'),
+            'classes': ('collapse',)
         }),
     )
 

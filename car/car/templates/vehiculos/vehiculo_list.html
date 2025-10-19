@@ -451,7 +451,7 @@
                     <input type="text" 
                            id="search-vehiculos" 
                            class="form-control search-input" 
-                           placeholder="🔍 Buscar por marca, modelo o año..."
+                           placeholder="🔍 Buscar por marca, modelo, año, motor o carrocería..."
                            value="{{ search_query }}"
                            autocomplete="off">
                 </div>
@@ -497,7 +497,9 @@
                      data-marca="{{ vehiculo.marca|lower }}"
                      data-modelo="{{ vehiculo.modelo|lower }}"
                      data-anio-desde="{{ vehiculo.anio_desde }}"
-                     data-anio-hasta="{{ vehiculo.anio_hasta }}">
+                     data-anio-hasta="{{ vehiculo.anio_hasta }}"
+                     data-motor="{{ vehiculo.motor|default:''|lower }}"
+                     data-carroceria="{{ vehiculo.carroceria|default:''|lower }}">
                     
                     <div class="vehiculo-header">
                         <div class="vehiculo-icon">🚗</div>
@@ -520,6 +522,18 @@
                             <span class="detail-label">Rango:</span>
                             <span class="detail-value">{{ vehiculo.anio_hasta|add:"-1"|add:vehiculo.anio_desde }} años</span>
                         </div>
+                        {% if vehiculo.motor %}
+                        <div class="detail-row">
+                            <span class="detail-label">Motor:</span>
+                            <span class="detail-value">{{ vehiculo.motor }}</span>
+                        </div>
+                        {% endif %}
+                        {% if vehiculo.carroceria %}
+                        <div class="detail-row">
+                            <span class="detail-label">Carrocería:</span>
+                            <span class="detail-value">{{ vehiculo.carroceria }}</span>
+                        </div>
+                        {% endif %}
                     </div>
                     
                     <div class="vehiculo-actions">
@@ -621,11 +635,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const modelo = card.dataset.modelo;
             const anioDesde = card.dataset.anioDesde;
             const anioHasta = card.dataset.anioHasta;
+            const motor = card.dataset.motor || '';
+            const carroceria = card.dataset.carroceria || '';
             
             const coincide = marca.includes(terminoLower) || 
                            modelo.includes(terminoLower) || 
                            anioDesde.includes(terminoLower) || 
-                           anioHasta.includes(terminoLower);
+                           anioHasta.includes(terminoLower) ||
+                           motor.includes(terminoLower) ||
+                           carroceria.includes(terminoLower);
             
             if (coincide) {
                 card.style.display = '';

@@ -204,6 +204,8 @@
             <li><strong>Modelo:</strong> Modelo específico (ej: Corolla, Civic, Sentra)</li>
             <li><strong>Año desde:</strong> Año de inicio de producción</li>
             <li><strong>Año hasta:</strong> Año final de producción</li>
+            <li><strong>Motor:</strong> Tipo de motor (ej: 1.6L, 2.0L Turbo, V6) - Opcional</li>
+            <li><strong>Carrocería:</strong> Tipo de carrocería (ej: Sedán, Hatchback, SUV) - Opcional</li>
         </ul>
         <p><strong>Nota:</strong> Este vehículo se usará para determinar qué repuestos son compatibles, no es un vehículo de cliente del taller.</p>
     </div>
@@ -287,6 +289,43 @@
                 {% if form.anio_hasta.errors %}
                     <div class="text-danger mt-1">
                         {% for error in form.anio_hasta.errors %}
+                            <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Motor y Carrocería -->
+        <div class="form-row">
+            <div class="form-group">
+                <label for="{{ form.motor.id_for_label }}" class="form-label">
+                    <i class="fas fa-cog me-2"></i>{{ form.motor.label }}
+                </label>
+                {{ form.motor }}
+                {% if form.motor.help_text %}
+                    <div class="form-text">{{ form.motor.help_text }}</div>
+                {% endif %}
+                {% if form.motor.errors %}
+                    <div class="text-danger mt-1">
+                        {% for error in form.motor.errors %}
+                            <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.carroceria.id_for_label }}" class="form-label">
+                    <i class="fas fa-car-side me-2"></i>{{ form.carroceria.label }}
+                </label>
+                {{ form.carroceria }}
+                {% if form.carroceria.help_text %}
+                    <div class="form-text">{{ form.carroceria.help_text }}</div>
+                {% endif %}
+                {% if form.carroceria.errors %}
+                    <div class="text-danger mt-1">
+                        {% for error in form.carroceria.errors %}
                             <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
                         {% endfor %}
                     </div>
