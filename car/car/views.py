@@ -1532,6 +1532,67 @@ def trabajo_detalle(request, pk):
                 messages.error(request, "Repuesto no encontrado.")
             return redirect_with_tab("repuestos")
 
+        # 🔹 Agregar múltiples repuestos (nuevo método)
+        elif "agregar_repuestos_multiples" in request.POST:
+            import json
+            repuestos_json = request.POST.get("repuestos_json", "")
+            
+            print(f"DEBUG: repuestos_json recibido: {repuestos_json}")
+            
+            if repuestos_json:
+                try:
+                    repuestos_data = json.loads(repuestos_json)
+                    print(f"DEBUG: repuestos_data parseado: {repuestos_data}")
+                    repuestos_creados = 0
+                    
+                    for repuesto_data in repuestos_data:
+                        try:
+                            repuesto_id = int(repuesto_data.get("id"))
+                            cantidad = int(repuesto_data.get("cantidad", 1))
+                            precio_unitario = float(repuesto_data.get("precio_unitario", 0))
+                            
+                            print(f"DEBUG: Procesando - repuesto_id: {repuesto_id}, cantidad: {cantidad}, precio: {precio_unitario}")
+                            
+                            repuesto = Repuesto.objects.get(id=repuesto_id)
+                            
+                            # Verificar si ya existe este repuesto en el trabajo
+                            if not TrabajoRepuesto.objects.filter(
+                                trabajo=trabajo,
+                                repuesto=repuesto
+                            ).exists():
+                                TrabajoRepuesto.objects.create(
+                                    trabajo=trabajo,
+                                    repuesto=repuesto,
+                                    cantidad=cantidad,
+                                    precio_unitario=precio_unitario,
+                                    subtotal=cantidad * precio_unitario
+                                )
+                                repuestos_creados += 1
+                                print(f"DEBUG: Repuesto creado exitosamente")
+                            else:
+                                print(f"DEBUG: Repuesto ya existe, saltando")
+                                
+                        except (ValueError, Repuesto.DoesNotExist) as e:
+                            print(f"DEBUG: Error en repuesto individual: {str(e)}")
+                            continue
+                    
+                    if repuestos_creados > 0:
+                        messages.success(request, f"{repuestos_creados} repuesto(s) agregado(s) al trabajo.")
+                    else:
+                        messages.info(request, "No se agregaron repuestos nuevos (posiblemente ya existían).")
+                        
+                except json.JSONDecodeError as e:
+                    print(f"DEBUG: Error JSON: {str(e)}")
+                    messages.error(request, f"Error al procesar los repuestos: {str(e)}")
+                except Exception as e:
+                    print(f"DEBUG: Error general: {str(e)}")
+                    messages.error(request, f"Error al agregar los repuestos: {str(e)}")
+            else:
+                print("DEBUG: No se recibió repuestos_json")
+                messages.error(request, "No se recibieron repuestos para agregar.")
+            
+            return redirect_with_tab("repuestos")
+
         # 🔹 Subir foto
         elif "subir_foto" in request.POST:
             foto_form = SubirFotoForm(request.POST, request.FILES)
@@ -1593,7 +1654,7 @@ def trabajo_detalle(request, pk):
     active_tab = request.GET.get('tab', 'info')
     
     # 🔹 Obtener componentes ya seleccionados en el trabajo
-    componentes_trabajo = trabajo.acciones.values_list('componente_id', flat=True).distinct()
+    componentes_trabajo = list(trabajo.acciones.values_list('componente_id', flat=True).distinct())
     
     context = {
         "trabajo": trabajo,

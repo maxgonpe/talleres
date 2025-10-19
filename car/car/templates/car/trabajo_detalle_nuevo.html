@@ -739,87 +739,66 @@
                 <div class="alert alert-info mb-3">
                     <small>
                         <strong>🧠 Filtro Inteligente Activo:</strong> 
-                        Los repuestos mostrados están filtrados automáticamente por las características del vehículo 
+                        Los repuestos sugeridos están filtrados automáticamente por las características del vehículo 
                         (marca: <strong>{{ trabajo.vehiculo.marca|default:"No especificada" }}</strong>, 
-                        motor: <strong>{{ trabajo.vehiculo.descripcion_motor|default:"No especificado" }}</strong>).
-                        Solo se muestran repuestos compatibles o de uso general.
+                        motor: <strong>{{ trabajo.vehiculo.descripcion_motor|default:"No especificado" }}</strong>)
+                        y los componentes ya seleccionados en el trabajo.
                     </small>
                 </div>
                 
-                <!-- Botón para agregar repuesto -->
-                <button class="btn btn-success btn-toggle-form" onclick="toggleAddForm('repuesto')">
-                    ➕ Agregar Repuesto
+                <!-- 🔧 Repuestos sugeridos (como en ingreso.html) -->
+                <h6 class="mt-3 mb-2">🔧 Repuestos sugeridos</h6>
+                <button type="button" class="btn btn-outline-primary mb-2" onclick="cargarRepuestosTrabajo()">
+                    Buscar repuestos sugeridos
                 </button>
+
+                <!-- Contenedor para repuestos sugeridos -->
+                <div id="repuestos-list-trabajo"
+                     data-preview-url="{% url 'sugerir_repuestos_preview' %}"
+                     data-with-id-template="{% url 'sugerir_repuestos' 0 %}">
+                    <p class="text-muted">Aquí aparecerán los repuestos sugeridos basados en los componentes del trabajo.</p>
+                </div>
+
+                <hr>
                 
-                <!-- Formulario para agregar repuesto -->
-                <div id="add-repuesto-form" class="add-form">
-                    <form method="post">
-                        {% csrf_token %}
-                        <div class="form-group">
-                            <label>Repuesto:</label>
-                            <select name="repuesto" class="form-control" required>
-                                <option value="">Seleccionar repuesto...</option>
-                                {% for repuesto in repuestos_disponibles %}
-                                    <option value="{{ repuesto.id }}" 
-                                            data-marca="{{ repuesto.marca_veh|default:'General' }}"
-                                            data-motor="{{ repuesto.tipo_de_motor|default:'General' }}"
-                                            data-stock="{{ repuesto.stock|default:0 }}">
-                                        {{ repuesto.nombre }} - ${{ repuesto.precio_venta|default:0|floatformat:0|intcomma }}
-                                        {% if repuesto.marca_veh %} ({{ repuesto.marca_veh }}){% endif %}
-                                        {% if repuesto.stock > 0 %} - Stock: {{ repuesto.stock }}{% endif %}
-                                    </option>
-                                {% endfor %}
-                            </select>
+                <!-- 🧾 Repuestos agregados al trabajo -->
+                <h6>🧾 Repuestos agregados al trabajo</h6>
+                <div id="tabla-contenido-trabajo">
+                    {% for repuesto in trabajo.repuestos.all %}
+                        <div class="item-card {% if repuesto.completado %}completado{% else %}pendiente{% endif %}">
+                            <div>
+                                <strong>{{ repuesto.repuesto.nombre }}</strong><br>
+                                <small>Cantidad: {{ repuesto.cantidad }}</small>
+                                {% if repuesto.precio_unitario %}
+                                    <br><small class="text-success">${{ repuesto.precio_unitario|floatformat:0|intcomma }} c/u</small>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <form method="post" style="display: inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="repuesto_id" value="{{ repuesto.id }}">
+                                    <button type="submit" name="toggle_repuesto" 
+                                            class="toggle-btn {% if repuesto.completado %}completado{% else %}pendiente{% endif %}">
+                                        {% if repuesto.completado %}✅ Completado{% else %}⏳ Pendiente{% endif %}
+                                    </button>
+                                </form>
+                                <form method="post" style="display: inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="repuesto_id" value="{{ repuesto.id }}">
+                                    <button type="submit" name="eliminar_repuesto" class="btn btn-danger btn-sm" 
+                                            onclick="return confirm('¿Eliminar este repuesto?')">
+                                        🗑️
+                                    </button>
+                                </form>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label>Cantidad:</label>
-                            <input type="number" name="cantidad" class="form-control" min="1" value="1" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Precio Unitario:</label>
-                            <input type="number" name="precio_unitario" id="precio-unitario" class="form-control" step="0.01" min="0" placeholder="Se llena automáticamente">
-                        </div>
-                        <button type="submit" name="agregar_repuesto" class="btn btn-primary btn-action">
-                            ➕ Agregar
-                        </button>
-                        <button type="button" class="btn btn-secondary btn-action" onclick="toggleAddForm('repuesto')">
-                            ❌ Cancelar
-                        </button>
-                    </form>
+                    {% empty %}
+                        <p class="text-muted">No hay repuestos registrados</p>
+                    {% endfor %}
                 </div>
                 
-                <!-- Lista de repuestos -->
-                {% for repuesto in trabajo.repuestos.all %}
-                    <div class="item-card {% if repuesto.completado %}completado{% else %}pendiente{% endif %}">
-                        <div>
-                            <strong>{{ repuesto.repuesto.nombre }}</strong><br>
-                            <small>Cantidad: {{ repuesto.cantidad }}</small>
-                            {% if repuesto.precio_unitario %}
-                                <br><small class="text-success">${{ repuesto.precio_unitario|floatformat:0|intcomma }} c/u</small>
-                            {% endif %}
-                        </div>
-                        <div>
-                            <form method="post" style="display: inline;">
-                                {% csrf_token %}
-                                <input type="hidden" name="repuesto_id" value="{{ repuesto.id }}">
-                                <button type="submit" name="toggle_repuesto" 
-                                        class="toggle-btn {% if repuesto.completado %}completado{% else %}pendiente{% endif %}">
-                                    {% if repuesto.completado %}✅ Completado{% else %}⏳ Pendiente{% endif %}
-                                </button>
-                            </form>
-                            <form method="post" style="display: inline;">
-                                {% csrf_token %}
-                                <input type="hidden" name="repuesto_id" value="{{ repuesto.id }}">
-                                <button type="submit" name="eliminar_repuesto" class="btn btn-danger btn-sm" 
-                                        onclick="return confirm('¿Eliminar este repuesto?')">
-                                    🗑️
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                {% empty %}
-                    <p class="text-muted">No hay repuestos registrados</p>
-                {% endfor %}
+                <!-- Hidden input para enviar repuestos seleccionados -->
+                <input type="hidden" name="repuestos_json" id="repuestos-json-trabajo">
             </div>
         </div>
 
@@ -916,8 +895,13 @@
 
 {% block extra_js %}
 <script>
+console.log('🚀 CARGANDO SCRIPT ACTUALIZADO - Versión con debug de showTab');
+
 // Funciones para las pestañas
 function showTab(tabName) {
+    console.log('🔧 showTab llamado con:', tabName);
+    console.log('🔧 event:', event);
+    
     // Ocultar todas las pestañas
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
@@ -929,14 +913,27 @@ function showTab(tabName) {
     });
     
     // Mostrar la pestaña seleccionada
-    document.getElementById('tab-' + tabName).classList.add('active');
+    const tabElement = document.getElementById('tab-' + tabName);
+    if (tabElement) {
+        tabElement.classList.add('active');
+    } else {
+        console.error('❌ No se encontró el elemento tab-' + tabName);
+    }
     
     // Activar el botón correspondiente
-    if (event && event.target) {
+    if (event && event.target && event.target.classList) {
+        console.log('🔧 Activando botón desde event.target');
         event.target.classList.add('active');
     } else {
         // Si no hay event (llamada programática), buscar el botón correcto
-        document.querySelector(`[onclick="showTab('${tabName}')"]`).classList.add('active');
+        console.log('🔧 Buscando botón programáticamente');
+        const button = document.querySelector(`[onclick="showTab('${tabName}')"]`);
+        if (button) {
+            console.log('🔧 Botón encontrado, activando');
+            button.classList.add('active');
+        } else {
+            console.error('❌ No se encontró el botón para la pestaña:', tabName);
+        }
     }
 }
 
@@ -1095,34 +1092,6 @@ document.addEventListener('DOMContentLoaded', function() {
         precioInput.addEventListener('input', calcularSubtotal);
     }
     
-    // 🔹 FUNCIÓN PARA CAMBIAR DE PESTAÑA
-    window.showTab = function(tabName) {
-        // Ocultar todas las pestañas
-        const allTabs = document.querySelectorAll('.tab-content');
-        allTabs.forEach(tab => {
-            tab.classList.remove('active');
-        });
-        
-        // Desactivar todos los botones
-        const allButtons = document.querySelectorAll('.tab-btn');
-        allButtons.forEach(btn => {
-            btn.classList.remove('active');
-        });
-        
-        // Mostrar la pestaña seleccionada
-        const selectedTab = document.getElementById('tab-' + tabName);
-        if (selectedTab) {
-            selectedTab.classList.add('active');
-        }
-        
-        // Activar el botón correspondiente
-        const buttons = document.querySelectorAll('.tab-btn');
-        buttons.forEach(btn => {
-            if (btn.getAttribute('onclick').includes(tabName)) {
-                btn.classList.add('active');
-            }
-        });
-    };
     
     // 🔹 FUNCIONALIDAD PARA COMPONENTES SELECCIONADOS (como en ingreso.html)
     console.log('🚀 SCRIPT INICIADO - Variables globales definidas');
@@ -1484,6 +1453,197 @@ document.addEventListener('DOMContentLoaded', function() {
         
         console.log('✅ Selección limpiada completamente');
     };
+    
+    // 🔹 FUNCIONALIDAD PARA REPUESTOS SUGERIDOS (adaptado de ingreso.js)
+    window.cargarRepuestosTrabajo = function () {
+        console.log('🔧 cargarRepuestosTrabajo llamado');
+        
+        const cont = document.getElementById("repuestos-list-trabajo");
+        if (!cont) {
+            console.error('❌ No se encontró el contenedor repuestos-list-trabajo');
+            return;
+        }
+
+        // Obtener componentes ya seleccionados en el trabajo
+        const componentesTrabajo = JSON.parse('{{ componentes_trabajo|default:"[]"|escapejs }}');
+        console.log('📋 Componentes del trabajo:', componentesTrabajo);
+        
+        if (!componentesTrabajo || componentesTrabajo.length === 0) {
+            cont.innerHTML = "<div class='alert alert-warning'>⚠️ No hay componentes seleccionados en el trabajo. Primero selecciona componentes en la pestaña 'Acciones'.</div>";
+            return;
+        }
+
+        // Obtener datos del vehículo del trabajo
+        const vehMarca = "{{ trabajo.vehiculo.marca|default:''|escapejs }}";
+        const vehModelo = "{{ trabajo.vehiculo.modelo|default:''|escapejs }}";
+        const vehAnio = "{{ trabajo.vehiculo.anio|default:''|escapejs }}";
+        const vehMotor = "{{ trabajo.vehiculo.descripcion_motor|default:''|escapejs }}";
+        
+        console.log('🚗 Datos del vehículo:', { vehMarca, vehModelo, vehAnio, vehMotor });
+
+        // Construir URL para repuestos sugeridos
+        const params = new URLSearchParams();
+        componentesTrabajo.forEach(c => params.append("componentes_ids", c));
+        if (vehMarca) params.append("marca", vehMarca);
+        if (vehModelo) params.append("modelo", vehModelo);
+        if (vehAnio) params.append("anio", vehAnio);
+        if (vehMotor) params.append("motor", vehMotor);
+
+        const url = cont.dataset.previewUrl + "?" + params.toString();
+        console.log('📡 URL de repuestos sugeridos:', url);
+
+        // Mostrar indicador de carga
+        cont.innerHTML = "<div class='text-center'><div class='spinner-border text-primary' role='status'><span class='visually-hidden'>Cargando...</span></div><br><small>Cargando repuestos sugeridos...</small></div>";
+
+        // Fetch y render
+        fetch(url)
+            .then(r => {
+                if (!r.ok) throw new Error("HTTP " + r.status);
+                return r.json();
+            })
+            .then(data => {
+                console.log('📡 Datos de repuestos recibidos:', data);
+                cont.innerHTML = "";
+                
+                if (!data.repuestos || data.repuestos.length === 0) {
+                    cont.innerHTML = "<div class='alert alert-info'>ℹ️ No hay repuestos sugeridos para los componentes seleccionados.</div>";
+                    return;
+                }
+                
+                data.repuestos.forEach(r => {
+                    const div = document.createElement("div");
+                    div.classList.add("card", "mb-2", "p-2");
+                    
+                    // Clase CSS basada en compatibilidad
+                    let compatibilidadClass = "border-secondary";
+                    if (r.compatibilidad >= 80) compatibilidadClass = "border-success";
+                    else if (r.compatibilidad >= 60) compatibilidadClass = "border-warning";
+                    else if (r.compatibilidad >= 40) compatibilidadClass = "border-info";
+                    else if (r.compatibilidad >= 20) compatibilidadClass = "border-danger";
+                    
+                    div.classList.add(compatibilidadClass);
+                    
+                    div.innerHTML = `
+                        <label class="form-check">
+                            <input type="checkbox"
+                                   class="form-check-input repuesto-check"
+                                   data-id="${r.id}"
+                                   data-stock-id="${r.repuesto_stock_id || ''}"
+                                   data-precio="${r.precio_venta || 0}"
+                                   data-nombre="${escapeHtml(r.nombre)}"
+                                   data-oem="${escapeHtml(r.oem || '')}">
+                            <b>${escapeHtml(r.nombre)}</b> (${escapeHtml(r.oem || "sin OEM")})<br>
+                            <small>${escapeHtml(r.sku || "")} • ${escapeHtml(r.posicion || "")}</small><br>
+                            Stock: ${r.disponible} – 💰 $${(r.precio_venta || 0).toFixed(0)}<br>
+                            ${r.compatibilidad_texto ? `<small class="text-muted">${r.compatibilidad_texto} (${r.compatibilidad}%)</small>` : ''}
+                        </label>
+                        <div class="mt-1 d-flex justify-content-between align-items-center">
+                            <div>
+                                <label class="form-label small mb-0">Cantidad</label>
+                                <input type="number"
+                                       class="form-control form-control-sm repuesto-cantidad"
+                                       data-id="${r.id}"
+                                       min="1"
+                                       value="1"
+                                       style="max-width:80px;">
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="descartarRepuestoTrabajo(this)">
+                                ✕
+                            </button>
+                        </div>
+                    `;
+                    cont.appendChild(div);
+                });
+                
+                // Agregar botón para guardar repuestos seleccionados
+                const guardarDiv = document.createElement("div");
+                guardarDiv.className = "mt-3 text-center";
+                guardarDiv.innerHTML = `
+                    <button type="button" class="btn btn-success" onclick="guardarRepuestosTrabajo()">
+                        💾 Guardar Repuestos Seleccionados
+                    </button>
+                `;
+                cont.appendChild(guardarDiv);
+                
+            })
+            .catch(err => {
+                console.error('❌ Error cargando repuestos:', err);
+                cont.innerHTML = `<div class="alert alert-danger">❌ Error cargando repuestos: ${escapeHtml(err.message)}</div>`;
+            });
+    };
+
+    // Función para descartar repuesto
+    window.descartarRepuestoTrabajo = function(boton) {
+        boton.closest('.card').remove();
+    };
+
+    // Función para guardar repuestos seleccionados
+    window.guardarRepuestosTrabajo = async function() {
+        console.log('💾 guardarRepuestosTrabajo llamado');
+        
+        const repuestos = [];
+        document.querySelectorAll("#repuestos-list-trabajo input.repuesto-check:checked").forEach(chk => {
+            const cantidadInput = document.querySelector(
+                `#repuestos-list-trabajo input.repuesto-cantidad[data-id="${chk.dataset.id}"]`
+            );
+            const cantidad = cantidadInput ? parseInt(cantidadInput.value) || 1 : 1;
+            repuestos.push({
+                id: chk.dataset.id,
+                repuesto_stock_id: chk.dataset.stockId || null,
+                cantidad: cantidad,
+                precio_unitario: parseFloat(chk.dataset.precio) || 0
+            });
+        });
+        
+        console.log('📋 Repuestos seleccionados:', repuestos);
+        
+        if (repuestos.length === 0) {
+            alert('⚠️ No hay repuestos seleccionados para guardar');
+            return;
+        }
+        
+        try {
+            // Crear formulario para enviar datos
+            const formData = new FormData();
+            formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+            formData.append('repuestos_json', JSON.stringify(repuestos));
+            formData.append('agregar_repuestos_multiples', 'true');
+            
+            const response = await fetch(window.location.href, {
+                method: 'POST',
+                body: formData
+            });
+            
+            console.log('📡 Respuesta del servidor:', response);
+            
+            if (response.ok || response.status === 302) {
+                console.log('✅ Repuestos guardados exitosamente');
+                alert('✅ Repuestos guardados exitosamente');
+                
+                // Recargar la página manteniendo la pestaña de repuestos activa
+                window.location.href = window.location.pathname + '?tab=repuestos';
+            } else {
+                console.error('❌ Error al guardar repuestos:', response.status);
+                alert('❌ Error al guardar los repuestos');
+            }
+            
+        } catch (error) {
+            console.error('❌ Error en la petición:', error);
+            alert('❌ Error al guardar los repuestos');
+        }
+    };
+
+    // Función helper para escapar HTML
+    function escapeHtml(text) {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
 });
 </script>
 {% endblock %}
