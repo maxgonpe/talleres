@@ -1672,33 +1672,60 @@ def trabajo_detalle(request, pk):
 @login_required
 def trabajo_pdf(request, pk):
     """Generar PDF del estado del trabajo"""
+    import logging
+    logger = logging.getLogger(__name__)
+    
     from django.http import HttpResponse
     from django.template.loader import get_template
     from django.conf import settings
     import os
     
+    logger.info(f"🔍 INICIANDO GENERACIÓN PDF - Trabajo ID: {pk}")
+    
     trabajo = get_object_or_404(Trabajo, pk=pk)
+    logger.info(f"✅ Trabajo encontrado: {trabajo.vehiculo} - Estado: {trabajo.estado}")
     
     # Crear el PDF usando weasyprint o reportlab
     try:
         from weasyprint import HTML, CSS
         from weasyprint.text.fonts import FontConfiguration
+        logger.info("✅ WeasyPrint importado correctamente")
         
         # Template para el PDF
         template = get_template('car/trabajo_pdf.html')
+        logger.info("✅ Template cargado correctamente")
         
         # Preparar contexto con URLs absolutas para las imágenes
         context = {
             'trabajo': trabajo,
             'request': request,  # Para generar URLs absolutas
         }
+        
+        # Log de fotos del trabajo
+        fotos_count = trabajo.fotos.count()
+        logger.info(f"📷 Fotos encontradas en el trabajo: {fotos_count}")
+        
+        if fotos_count > 0:
+            for i, foto in enumerate(trabajo.fotos.all()):
+                logger.info(f"📷 Foto {i+1}: {foto.imagen.name} - URL: {foto.imagen.url}")
+                # Verificar si el archivo existe físicamente
+                if os.path.exists(foto.imagen.path):
+                    logger.info(f"✅ Archivo físico existe: {foto.imagen.path}")
+                else:
+                    logger.error(f"❌ Archivo físico NO existe: {foto.imagen.path}")
+        
         html_content = template.render(context)
+        logger.info(f"✅ HTML renderizado - Tamaño: {len(html_content)} caracteres")
         
         # Configuración de fuentes
         font_config = FontConfiguration()
+        logger.info("✅ Configuración de fuentes creada")
         
         # Crear el PDF
+        logger.info("🔄 Creando documento HTML para WeasyPrint...")
         html_doc = HTML(string=html_content)
+        logger.info("✅ Documento HTML creado")
+        
         css = CSS(string='''
             @page {
                 size: A4;
@@ -1735,15 +1762,24 @@ def trabajo_pdf(request, pk):
             th {
                 background: #f0f0f0;
             }
+            img {
+                max-width: 100%;
+                height: auto;
+            }
         ''', font_config=font_config)
+        logger.info("✅ CSS aplicado")
         
+        logger.info("🔄 Generando PDF con WeasyPrint...")
         pdf_file = html_doc.write_pdf(stylesheets=[css], font_config=font_config)
+        logger.info(f"✅ PDF generado exitosamente - Tamaño: {len(pdf_file)} bytes")
         
         response = HttpResponse(pdf_file, content_type='application/pdf')
         response['Content-Disposition'] = f'inline; filename="trabajo_{trabajo.id}_estado.pdf"'
+        logger.info("✅ Respuesta HTTP creada")
         return response
         
-    except ImportError:
+    except ImportError as e:
+        logger.error(f"❌ ERROR: WeasyPrint no está disponible: {str(e)}")
         # Si weasyprint no está disponible, usar una alternativa simple
         from django.http import HttpResponse
         response = HttpResponse(content_type='text/plain')
@@ -1786,6 +1822,19 @@ Mecánicos Asignados:
         content += f"\nGenerado el: {timezone.now().strftime('%d/%m/%Y %H:%M')}"
         
         response.write(content)
+        return response
+        
+    except Exception as e:
+        logger.error(f"❌ ERROR GENERAL generando PDF: {str(e)}")
+        logger.error(f"❌ Tipo de error: {type(e).__name__}")
+        import traceback
+        logger.error(f"❌ Traceback completo: {traceback.format_exc()}")
+        
+        # Respuesta de error
+        from django.http import HttpResponse
+        response = HttpResponse(content_type='text/plain')
+        response['Content-Disposition'] = f'attachment; filename="error_trabajo_{trabajo.id}.txt"'
+        response.write(f"Error generando PDF: {str(e)}")
         return response
 
 

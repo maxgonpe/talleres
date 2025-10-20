@@ -413,7 +413,7 @@
         <div class="foto-grid">
             {% for foto in trabajo.fotos.all %}
                 <div class="foto-item">
-                    <img src="{{ request.scheme }}://{{ request.get_host }}{{ foto.imagen.url }}" alt="{{ foto.descripcion|default:'Foto del trabajo' }}">
+                    <img src="file://{{ foto.imagen.path }}" alt="{{ foto.descripcion|default:'Foto del trabajo' }}">
                     {% if foto.descripcion %}
                         <div style="font-size: 10px; margin-top: 5px;">{{ foto.descripcion }}</div>
                     {% endif %}
