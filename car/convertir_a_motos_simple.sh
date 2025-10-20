@@ -51,3 +51,4 @@ echo "   ✅ vehiculo-desde-abajo.svg (plano de moto)"
 echo "   ✅ motor.svg (motor de moto)"
 echo ""
 echo "🌐 Accede a tu aplicación para ver los cambios"
+

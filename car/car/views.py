@@ -18,6 +18,12 @@ from django.db import transaction
 from django.http import HttpResponse
 from django.db.models import Sum
 from django.db.models import Q
+
+# NUEVOS IMPORTS PARA PERMISOS
+from .decorators import (
+    requiere_permiso, requiere_rol, solo_administradores, 
+    solo_mecanicos_y_admin, solo_vendedores_y_admin
+)
 from .forms import RepuestoForm
 import pandas as pd
 from io import BytesIO
@@ -46,6 +52,7 @@ from .models import Diagnostico, Cliente_Taller, Vehiculo,\
                     DiagnosticoRepuesto, Trabajo, Mecanico, TrabajoFoto,TrabajoRepuesto,\
                     TrabajoAccion, Venta, VentaItem, RepuestoEnStock, StockMovimiento,\
                     VentaPOS, SesionVenta, CarritoItem, AdministracionTaller
+from django.contrib.auth.models import User
 from django.forms import modelformset_factory
 from django.forms import inlineformset_factory
 from .forms import ComponenteForm, ClienteTallerForm, ClienteTallerRapidoForm, VehiculoForm,\
@@ -100,6 +107,7 @@ def componente_list(request):
 
 
 @login_required
+@requiere_permiso('diagnosticos')
 @transaction.atomic
 def ingreso_view(request):
     clientes_existentes = Cliente_Taller.objects.filter(activo=True).order_by('nombre')
@@ -430,6 +438,7 @@ def get_vehiculos_por_cliente(request, cliente_id):
     return JsonResponse(data, safe=False)
 
 @login_required
+@requiere_permiso('diagnosticos')
 def lista_diagnosticos(request):
     diagnosticos = Diagnostico.objects.all().select_related(
         'vehiculo__cliente'
@@ -1288,6 +1297,7 @@ def lista_trabajos2(request):
 
 
 @login_required
+@requiere_permiso('trabajos')
 def lista_trabajos(request):
     trabajos = Trabajo.objects.all().select_related(
         'vehiculo__cliente'
@@ -1308,6 +1318,7 @@ def lista_trabajos(request):
 
 
 @login_required
+@requiere_permiso('trabajos')
 def trabajo_detalle(request, pk):
     trabajo = get_object_or_404(Trabajo, pk=pk)
     
@@ -2638,4 +2649,140 @@ def repuesto_compatibilidad(request, pk):
     }
     
     return render(request, "repuestos/repuesto_compatibilidad.html", context)
+
+
+# ========================
+# GESTIÓN DE USUARIOS Y PERMISOS
+# ========================
+
+@login_required
+@solo_administradores
+def gestion_usuarios(request):
+    """Vista para gestionar usuarios y sus permisos"""
+    usuarios = User.objects.filter(mecanico__isnull=False).select_related('mecanico')
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'crear_usuario':
+            username = request.POST.get('username')
+            password = request.POST.get('password')
+            rol = request.POST.get('rol', 'mecanico')
+            
+            if User.objects.filter(username=username).exists():
+                messages.error(request, f"El usuario '{username}' ya existe")
+            else:
+                user = User.objects.create_user(username=username, password=password)
+                mecanico = Mecanico.objects.create(
+                    user=user,
+                    rol=rol
+                )
+                messages.success(request, f"Usuario '{username}' creado como {mecanico.get_rol_display()}")
+        
+        elif action == 'cambiar_rol':
+            user_id = request.POST.get('user_id')
+            nuevo_rol = request.POST.get('nuevo_rol')
+            
+            try:
+                user = User.objects.get(id=user_id)
+                mecanico = user.mecanico
+                mecanico.rol = nuevo_rol
+                mecanico.save()
+                messages.success(request, f"Rol de {user.username} cambiado a {mecanico.get_rol_display()}")
+            except User.DoesNotExist:
+                messages.error(request, "Usuario no encontrado")
+        
+        elif action == 'toggle_permiso':
+            user_id = request.POST.get('user_id')
+            permiso = request.POST.get('permiso')
+            activo = request.POST.get('activo') == 'true'
+            
+            try:
+                user = User.objects.get(id=user_id)
+                mecanico = user.mecanico
+                setattr(mecanico, permiso, activo)
+                mecanico.save()
+                messages.success(request, f"Permiso '{permiso}' {'activado' if activo else 'desactivado'} para {user.username}")
+            except User.DoesNotExist:
+                messages.error(request, "Usuario no encontrado")
+        
+        elif action == 'eliminar_usuario':
+            user_id = request.POST.get('user_id')
+            
+            try:
+                user = User.objects.get(id=user_id)
+                if user == request.user:
+                    messages.error(request, "No puedes eliminar tu propio usuario")
+                else:
+                    username = user.username
+                    user.delete()
+                    messages.success(request, f"Usuario '{username}' eliminado")
+            except User.DoesNotExist:
+                messages.error(request, "Usuario no encontrado")
+        
+        return redirect('gestion_usuarios')
+    
+    return render(request, 'car/gestion_usuarios.html', {
+        'usuarios': usuarios,
+        'roles_choices': Mecanico.ROLES_CHOICES,
+    })
+
+
+@login_required
+@solo_administradores
+def crear_usuario_rapido(request):
+    """API para crear usuarios rápidamente"""
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        rol = request.POST.get('rol', 'mecanico')
+        
+        if User.objects.filter(username=username).exists():
+            return JsonResponse({'error': f'El usuario "{username}" ya existe'}, status=400)
+        
+        try:
+            user = User.objects.create_user(username=username, password=password)
+            mecanico = Mecanico.objects.create(user=user, rol=rol)
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Usuario "{username}" creado como {mecanico.get_rol_display()}',
+                'usuario': {
+                    'id': user.id,
+                    'username': user.username,
+                    'rol': mecanico.rol,
+                    'rol_display': mecanico.get_rol_display()
+                }
+            })
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Método no permitido'}, status=405)
+
+
+@login_required
+@solo_administradores
+def toggle_permiso_usuario(request):
+    """API para activar/desactivar permisos de usuarios"""
+    if request.method == 'POST':
+        user_id = request.POST.get('user_id')
+        permiso = request.POST.get('permiso')
+        activo = request.POST.get('activo') == 'true'
+        
+        try:
+            user = User.objects.get(id=user_id)
+            mecanico = user.mecanico
+            setattr(mecanico, permiso, activo)
+            mecanico.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Permiso "{permiso}" {"activado" if activo else "desactivado"} para {user.username}'
+            })
+        except User.DoesNotExist:
+            return JsonResponse({'error': 'Usuario no encontrado'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Método no permitido'}, status=405)
 

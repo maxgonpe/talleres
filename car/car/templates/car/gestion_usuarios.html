@@ -1,0 +1,319 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Gestión de Usuarios y Permisos{% endblock %}
+
+{% block extra_head %}
+<style>
+    .usuarios-container {
+        max-width: 100%;
+        margin: 0;
+        padding: 0.5rem;
+    }
+    
+    .usuarios-header {
+        background: linear-gradient(135deg, var(--btn-bg) 0%, var(--muted) 100%);
+        color: var(--btn-fg);
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+        text-align: center;
+    }
+    
+    .crear-usuario-card {
+        background: var(--card-bg);
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .usuarios-table {
+        background: var(--card-bg);
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .table {
+        color: var(--fg);
+    }
+    
+    .table th {
+        background: var(--muted);
+        color: var(--fg);
+        border: none;
+        font-weight: 600;
+    }
+    
+    .table td {
+        border-color: var(--muted);
+        vertical-align: middle;
+    }
+    
+    .rol-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .rol-mecanico {
+        background: #007bff;
+        color: white;
+    }
+    
+    .rol-vendedor {
+        background: #28a745;
+        color: white;
+    }
+    
+    .rol-admin {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .permiso-checkbox {
+        transform: scale(1.2);
+        cursor: pointer;
+    }
+    
+    .btn-eliminar {
+        background: #dc3545;
+        border: none;
+        color: white;
+        padding: 0.25rem 0.5rem;
+        border-radius: 5px;
+        font-size: 0.8rem;
+    }
+    
+    .btn-eliminar:hover {
+        background: #c82333;
+        color: white;
+    }
+    
+    .form-control, .form-select {
+        background: var(--card-bg);
+        border: 1px solid var(--muted);
+        color: var(--fg);
+    }
+    
+    .form-control:focus, .form-select:focus {
+        background: var(--card-bg);
+        border-color: var(--btn-bg);
+        color: var(--fg);
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="usuarios-container">
+    <!-- Header -->
+    <div class="usuarios-header">
+        <h1 class="mb-0">👥 Gestión de Usuarios y Permisos</h1>
+        <small>Administra usuarios, roles y permisos del sistema</small>
+    </div>
+
+    <!-- Crear Usuario -->
+    <div class="crear-usuario-card">
+        <h4 class="mb-3">➕ Crear Nuevo Usuario</h4>
+        <form method="post" id="crearUsuarioForm">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="crear_usuario">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Usuario</label>
+                    <input type="text" class="form-control" name="username" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Contraseña</label>
+                    <input type="password" class="form-control" name="password" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Rol</label>
+                    <select class="form-select" name="rol" required>
+                        {% for value, label in roles_choices %}
+                        <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary w-100">
+                        ➕ Crear Usuario
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Lista de Usuarios -->
+    <div class="usuarios-table">
+        <h4 class="mb-3">👥 Usuarios del Sistema</h4>
+        
+        {% if usuarios %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Rol</th>
+                        <th>Diagnósticos</th>
+                        <th>Trabajos</th>
+                        <th>POS</th>
+                        <th>Compras</th>
+                        <th>Inventario</th>
+                        <th>Administración</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for usuario in usuarios %}
+                    <tr>
+                        <td>
+                            <strong>{{ usuario.username }}</strong>
+                            {% if usuario == request.user %}
+                            <span class="badge bg-info">Tú</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <form method="post" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="cambiar_rol">
+                                <input type="hidden" name="user_id" value="{{ usuario.id }}">
+                                <select name="nuevo_rol" class="form-select form-select-sm" onchange="this.form.submit()">
+                                    {% for value, label in roles_choices %}
+                                    <option value="{{ value }}" {% if usuario.mecanico.rol == value %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </form>
+                        </td>
+                        <td>
+                            <form method="post" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="toggle_permiso">
+                                <input type="hidden" name="user_id" value="{{ usuario.id }}">
+                                <input type="hidden" name="permiso" value="puede_ver_diagnosticos">
+                                <input type="checkbox" class="form-check-input permiso-checkbox" 
+                                       {% if usuario.mecanico.puede_ver_diagnosticos %}checked{% endif %}
+                                       onchange="this.form.submit()">
+                            </form>
+                        </td>
+                        <td>
+                            <form method="post" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="toggle_permiso">
+                                <input type="hidden" name="user_id" value="{{ usuario.id }}">
+                                <input type="hidden" name="permiso" value="puede_ver_trabajos">
+                                <input type="checkbox" class="form-check-input permiso-checkbox" 
+                                       {% if usuario.mecanico.puede_ver_trabajos %}checked{% endif %}
+                                       onchange="this.form.submit()">
+                            </form>
+                        </td>
+                        <td>
+                            <form method="post" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="toggle_permiso">
+                                <input type="hidden" name="user_id" value="{{ usuario.id }}">
+                                <input type="hidden" name="permiso" value="puede_ver_pos">
+                                <input type="checkbox" class="form-check-input permiso-checkbox" 
+                                       {% if usuario.mecanico.puede_ver_pos %}checked{% endif %}
+                                       onchange="this.form.submit()">
+                            </form>
+                        </td>
+                        <td>
+                            <form method="post" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="toggle_permiso">
+                                <input type="hidden" name="user_id" value="{{ usuario.id }}">
+                                <input type="hidden" name="permiso" value="puede_ver_compras">
+                                <input type="checkbox" class="form-check-input permiso-checkbox" 
+                                       {% if usuario.mecanico.puede_ver_compras %}checked{% endif %}
+                                       onchange="this.form.submit()">
+                            </form>
+                        </td>
+                        <td>
+                            <form method="post" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="toggle_permiso">
+                                <input type="hidden" name="user_id" value="{{ usuario.id }}">
+                                <input type="hidden" name="permiso" value="puede_ver_inventario">
+                                <input type="checkbox" class="form-check-input permiso-checkbox" 
+                                       {% if usuario.mecanico.puede_ver_inventario %}checked{% endif %}
+                                       onchange="this.form.submit()">
+                            </form>
+                        </td>
+                        <td>
+                            <form method="post" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="toggle_permiso">
+                                <input type="hidden" name="user_id" value="{{ usuario.id }}">
+                                <input type="hidden" name="permiso" value="puede_ver_administracion">
+                                <input type="checkbox" class="form-check-input permiso-checkbox" 
+                                       {% if usuario.mecanico.puede_ver_administracion %}checked{% endif %}
+                                       onchange="this.form.submit()">
+                            </form>
+                        </td>
+                        <td>
+                            {% if usuario != request.user %}
+                            <form method="post" class="d-inline" onsubmit="return confirm('¿Estás seguro de eliminar este usuario?')">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="eliminar_usuario">
+                                <input type="hidden" name="user_id" value="{{ usuario.id }}">
+                                <button type="submit" class="btn-eliminar">
+                                    🗑️ Eliminar
+                                </button>
+                            </form>
+                            {% else %}
+                            <span class="text-muted">No disponible</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center text-muted py-4">
+            <h5>No hay usuarios registrados</h5>
+            <p>Crea el primer usuario del sistema</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Aplicar tema automáticamente
+    const saved = localStorage.getItem("theme") || "piedra";
+    document.body.className = `theme-${saved}`;
+    
+    // Auto-submit para checkboxes de permisos
+    document.querySelectorAll('.permiso-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            // Encontrar el formulario padre y enviarlo
+            const form = this.closest('form');
+            if (form) {
+                form.submit();
+            }
+        });
+    });
+    
+    // Auto-submit para cambios de rol
+    document.querySelectorAll('select[name="nuevo_rol"]').forEach(select => {
+        select.addEventListener('change', function() {
+            const form = this.closest('form');
+            if (form) {
+                form.submit();
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

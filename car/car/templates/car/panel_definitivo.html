@@ -394,6 +394,7 @@
 
             <!-- Acciones principales -->
             <div class="actions-grid">
+                {% if request.permisos.diagnosticos %}
                 <a href="{% url 'ingreso' %}" class="action-card">
                     <span class="action-icon">🔧</span>
                     <div class="action-title">Nuevo Diagnóstico</div>
@@ -405,30 +406,47 @@
                     <div class="action-title">Ver Diagnósticos</div>
                     <div class="action-description">Lista de diagnósticos pendientes</div>
                 </a>
+                {% endif %}
                 
+                {% if request.permisos.trabajos %}
                 <a href="{% url 'lista_trabajos' %}" class="action-card">
                     <span class="action-icon">🚗</span>
                     <div class="action-title">Ver Trabajos</div>
                     <div class="action-description">Lista completa de trabajos activos</div>
                 </a>
+                {% endif %}
                 
+                {% if request.permisos.inventario %}
                 <a href="{% url 'repuesto_list' %}" class="action-card">
                     <span class="action-icon">📦</span>
                     <div class="action-title">Inventario</div>
                     <div class="action-description">Gestionar repuestos y stock</div>
                 </a>
+                {% endif %}
                 
+                {% if request.permisos.pos %}
                 <a href="{% url 'pos_principal' %}" class="action-card">
                     <span class="action-icon">🛒</span>
                     <div class="action-title">Punto de Venta</div>
                     <div class="action-description">Ventas y cotizaciones de repuestos</div>
                 </a>
+                {% endif %}
                 
+                {% if request.permisos.compras %}
                 <a href="{% url 'compra_dashboard' %}" class="action-card">
                     <span class="action-icon">📥</span>
                     <div class="action-title">Compras</div>
                     <div class="action-description">Gestiona compras de repuestos</div>
                 </a>
+                {% endif %}
+                
+                {% if request.permisos.administracion %}
+                <a href="{% url 'gestion_usuarios' %}" class="action-card">
+                    <span class="action-icon">👥</span>
+                    <div class="action-title">Gestión de Usuarios</div>
+                    <div class="action-description">Administrar usuarios y permisos</div>
+                </a>
+                {% endif %}
             </div>
 
             <!-- Pizarra de trabajos -->

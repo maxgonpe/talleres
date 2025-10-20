@@ -140,6 +140,11 @@ urlpatterns = [
     # === ADMINISTRACIÓN DEL TALLER ===
     path("administracion/", views.administracion_taller, name="administracion_taller"),
     
+    # === GESTIÓN DE USUARIOS Y PERMISOS ===
+    path("gestion-usuarios/", views.gestion_usuarios, name="gestion_usuarios"),
+    path("api/crear-usuario/", views.crear_usuario_rapido, name="crear_usuario_rapido"),
+    path("api/toggle-permiso/", views.toggle_permiso_usuario, name="toggle_permiso_usuario"),
+    
     # === COMPRAS ===
     path("compras/", views_compras.compra_dashboard, name="compra_dashboard"),
     path("compras/lista/", views_compras.compra_list, name="compra_list"),

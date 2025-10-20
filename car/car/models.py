@@ -9,13 +9,74 @@ from django.db import transaction
 from django.utils.timezone import now
 
 class Mecanico(models.Model):
+    ROLES_CHOICES = [
+        ('mecanico', 'Mecánico'),
+        ('vendedor', 'Vendedor'),
+        ('admin', 'Administrador'),
+    ]
+    
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="mecanico")
     especialidad = models.CharField(max_length=100, blank=True, null=True)
     fecha_ingreso = models.DateField(auto_now_add=True)
     activo = models.BooleanField(default=True)
+    
+    # NUEVOS CAMPOS PARA ROLES Y PERMISOS
+    rol = models.CharField(max_length=20, choices=ROLES_CHOICES, default='mecanico')
+    
+    # PERMISOS POR MÓDULO
+    puede_ver_diagnosticos = models.BooleanField(default=True)
+    puede_ver_trabajos = models.BooleanField(default=True)
+    puede_ver_pos = models.BooleanField(default=False)
+    puede_ver_compras = models.BooleanField(default=False)
+    puede_ver_inventario = models.BooleanField(default=False)
+    puede_ver_administracion = models.BooleanField(default=False)
+    
+    # PERMISOS ESPECÍFICOS
+    crear_clientes = models.BooleanField(default=True)
+    crear_vehiculos = models.BooleanField(default=True)
+    aprobar_diagnosticos = models.BooleanField(default=False)
+    gestionar_usuarios = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.user.get_full_name() or self.user.username}"
+        return f"{self.user.get_full_name() or self.user.username} ({self.get_rol_display()})"
+    
+    def save(self, *args, **kwargs):
+        # Auto-configurar permisos según el rol
+        if self.rol == 'mecanico':
+            self.puede_ver_diagnosticos = True
+            self.puede_ver_trabajos = True
+            self.puede_ver_pos = False
+            self.puede_ver_compras = False
+            self.puede_ver_inventario = False
+            self.puede_ver_administracion = False
+            self.crear_clientes = True
+            self.crear_vehiculos = True
+            self.aprobar_diagnosticos = False
+            self.gestionar_usuarios = False
+        elif self.rol == 'vendedor':
+            self.puede_ver_diagnosticos = False
+            self.puede_ver_trabajos = False
+            self.puede_ver_pos = True
+            self.puede_ver_compras = False
+            self.puede_ver_inventario = True
+            self.puede_ver_administracion = False
+            self.crear_clientes = True
+            self.crear_vehiculos = False
+            self.aprobar_diagnosticos = False
+            self.gestionar_usuarios = False
+        elif self.rol == 'admin':
+            self.puede_ver_diagnosticos = True
+            self.puede_ver_trabajos = True
+            self.puede_ver_pos = True
+            self.puede_ver_compras = True
+            self.puede_ver_inventario = True
+            self.puede_ver_administracion = True
+            self.crear_clientes = True
+            self.crear_vehiculos = True
+            self.aprobar_diagnosticos = True
+            self.gestionar_usuarios = True
+        
+        super().save(*args, **kwargs)
 
 
 

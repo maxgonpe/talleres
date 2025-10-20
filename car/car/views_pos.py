@@ -8,6 +8,12 @@ from django.core.paginator import Paginator
 from django.db.models import Q, Sum
 from decimal import Decimal
 
+# NUEVOS IMPORTS PARA PERMISOS
+from .decorators import (
+    requiere_permiso, requiere_rol, solo_administradores, 
+    solo_mecanicos_y_admin, solo_vendedores_y_admin
+)
+
 from .models import (
     Repuesto, RepuestoEnStock, Cliente, SesionVenta, 
     CarritoItem, VentaPOS, VentaPOSItem, ConfiguracionPOS,
@@ -23,6 +29,7 @@ from .forms import (
 # ========================
 
 @login_required
+@requiere_permiso('pos')
 def pos_principal(request):
     """Vista principal del sistema POS"""
     # Obtener o crear sesión activa
