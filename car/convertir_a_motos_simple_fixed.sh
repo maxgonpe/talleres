@@ -26,9 +26,9 @@ fi
 
 echo "📁 Inyectando archivos de motos..."
 
-# 1. Panel definitivo con iconos de motos
+# 1. Panel definitivo con iconos de motos (CORREGIDO)
 echo "   📄 Panel definitivo..."
-docker cp otros/archivos_motos/panel_definitivo.html $CONTAINER_NAME:/app/car/templates/car/panel_definitivo.html
+docker cp otros/archivos_motos/panel_definitivo_motos.html $CONTAINER_NAME:/app/car/templates/car/panel_definitivo.html
 
 # 2. Plano interactivo de moto
 echo "   🖼️  Plano interactivo..."
@@ -46,12 +46,11 @@ echo "✅ ¡Conversión completada!"
 echo "🏍️ $CONTAINER_NAME ahora es un taller de motos"
 echo ""
 echo "📋 Archivos cambiados:"
-echo "   ✅ panel_definitivo.html (iconos 🏍️)"
+echo "   ✅ panel_definitivo.html (iconos 🏍️ + permisos)"
 echo "   ✅ vehiculo-desde-abajo.svg (plano de moto)"
 echo "   ✅ motor.svg (motor de moto)"
 echo ""
 echo "🌐 Accede a tu aplicación para ver los cambios"
-
 
 
 

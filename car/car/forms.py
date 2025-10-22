@@ -420,7 +420,7 @@ class CompraForm(forms.ModelForm):
     """Formulario para crear/editar compras"""
     class Meta:
         model = Compra
-        fields = ['proveedor', 'fecha_compra', 'fecha_recibida', 'estado', 'observaciones']
+        fields = ['proveedor', 'fecha_compra', 'observaciones']
         widgets = {
             'proveedor': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -430,13 +430,6 @@ class CompraForm(forms.ModelForm):
                 'class': 'form-control',
                 'type': 'date'
             }),
-            'fecha_recibida': forms.DateInput(attrs={
-                'class': 'form-control',
-                'type': 'date'
-            }),
-            'estado': forms.Select(attrs={
-                'class': 'form-select'
-            }),
             'observaciones': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 3,
@@ -444,135 +437,67 @@ class CompraForm(forms.ModelForm):
             }),
         }
 
-
 class CompraItemForm(forms.ModelForm):
-    """Formulario para agregar items a una compra"""
+    """Formulario para agregar/editar items de compra"""
     class Meta:
         model = CompraItem
         fields = ['repuesto', 'cantidad', 'precio_unitario']
         widgets = {
             'repuesto': forms.Select(attrs={
                 'class': 'form-select',
-                'id': 'id_repuesto'
+                'placeholder': 'Seleccionar repuesto'
             }),
             'cantidad': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'min': '1',
-                'step': '1'
+                'step': '1',
+                'placeholder': 'Cantidad'
             }),
             'precio_unitario': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'min': '0',
-                'step': '0.01'
+                'step': '0.01',
+                'placeholder': '0.00'
             }),
         }
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Ordenar repuestos por nombre
-        self.fields['repuesto'].queryset = Repuesto.objects.all().order_by('nombre')
 
 
-class CompraItemInlineForm(forms.ModelForm):
-    """Formulario inline para items de compra"""
-    class Meta:
-        model = CompraItem
-        fields = ['repuesto', 'cantidad', 'precio_unitario', 'recibido']
-        widgets = {
-            'repuesto': forms.Select(attrs={'class': 'form-select'}),
-            'cantidad': forms.NumberInput(attrs={'class': 'form-control', 'min': '1'}),
-            'precio_unitario': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
-            'recibido': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-        }
+# ========================
+# FORMULARIOS PARA VEHÍCULOS
+# ========================
 
 class VehiculoVersionForm(forms.ModelForm):
-    """Formulario para crear y editar vehículos"""
+    """Formulario para crear/editar versiones de vehículos"""
     class Meta:
         model = VehiculoVersion
         fields = ['marca', 'modelo', 'anio_desde', 'anio_hasta', 'motor', 'carroceria']
         widgets = {
             'marca': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Ej: Toyota, Honda, Nissan...',
-                'autocomplete': 'off'
+                'placeholder': 'Ej: Toyota, Honda, Ford'
             }),
             'modelo': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Ej: Corolla, Civic, Sentra...',
-                'autocomplete': 'off'
+                'placeholder': 'Ej: Corolla, Civic, Focus'
             }),
             'anio_desde': forms.NumberInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Ej: 2015',
                 'min': '1900',
-                'max': '2030'
+                'max': '2030',
+                'placeholder': '2020'
             }),
             'anio_hasta': forms.NumberInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Ej: 2020',
                 'min': '1900',
-                'max': '2030'
+                'max': '2030',
+                'placeholder': '2024'
             }),
             'motor': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Ej: 1.6L, 2.0L Turbo, V6...',
-                'autocomplete': 'off'
+                'placeholder': 'Ej: 1.6L, 2.0L Turbo, V6'
             }),
             'carroceria': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Ej: Sedán, Hatchback, SUV...',
-                'autocomplete': 'off'
+                'placeholder': 'Ej: Sedán, Hatchback, SUV'
             }),
         }
-    
-    def clean(self):
-        cleaned_data = super().clean()
-        anio_desde = cleaned_data.get('anio_desde')
-        anio_hasta = cleaned_data.get('anio_hasta')
-        
-        if anio_desde and anio_hasta:
-            if anio_desde > anio_hasta:
-                raise forms.ValidationError('El año de inicio no puede ser mayor al año final.')
-        
-        return cleaned_data
-
-
-class RepuestoForm(forms.ModelForm):
-    """Formulario para Repuesto con sincronización automática de stock"""
-    class Meta:
-        model = Repuesto
-        fields = ['nombre', 'marca', 'descripcion', 'sku', 'oem', 'codigo_barra', 
-                 'referencia', 'cod_prov', 'medida', 'posicion', 'unidad', 
-                 'origen_repuesto', 'marca_veh', 'tipo_de_motor', 'precio_costo', 
-                 'precio_venta', 'stock']
-        widgets = {
-            'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombre del repuesto'}),
-            'marca': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Marca del repuesto'}),
-            'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Descripción detallada'}),
-            'sku': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Se genera automáticamente'}),
-            'oem': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Código del fabricante'}),
-            'codigo_barra': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Código de barras'}),
-            'referencia': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Referencia del proveedor'}),
-            'cod_prov': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Código del proveedor'}),
-            'medida': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: 258x22mm, 10x1.25'}),
-            'posicion': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: freno delantero, motor'}),
-            'unidad': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'pieza, metro, litro, etc.'}),
-            'origen_repuesto': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Original, Alternativo, Reconstruido'}),
-            'marca_veh': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Toyota, Honda, Ford'}),
-            'tipo_de_motor': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '1.6L, 2.0L Turbo, V6, etc.'}),
-            'precio_costo': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': '0.00'}),
-            'precio_venta': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': '0.00'}),
-            'stock': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'placeholder': '0'}),
-        }
-    
-    def save(self, commit=True):
-        """Guarda el repuesto y sincroniza automáticamente el stock"""
-        repuesto = super().save(commit=commit)
-        
-        if commit:
-            # Importar aquí para evitar importaciones circulares
-            from .views import clone_repuesto_to_stock
-            # Sincronizar automáticamente con RepuestoEnStock
-            clone_repuesto_to_stock(repuesto)
-        
-        return repuesto

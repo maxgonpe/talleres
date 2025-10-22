@@ -1,0 +1,66 @@
+{% load humanize %}
+{% if items %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Repuesto</th>
+                    <th>Cantidad</th>
+                    <th>Precio Unitario</th>
+                    <th>Subtotal</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td>
+                        <div>
+                            <strong>{{ item.repuesto.nombre }}</strong>
+                            <br>
+                            <small class="text-muted">
+                                SKU: {{ item.repuesto.sku|default:"N/A" }} | 
+                                Stock actual: {{ item.repuesto.stock_total }}
+                            </small>
+                        </div>
+                    </td>
+                    <td>{{ item.cantidad }}</td>
+                    <td>${{ item.precio_unitario|floatformat:0|intcomma }}</td>
+                    <td>${{ item.subtotal|floatformat:0|intcomma }}</td>
+                    <td>
+                        {% if item.recibido %}
+                            <span class="badge bg-success">Recibido</span>
+                            <br>
+                            <small class="text-muted">{{ item.fecha_recibido|date:"d/m/Y H:i" }}</small>
+                        {% else %}
+                            <span class="badge bg-warning">Pendiente</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="btn-group" role="group">
+                            <a href="{% url 'compra_item_edit' item.pk %}" class="btn btn-sm btn-outline-primary" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            {% if not item.recibido %}
+                                <a href="{% url 'compra_item_recibir' item.pk %}" class="btn btn-sm btn-outline-success" title="Recibir">
+                                    <i class="fas fa-check"></i>
+                                </a>
+                            {% endif %}
+                            <a href="{% url 'compra_item_delete' item.pk %}" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="text-center py-4">
+        <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+        <h5>No hay items en esta compra</h5>
+        <p class="text-muted">Agrega items para comenzar</p>
+    </div>
+{% endif %}

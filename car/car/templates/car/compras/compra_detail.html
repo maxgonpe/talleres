@@ -200,6 +200,9 @@
                                 <i class="fas fa-times me-2"></i>Cancelar Compra
                             </a>
                         {% endif %}
+                        <a href="{% url 'compra_dashboard' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Volver al Dashboard
+                        </a>
                     </div>
                 </div>
             </div>
@@ -221,10 +224,29 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="repuesto_search" class="form-label">Buscar Repuesto *</label>
-                        <input type="text" id="repuesto_search" class="form-control" placeholder="Escribe nombre, SKU o código de barras...">
-                        <input type="hidden" id="id_repuesto" name="repuesto" required>
+                        <input type="text" 
+                               id="repuesto_search" 
+                               class="form-control" 
+                               placeholder="Escriba nombre, SKU, código de barras o escanee..."
+                               autocomplete="off">
+                        <input type="hidden" id="id_repuesto" name="repuesto" value="">
+                        <div id="repuesto_suggestions" class="list-group" style="display: none; position: absolute; z-index: 1000; width: 100%; max-height: 300px; overflow-y: auto;"></div>
+                        
+                        <!-- Información del producto seleccionado -->
+                        <div id="producto_info" class="mt-2" style="display: none;">
+                            <div class="alert alert-info">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <strong>📦 Stock Actual:</strong> <span id="stock_info">-</span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>💰 Último Precio:</strong> <span id="precio_info">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="form-text">Si el repuesto ya existe en la compra, se sumará la cantidad</div>
-                        <div id="repuesto_suggestions" class="list-group mt-2" style="display: none;"></div>
                     </div>
                     <div class="row">
                         <div class="col-md-6">
@@ -259,6 +281,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const suggestions = document.getElementById('repuesto_suggestions');
     let searchTimeout;
 
+    // Búsqueda de repuestos en tiempo real
     repuestoSearch.addEventListener('input', function() {
         const query = this.value.trim();
         
@@ -267,10 +290,11 @@ document.addEventListener('DOMContentLoaded', function() {
             clearTimeout(searchTimeout);
         }
         
-        // Si el campo está vacío, ocultar sugerencias
+        // Si el campo está vacío, ocultar sugerencias y info del producto
         if (query.length < 2) {
             suggestions.style.display = 'none';
             repuestoHidden.value = '';
+            ocultarInfoProducto();
             return;
         }
         
@@ -280,6 +304,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 300);
     });
 
+    // Función para buscar repuestos
     function buscarRepuestos(query) {
         fetch(`/car/api/buscar-repuestos-compra/?q=${encodeURIComponent(query)}`)
             .then(response => response.json())
@@ -291,6 +316,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
+    // Mostrar sugerencias de repuestos
     function mostrarSugerencias(repuestos) {
         suggestions.innerHTML = '';
         
@@ -312,11 +338,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         <small class="text-muted">
                             SKU: ${repuesto.sku || 'N/A'} | 
                             OEM: ${repuesto.oem || 'N/A'} |
-                            Stock: ${repuesto.stock}
+                            Stock: ${repuesto.stock_actual || 0} | 
+                            Precio: $${repuesto.precio_costo || 0}
                         </small>
-                    </div>
-                    <div class="text-end">
-                        <small class="text-success">$${repuesto.precio_venta}</small>
                     </div>
                 </div>
             `;
@@ -328,15 +352,39 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Auto-completar precio si está disponible
                 const precioInput = document.querySelector('input[name="precio_unitario"]');
-                if (precioInput && repuesto.precio_venta) {
-                    precioInput.value = repuesto.precio_venta;
+                if (precioInput && repuesto.precio_costo) {
+                    precioInput.value = repuesto.precio_costo;
                 }
+                
+                // Mostrar información del producto seleccionado
+                mostrarInfoProducto(repuesto);
             });
             
             suggestions.appendChild(item);
         });
         
         suggestions.style.display = 'block';
+    }
+
+    // Función para mostrar información del producto seleccionado
+    function mostrarInfoProducto(repuesto) {
+        const productoInfo = document.getElementById('producto_info');
+        const stockInfo = document.getElementById('stock_info');
+        const precioInfo = document.getElementById('precio_info');
+        
+        if (productoInfo && stockInfo && precioInfo) {
+            stockInfo.textContent = repuesto.stock_actual || 0;
+            precioInfo.textContent = `$${repuesto.precio_costo || 0}`;
+            productoInfo.style.display = 'block';
+        }
+    }
+
+    // Función para ocultar información del producto
+    function ocultarInfoProducto() {
+        const productoInfo = document.getElementById('producto_info');
+        if (productoInfo) {
+            productoInfo.style.display = 'none';
+        }
     }
 
     // Ocultar sugerencias al hacer clic fuera
@@ -351,9 +399,21 @@ document.addEventListener('DOMContentLoaded', function() {
         repuestoSearch.value = '';
         repuestoHidden.value = '';
         suggestions.style.display = 'none';
+        ocultarInfoProducto();
         document.querySelector('input[name="cantidad"]').value = '';
         document.querySelector('input[name="precio_unitario"]').value = '';
     });
+
+    // Forzar actualización de la página después de agregar un item
+    if (window.location.search.includes('item_agregado=true')) {
+        const url = new URL(window.location);
+        url.searchParams.delete('item_agregado');
+        window.history.replaceState({}, '', url);
+        
+        setTimeout(() => {
+            window.location.reload();
+        }, 500);
+    }
 });
 </script>
 {% endblock %}

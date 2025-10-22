@@ -54,3 +54,9 @@ echo "   ✅ Contenedor reiniciado"
 echo ""
 echo "🌐 Accede a tu aplicación para ver los cambios"
 
+
+
+
+
+
+

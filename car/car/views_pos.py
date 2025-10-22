@@ -67,49 +67,67 @@ def pos_principal(request):
 
 @login_required
 def buscar_repuestos_pos(request):
-    """Búsqueda de repuestos para POS (AJAX)"""
+    """Búsqueda de repuestos para POS (AJAX) - Unificada con módulo de repuestos"""
     query = request.GET.get('q', '').strip()
     
     if len(query) < 2:
         return JsonResponse({'repuestos': []})
     
-    # Buscar por nombre, SKU, código de barras, OEM y nuevos campos
+    # Usar la misma lógica de búsqueda que funciona en el módulo de repuestos
     repuestos = Repuesto.objects.filter(
         Q(nombre__icontains=query) |
         Q(sku__icontains=query) |
         Q(codigo_barra__icontains=query) |
         Q(oem__icontains=query) |
         Q(referencia__icontains=query) |
-        Q(origen_repuesto__icontains=query) |
-        Q(cod_prov__icontains=query) |
+        Q(marca__icontains=query) |
+        Q(descripcion__icontains=query) |
         Q(marca_veh__icontains=query) |
-        Q(tipo_de_motor__icontains=query)
-    ).select_related().prefetch_related('stocks')[:10]
+        Q(tipo_de_motor__icontains=query) |
+        Q(cod_prov__icontains=query) |
+        Q(origen_repuesto__icontains=query)
+    )
+    
+    # Si no hay resultados y el término contiene guiones, buscar por partes del SKU
+    if not repuestos.exists() and '-' in query:
+        partes = query.split('-')
+        if len(partes) > 1:
+            # Buscar SKUs que contengan todas las partes
+            sku_filter = Q()
+            for parte in partes:
+                if parte.strip():  # Ignorar partes vacías
+                    sku_filter &= Q(sku__icontains=parte.strip())
+            
+            if sku_filter:
+                repuestos = Repuesto.objects.filter(sku_filter)
+    
+    # Ordenar por nombre y limitar resultados
+    repuestos = repuestos.order_by('nombre')[:20]
     
     resultados = []
     for repuesto in repuestos:
-        # Obtener stock disponible
-        stock_total = RepuestoEnStock.objects.filter(
-            repuesto=repuesto
-        ).aggregate(total=Sum('stock'))['total'] or 0
-        
-        # Si no hay stock en RepuestoEnStock, usar el stock del modelo Repuesto
-        if stock_total == 0:
-            stock_total = repuesto.stock or 0
+        # Usar el stock unificado desde la tabla maestra
+        stock_total = repuesto.stock_total
         
         # Precio de venta
         precio_venta = repuesto.precio_venta or 0
         
-        resultados.append({
-            'id': repuesto.id,
-            'nombre': repuesto.nombre,
-            'sku': repuesto.sku or '',
-            'marca': repuesto.marca or '',
-            'precio_venta': float(precio_venta),
-            'stock': stock_total,
-            'codigo_barra': repuesto.codigo_barra or '',
-            'unidad': repuesto.unidad,
-        })
+        # Solo incluir repuestos con stock disponible
+        if stock_total > 0:
+            resultados.append({
+                'id': repuesto.id,
+                'nombre': repuesto.nombre,
+                'sku': repuesto.sku or '',
+                'marca': repuesto.marca or '',
+                'precio_venta': float(precio_venta),
+                'stock': stock_total,
+                'codigo_barra': repuesto.codigo_barra or '',
+                'unidad': repuesto.unidad,
+                'oem': repuesto.oem or '',
+                'referencia': repuesto.referencia or '',
+                'marca_veh': repuesto.marca_veh or '',
+                'tipo_motor': repuesto.tipo_de_motor or '',
+            })
     
     return JsonResponse({'repuestos': resultados})
 
@@ -263,34 +281,48 @@ def procesar_venta(request):
                         subtotal=carrito_item.subtotal
                     )
                     
-                    # Actualizar stock en RepuestoEnStock
+                    # Actualizar stock usando el sistema unificado
+                    repuesto = carrito_item.repuesto
+                    
+                    # Verificar stock suficiente
+                    if repuesto.stock_total < carrito_item.cantidad:
+                        raise ValueError(f"Stock insuficiente para {repuesto.nombre}. Disponible: {repuesto.stock_total}, Solicitado: {carrito_item.cantidad}")
+                    
+                    # Actualizar stock en la tabla maestra
+                    repuesto.stock -= carrito_item.cantidad
+                    repuesto.save()
+                    
+                    # Sincronizar con RepuestoEnStock
                     stock_disponible = RepuestoEnStock.objects.filter(
-                        repuesto=carrito_item.repuesto,
-                        stock__gte=carrito_item.cantidad
+                        repuesto=repuesto,
+                        deposito='bodega-principal'
                     ).first()
                     
                     if stock_disponible:
-                        # Descontar stock
-                        stock_disponible.stock -= carrito_item.cantidad
+                        # Actualizar stock detallado para que coincida con el stock maestro
+                        stock_disponible.stock = repuesto.stock
                         stock_disponible.save()
-                        
-                        # Registrar movimiento de stock
-                        StockMovimiento.objects.create(
-                            repuesto_stock=stock_disponible,
-                            tipo="salida",
-                            cantidad=carrito_item.cantidad,
-                            motivo=f"Venta POS #{venta.id}",
-                            referencia=str(venta.id),
-                            usuario=request.user
-                        )
                     else:
-                        # Si no hay stock específico, actualizar el stock general del repuesto
-                        repuesto = carrito_item.repuesto
-                        if repuesto.stock >= carrito_item.cantidad:
-                            repuesto.stock -= carrito_item.cantidad
-                            repuesto.save()
-                        else:
-                            raise ValueError(f"Stock insuficiente para {repuesto.nombre}")
+                        # Crear registro si no existe
+                        RepuestoEnStock.objects.create(
+                            repuesto=repuesto,
+                            deposito='bodega-principal',
+                            stock=repuesto.stock,
+                            reservado=0,
+                            precio_compra=repuesto.precio_costo,
+                            precio_venta=repuesto.precio_venta,
+                            proveedor=''
+                        )
+                    
+                    # Registrar movimiento de stock
+                    StockMovimiento.objects.create(
+                        repuesto_stock=stock_disponible,
+                        tipo="salida",
+                        cantidad=carrito_item.cantidad,
+                        motivo=f"Venta POS #{venta.id}",
+                        referencia=str(venta.id),
+                        usuario=request.user
+                    )
                 
                 # Limpiar carrito
                 sesion.carrito_items.all().delete()
@@ -647,34 +679,48 @@ def convertir_cotizacion_a_venta(request, cotizacion_id):
                     subtotal=item.subtotal
                 )
                 
-                # Actualizar stock en RepuestoEnStock
+                # Actualizar stock usando el sistema unificado
+                repuesto = item.repuesto
+                
+                # Verificar stock suficiente
+                if repuesto.stock_total < item.cantidad:
+                    raise ValueError(f"Stock insuficiente para {repuesto.nombre}. Disponible: {repuesto.stock_total}, Solicitado: {item.cantidad}")
+                
+                # Actualizar stock en la tabla maestra
+                repuesto.stock -= item.cantidad
+                repuesto.save()
+                
+                # Sincronizar con RepuestoEnStock
                 stock_disponible = RepuestoEnStock.objects.filter(
-                    repuesto=item.repuesto,
-                    stock__gte=item.cantidad
+                    repuesto=repuesto,
+                    deposito='bodega-principal'
                 ).first()
                 
                 if stock_disponible:
-                    # Descontar stock
-                    stock_disponible.stock -= item.cantidad
+                    # Actualizar stock detallado para que coincida con el stock maestro
+                    stock_disponible.stock = repuesto.stock
                     stock_disponible.save()
-                    
-                    # Registrar movimiento de stock
-                    StockMovimiento.objects.create(
-                        repuesto_stock=stock_disponible,
-                        tipo="salida",
-                        cantidad=item.cantidad,
-                        motivo=f"Venta POS #{venta.id} (desde cotización #{cotizacion.id})",
-                        referencia=str(venta.id),
-                        usuario=request.user
-                    )
                 else:
-                    # Si no hay stock específico, actualizar el stock general del repuesto
-                    repuesto = item.repuesto
-                    if repuesto.stock >= item.cantidad:
-                        repuesto.stock -= item.cantidad
-                        repuesto.save()
-                    else:
-                        raise ValueError(f"Stock insuficiente para {repuesto.nombre}")
+                    # Crear registro si no existe
+                    RepuestoEnStock.objects.create(
+                        repuesto=repuesto,
+                        deposito='bodega-principal',
+                        stock=repuesto.stock,
+                        reservado=0,
+                        precio_compra=repuesto.precio_costo,
+                        precio_venta=repuesto.precio_venta,
+                        proveedor=''
+                    )
+                
+                # Registrar movimiento de stock
+                StockMovimiento.objects.create(
+                    repuesto_stock=stock_disponible,
+                    tipo="salida",
+                    cantidad=item.cantidad,
+                    motivo=f"Venta POS #{venta.id} (desde cotización #{cotizacion.id})",
+                    referencia=str(venta.id),
+                    usuario=request.user
+                )
             
             # Actualizar estado de la cotización
             cotizacion.estado = 'convertida'

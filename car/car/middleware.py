@@ -74,3 +74,9 @@ class PermisosMiddleware:
                 'es_vendedor': False,
                 'es_admin': False,
             }
+
+
+
+
+
+

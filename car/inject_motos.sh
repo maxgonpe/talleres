@@ -28,9 +28,9 @@ fi
 
 echo "📁 Inyectando archivos de motos..."
 
-# 1. Inyectar panel principal de motos
+# 1. Inyectar panel principal de motos (con permisos)
 echo "   📄 Panel principal..."
-docker cp otros/archivos_motos/panel_principal.html $CONTAINER_NAME:/app/car/templates/car/panel_principal.html
+docker cp otros/archivos_motos/panel_definitivo_motos.html $CONTAINER_NAME:/app/car/templates/car/panel_definitivo.html
 
 # 2. Inyectar imágenes SVG de motos (mismo nombre, contenido diferente)
 echo "   🖼️  Imágenes SVG..."

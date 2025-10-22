@@ -524,30 +524,112 @@ class Repuesto(models.Model):
     
     @property
     def stock_total(self):
-        """Obtiene el stock total de todos los depósitos"""
-        from django.db.models import Sum
-        total = self.stocks.aggregate(total=Sum('stock'))['total']
-        # Si no hay stock en RepuestoEnStock, usar el stock del modelo Repuesto
-        if total == 0 or total is None:
-            return self.stock or 0
-        return total
+        """Obtiene el stock total - SIEMPRE desde la tabla maestra Repuesto"""
+        return self.stock or 0
     
     @property
     def stock_disponible(self):
         """Obtiene el stock disponible (total - reservado)"""
         from django.db.models import Sum
-        total_stock = self.stocks.aggregate(total=Sum('stock'))['total'] or 0
         total_reservado = self.stocks.aggregate(total=Sum('reservado'))['total'] or 0
-        
-        # Si no hay stock en RepuestoEnStock, usar el stock del modelo Repuesto
-        if total_stock == 0:
-            total_stock = self.stock or 0
-            
-        return total_stock - total_reservado
+        return self.stock_total - total_reservado
     
     def tiene_stock_suficiente(self, cantidad):
         """Verifica si hay stock suficiente para la cantidad solicitada"""
         return self.stock_disponible >= cantidad
+    
+    def actualizar_stock_y_precio(self, cantidad_entrada, precio_compra, precio_venta_nuevo=None, proveedor=''):
+        """
+        Actualiza stock y precio usando promedio ponderado con factor de margen automático
+        
+        Args:
+            cantidad_entrada: Cantidad que se está agregando
+            precio_compra: Precio de compra de la nueva mercancía
+            precio_venta_nuevo: Precio de venta nuevo (opcional, si no se proporciona se calcula automáticamente)
+            proveedor: Nombre del proveedor (opcional)
+        
+        Returns:
+            dict: Información del cambio realizado
+        """
+        from decimal import Decimal
+        
+        # Stock y precios actuales
+        stock_anterior = self.stock or 0
+        precio_venta_anterior = self.precio_venta or Decimal('0')
+        precio_costo_anterior = self.precio_costo or Decimal('0')
+        
+        # Calcular nuevo stock
+        nuevo_stock = stock_anterior + cantidad_entrada
+        
+        # El precio de compra es literal (no promedio ponderado)
+        nuevo_precio_costo = precio_compra
+        
+        # Calcular precio de venta usando factor de margen
+        if precio_venta_nuevo is not None:
+            # Si se proporciona precio de venta específico, usarlo
+            nuevo_precio_venta = precio_venta_nuevo
+        elif stock_anterior > 0 and precio_venta_anterior > 0 and precio_costo_anterior > 0:
+            # Calcular factor de margen del producto existente
+            factor_margen = precio_venta_anterior / precio_costo_anterior
+            
+            # Aplicar el mismo factor al nuevo precio de costo
+            nuevo_precio_venta = nuevo_precio_costo * factor_margen
+        else:
+            # Producto nuevo o sin datos anteriores: usar margen del 30% por defecto
+            nuevo_precio_venta = nuevo_precio_costo * Decimal('1.3')
+        
+        # Actualizar el repuesto
+        self.stock = nuevo_stock
+        self.precio_costo = nuevo_precio_costo
+        self.precio_venta = nuevo_precio_venta
+        self.save()
+        
+        # Sincronizar con RepuestoEnStock
+        self._sincronizar_con_stock_detallado(cantidad_entrada, precio_compra, proveedor)
+        
+        return {
+            'stock_anterior': stock_anterior,
+            'stock_nuevo': nuevo_stock,
+            'precio_costo_anterior': float(precio_costo_anterior),
+            'precio_costo_nuevo': float(nuevo_precio_costo),
+            'precio_venta_anterior': float(precio_venta_anterior),
+            'precio_venta_nuevo': float(nuevo_precio_venta),
+            'cantidad_agregada': cantidad_entrada,
+            'factor_margen_aplicado': float(nuevo_precio_venta / nuevo_precio_costo) if nuevo_precio_costo > 0 else 0
+        }
+    
+    def _sincronizar_con_stock_detallado(self, cantidad_entrada, precio_compra, proveedor=''):
+        """Sincroniza con RepuestoEnStock para mantener consistencia"""
+        # Primero, eliminar cualquier registro duplicado existente
+        registros_existentes = RepuestoEnStock.objects.filter(
+            repuesto=self,
+            deposito='bodega-principal'
+        )
+        
+        if registros_existentes.count() > 1:
+            # Mantener solo el más reciente y eliminar los duplicados
+            registro_principal = registros_existentes.order_by('-id').first()
+            registros_duplicados = registros_existentes.exclude(id=registro_principal.id)
+            registros_duplicados.delete()
+        
+        # Obtener o crear el registro principal en RepuestoEnStock
+        stock_principal, created = RepuestoEnStock.objects.get_or_create(
+            repuesto=self,
+            deposito='bodega-principal',
+            proveedor=proveedor,
+            defaults={
+                'stock': 0,
+                'reservado': 0,
+                'precio_compra': precio_compra,
+                'precio_venta': self.precio_venta
+            }
+        )
+        
+        # Actualizar el stock detallado para que coincida con el stock maestro
+        stock_principal.stock = self.stock
+        stock_principal.precio_compra = self.precio_costo
+        stock_principal.precio_venta = self.precio_venta
+        stock_principal.save()
 
 
 
@@ -1127,16 +1209,24 @@ class Compra(models.Model):
     def save(self, *args, **kwargs):
         if not self.numero_compra:
             # Generar número de compra automático
-            ultima_compra = Compra.objects.order_by('-id').first()
-            if ultima_compra and ultima_compra.numero_compra:
+            from django.db.models import Max
+            
+            # Obtener el último número de compra
+            ultimo_numero = Compra.objects.aggregate(
+                max_numero=Max('numero_compra')
+            )['max_numero']
+            
+            if ultimo_numero:
                 try:
-                    ultimo_numero = int(ultima_compra.numero_compra.split('-')[-1])
-                    nuevo_numero = ultimo_numero + 1
-                except:
+                    # Extraer el número del formato COMP-0001
+                    numero_actual = int(ultimo_numero.split('-')[-1])
+                    nuevo_numero = numero_actual + 1
+                except (ValueError, IndexError):
                     nuevo_numero = 1
             else:
                 nuevo_numero = 1
             
+            # Generar el número de compra
             self.numero_compra = f"COMP-{nuevo_numero:04d}"
         
         super().save(*args, **kwargs)
@@ -1178,46 +1268,42 @@ class CompraItem(models.Model):
         self.compra.calcular_total()
     
     def recibir_item(self, usuario=None):
-        """Marca el item como recibido y actualiza el stock"""
+        """Marca el item como recibido y actualiza el stock usando precio promedio ponderado"""
         if not self.recibido:
             self.recibido = True
             self.fecha_recibido = now()
             self.save()
             
-            # Actualizar stock del repuesto
+            # Actualizar stock del repuesto usando el nuevo sistema unificado
             repuesto = self.repuesto
             
-            # Buscar si existe stock en RepuestoEnStock
-            stock_obj = RepuestoEnStock.objects.filter(
-                repuesto=repuesto,
-                deposito='bodega-principal'
-            ).first()
+            # Usar el nuevo método de actualización con precio promedio ponderado
+            resultado = repuesto.actualizar_stock_y_precio(
+                cantidad_entrada=self.cantidad,
+                precio_compra=self.precio_unitario,
+                proveedor=self.compra.proveedor
+            )
             
-            if stock_obj:
-                # Actualizar stock existente
-                stock_obj.stock += self.cantidad
-                stock_obj.save()
-            else:
-                # Crear nuevo registro de stock
-                RepuestoEnStock.objects.create(
-                    repuesto=repuesto,
-                    deposito='bodega-principal',
-                    stock=self.cantidad,
-                    precio_compra=self.precio_unitario,
-                    precio_venta=repuesto.precio_venta
-                )
+            # Crear movimiento de stock para auditoría
+            # Obtener o crear el registro de RepuestoEnStock
+            stock_principal, created = RepuestoEnStock.objects.get_or_create(
+                repuesto=self.repuesto,
+                deposito='bodega-principal',
+                proveedor=self.compra.proveedor,
+                defaults={
+                    'stock': 0,
+                    'reservado': 0,
+                    'precio_compra': self.repuesto.precio_costo,
+                    'precio_venta': self.repuesto.precio_venta
+                }
+            )
             
-            # También actualizar el stock general del repuesto
-            repuesto.stock += self.cantidad
-            repuesto.save()
-            
-            # Registrar movimiento de stock
             StockMovimiento.objects.create(
-                repuesto_stock=stock_obj or RepuestoEnStock.objects.filter(repuesto=repuesto).first(),
-                tipo='ingreso',
+                repuesto_stock=stock_principal,
+                tipo='entrada',
                 cantidad=self.cantidad,
                 motivo=f'Compra #{self.compra.numero_compra}',
-                referencia=self.compra.numero_compra,
+                referencia=f'COMPRA-{self.compra.id}',
                 usuario=usuario
             )
 

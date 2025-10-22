@@ -111,3 +111,9 @@ def solo_vendedores_y_admin(view_func):
         
         return view_func(request, *args, **kwargs)
     return wrapper
+
+
+
+
+
+

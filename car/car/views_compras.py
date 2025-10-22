@@ -64,9 +64,36 @@ def compra_detail(request, pk):
     compra = get_object_or_404(Compra, pk=pk)
     items = compra.items.all().order_by('repuesto__nombre')
     
+    # DEBUG: Verificar items en la vista
+    print(f"DEBUG VISTA - Compra ID: {compra.id}")
+    print(f"DEBUG VISTA - Items count: {items.count()}")
+    print(f"DEBUG VISTA - Items: {list(items)}")
+    print(f"DEBUG VISTA - Items type: {type(items)}")
+    print(f"DEBUG VISTA - Items empty: {items.exists()}")
+    
+    # DEBUG: Verificar la consulta directamente
+    items_directos = CompraItem.objects.filter(compra=compra)
+    print(f"DEBUG VISTA - Items directos count: {items_directos.count()}")
+    print(f"DEBUG VISTA - Items directos: {list(items_directos)}")
+    
+    # DEBUG: Verificar si hay items en la base de datos
+    from django.db import connection
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT COUNT(*) FROM car_compraitem WHERE compra_id = %s", [compra.id])
+        count_db = cursor.fetchone()[0]
+        print(f"DEBUG VISTA - Items en DB: {count_db}")
+    
+    # Usar items directos en lugar de la relación
+    items = items_directos.order_by('repuesto__nombre')
+    
     # Formulario para agregar items
     if request.method == 'POST':
+        print(f"DEBUG FORMULARIO - Método: {request.method}")
+        print(f"DEBUG FORMULARIO - POST data: {request.POST}")
         form = CompraItemForm(request.POST)
+        print(f"DEBUG FORMULARIO - Form válido: {form.is_valid()}")
+        if not form.is_valid():
+            print(f"DEBUG FORMULARIO - Errores: {form.errors}")
         if form.is_valid():
             repuesto = form.cleaned_data['repuesto']
             
@@ -79,14 +106,14 @@ def compra_detail(request, pk):
                 item_existente.precio_unitario = form.cleaned_data['precio_unitario']
                 item_existente.save()
                 messages.success(request, f'Cantidad actualizada para {repuesto.nombre}.')
+                return redirect(f'/car/compras/{compra.pk}/?item_agregado=true')
             else:
                 # Si no existe, crear nuevo item
                 item = form.save(commit=False)
                 item.compra = compra
                 item.save()
-                messages.success(request, f'Item agregado a la compra.')
-            
-            return redirect('compra_detail', pk=compra.pk)
+                messages.success(request, f'Item "{repuesto.nombre}" agregado a la compra. Cantidad: {form.cleaned_data["cantidad"]}, Precio: ${form.cleaned_data["precio_unitario"]}')
+                return redirect(f'/car/compras/{compra.pk}/?item_agregado=true')
     else:
         form = CompraItemForm()
     
@@ -259,6 +286,11 @@ def buscar_repuestos_compra(request):
         Q(codigo_barra__icontains=query) |
         Q(oem__icontains=query) |
         Q(referencia__icontains=query)
+    ).exclude(
+        # Excluir registros con valores por defecto problemáticos
+        Q(oem__in=['oem', '']) |
+        Q(referencia__in=['no-tiene', '']) |
+        Q(marca__in=['general', ''])
     ).order_by('nombre')[:10]
     
     resultados = []
@@ -268,8 +300,11 @@ def buscar_repuestos_compra(request):
             'nombre': repuesto.nombre,
             'sku': repuesto.sku or '',
             'marca': repuesto.marca or '',
+            'oem': repuesto.oem or '',
             'precio_costo': float(repuesto.precio_costo or 0),
-            'stock_actual': repuesto.stock_total,
+            'precio_venta': float(repuesto.precio_venta or 0),
+            'stock': repuesto.stock_total,  # Usar stock unificado
+            'stock_actual': repuesto.stock_total,  # Alias para compatibilidad
         })
     
     return JsonResponse({'repuestos': resultados})
@@ -302,3 +337,16 @@ def compra_dashboard(request):
         'total_mes': total_mes,
     }
     return render(request, 'car/compras/compra_dashboard.html', context)
+
+
+@login_required
+def compra_items_ajax(request, pk):
+    """Vista AJAX para obtener solo la tabla de items de una compra"""
+    compra = get_object_or_404(Compra, pk=pk)
+    items = compra.items.all().order_by('repuesto__nombre')
+    
+    context = {
+        'compra': compra,
+        'items': items,
+    }
+    return render(request, 'car/compras/compra_items_table.html', context)
