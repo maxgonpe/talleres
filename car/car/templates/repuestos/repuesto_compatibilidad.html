@@ -477,7 +477,10 @@
                                                placeholder="Motor (opcional)"
                                                {% for aplicacion in aplicaciones_existentes %}
                                                    {% if aplicacion.version.id == version.id %}value="{{ aplicacion.motor }}"{% endif %}
-                                               {% endfor %}>
+                                               {% endfor %}
+                                               {% if not aplicaciones_existentes or not aplicaciones_existentes|length %}
+                                                   value="{{ version.motor|default:'' }}"
+                                               {% endif %}>
                                         
                                         <input type="text" 
                                                name="carroceria_{{ version.id }}" 
@@ -485,7 +488,10 @@
                                                placeholder="Carrocería (opcional)"
                                                {% for aplicacion in aplicaciones_existentes %}
                                                    {% if aplicacion.version.id == version.id %}value="{{ aplicacion.carroceria }}"{% endif %}
-                                               {% endfor %}>
+                                               {% endfor %}
+                                               {% if not aplicaciones_existentes or not aplicaciones_existentes|length %}
+                                                   value="{{ version.carroceria|default:'' }}"
+                                               {% endif %}>
                                     </div>
                                 </div>
                             </label>

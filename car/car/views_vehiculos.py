@@ -48,6 +48,10 @@ def vehiculo_list(request):
         vehiculos_filtrados = list(vehiculos)
         marca_activa = None
     
+    # Calcular el rango de años para cada vehículo
+    for vehiculo in vehiculos_filtrados:
+        vehiculo.rango_anos = vehiculo.anio_hasta - vehiculo.anio_desde + 1
+    
     # Paginación para los vehículos filtrados
     paginator = Paginator(vehiculos_filtrados, 20)  # 20 vehículos por página
     page_number = request.GET.get('page')
