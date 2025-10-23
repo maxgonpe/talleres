@@ -1722,6 +1722,67 @@ def trabajo_detalle(request, pk):
             
             return redirect_with_tab("repuestos")
 
+        # 🔹 Agregar múltiples insumos (nuevo método)
+        elif "agregar_insumos_multiples" in request.POST:
+            import json
+            insumos_json = request.POST.get("insumos_json", "")
+            
+            print(f"DEBUG: insumos_json recibido: {insumos_json}")
+            
+            if insumos_json:
+                try:
+                    insumos_data = json.loads(insumos_json)
+                    print(f"DEBUG: insumos_data parseado: {insumos_data}")
+                    insumos_creados = 0
+                    
+                    for insumo_data in insumos_data:
+                        try:
+                            repuesto_id = int(insumo_data.get("id"))
+                            cantidad = int(insumo_data.get("cantidad", 1))
+                            precio_unitario = float(insumo_data.get("precio_unitario", 0))
+                            
+                            print(f"DEBUG: Procesando insumo - repuesto_id: {repuesto_id}, cantidad: {cantidad}, precio: {precio_unitario}")
+                            
+                            repuesto = Repuesto.objects.get(id=repuesto_id)
+                            
+                            # Verificar si ya existe este repuesto en el trabajo
+                            if not TrabajoRepuesto.objects.filter(
+                                trabajo=trabajo,
+                                repuesto=repuesto
+                            ).exists():
+                                TrabajoRepuesto.objects.create(
+                                    trabajo=trabajo,
+                                    repuesto=repuesto,
+                                    cantidad=cantidad,
+                                    precio_unitario=precio_unitario,
+                                    subtotal=cantidad * precio_unitario
+                                )
+                                insumos_creados += 1
+                                print(f"DEBUG: Insumo creado exitosamente")
+                            else:
+                                print(f"DEBUG: Insumo ya existe, saltando")
+                                
+                        except (ValueError, Repuesto.DoesNotExist) as e:
+                            print(f"DEBUG: Error en insumo individual: {str(e)}")
+                            continue
+                    
+                    if insumos_creados > 0:
+                        messages.success(request, f"{insumos_creados} insumo(s) agregado(s) al trabajo.")
+                    else:
+                        messages.info(request, "No se agregaron insumos nuevos (posiblemente ya existían).")
+                        
+                except json.JSONDecodeError as e:
+                    print(f"DEBUG: Error JSON: {str(e)}")
+                    messages.error(request, f"Error al procesar los insumos: {str(e)}")
+                except Exception as e:
+                    print(f"DEBUG: Error general: {str(e)}")
+                    messages.error(request, f"Error al agregar los insumos: {str(e)}")
+            else:
+                print("DEBUG: No se recibió insumos_json")
+                messages.error(request, "No se recibieron insumos para agregar.")
+            
+            return redirect_with_tab("insumos")
+
         # 🔹 Subir foto
         elif "subir_foto" in request.POST:
             foto_form = SubirFotoForm(request.POST, request.FILES)
@@ -1908,6 +1969,11 @@ def trabajo_pdf(request, pk):
         
         response = HttpResponse(pdf_file, content_type='application/pdf')
         response['Content-Disposition'] = f'inline; filename="trabajo_{trabajo.id}_estado.pdf"'
+        response['Content-Length'] = str(len(pdf_file))
+        response['X-Content-Type-Options'] = 'nosniff'
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response['Pragma'] = 'no-cache'
+        response['Expires'] = '0'
         logger.info("✅ Respuesta HTTP creada")
         return response
         
@@ -2231,6 +2297,89 @@ def repuesto_lookup(request):
 
     print("results :",{"results": results})
     return JsonResponse({"results": results})
+
+
+@login_required
+def buscar_insumos(request):
+    """Buscar insumos para la pestaña de insumos en trabajos - Búsqueda amplia sin filtros"""
+    query = request.GET.get('q', '').strip()
+    
+    if len(query) < 2:
+        return JsonResponse({'insumos': []})
+    
+    try:
+        from django.db.models import Q
+        from .models import RepuestoEnStock
+        
+        # Búsqueda amplia en RepuestoEnStock (tabla por defecto)
+        repuestos_stock = RepuestoEnStock.objects.select_related("repuesto").filter(
+            Q(repuesto__nombre__icontains=query) |
+            Q(repuesto__sku__icontains=query) |
+            Q(repuesto__oem__icontains=query) |
+            Q(repuesto__codigo_barra__icontains=query) |
+            Q(repuesto__marca__icontains=query) |
+            Q(repuesto__descripcion__icontains=query) |
+            Q(repuesto__marca_veh__icontains=query) |
+            Q(repuesto__tipo_de_motor__icontains=query) |
+            Q(repuesto__cod_prov__icontains=query) |
+            Q(repuesto__origen_repuesto__icontains=query) |
+            Q(repuesto__carroceria__icontains=query) |
+            Q(repuesto__referencia__icontains=query)
+        )
+        
+        # Si no hay resultados y el término contiene guiones, buscar por partes del SKU
+        if not repuestos_stock.exists() and '-' in query:
+            partes = query.split('-')
+            if len(partes) > 1:
+                # Buscar SKUs que contengan todas las partes
+                sku_filter = Q()
+                for parte in partes:
+                    if parte.strip():  # Ignorar partes vacías
+                        sku_filter &= Q(repuesto__sku__icontains=parte.strip())
+                
+                if sku_filter:
+                    repuestos_stock = RepuestoEnStock.objects.select_related("repuesto").filter(sku_filter)
+        
+        # Ordenar por nombre y limitar resultados
+        repuestos_stock = repuestos_stock.order_by('repuesto__nombre')[:20]
+        
+        # Convertir a formato JSON
+        insumos = []
+        for stock_item in repuestos_stock:
+            repuesto = stock_item.repuesto
+            
+            # Stock disponible (stock - reservado)
+            stock_disponible = (stock_item.stock or 0) - (stock_item.reservado or 0)
+            
+            # Precio de venta desde RepuestoEnStock
+            precio_venta = stock_item.precio_venta or 0
+            
+            # Incluir todos los repuestos (con o sin stock para insumos)
+            insumos.append({
+                'id': repuesto.id,
+                'nombre': repuesto.nombre,
+                'sku': repuesto.sku or '',
+                'codigo': repuesto.codigo_barra or '',  # Usar codigo_barra como codigo
+                'marca': repuesto.marca or '',
+                'precio': float(precio_venta),
+                'stock': int(stock_disponible),
+                'codigo_barra': repuesto.codigo_barra or '',
+                'unidad': repuesto.unidad or '',
+                'oem': repuesto.oem or '',
+                'referencia': repuesto.referencia or '',
+                'marca_veh': repuesto.marca_veh or '',
+                'tipo_motor': repuesto.tipo_de_motor or '',
+                'carroceria': repuesto.carroceria or '',
+                'deposito': stock_item.deposito or '',
+                'proveedor': stock_item.proveedor or '',
+            })
+        
+        return JsonResponse({'insumos': insumos})
+        
+    except Exception as e:
+        print(f"Error buscando insumos: {e}")
+        return JsonResponse({'insumos': [], 'error': str(e)})
+
 
 
 class RepuestoListView(ListView):

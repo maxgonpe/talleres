@@ -48,3 +48,4 @@ class Command(BaseCommand):
         else:
             self.stdout.write(f"\n✅ Todos los vehículos Lada tienen años normales")
 
+

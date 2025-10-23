@@ -110,6 +110,7 @@ urlpatterns = [
     path("repuestos/nuevo/", RepuestoCreateView.as_view(), name="repuesto_create"),
     path("repuestos/<int:pk>/editar/", RepuestoUpdateView.as_view(), name="repuesto_update"),
     path("repuestos/<int:pk>/eliminar/", RepuestoDeleteView.as_view(), name="repuesto_delete"),
+    path("repuestos/buscar-insumos/", views.buscar_insumos, name="buscar_insumos"),
     path("repuestos/<int:pk>/compatibilidad/", views.repuesto_compatibilidad, name="repuesto_compatibilidad"),
     # Seguimiento público por placa
     path("tracking/", views.tracking_publico, name="tracking_publico"),

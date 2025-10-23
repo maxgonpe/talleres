@@ -282,3 +282,4 @@ Para problemas o preguntas:
 3. Verificar variables CSS
 4. Contactar al desarrollador
 
+

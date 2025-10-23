@@ -512,6 +512,7 @@
             <button class="tab-btn {% if active_tab == 'info' %}active{% endif %}" onclick="showTab('info')">📋 Info</button>
             <button class="tab-btn {% if active_tab == 'acciones' %}active{% endif %}" onclick="showTab('acciones')">🛠️ Acciones</button>
             <button class="tab-btn {% if active_tab == 'repuestos' %}active{% endif %}" onclick="showTab('repuestos')">🔧 Repuestos</button>
+            <button class="tab-btn {% if active_tab == 'insumos' %}active{% endif %}" onclick="showTab('insumos')">📦 Insumos</button>
             <button class="tab-btn {% if active_tab == 'fotos' %}active{% endif %}" onclick="showTab('fotos')">📷 Fotos</button>
             <button class="tab-btn {% if active_tab == 'estado' %}active{% endif %}" onclick="showTab('estado')">⚡ Estado</button>
         </div>
@@ -787,6 +788,69 @@
             </div>
         </div>
 
+        <!-- Pestaña: Insumos -->
+        <div id="tab-insumos" class="tab-content {% if active_tab == 'insumos' %}active{% endif %}">
+            <div class="info-card">
+                <h5>📦 Insumos del Trabajo</h5>
+                
+                <!-- Información del filtro amplio -->
+                <div class="alert alert-warning mb-3">
+                    <small>
+                        <strong>🔍 Filtro Amplio:</strong> 
+                        Aquí puedes agregar cualquier insumo del inventario sin restricciones de compatibilidad.
+                        Filtro inicial: SKU que contenga 'xxxx' o 'zzzzzz'
+                    </small>
+                </div>
+                
+                <!-- Búsqueda de insumos -->
+                <div class="mb-3">
+                    <label for="buscar-insumo" class="form-label">🔍 Buscar Insumo:</label>
+                    <div class="input-group">
+                        <input type="text" id="buscar-insumo" class="form-control" placeholder="Buscar por nombre, SKU, código... (escribe para filtrar)">
+                        <button class="btn btn-outline-primary" type="button" onclick="buscarInsumos()">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    <small class="text-muted">La búsqueda se realiza automáticamente mientras escribes (mínimo 2 caracteres)</small>
+                    <div class="mt-2">
+                        <button class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('buscar-insumo').value='aceite'; buscarInsumos();">Probar: aceite</button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('buscar-insumo').value='xxxx'; buscarInsumos();">Probar: xxxx</button>
+                    </div>
+                </div>
+                
+                <!-- Lista de insumos disponibles -->
+                <div id="insumos-disponibles" class="mb-3">
+                    <h6>📋 Insumos Disponibles:</h6>
+                    <div class="list-group" id="lista-insumos-disponibles">
+                        <!-- Los insumos se cargarán aquí dinámicamente -->
+                    </div>
+                </div>
+                
+                <!-- Insumos agregados al trabajo - Lista espejo -->
+                <div class="mb-3">
+                    <h6>✅ Insumos Agregados al Trabajo:</h6>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> 
+                        <strong>Lista Espejo:</strong> Los insumos agregados aparecerán automáticamente en la pestaña "Repuestos" del trabajo.
+                        <br><small>Esta pestaña es para buscar y agregar nuevos insumos.</small>
+                    </div>
+                </div>
+                
+                <!-- Botón para agregar insumos -->
+                <div class="d-grid">
+                    <button class="btn btn-success" onclick="agregarInsumos()">
+                        <i class="fas fa-plus"></i> Agregar Insumos al Trabajo
+                    </button>
+                </div>
+                
+                <!-- Formulario oculto para enviar datos -->
+                <form method="post" id="form-insumos" style="display: none;">
+                    {% csrf_token %}
+                    <input type="hidden" name="insumos_json" id="insumos-json-trabajo">
+                </form>
+            </div>
+        </div>
+
         <!-- Pestaña: Fotos -->
         <div id="tab-fotos" class="tab-content {% if active_tab == 'fotos' %}active{% endif %}">
             <div class="info-card">
@@ -861,7 +925,7 @@
             <div class="info-card">
                 <h5>📄 Acciones Adicionales</h5>
                 
-                <a href="{% url 'trabajo_pdf' trabajo.pk %}" class="btn btn-info btn-mobile" target="_blank">
+                <a href="{% url 'trabajo_pdf' trabajo.pk %}" class="btn btn-info btn-mobile" title="Se abrirá en el navegador" onclick="verificarPDF(this.href); return false;">
                     📄 Generar PDF de Estado
                 </a>
                 
@@ -1618,6 +1682,228 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
+    // ========================================
+    // FUNCIONES PARA INSUMOS
+    // ========================================
+    
+    // Función para buscar insumos (con debounce para búsqueda en tiempo real)
+    let buscarInsumosTimeout;
+    window.buscarInsumos = async function() {
+        console.log('🔍 buscarInsumos llamado');
+        
+        const buscarInput = document.getElementById('buscar-insumo');
+        const cont = document.getElementById('lista-insumos-disponibles');
+        
+        if (!buscarInput) {
+            console.error('❌ Input de búsqueda no encontrado');
+            return;
+        }
+        
+        if (!cont) {
+            console.error('❌ Contenedor de resultados no encontrado');
+            return;
+        }
+        
+        const busqueda = buscarInput.value.trim();
+        console.log('🔍 Término de búsqueda:', busqueda);
+        
+        if (busqueda.length < 2) {
+            cont.innerHTML = '<div class="alert alert-info">Escribe al menos 2 caracteres para buscar</div>';
+            return;
+        }
+        
+        console.log('🔍 Buscando insumos con término:', busqueda);
+        
+        // Mostrar indicador de carga
+        cont.innerHTML = '<div class="alert alert-info"><i class="fas fa-spinner fa-spin"></i> Buscando insumos...</div>';
+        
+        try {
+            const url = `/car/repuestos/buscar-insumos/?q=${encodeURIComponent(busqueda)}`;
+            console.log('🌐 URL de búsqueda:', url);
+            
+            const response = await fetch(url);
+            console.log('📡 Respuesta del servidor:', response.status);
+            
+            const data = await response.json();
+            console.log('📦 Datos recibidos:', data);
+            
+            if (data.insumos && data.insumos.length > 0) {
+                console.log(`✅ Encontrados ${data.insumos.length} insumos`);
+                cont.innerHTML = '';
+                data.insumos.forEach((insumo, index) => {
+                    console.log(`📦 Procesando insumo ${index + 1}:`, insumo.nombre);
+                    const item = document.createElement('div');
+                    item.className = 'list-group-item d-flex justify-content-between align-items-center';
+                    item.innerHTML = `
+                        <div class="form-check">
+                            <input class="form-check-input insumo-check" type="checkbox" 
+                                   data-id="${insumo.id}" 
+                                   data-nombre="${escapeHtml(insumo.nombre)}"
+                                   data-precio="${insumo.precio || 0}"
+                                   data-stock="${insumo.stock || 0}">
+                            <label class="form-check-label">
+                                <strong>${escapeHtml(insumo.nombre)}</strong><br>
+                                <small class="text-muted">
+                                    SKU: ${escapeHtml(insumo.sku || 'N/A')} | 
+                                    ${insumo.marca ? 'Marca: ' + escapeHtml(insumo.marca) + ' | ' : ''}
+                                    ${insumo.oem ? 'OEM: ' + escapeHtml(insumo.oem) + ' | ' : ''}
+                                    Precio: $${(insumo.precio || 0).toLocaleString()} | 
+                                    Stock: ${insumo.stock || 0}
+                                    ${insumo.deposito ? ' | Depósito: ' + escapeHtml(insumo.deposito) : ''}
+                                </small>
+                            </label>
+                        </div>
+                        <div class="input-group" style="width: 120px;">
+                            <input type="number" class="form-control insumo-cantidad" 
+                                   data-id="${insumo.id}" value="1" min="1" max="${insumo.stock || 999}">
+                        </div>
+                    `;
+                    cont.appendChild(item);
+                });
+            } else {
+                console.log('ℹ️ No se encontraron insumos');
+                cont.innerHTML = '<div class="alert alert-info">No se encontraron insumos con ese término de búsqueda</div>';
+            }
+            
+        } catch (error) {
+            console.error('❌ Error buscando insumos:', error);
+            cont.innerHTML = '<div class="alert alert-danger">❌ Error buscando insumos: ' + error.message + '</div>';
+        }
+    };
+    
+    // Función con debounce para búsqueda en tiempo real
+    window.buscarInsumosDebounced = function() {
+        clearTimeout(buscarInsumosTimeout);
+        buscarInsumosTimeout = setTimeout(buscarInsumos, 300); // 300ms de delay
+    };
+    
+    
+    // Función para agregar insumos al trabajo
+    window.agregarInsumos = async function() {
+        console.log('📦 agregarInsumos llamado');
+        
+        const insumos = [];
+        document.querySelectorAll("#lista-insumos-disponibles input.insumo-check:checked").forEach(chk => {
+            const cantidadInput = document.querySelector(
+                `#lista-insumos-disponibles input.insumo-cantidad[data-id="${chk.dataset.id}"]`
+            );
+            const cantidad = cantidadInput ? parseInt(cantidadInput.value) || 1 : 1;
+            insumos.push({
+                id: chk.dataset.id,
+                nombre: chk.dataset.nombre,
+                cantidad: cantidad,
+                precio_unitario: parseFloat(chk.dataset.precio) || 0
+            });
+        });
+        
+        console.log('📦 Insumos seleccionados:', insumos);
+        
+        if (insumos.length === 0) {
+            alert('⚠️ No hay insumos seleccionados para agregar');
+            return;
+        }
+        
+        try {
+            // Crear formulario para enviar datos
+            const formData = new FormData();
+            formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+            formData.append('insumos_json', JSON.stringify(insumos));
+            formData.append('agregar_insumos_multiples', 'true');
+            
+            const response = await fetch(window.location.href, {
+                method: 'POST',
+                body: formData
+            });
+            
+            console.log('📡 Respuesta del servidor:', response);
+            
+            if (response.ok || response.status === 302) {
+                console.log('✅ Insumos agregados exitosamente');
+                alert('✅ Insumos agregados exitosamente');
+                
+                // Recargar la página manteniendo la pestaña de insumos activa
+                window.location.href = window.location.pathname + '?tab=insumos';
+                
+            } else {
+                console.error('❌ Error al agregar insumos:', response.status);
+                alert('❌ Error al agregar los insumos');
+            }
+            
+        } catch (error) {
+            console.error('❌ Error en la petición:', error);
+            alert('❌ Error al agregar los insumos');
+        }
+    };
+    
+    // Configurar búsqueda en tiempo real para insumos
+    function configurarBusquedaInsumos() {
+        console.log('🔧 Configurando búsqueda de insumos...');
+        const buscarInsumoInput = document.getElementById('buscar-insumo');
+        
+        if (buscarInsumoInput) {
+            console.log('✅ Input de búsqueda encontrado');
+            
+            // Remover event listeners existentes
+            buscarInsumoInput.removeEventListener('input', buscarInsumosDebounced);
+            
+            // Event listener para búsqueda en tiempo real
+            buscarInsumoInput.addEventListener('input', function(e) {
+                console.log('🔍 Input detectado:', e.target.value);
+                buscarInsumosDebounced();
+            });
+            
+            // Cargar insumos iniciales si estamos en la pestaña de insumos
+            if (window.location.search.includes('tab=insumos')) {
+                console.log('📦 Cargando insumos iniciales...');
+                buscarInsumoInput.value = 'xxxx zzzzzz';
+                buscarInsumos();
+            }
+        } else {
+            console.log('❌ Input de búsqueda no encontrado');
+        }
+    }
+    
+    // Cargar cuando el DOM esté listo
+    document.addEventListener('DOMContentLoaded', configurarBusquedaInsumos);
+    
+    // También configurar cuando se cambie de pestaña
+    window.addEventListener('load', function() {
+        setTimeout(configurarBusquedaInsumos, 100);
+    });
+    
+    // Función para mostrar pestaña (modificar la función existente)
+    function showTab(tabName) {
+        // Ocultar todas las pestañas
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        
+        // Remover clase active de todos los botones
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // Mostrar la pestaña seleccionada
+        const selectedTab = document.getElementById(`tab-${tabName}`);
+        if (selectedTab) {
+            selectedTab.classList.add('active');
+        }
+        
+        // Activar el botón correspondiente
+        const selectedBtn = document.querySelector(`.tab-btn[onclick="showTab('${tabName}')"]`);
+        if (selectedBtn) {
+            selectedBtn.classList.add('active');
+        }
+        
+        // Si es la pestaña de insumos, configurar búsqueda
+        if (tabName === 'insumos') {
+            console.log('📦 Cambiando a pestaña de insumos...');
+            setTimeout(() => {
+                configurarBusquedaInsumos();
+            }, 100);
+        }
+    }
+
     // Función helper para escapar HTML
     function escapeHtml(text) {
         const map = {
@@ -1628,6 +1914,37 @@ document.addEventListener('DOMContentLoaded', function() {
             "'": '&#039;'
         };
         return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+    
+    // Función para verificar y abrir PDF
+    function verificarPDF(url) {
+        console.log('🔍 Verificando PDF:', url);
+        
+        // Crear un iframe oculto para verificar el tipo de contenido
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = url;
+        
+        iframe.onload = function() {
+            console.log('✅ PDF cargado en iframe');
+            // Si se carga en iframe, abrir en nueva ventana
+            window.open(url, '_blank');
+        };
+        
+        iframe.onerror = function() {
+            console.log('❌ Error cargando PDF en iframe');
+            // Si hay error, intentar abrir directamente
+            window.open(url, '_blank');
+        };
+        
+        document.body.appendChild(iframe);
+        
+        // Limpiar el iframe después de 3 segundos
+        setTimeout(() => {
+            if (iframe.parentNode) {
+                iframe.parentNode.removeChild(iframe);
+            }
+        }, 3000);
     }
 });
 </script>
