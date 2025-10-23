@@ -52,7 +52,11 @@
             <div class="col-md-6">
               <div class="p-3 p-md-4 rounded-3 border" style="background: linear-gradient(135deg, var(--warning-50), var(--warning-100));">
                 <div class="d-flex align-items-center mb-3">
-                  <img src="{% static 'images/Logo1.svg' %}" alt="Taller" style="height:40px" class="me-2">
+                  {% if config and config.logo_secundario_url %}
+                    <img src="{{ config.logo_secundario_url }}" alt="Taller" style="height:40px" class="me-2">
+                  {% else %}
+                    <img src="{% static 'images/Logo1.svg' %}" alt="Taller" style="height:40px" class="me-2">
+                  {% endif %}
                   <h5 class="mb-0">Seguimiento de vehículo</h5>
                 </div>
                 <p class="text-secondary small mb-2">Ingresa la placa para ver el avance si tu vehículo está en taller.</p>

@@ -314,6 +314,10 @@ def buscar_repuestos_compra(request):
 @login_required
 def compra_dashboard(request):
     """Dashboard de compras"""
+    # Obtener configuración del taller
+    from .models import AdministracionTaller
+    config = AdministracionTaller.get_configuracion_activa()
+    
     # Estadísticas básicas
     total_compras = Compra.objects.count()
     compras_pendientes = Compra.objects.filter(estado__in=['borrador', 'confirmada']).count()
@@ -336,6 +340,7 @@ def compra_dashboard(request):
         'compras_recibidas': compras_recibidas,
         'compras_recientes': compras_recientes,
         'total_mes': total_mes,
+        'config': config,
     }
     return render(request, 'car/compras/compra_dashboard.html', context)
 

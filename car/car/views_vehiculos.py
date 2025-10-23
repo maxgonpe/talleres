@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q
-from .models import VehiculoVersion
+from .models import VehiculoVersion, AdministracionTaller
 from .forms import VehiculoVersionForm
 
 @login_required
@@ -57,6 +57,9 @@ def vehiculo_list(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
+    # Obtener configuración del taller
+    config = AdministracionTaller.get_configuracion_activa()
+    
     context = {
         'vehiculos': page_obj,
         'marcas_data': marcas_data,
@@ -66,6 +69,7 @@ def vehiculo_list(request):
         'marca_activa': marca_activa,
         'search_query': search_query,
         'total_vehiculos': vehiculos.count(),
+        'config': config,
     }
     
     return render(request, 'vehiculos/vehiculo_list.html', context)

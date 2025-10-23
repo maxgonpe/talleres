@@ -50,7 +50,11 @@ def pos_principal(request):
     # Calcular totales
     subtotal = sum(item.subtotal for item in carrito_items)
     
-    # Obtener configuración
+    # Obtener configuración del taller
+    from .models import AdministracionTaller
+    config_taller = AdministracionTaller.get_configuracion_activa()
+    
+    # Obtener configuración POS
     config = ConfiguracionPOS.objects.first()
     if not config:
         config = ConfiguracionPOS.objects.create()
@@ -59,7 +63,8 @@ def pos_principal(request):
         'sesion': sesion_activa,
         'carrito_items': carrito_items,
         'subtotal': subtotal,
-        'config': config,
+        'config': config_taller,
+        'config_pos': config,
         'buscar_form': BuscarRepuestoForm(),
     }
     

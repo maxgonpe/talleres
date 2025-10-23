@@ -71,6 +71,9 @@ import os
 
 
 def login_view(request):
+    # Obtener configuración del taller
+    config = AdministracionTaller.get_configuracion_activa()
+    
     if request.method == "POST":
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
@@ -79,7 +82,7 @@ def login_view(request):
             return redirect("panel_principal")  # cámbialo al dashboard que quieras
     else:
         form = AuthenticationForm()
-    return render(request, "registration/login.html", {"form": form})
+    return render(request, "registration/login.html", {"form": form, "config": config})
 
 def logout_view(request):
     logout(request)
@@ -90,6 +93,9 @@ def logout_view(request):
 
 @login_required
 def componente_list(request):
+    # Obtener configuración del taller
+    config = AdministracionTaller.get_configuracion_activa()
+    
     q = request.GET.get('q', '').strip()
     if q:
         componentes = Componente.objects.filter(nombre__icontains=q).order_by('codigo')
@@ -97,12 +103,13 @@ def componente_list(request):
         componentes = Componente.objects.filter(padre__isnull=True).order_by('codigo')
 
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        html = render_to_string('car/componentes_tree.html', {'componentes': componentes})
+        html = render_to_string('car/componentes_tree.html', {'componentes': componentes, 'config': config})
         return JsonResponse({'html': html})
 
     return render(request, 'car/componentes_list.html', {
         'componentes': componentes,
         'q': q,
+        'config': config,
     })
 
 
@@ -110,6 +117,9 @@ def componente_list(request):
 @requiere_permiso('diagnosticos')
 @transaction.atomic
 def ingreso_view(request):
+    # Obtener configuración del taller
+    config = AdministracionTaller.get_configuracion_activa()
+    
     clientes_existentes = Cliente_Taller.objects.filter(activo=True).order_by('nombre')
 
     selected_cliente = None
@@ -265,6 +275,7 @@ def ingreso_view(request):
     return render(request, 'car/ingreso.html', {
         'cliente_form': cliente_form,
         'vehiculo_form': vehiculo_form,
+        'config': config,
         'diagnostico_form': diagnostico_form,
         'clientes_existentes': clientes_existentes,
         'vehiculos_existentes': vehiculos_existentes,
@@ -281,7 +292,10 @@ def ingreso_view(request):
 
 @login_required
 def ingreso_exitoso_view(request):
-    return render(request, 'car/ingreso_exitoso.html')
+    # Obtener configuración del taller
+    config = AdministracionTaller.get_configuracion_activa()
+    
+    return render(request, 'car/ingreso_exitoso.html', {'config': config})
 
 @login_required
 def eliminar_diagnostico(request, pk):
@@ -296,7 +310,10 @@ def editar_diagnostico(request, pk):
     if request.method == 'POST' and diagnostico_form.is_valid():
         diagnostico_form.save()
         return redirect('ingreso')
-    return render(request, 'car/editar_diagnostico.html', {'form': diagnostico_form})
+    # Obtener configuración del taller
+    config = AdministracionTaller.get_configuracion_activa()
+    
+    return render(request, 'car/editar_diagnostico.html', {'form': diagnostico_form, 'config': config})
 
 @login_required
 def componente_create(request):
@@ -356,7 +373,10 @@ def componente_delete(request, pk):
 def mostrar_plano(request):
     svg_path = pathlib.Path(settings.BASE_DIR) / 'static' / 'images' / 'vehiculo-desde-abajo.svg'
     svg_content = svg_path.read_text(encoding='utf-8')
-    return render(request, 'car/plano_interactivo.html', {'svg': svg_content})
+    # Obtener configuración del taller
+    config = AdministracionTaller.get_configuracion_activa()
+    
+    return render(request, 'car/plano_interactivo.html', {'svg': svg_content, 'config': config})
 
 @login_required
 def componentes_lookup(request):
@@ -440,6 +460,9 @@ def get_vehiculos_por_cliente(request, cliente_id):
 @login_required
 @requiere_permiso('diagnosticos')
 def lista_diagnosticos(request):
+    # Obtener configuración del taller
+    config = AdministracionTaller.get_configuracion_activa()
+    
     diagnosticos = Diagnostico.objects.all().select_related(
         'vehiculo__cliente'
     ).prefetch_related(
@@ -456,7 +479,8 @@ def lista_diagnosticos(request):
         diag.total_presupuesto = diag.total_mano_obra + diag.total_repuestos
 
     return render(request, 'car/diagnostico_lista.html', {
-        'diagnosticos': diagnosticos
+        'diagnosticos': diagnosticos,
+        'config': config
     })
 
 @login_required
@@ -467,7 +491,10 @@ def eliminar_diagnostico(request, pk):
         diagnostico.delete()
         
         return redirect('lista_diagnosticos')
-    return render(request, 'car/diagnostico_eliminar.html', {'diagnostico': diagnostico})
+    # Obtener configuración del taller
+    config = AdministracionTaller.get_configuracion_activa()
+    
+    return render(request, 'car/diagnostico_eliminar.html', {'diagnostico': diagnostico, 'config': config})
 
 @login_required
 @require_GET
@@ -546,11 +573,14 @@ def guardar_diagnostico(request):
 
 @login_required
 def accion_list(request):
+    # Obtener configuración del taller
+    config = AdministracionTaller.get_configuracion_activa()
+    
     q = (request.GET.get("q") or "").strip()
     acciones = Accion.objects.all().order_by("nombre")
     if q:
         acciones = acciones.filter(nombre__icontains=q)
-    return render(request, "car/accion_list.html", {"acciones": acciones, "q": q})
+    return render(request, "car/accion_list.html", {"acciones": acciones, "q": q, "config": config})
 
 @login_required
 def accion_create(request):
@@ -562,7 +592,10 @@ def accion_create(request):
             return redirect("accion_list")
     else:
         form = AccionForm()
-    return render(request, "car/accion_form.html", {"form": form, "modo": "crear"})
+    # Obtener configuración del taller
+    config = AdministracionTaller.get_configuracion_activa()
+    
+    return render(request, "car/accion_form.html", {"form": form, "modo": "crear", "config": config})
 
 @login_required
 def accion_update(request, pk):
@@ -575,7 +608,10 @@ def accion_update(request, pk):
             return redirect("accion_list")
     else:
         form = AccionForm(instance=accion)
-    return render(request, "car/accion_form.html", {"form": form, "modo": "editar", "accion": accion})
+    # Obtener configuración del taller
+    config = AdministracionTaller.get_configuracion_activa()
+    
+    return render(request, "car/accion_form.html", {"form": form, "modo": "editar", "accion": accion, "config": config})
 
 @login_required
 def accion_delete(request, pk):
@@ -584,7 +620,10 @@ def accion_delete(request, pk):
         accion.delete()
         messages.success(request, "Acción eliminada.")
         return redirect("accion_list")
-    return render(request, "car/accion_confirm_delete.html", {"accion": accion})
+    # Obtener configuración del taller
+    config = AdministracionTaller.get_configuracion_activa()
+    
+    return render(request, "car/accion_confirm_delete.html", {"accion": accion, "config": config})
 
 
 # ----- COMPONENTE + ACCION (precios) -----
@@ -596,7 +635,10 @@ def comp_accion_list(request):
         items = items.filter(
             Q(componente__nombre__icontains=q) | Q(accion__nombre__icontains=q)
         )
-    return render(request, "car/comp_accion_list.html", {"items": items, "q": q})
+    # Obtener configuración del taller
+    config = AdministracionTaller.get_configuracion_activa()
+    
+    return render(request, "car/comp_accion_list.html", {"items": items, "q": q, "config": config})
 
 @login_required
 def comp_accion_create(request):
@@ -608,7 +650,10 @@ def comp_accion_create(request):
             return redirect("comp_accion_list")
     else:
         form = ComponenteAccionForm()
-    return render(request, "car/comp_accion_form.html", {"form": form, "modo": "crear"})
+    # Obtener configuración del taller
+    config = AdministracionTaller.get_configuracion_activa()
+    
+    return render(request, "car/comp_accion_form.html", {"form": form, "modo": "crear", "config": config})
 
 @login_required
 def comp_accion_update(request, pk):
@@ -621,7 +666,10 @@ def comp_accion_update(request, pk):
             return redirect("comp_accion_list")
     else:
         form = ComponenteAccionForm(instance=obj)
-    return render(request, "car/comp_accion_form.html", {"form": form, "modo": "editar", "obj": obj})
+    # Obtener configuración del taller
+    config = AdministracionTaller.get_configuracion_activa()
+    
+    return render(request, "car/comp_accion_form.html", {"form": form, "modo": "editar", "obj": obj, "config": config})
 
 @login_required
 def comp_accion_delete(request, pk):
@@ -630,7 +678,10 @@ def comp_accion_delete(request, pk):
         obj.delete()
         messages.success(request, "Registro eliminado.")
         return redirect("comp_accion_list")
-    return render(request, "car/comp_accion_confirm_delete.html", {"obj": obj})
+    # Obtener configuración del taller
+    config = AdministracionTaller.get_configuracion_activa()
+    
+    return render(request, "car/comp_accion_confirm_delete.html", {"obj": obj, "config": config})
 
 # funciones adicionales para incluir repuestos
 
@@ -1216,52 +1267,115 @@ class VehiculoListView(ListView):
     model = Vehiculo
     template_name = "car/vehiculo_list.html"
     context_object_name = "vehiculos"
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Obtener configuración del taller
+        config = AdministracionTaller.get_configuracion_activa()
+        context['config'] = config
+        return context
 
 class VehiculoCreateView(CreateView):
     model = Vehiculo
     fields = ["cliente", "placa", "marca", "modelo", "anio", "vin", "descripcion_motor"]
     template_name = "car/vehiculo_form.html"
     success_url = reverse_lazy("vehiculo_list")
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Obtener configuración del taller
+        config = AdministracionTaller.get_configuracion_activa()
+        context['config'] = config
+        return context
 
 class VehiculoUpdateView(UpdateView):
     model = Vehiculo
     fields = ["cliente", "placa", "marca", "modelo", "anio", "vin", "descripcion_motor"]
     template_name = "car/vehiculo_form.html"
     success_url = reverse_lazy("vehiculo_list")
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Obtener configuración del taller
+        config = AdministracionTaller.get_configuracion_activa()
+        context['config'] = config
+        return context
 
 class VehiculoDeleteView(DeleteView):
     model = Vehiculo
     template_name = "car/vehiculo_confirm_delete.html"
     success_url = reverse_lazy("vehiculo_list")
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Obtener configuración del taller
+        config = AdministracionTaller.get_configuracion_activa()
+        context['config'] = config
+        return context
 
 # ---- MecanicoS ----
 class MecanicoListView(ListView):
     model = Mecanico
     template_name = "car/mecanico_list.html"
     context_object_name = "mecanicos"
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Obtener configuración del taller
+        config = AdministracionTaller.get_configuracion_activa()
+        context['config'] = config
+        return context
 
 class MecanicoCreateView(CreateView):
     model = Mecanico
     fields = ["user", "especialidad","activo"]
     template_name = "car/mecanico_form.html"
     success_url = reverse_lazy("mecanico_list")
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Obtener configuración del taller
+        config = AdministracionTaller.get_configuracion_activa()
+        context['config'] = config
+        return context
 
 class MecanicoUpdateView(UpdateView):
     model = Mecanico
     fields = ["user", "especialidad","activo"]
     template_name = "car/mecanico_form.html"
     success_url = reverse_lazy("mecanico_list")
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Obtener configuración del taller
+        config = AdministracionTaller.get_configuracion_activa()
+        context['config'] = config
+        return context
 
 class MecanicoDeleteView(DeleteView):
     model = Mecanico
     template_name = "car/mecanico_confirm_delete.html"
     success_url = reverse_lazy("mecanico_list")
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Obtener configuración del taller
+        config = AdministracionTaller.get_configuracion_activa()
+        context['config'] = config
+        return context
 
 # ---- TRABAJOS ----
 class TrabajoDeleteView(DeleteView):
     model = Trabajo
     template_name = "car/trabajo_confirm_delete.html"
     success_url = reverse_lazy("lista_trabajos")
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Obtener configuración del taller
+        config = AdministracionTaller.get_configuracion_activa()
+        context['config'] = config
+        return context
 
 @login_required
 def aprobar_diagnostico(request, pk):
@@ -1299,6 +1413,9 @@ def lista_trabajos2(request):
 @login_required
 @requiere_permiso('trabajos')
 def lista_trabajos(request):
+    # Obtener configuración del taller
+    config = AdministracionTaller.get_configuracion_activa()
+    
     trabajos = Trabajo.objects.all().select_related(
         'vehiculo__cliente'
     ).prefetch_related(
@@ -1311,7 +1428,8 @@ def lista_trabajos(request):
     # No necesitamos asignarlos manualmente
 
     return render(request, 'car/trabajo_lista.html', {
-        'trabajos': trabajos
+        'trabajos': trabajos,
+        'config': config
     })
 
 
@@ -1667,6 +1785,9 @@ def trabajo_detalle(request, pk):
     # 🔹 Obtener componentes ya seleccionados en el trabajo
     componentes_trabajo = list(trabajo.acciones.values_list('componente_id', flat=True).distinct())
     
+    # Obtener configuración del taller
+    config = AdministracionTaller.get_configuracion_activa()
+    
     context = {
         "trabajo": trabajo,
         "asignar_form": asignar_form,
@@ -1676,6 +1797,7 @@ def trabajo_detalle(request, pk):
         "acciones_disponibles": acciones_disponibles,
         "repuestos_disponibles": repuestos_disponibles,
         "active_tab": active_tab,
+        "config": config,
     }
     return render(request, "car/trabajo_detalle_nuevo.html", context)
 
@@ -1852,6 +1974,9 @@ Mecánicos Asignados:
 
 @login_required
 def pizarra_view(request):
+    # Obtener configuración del taller
+    config = AdministracionTaller.get_configuracion_activa()
+    
     trabajos = Trabajo.objects.select_related("vehiculo", "vehiculo__cliente")
 
     context = {
@@ -1859,6 +1984,7 @@ def pizarra_view(request):
         "trabajando": trabajos.filter(estado="trabajando"),
         "completados": trabajos.filter(estado="completado"),
         "entregados": trabajos.filter(estado="entregado"),
+        "config": config,
     }
     return render(request, "car/pizarra_page.html", context)
 
@@ -2115,12 +2241,26 @@ class RepuestoListView(ListView):
     def get_queryset(self):
         # Solo seleccionar campos que existen en la base de datos
         return Repuesto.objects.all().select_related()
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Obtener configuración del taller
+        config = AdministracionTaller.get_configuracion_activa()
+        context['config'] = config
+        return context
 
 class RepuestoCreateView(CreateView):
     model = Repuesto
     form_class = RepuestoForm
     template_name = "repuestos/repuesto_form.html"
     success_url = reverse_lazy("repuesto_list")
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Obtener configuración del taller
+        config = AdministracionTaller.get_configuracion_activa()
+        context['config'] = config
+        return context
     
     def form_valid(self, form):
         """Sobrescribir para crear clon en RepuestoEnStock al crear repuesto"""
@@ -2148,6 +2288,13 @@ class RepuestoUpdateView(UpdateView):
     template_name = "repuestos/repuesto_form.html"
     success_url = reverse_lazy("repuesto_list")
     
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Obtener configuración del taller
+        config = AdministracionTaller.get_configuracion_activa()
+        context['config'] = config
+        return context
+    
     def form_valid(self, form):
         """Sobrescribir para sincronizar con RepuestoEnStock al actualizar repuesto"""
         response = super().form_valid(form)
@@ -2171,6 +2318,13 @@ class RepuestoDeleteView(DeleteView):
     model = Repuesto
     template_name = "repuestos/repuesto_confirm_delete.html"
     success_url = reverse_lazy("repuesto_list")
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Obtener configuración del taller
+        config = AdministracionTaller.get_configuracion_activa()
+        context['config'] = config
+        return context
 
 
 # ============================
@@ -2346,6 +2500,13 @@ class ClienteTallerListView(ListView):
                 Q(telefono__icontains=search)
             )
         return queryset.order_by('nombre')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Obtener configuración del taller
+        config = AdministracionTaller.get_configuracion_activa()
+        context['config'] = config
+        return context
 
 
 class ClienteTallerCreateView(CreateView):
@@ -2354,6 +2515,13 @@ class ClienteTallerCreateView(CreateView):
     form_class = ClienteTallerForm
     template_name = "car/cliente_taller_form.html"
     success_url = reverse_lazy("cliente_taller_list")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Obtener configuración del taller
+        config = AdministracionTaller.get_configuracion_activa()
+        context['config'] = config
+        return context
 
     def form_valid(self, form):
         # Asegurar que el cliente esté activo por defecto
@@ -2369,6 +2537,13 @@ class ClienteTallerUpdateView(UpdateView):
     template_name = "car/cliente_taller_form.html"
     success_url = reverse_lazy("cliente_taller_list")
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Obtener configuración del taller
+        config = AdministracionTaller.get_configuracion_activa()
+        context['config'] = config
+        return context
+
     def form_valid(self, form):
         messages.success(self.request, f"Cliente {form.instance.nombre} actualizado correctamente.")
         return super().form_valid(form)
@@ -2379,6 +2554,13 @@ class ClienteTallerDeleteView(DeleteView):
     model = Cliente_Taller
     template_name = "car/cliente_taller_confirm_delete.html"
     success_url = reverse_lazy("cliente_taller_list")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Obtener configuración del taller
+        config = AdministracionTaller.get_configuracion_activa()
+        context['config'] = config
+        return context
 
     def delete(self, request, *args, **kwargs):
         cliente = self.get_object()
@@ -2775,9 +2957,13 @@ def gestion_usuarios(request):
         
         return redirect('gestion_usuarios')
     
+    # Obtener configuración del taller
+    config = AdministracionTaller.get_configuracion_activa()
+    
     return render(request, 'car/gestion_usuarios.html', {
         'usuarios': usuarios,
         'roles_choices': Mecanico.ROLES_CHOICES,
+        'config': config,
     })
 
 
