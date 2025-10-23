@@ -621,19 +621,30 @@
                 
                 <!-- Acordeón de Componentes (como en ingreso.html) -->
                 <h6 class="mt-3 mb-2">📋 Seleccionar Componentes</h6>
-                <div class="accordion" id="componentesAccordion">
+                <div class="accordion" id="componentesAccordion" style="
+                    --bs-accordion-bg: #ffffff !important;
+                    --bs-accordion-color: #212529 !important;
+                    --bs-accordion-border-color: #dee2e6 !important;
+                    --bs-accordion-btn-bg: #ffffff !important;
+                    --bs-accordion-btn-color: #212529 !important;
+                    --bs-accordion-btn-focus-border-color: #dee2e6 !important;
+                    --bs-accordion-btn-focus-box-shadow: 0 0 0 0.25rem rgba(0, 0, 0, 0.125) !important;
+                    --bs-accordion-active-bg: #ffffff !important;
+                    --bs-accordion-active-color: #212529 !important;
+                ">
                     {% for padre in componentes %}
-                        <div class="accordion-item">
+                        <div class="accordion-item" style="background-color: #ffffff !important; border-color: #dee2e6 !important;">
                             <h2 class="accordion-header" id="heading-{{ padre.id }}">
                                 <button class="accordion-button collapsed" type="button"
                                         data-bs-toggle="collapse" data-bs-target="#collapse-{{ padre.id }}"
-                                        aria-expanded="false" aria-controls="collapse-{{ padre.id }}">
+                                        aria-expanded="false" aria-controls="collapse-{{ padre.id }}"
+                                        style="background-color: #ffffff !important; color: #212529 !important; border-color: #dee2e6 !important; font-weight: 600 !important;">
                                     {{ padre.nombre }}
                                 </button>
                             </h2>
                             <div id="collapse-{{ padre.id }}" class="accordion-collapse collapse"
                                  aria-labelledby="heading-{{ padre.id }}" data-bs-parent="#componentesAccordion">
-                                <div class="accordion-body">
+                                <div class="accordion-body" style="background-color: #ffffff !important; color: #212529 !important; border-color: #dee2e6 !important;">
                                     {% for hijo in padre.hijos.all %}
                                         <div class="form-check">
                                             <input class="form-check-input componente-checkbox"
@@ -644,7 +655,7 @@
                                                    data-componente-id="{{ hijo.id }}"
                                                    data-componente-nombre="{{ hijo.nombre }}"
                                                    onclick="console.log('🎯 CLICK EN CHECKBOX:', this.id, this.dataset.componenteId, this.dataset.componenteNombre, 'Checked:', this.checked); if(this.checked) { agregarComponenteSeleccionado(this.dataset.componenteId, this.dataset.componenteNombre); } else { removerComponenteSeleccionado(this.dataset.componenteId); }">
-                                            <label class="form-check-label" for="comp-{{ hijo.id }}">
+                                            <label class="form-check-label" for="comp-{{ hijo.id }}" style="color: #212529 !important; font-weight: 500 !important;">
                                                 {{ hijo.nombre }}
                                             </label>
                                         </div>

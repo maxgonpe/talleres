@@ -26,6 +26,13 @@
         padding: 1.5rem;
         box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         margin-bottom: 1rem;
+        border: 1px solid var(--muted);
+        transition: all 0.3s ease;
+    }
+    
+    .form-card:hover {
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        transform: translateY(-2px);
     }
     
     .form-section {
@@ -40,27 +47,47 @@
     }
     
     .form-group {
-        margin-bottom: 1rem;
+        margin-bottom: 1.5rem;
+        position: relative;
+    }
+    
+    .form-group:last-child {
+        margin-bottom: 0;
     }
     
     .form-label {
         color: var(--fg);
         font-weight: 600;
         margin-bottom: 0.5rem;
+        display: block;
+        transition: color 0.3s ease;
+    }
+    
+    .form-label:hover {
+        color: var(--btn-bg);
     }
     
     .form-control, .form-select {
-        background: var(--card-bg);
-        border: 2px solid var(--muted);
-        color: var(--fg);
-        border-radius: 8px;
+        background: var(--card-bg) !important;
+        border: 2px solid var(--muted) !important;
+        color: var(--fg) !important;
+        border-radius: 8px !important;
+        padding: 0.75rem 1rem !important;
+        font-size: 1rem !important;
+        transition: all 0.3s ease !important;
     }
     
     .form-control:focus, .form-select:focus {
-        border-color: var(--btn-bg);
-        box-shadow: 0 0 0 0.2rem rgba(var(--btn-bg), 0.25);
-        background: var(--card-bg);
-        color: var(--fg);
+        border-color: var(--btn-bg) !important;
+        box-shadow: 0 0 0 0.2rem rgba(var(--btn-bg), 0.25) !important;
+        background: var(--card-bg) !important;
+        color: var(--fg) !important;
+        outline: none !important;
+    }
+    
+    .form-control:hover, .form-select:hover {
+        border-color: var(--btn-bg) !important;
+        background: var(--card-bg) !important;
     }
     
     .form-control::placeholder {
@@ -74,6 +101,8 @@
         padding: 0.75rem 2rem;
         border-radius: 25px;
         font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     
     .btn-cancel {
@@ -83,6 +112,8 @@
         padding: 0.75rem 2rem;
         border-radius: 25px;
         font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     
     .btn-save:hover {
@@ -100,6 +131,101 @@
         font-size: 0.8rem;
         color: var(--muted);
         margin-top: 0.25rem;
+    }
+    
+    /* ========================================
+       ESTILOS ESPECÍFICOS PARA TEMAS OSCUROS
+       ======================================== */
+    
+    /* Mejorar contraste en temas oscuros */
+    .theme-piedra .form-control,
+    .theme-charcoal .form-control,
+    .theme-forest .form-control,
+    .theme-plum .form-control {
+        background-color: #34495e !important;
+        border-color: #2c3e50 !important;
+        color: #ffffff !important;
+    }
+    
+    .theme-piedra .form-control:focus,
+    .theme-charcoal .form-control:focus,
+    .theme-forest .form-control:focus,
+    .theme-plum .form-control:focus {
+        background-color: #34495e !important;
+        border-color: #3498db !important;
+        color: #ffffff !important;
+        box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25) !important;
+    }
+    
+    .theme-piedra .form-control:hover,
+    .theme-charcoal .form-control:hover,
+    .theme-forest .form-control:hover,
+    .theme-plum .form-control:hover {
+        background-color: #34495e !important;
+        border-color: #3498db !important;
+        color: #ffffff !important;
+    }
+    
+    .theme-piedra .form-select,
+    .theme-charcoal .form-select,
+    .theme-forest .form-select,
+    .theme-plum .form-select {
+        background-color: #34495e !important;
+        border-color: #2c3e50 !important;
+        color: #ffffff !important;
+    }
+    
+    .theme-piedra .form-select:focus,
+    .theme-charcoal .form-select:focus,
+    .theme-forest .form-select:focus,
+    .theme-plum .form-select:focus {
+        background-color: #34495e !important;
+        border-color: #3498db !important;
+        color: #ffffff !important;
+        box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25) !important;
+    }
+    
+    .theme-piedra .form-select:hover,
+    .theme-charcoal .form-select:hover,
+    .theme-forest .form-select:hover,
+    .theme-plum .form-select:hover {
+        background-color: #34495e !important;
+        border-color: #3498db !important;
+        color: #ffffff !important;
+    }
+    
+    /* Placeholder text en temas oscuros */
+    .theme-piedra .form-control::placeholder,
+    .theme-charcoal .form-control::placeholder,
+    .theme-forest .form-control::placeholder,
+    .theme-plum .form-control::placeholder {
+        color: #bdc3c7 !important;
+    }
+    
+    /* Labels en temas oscuros */
+    .theme-piedra .form-label,
+    .theme-charcoal .form-label,
+    .theme-forest .form-label,
+    .theme-plum .form-label {
+        color: #ecf0f1 !important;
+        font-weight: 600 !important;
+    }
+    
+    /* Help text en temas oscuros */
+    .theme-piedra .help-text,
+    .theme-charcoal .help-text,
+    .theme-forest .help-text,
+    .theme-plum .help-text {
+        color: #bdc3c7 !important;
+    }
+    
+    /* Form sections en temas oscuros */
+    .theme-piedra .form-section h5,
+    .theme-charcoal .form-section h5,
+    .theme-forest .form-section h5,
+    .theme-plum .form-section h5 {
+        color: #3498db !important;
+        border-bottom-color: #2c3e50 !important;
     }
     
     @media (max-width: 768px) {

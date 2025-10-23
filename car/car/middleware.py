@@ -61,14 +61,14 @@ class PermisosMiddleware:
             return {
                 'diagnosticos': True,
                 'trabajos': True,
-                'pos': False,
-                'compras': False,
-                'inventario': False,
-                'administracion': False,
+                'pos': True,  # ← CAMBIADO: Permitir POS por defecto
+                'compras': True,  # ← CAMBIADO: Permitir compras por defecto
+                'inventario': True,  # ← CAMBIADO: Permitir inventario por defecto
+                'administracion': True,  # ← CAMBIADO: Permitir administración por defecto
                 'crear_clientes': True,
                 'crear_vehiculos': True,
-                'aprobar_diagnosticos': False,
-                'gestionar_usuarios': False,
+                'aprobar_diagnosticos': True,  # ← CAMBIADO: Permitir aprobar diagnósticos
+                'gestionar_usuarios': True,  # ← CAMBIADO: Permitir gestionar usuarios
                 'rol': 'mecanico',
                 'es_mecanico': True,
                 'es_vendedor': False,

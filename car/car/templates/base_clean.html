@@ -94,8 +94,6 @@
               <li><a class="dropdown-item" href="{% url 'componente_list' %}">🔧 Componentes</a></li>
               <li><a class="dropdown-item" href="{% url 'accion_list' %}">⚙️ Acciones</a></li>
               <li><a class="dropdown-item" href="{% url 'mecanico_list' %}">👨‍🔧 Mecánicos</a></li>
-              <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item" href="{% url 'gestion_usuarios' %}">👥 Gestión de Usuarios</a></li>
             </ul>
           </li>
         </ul>
@@ -105,7 +103,13 @@
           <li class="nav-item d-flex align-items-center">
             <span class="me-2">🎨</span>
             <span class="theme-btn piedra" title="Piedra (oscuro)" onclick="setTheme('piedra')"></span>
+            <span class="theme-btn charcoal" title="Charcoal (oscuro)" onclick="setTheme('charcoal')"></span>
+            <span class="theme-btn forest" title="Forest (oscuro)" onclick="setTheme('forest')"></span>
+            <span class="theme-btn plum" title="Plum (oscuro)" onclick="setTheme('plum')"></span>
+            <span class="theme-btn cyan" title="Cyan (claro)" onclick="setTheme('cyan')"></span>
             <span class="theme-btn sand" title="Sand (claro)" onclick="setTheme('sand')"></span>
+            <span class="theme-btn sage" title="Sage (claro)" onclick="setTheme('sage')"></span>
+            <span class="theme-btn sky" title="Sky (claro)" onclick="setTheme('sky')"></span>
           </li>
         </ul>
         
@@ -159,12 +163,22 @@
   <!-- jQuery -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-  <!-- Script de temas simplificado -->
+  <!-- Script de temas seguro -->
   <script>
     function setTheme(theme) {
       document.body.className = document.body.className.replace(/theme-\w+/g, '').trim();
       document.body.classList.add(`theme-${theme}`);
       localStorage.setItem("theme", theme);
+
+      document.querySelectorAll('.theme-btn').forEach(btn => {
+        btn.style.border = '2px solid rgba(255,255,255,.85)';
+        btn.style.transform = 'scale(1)';
+      });
+      const activeBtn = document.querySelector(`.theme-btn.${theme}`);
+      if (activeBtn) {
+        activeBtn.style.border = '3px solid var(--btn-bg)';
+        activeBtn.style.transform = 'scale(1.1)';
+      }
     }
 
     document.addEventListener("DOMContentLoaded", function() {
@@ -174,5 +188,8 @@
   </script>
 
   {% block extra_js %}{% endblock %}
+  
+  <!-- Script para solucionar contraste de acordeones -->
+  <script src="{% static 'js/accordion-contrast.js' %}"></script>
 </body>
 </html>

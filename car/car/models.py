@@ -26,10 +26,10 @@ class Mecanico(models.Model):
     # PERMISOS POR MÓDULO
     puede_ver_diagnosticos = models.BooleanField(default=True)
     puede_ver_trabajos = models.BooleanField(default=True)
-    puede_ver_pos = models.BooleanField(default=False)
-    puede_ver_compras = models.BooleanField(default=False)
-    puede_ver_inventario = models.BooleanField(default=False)
-    puede_ver_administracion = models.BooleanField(default=False)
+    puede_ver_pos = models.BooleanField(default=True)  # ← CAMBIADO
+    puede_ver_compras = models.BooleanField(default=True)  # ← CAMBIADO
+    puede_ver_inventario = models.BooleanField(default=True)  # ← CAMBIADO
+    puede_ver_administracion = models.BooleanField(default=True)  # ← CAMBIADO
     
     # PERMISOS ESPECÍFICOS
     crear_clientes = models.BooleanField(default=True)
