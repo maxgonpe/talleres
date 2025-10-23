@@ -2,6 +2,10 @@
 {% load static %}
 {% load humanize %}
 
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+{% endblock %}
+
 {% block title %}Dashboard POS{% endblock %}
 
 {% block extra_head %}
@@ -15,7 +19,7 @@
     .dashboard-header {
         background: linear-gradient(135deg, var(--btn-bg) 0%, var(--muted) 100%);
         color: var(--btn-fg);
-        padding: 1rem;
+        padding: var(--spacing-md);
         text-align: center;
     }
     
@@ -23,15 +27,15 @@
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
         gap: 1rem;
-        margin: 1rem;
+        margin: var(--spacing-md);
     }
     
     .stat-card {
         background: var(--card-bg);
-        border-radius: 15px;
-        padding: 1.5rem;
+        border-radius: var(--border-radius-xl);
+        padding: var(--spacing-lg);
         text-align: center;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        box-shadow: var(--shadow-lg);
         border-top: 4px solid;
         transition: transform 0.3s ease;
         color: var(--fg);
@@ -42,10 +46,10 @@
     }
     
     .stat-card.primary { border-top-color: #007bff; }
-    .stat-card.success { border-top-color: #28a745; }
-    .stat-card.warning { border-top-color: #ffc107; }
-    .stat-card.info { border-top-color: #17a2b8; }
-    .stat-card.danger { border-top-color: #dc3545; }
+    .stat-card.success { border-top-color: var(--success-600); }
+    .stat-card.warning { border-top-color: var(--warning-600); }
+    .stat-card.info { border-top-color: var(--info-600); }
+    .stat-card.danger { border-top-color: var(--danger-600); }
     
     .stat-number {
         font-size: 2.5rem;
@@ -63,10 +67,10 @@
     
     .quick-actions {
         background: var(--card-bg);
-        border-radius: 15px;
-        margin: 1rem;
-        padding: 1.5rem;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border-radius: var(--border-radius-xl);
+        margin: var(--spacing-md);
+        padding: var(--spacing-lg);
+        box-shadow: var(--shadow-lg);
     }
     
     .action-grid {
@@ -79,11 +83,11 @@
         background: linear-gradient(135deg, var(--btn-bg) 0%, var(--muted) 100%);
         color: var(--btn-fg);
         border: none;
-        border-radius: 15px;
-        padding: 1.5rem 1rem;
+        border-radius: var(--border-radius-xl);
+        padding: var(--spacing-lg) 1rem;
         text-align: center;
         text-decoration: none;
-        transition: all 0.3s ease;
+        transition: var(--transition);
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -112,11 +116,11 @@
         
         .stats-grid {
             grid-template-columns: repeat(2, 1fr);
-            margin: 0.5rem;
+            margin: var(--spacing-sm);
         }
         
         .quick-actions {
-            margin: 0.5rem;
+            margin: var(--spacing-sm);
         }
         
         .stat-number {

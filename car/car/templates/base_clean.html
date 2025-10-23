@@ -12,30 +12,14 @@
   <!-- FontAwesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-  <!-- CSS de colores -->
-  <link rel="stylesheet" href="{% static 'css/colors.css' %}">
-  
-  <!-- CSS centralizado de variables y temas -->
-  <link rel="stylesheet" href="{% static 'css/variables.css' %}">
+  <!-- Sistema de colores centralizado -->
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
 
-  <!-- Evitar error antes de cargar body -->
+  <!-- Aplicación automática del tema -->
   <script>
-    // Solo aplica color base para evitar parpadeo visual, sin usar document.body
     (function() {
       const saved = localStorage.getItem("theme") || "piedra";
-      const themes = {
-        piedra: { bg: "#2a374e", fg: "#e6e6e6" },
-        charcoal: { bg: "#111827", fg: "#e5e7eb" },
-        forest: { bg: "#0b3d2e", fg: "#e7f6ef" },
-        plum: { bg: "#2c1b3a", fg: "#f0e9f7" },
-        cyan: { bg: "#e0f7fa", fg: "#004d40" },
-        sand: { bg: "#faf7f0", fg: "#3e2723" },
-        sage: { bg: "#f1f8e9", fg: "#1b5e20" },
-        sky: { bg: "#e3f2fd", fg: "#0d47a1" }
-      };
-      const theme = themes[saved] || themes.piedra;
-      document.documentElement.style.backgroundColor = theme.bg;
-      document.documentElement.style.color = theme.fg;
+      document.documentElement.className = `theme-${saved}`;
     })();
   </script>
 
@@ -193,3 +177,4 @@
   <script src="{% static 'js/accordion-contrast.js' %}"></script>
 </body>
 </html>
+

@@ -59,3 +59,4 @@ class Command(BaseCommand):
             self.stdout.write(f"✅ Eliminadas {eliminadas[0]} ventas huérfanas")
         
         self.stdout.write(self.style.SUCCESS("🎉 Limpieza completada exitosamente"))
+

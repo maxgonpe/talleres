@@ -1,5 +1,10 @@
+{% load static %}
 {% extends 'base.html' %}
 {% load humanize %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+{% endblock %}
 
 {% block title %}Algoritmo de Relación Inteligente{% endblock %}
 
@@ -20,7 +25,7 @@
             {% if not resultados %}
             <!-- Formulario inicial -->
             <div class="card">
-                <div class="card-header bg-primary text-white">
+                <div class="card-header bg-primary text-inverse">
                     <h5 class="mb-0">
                         <i class="fas fa-cogs"></i>
                         Configuración del Algoritmo
@@ -48,11 +53,11 @@
                                            min="0.1" max="1.0" step="0.1" value="{{ umbral_default }}" 
                                            oninput="document.getElementById('umbralValue').textContent = this.value">
                                     <div class="d-flex justify-content-between">
-                                        <small class="text-muted">Bajo (0.1)</small>
+                                        <small class="text-secondary">Bajo (0.1)</small>
                                         <span id="umbralValue" class="badge bg-primary">{{ umbral_default }}</span>
-                                        <small class="text-muted">Alto (1.0)</small>
+                                        <small class="text-secondary">Alto (1.0)</small>
                                     </div>
-                                    <small class="form-text text-muted">
+                                    <small class="form-text text-secondary">
                                         Un umbral más bajo encontrará más relaciones pero con menor precisión.
                                     </small>
                                 </div>
@@ -84,7 +89,7 @@
             <div class="row">
                 <div class="col-md-4">
                     <div class="card">
-                        <div class="card-header bg-success text-white">
+                        <div class="card-header bg-success text-inverse">
                             <h6 class="mb-0">
                                 <i class="fas fa-chart-pie"></i>
                                 Estadísticas
@@ -95,12 +100,12 @@
                                 <div class="col-6">
                                     <div class="border-end">
                                         <h4 class="text-primary">{{ resultados.estadisticas.total_repuestos|intcomma }}</h4>
-                                        <small class="text-muted">Repuestos</small>
+                                        <small class="text-secondary">Repuestos</small>
                                     </div>
                                 </div>
                                 <div class="col-6">
                                     <h4 class="text-info">{{ resultados.estadisticas.total_componentes|intcomma }}</h4>
-                                    <small class="text-muted">Componentes</small>
+                                    <small class="text-secondary">Componentes</small>
                                 </div>
                             </div>
                             <hr>
@@ -108,18 +113,18 @@
                                 <div class="col-6">
                                     <div class="border-end">
                                         <h4 class="text-warning">{{ resultados.estadisticas.relaciones_existentes|intcomma }}</h4>
-                                        <small class="text-muted">Existentes</small>
+                                        <small class="text-secondary">Existentes</small>
                                     </div>
                                 </div>
                                 <div class="col-6">
                                     <h4 class="text-success">{{ resultados.estadisticas.nuevas_relaciones|intcomma }}</h4>
-                                    <small class="text-muted">Nuevas</small>
+                                    <small class="text-secondary">Nuevas</small>
                                 </div>
                             </div>
                             <hr>
                             <div class="text-center">
                                 <h3 class="text-success">{{ resultados.estadisticas.porcentaje_exito|floatformat:1 }}%</h3>
-                                <small class="text-muted">Tasa de Éxito</small>
+                                <small class="text-secondary">Tasa de Éxito</small>
                             </div>
                         </div>
                     </div>
@@ -174,11 +179,11 @@
                                         <tr>
                                             <td>
                                                 <strong>{{ rel.repuesto.nombre }}</strong><br>
-                                                <small class="text-muted">{{ rel.repuesto.sku|default:"Sin SKU" }}</small>
+                                                <small class="text-secondary">{{ rel.repuesto.sku|default:"Sin SKU" }}</small>
                                             </td>
                                             <td>
                                                 <strong>{{ rel.componente.nombre }}</strong><br>
-                                                <small class="text-muted">{{ rel.componente.codigo }}</small>
+                                                <small class="text-secondary">{{ rel.componente.codigo }}</small>
                                             </td>
                                             <td>
                                                 <span class="badge bg-{% if rel.puntuacion >= 0.8 %}success{% elif rel.puntuacion >= 0.6 %}warning{% else %}secondary{% endif %}">
@@ -220,7 +225,7 @@
                                         <tr>
                                             <td>
                                                 <strong>{{ rel.repuesto.nombre }}</strong><br>
-                                                <small class="text-muted">{{ rel.repuesto.sku|default:"Sin SKU" }}</small>
+                                                <small class="text-secondary">{{ rel.repuesto.sku|default:"Sin SKU" }}</small>
                                             </td>
                                             <td>
                                                 {% if rel.mejor_puntuacion > 0 %}
@@ -233,7 +238,7 @@
                                                 {% if rel.mejor_componente %}
                                                 {{ rel.mejor_componente.nombre }}
                                                 {% else %}
-                                                <span class="text-muted">Ninguno</span>
+                                                <span class="text-secondary">Ninguno</span>
                                                 {% endif %}
                                             </td>
                                         </tr>
@@ -295,6 +300,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endblock %}
+
 
 
 

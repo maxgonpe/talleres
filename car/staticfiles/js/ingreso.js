@@ -189,12 +189,14 @@ document.addEventListener('DOMContentLoaded', function () {
       const marca = document.getElementById("id_marca")?.value || "";
       const modelo = document.getElementById("id_modelo")?.value || "";
       const anio = document.getElementById("id_anio")?.value || "";
+      const motor = document.getElementById("id_descripcion_motor")?.value || "";
 
       const params = new URLSearchParams();
       compIds.forEach(c => params.append("componentes_ids", c));
       if (marca) params.append("marca", marca);
       if (modelo) params.append("modelo", modelo);
       if (anio) params.append("anio", anio);
+      if (motor) params.append("motor", motor);
 
       url = cont.dataset.previewUrl + "?" + params.toString();
     }
@@ -214,6 +216,16 @@ document.addEventListener('DOMContentLoaded', function () {
         data.repuestos.forEach(r => {
           const div = document.createElement("div");
           div.classList.add("card", "mb-2", "p-2");
+          
+          // Clase CSS basada en compatibilidad
+          let compatibilidadClass = "border-secondary";
+          if (r.compatibilidad >= 80) compatibilidadClass = "border-success";
+          else if (r.compatibilidad >= 60) compatibilidadClass = "border-warning";
+          else if (r.compatibilidad >= 40) compatibilidadClass = "border-info";
+          else if (r.compatibilidad >= 20) compatibilidadClass = "border-danger";
+          
+          div.classList.add(compatibilidadClass);
+          
           div.innerHTML = `
   <label class="form-check">
     <input type="checkbox"
@@ -225,16 +237,22 @@ document.addEventListener('DOMContentLoaded', function () {
            data-oem="${escapeHtml(r.oem || '')}">
     <b>${escapeHtml(r.nombre)}</b> (${escapeHtml(r.oem || "sin OEM")})<br>
     <small>${escapeHtml(r.sku || "")} • ${escapeHtml(r.posicion || "")}</small><br>
-    Stock: ${r.disponible} – 💰 $${(r.precio_venta || 0).toFixed(0)}
+    Stock: ${r.disponible} – 💰 $${(r.precio_venta || 0).toFixed(0)}<br>
+    ${r.compatibilidad_texto ? `<small class="text-muted">${r.compatibilidad_texto} (${r.compatibilidad}%)</small>` : ''}
   </label>
-  <div class="mt-1">
-      <label class="form-label small mb-0">Cantidad</label>
-      <input type="number"
-             class="form-control form-control-sm repuesto-cantidad"
-             data-id="${r.id}"
-             min="1"
-             value="1"
-             style="max-width:80px;">
+  <div class="mt-1 d-flex justify-content-between align-items-center">
+      <div>
+        <label class="form-label small mb-0">Cantidad</label>
+        <input type="number"
+               class="form-control form-control-sm repuesto-cantidad"
+               data-id="${r.id}"
+               min="1"
+               value="1"
+               style="max-width:80px;">
+      </div>
+      <button type="button" class="btn btn-sm btn-outline-danger" onclick="descartarRepuesto(this)">
+        ✕
+      </button>
     </div>
   </div>
 `;
@@ -387,14 +405,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function updateHiddenAndTotal() {
       const payload = Object.entries(ACC)
-        .map(([id, v]) => ({
-          componente_id: parseInt(id),
+        .filter(([key, v]) => v.seleccionado) // Solo las acciones seleccionadas
+        .map(([key, v]) => ({
+          componente_id: parseInt(v.componente_id),
           accion_id: v.accion_id ? parseInt(v.accion_id) : null,
-          precio: (v.precio ?? '').toString()
+          precio_mano_obra: (v.precio ?? '').toString()
         }))
         .filter(x => x.accion_id);
+      
       HIDDEN_ACC.value = JSON.stringify(payload);
-      const sum = payload.reduce((acc, it) => acc + (parseFloat(it.precio || 0) || 0), 0);
+      
+      const sum = payload.reduce((acc, it) => acc + (parseFloat(it.precio_mano_obra || 0) || 0), 0);
       if (TOTAL_MO) TOTAL_MO.textContent = CLP.format(sum);
     }
 
@@ -425,76 +446,149 @@ document.addEventListener('DOMContentLoaded', function () {
 
     async function ensureMirrorRow(compId, nombre) {
       compId = String(compId);
-      ACC[compId] = ACC[compId] || { nombre, accion_id: null, precio: '' };
-      let li = UL_ACCIONES.querySelector(`li[data-componente-id="${compId}"]`);
-      if (!li) {
-        li = document.createElement('li');
-        li.className = 'list-group-item';
+      
+      // Verificar si ya existen elementos para este componente
+      const existingElements = UL_ACCIONES.querySelectorAll(`li[data-componente-id="${compId}"]`);
+      if (existingElements.length > 0) {
+        return; // Ya existen elementos para este componente
+      }
+
+      // Cargar acciones disponibles para este componente
+      const acciones = await loadAccionesForComponent(compId);
+      
+      if (acciones.length === 0) {
+        // Si no hay acciones, crear un elemento informativo
+        const li = document.createElement('li');
+        li.className = 'list-group-item text-muted';
         li.setAttribute('data-componente-id', compId);
         li.innerHTML = `
-          <div class="row g-2 align-items-end">
-            <div class="col-12 col-md-4">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
               <div class="fw-semibold">${nombre}</div>
-              <div class="text-muted small">ID: ${compId}</div>
+              <div class="small">ID: ${compId}</div>
             </div>
-            <div class="col-12 col-md-4">
-              <label class="form-label mb-0">Acción</label>
-              <select class="form-select form-select-sm accion-select">
-                <option value="">-- Seleccione --</option>
-              </select>
-            </div>
-            <div class="col-8 col-md-3">
-              <label class="form-label mb-0">Precio</label>
-              <input type="number" step="0.01" class="form-control form-control-sm accion-precio" placeholder="0.00">
-              <small class="text-muted">Vacío/0 usa precio base</small>
-            </div>
-            <div class="col-4 col-md-1 text-end">
-              <button type="button" class="btn btn-outline-secondary btn-sm limpiar-accion">×</button>
-            </div>
+            <div class="small">Sin acciones disponibles</div>
           </div>
         `;
         UL_ACCIONES.appendChild(li);
-
-        const sel = li.querySelector('.accion-select');
-        const inp = li.querySelector('.accion-precio');
-        const btn = li.querySelector('.limpiar-accion');
-        sel.addEventListener('change', () => {
-          const opt = sel.options[sel.selectedIndex];
-          const base = opt?.getAttribute('data-precio') || '';
-          if (base && (!inp.value || inp.value === '0' || inp.value === '0.00')) {
-            inp.value = base;
-          }
-          ACC[compId].accion_id = sel.value || null;
-          if (!ACC[compId].precio && inp.value) {
-            ACC[compId].precio = inp.value;
-          }
-          updateHiddenAndTotal();
-        });
-        inp.addEventListener('input', () => {
-          ACC[compId].precio = inp.value;
-          updateHiddenAndTotal();
-        });
-        btn.addEventListener('click', () => {
-          sel.value = '';
-          inp.value = '';
-          ACC[compId].accion_id = null;
-          ACC[compId].precio = '';
-          updateHiddenAndTotal();
-        });
+        return;
       }
-      const select = li.querySelector('.accion-select');
-      if (select && select.options.length <= 1) {
-        const acciones = await loadAccionesForComponent(compId);
-        select.innerHTML = `<option value="">-- Seleccione --</option>` +
-          acciones.map(a => `<option value="${a.accion_id}" data-precio="${a.precio_base ?? ''}">${a.accion_nombre}</option>`).join('');
+
+      // Crear un elemento por cada acción disponible
+      acciones.forEach(accion => {
+        const accionKey = `${compId}-${accion.accion_id}`;
+        ACC[accionKey] = ACC[accionKey] || { 
+          componente_id: compId,
+          nombre, 
+          accion_id: accion.accion_id, 
+          accion_nombre: accion.accion_nombre,
+          precio: accion.precio_base || '' 
+        };
+
+        const li = document.createElement('li');
+        li.className = 'list-group-item';
+        li.setAttribute('data-componente-id', compId);
+        li.setAttribute('data-accion-id', accion.accion_id);
+        li.setAttribute('data-accion-key', accionKey);
+        
+        const precioBase = parseFloat(accion.precio_base || 0);
+        const precioFormateado = precioBase > 0 ? CLP.format(precioBase) : 'Sin precio base';
+        
+        li.innerHTML = `
+          <div class="row g-2 align-items-center">
+            <div class="col-1">
+              <input type="checkbox" class="form-check-input accion-checkbox" 
+                     data-accion-key="${accionKey}" 
+                     ${ACC[accionKey].seleccionado ? 'checked' : ''}>
+            </div>
+            <div class="col-12 col-md-5">
+              <div class="fw-semibold">${nombre}</div>
+              <div class="text-primary small">${accion.accion_nombre}</div>
+              <div class="text-muted small">ID: ${compId} • Acción: ${accion.accion_id}</div>
+            </div>
+            <div class="col-8 col-md-4">
+              <label class="form-label mb-0 small">Precio personalizado</label>
+              <input type="number" step="0.01" class="form-control form-control-sm accion-precio" 
+                     placeholder="${precioBase > 0 ? precioBase : '0.00'}" 
+                     value="${ACC[accionKey].precio || ''}"
+                     data-accion-key="${accionKey}">
+              <small class="text-muted ${precioBase > 0 ? '' : 'precio-sin-base'}">Base: ${precioFormateado}</small>
+            </div>
+            <div class="col-4 col-md-2 text-end">
+              <div class="fw-bold text-success" data-precio-display="${accionKey}">
+                ${ACC[accionKey].seleccionado ? (ACC[accionKey].precio ? CLP.format(parseFloat(ACC[accionKey].precio)) : precioFormateado) : '$0'}
+              </div>
+            </div>
+          </div>
+        `;
+        
+        UL_ACCIONES.appendChild(li);
+
+        // Event listeners
+        const checkbox = li.querySelector('.accion-checkbox');
+        const precioInput = li.querySelector('.accion-precio');
+        const precioDisplay = li.querySelector('[data-precio-display]');
+
+        checkbox.addEventListener('change', () => {
+          ACC[accionKey].seleccionado = checkbox.checked;
+          if (checkbox.checked && !ACC[accionKey].precio && precioBase > 0) {
+            ACC[accionKey].precio = precioBase.toString();
+            precioInput.value = precioBase;
+          }
+          updatePrecioDisplay(accionKey, precioDisplay);
+          updateItemStyles(li, checkbox.checked);
+          updateHiddenAndTotal();
+        });
+
+        precioInput.addEventListener('input', () => {
+          ACC[accionKey].precio = precioInput.value;
+          updatePrecioDisplay(accionKey, precioDisplay);
+          updateHiddenAndTotal();
+        });
+
+        // Inicializar display del precio y estilos
+        updatePrecioDisplay(accionKey, precioDisplay);
+        updateItemStyles(li, checkbox.checked);
+      });
+    }
+
+    function updatePrecioDisplay(accionKey, precioDisplay) {
+      if (!ACC[accionKey].seleccionado) {
+        precioDisplay.textContent = '$0';
+        precioDisplay.className = 'fw-bold text-muted';
+        return;
+      }
+
+      const precio = ACC[accionKey].precio || ACC[accionKey].precio_base || '0';
+      const precioNum = parseFloat(precio) || 0;
+      precioDisplay.textContent = CLP.format(precioNum);
+      precioDisplay.className = 'fw-bold text-success';
+    }
+
+    function updateItemStyles(li, isSelected) {
+      if (isSelected) {
+        li.classList.remove('accion-item-unselected');
+        li.classList.add('accion-item-selected');
+      } else {
+        li.classList.remove('accion-item-selected');
+        li.classList.add('accion-item-unselected');
       }
     }
 
     function removeMirrorRow(compId) {
       compId = String(compId);
-      delete ACC[compId];
-      const li = UL_ACCIONES.querySelector(`li[data-componente-id="${compId}"]`);
-      if (li) li.remove();
+      
+      // Eliminar todas las acciones de este componente del objeto ACC
+      Object.keys(ACC).forEach(key => {
+        if (key.startsWith(`${compId}-`)) {
+          delete ACC[key];
+        }
+      });
+      
+      // Eliminar todos los elementos HTML de este componente
+      const elementos = UL_ACCIONES.querySelectorAll(`li[data-componente-id="${compId}"]`);
+      elementos.forEach(li => li.remove());
+      
       updateHiddenAndTotal();
     }
 
@@ -549,6 +643,11 @@ if (form) {
 // ---------------------- BUSCAR VEHICULO POR PLACA ----------------------
 
 
+
+// Función para descartar repuestos
+window.descartarRepuesto = function(boton) {
+  boton.closest('.card').remove();
+};
 
 //
 }); // fin DOMContentLoaded

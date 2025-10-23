@@ -19,7 +19,7 @@
                         <div>
                             <strong>{{ item.repuesto.nombre }}</strong>
                             <br>
-                            <small class="text-muted">
+                            <small class="text-secondary">
                                 SKU: {{ item.repuesto.sku|default:"N/A" }} | 
                                 Stock actual: {{ item.repuesto.stock_total }}
                             </small>
@@ -32,7 +32,7 @@
                         {% if item.recibido %}
                             <span class="badge bg-success">Recibido</span>
                             <br>
-                            <small class="text-muted">{{ item.fecha_recibido|date:"d/m/Y H:i" }}</small>
+                            <small class="text-secondary">{{ item.fecha_recibido|date:"d/m/Y H:i" }}</small>
                         {% else %}
                             <span class="badge bg-warning">Pendiente</span>
                         {% endif %}
@@ -61,6 +61,6 @@
     <div class="text-center py-4">
         <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
         <h5>No hay items en esta compra</h5>
-        <p class="text-muted">Agrega items para comenzar</p>
+        <p class="text-secondary">Agrega items para comenzar</p>
     </div>
 {% endif %}

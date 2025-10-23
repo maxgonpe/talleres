@@ -1,0 +1,974 @@
+/* ========================================
+   SISTEMA DE COLORES CENTRALIZADO
+   Sistema unificado para todo el taller mecánico
+   ======================================== */
+
+/* ========================================
+   VARIABLES GLOBALES BASE
+   ======================================== */
+
+:root {
+  /* Transiciones globales */
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Sombras */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+  /* Bordes */
+  --border-radius-sm: 0.375rem;
+  --border-radius-md: 0.5rem;
+  --border-radius-lg: 0.75rem;
+  --border-radius-xl: 1rem;
+  --border-radius-full: 9999px;
+
+  /* Espaciado */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+}
+
+/* ========================================
+   TEMA PRINCIPAL: TALLER MECÁNICO
+   ======================================== */
+
+:root {
+  /* Colores primarios del taller */
+  --primary-50: #f0f9ff;
+  --primary-100: #e0f2fe;
+  --primary-200: #bae6fd;
+  --primary-300: #7dd3fc;
+  --primary-400: #38bdf8;
+  --primary-500: #0ea5e9;
+  --primary-600: #0284c7;
+  --primary-700: #0369a1;
+  --primary-800: #075985;
+  --primary-900: #0c4a6e;
+
+  /* Colores secundarios (naranja mecánico) */
+  --secondary-50: #fff7ed;
+  --secondary-100: #ffedd5;
+  --secondary-200: #fed7aa;
+  --secondary-300: #fdba74;
+  --secondary-400: #fb923c;
+  --secondary-500: #f97316;
+  --secondary-600: #ea580c;
+  --secondary-700: #c2410c;
+  --secondary-800: #9a3412;
+  --secondary-900: #7c2d12;
+
+  /* Colores de estado */
+  --success-50: #f0fdf4;
+  --success-100: #dcfce7;
+  --success-200: #bbf7d0;
+  --success-300: #86efac;
+  --success-400: #4ade80;
+  --success-500: #22c55e;
+  --success-600: #16a34a;
+  --success-700: #15803d;
+  --success-800: #166534;
+  --success-900: #14532d;
+
+  --warning-50: #fffbeb;
+  --warning-100: #fef3c7;
+  --warning-200: #fde68a;
+  --warning-300: #fcd34d;
+  --warning-400: #fbbf24;
+  --warning-500: #f59e0b;
+  --warning-600: #d97706;
+  --warning-700: #b45309;
+  --warning-800: #92400e;
+  --warning-900: #78350f;
+
+  --danger-50: #fef2f2;
+  --danger-100: #fee2e2;
+  --danger-200: #fecaca;
+  --danger-300: #fca5a5;
+  --danger-400: #f87171;
+  --danger-500: #ef4444;
+  --danger-600: #dc2626;
+  --danger-700: #b91c1c;
+  --danger-800: #991b1b;
+  --danger-900: #7f1d1d;
+
+  --info-50: #f0f9ff;
+  --info-100: #e0f2fe;
+  --info-200: #bae6fd;
+  --info-300: #7dd3fc;
+  --info-400: #38bdf8;
+  --info-500: #0ea5e9;
+  --info-600: #0284c7;
+  --info-700: #0369a1;
+  --info-800: #075985;
+  --info-900: #0c4a6e;
+
+  /* Colores neutros */
+  --neutral-50: #fafafa;
+  --neutral-100: #f5f5f5;
+  --neutral-200: #e5e5e5;
+  --neutral-300: #d4d4d4;
+  --neutral-400: #a3a3a3;
+  --neutral-500: #737373;
+  --neutral-600: #525252;
+  --neutral-700: #404040;
+  --neutral-800: #262626;
+  --neutral-900: #171717;
+
+  /* Colores de acento */
+  --accent-50: #fdf4ff;
+  --accent-100: #fae8ff;
+  --accent-200: #f5d0fe;
+  --accent-300: #f0abfc;
+  --accent-400: #e879f9;
+  --accent-500: #d946ef;
+  --accent-600: #c026d3;
+  --accent-700: #a21caf;
+  --accent-800: #86198f;
+  --accent-900: #701a75;
+}
+
+/* ========================================
+   APLICACIÓN DE VARIABLES PRINCIPALES
+   ======================================== */
+
+:root {
+  /* Fondo y texto principal */
+  --bg-primary: var(--neutral-50);
+  --bg-secondary: var(--neutral-100);
+  --bg-tertiary: var(--neutral-200);
+  --text-primary: var(--neutral-900);
+  --text-secondary: var(--neutral-700);
+  --text-muted: var(--neutral-500);
+  --text-inverse: var(--neutral-50);
+
+  /* Fondos de componentes */
+  --bg-card: var(--neutral-50);
+  --bg-modal: var(--neutral-50);
+  --bg-input: var(--neutral-50);
+  --bg-navbar: var(--primary-600);
+  --bg-footer: var(--neutral-800);
+
+  /* Bordes */
+  --border-color: var(--neutral-300);
+  --border-color-light: var(--neutral-200);
+  --border-color-dark: var(--neutral-400);
+
+  /* Botones */
+  --btn-primary-bg: var(--primary-600);
+  --btn-primary-hover: var(--primary-700);
+  --btn-primary-text: var(--neutral-50);
+
+  --btn-secondary-bg: var(--secondary-600);
+  --btn-secondary-hover: var(--secondary-700);
+  --btn-secondary-text: var(--neutral-50);
+
+  --btn-success-bg: var(--success-600);
+  --btn-success-hover: var(--success-700);
+  --btn-success-text: var(--neutral-50);
+
+  --btn-warning-bg: var(--warning-500);
+  --btn-warning-hover: var(--warning-600);
+  --btn-warning-text: var(--neutral-900);
+
+  --btn-danger-bg: var(--danger-600);
+  --btn-danger-hover: var(--danger-700);
+  --btn-danger-text: var(--neutral-50);
+
+  --btn-info-bg: var(--info-600);
+  --btn-info-hover: var(--info-700);
+  --btn-info-text: var(--neutral-50);
+
+  /* Estados de hover */
+  --hover-bg: var(--neutral-100);
+  --hover-text: var(--neutral-900);
+
+  /* Colores de acento */
+  --accent: var(--primary-500);
+  --accent-hover: var(--primary-600);
+}
+
+/* ========================================
+   TEMAS ALTERNATIVOS
+   ======================================== */
+
+/* Tema Oscuro */
+.theme-dark {
+  --bg-primary: var(--neutral-900);
+  --bg-secondary: var(--neutral-800);
+  --bg-tertiary: var(--neutral-700);
+  --text-primary: var(--neutral-50);
+  --text-secondary: var(--neutral-300);
+  --text-muted: var(--neutral-400);
+  --text-inverse: var(--neutral-900);
+
+  --bg-card: var(--neutral-800);
+  --bg-modal: var(--neutral-800);
+  --bg-input: var(--neutral-800);
+  --bg-navbar: var(--neutral-900);
+  --bg-footer: var(--neutral-900);
+
+  --border-color: var(--neutral-700);
+  --border-color-light: var(--neutral-600);
+  --border-color-dark: var(--neutral-500);
+
+  --hover-bg: var(--neutral-700);
+  --hover-text: var(--neutral-50);
+}
+
+/* Tema Piedra (tema original del taller) */
+.theme-piedra {
+  --bg-primary: #2a374e;
+  --bg-secondary: #3c4a6e;
+  --bg-tertiary: #4a5c7a;
+  --text-primary: #e6e6e6;
+  --text-secondary: #b0c4de;
+  --text-muted: #8a9bb5;
+  --text-inverse: #ffffff;
+
+  --bg-card: #3c4a6e;
+  --bg-modal: #3c4a6e;
+  --bg-input: #3c4a6e;
+  
+  /* Cards anidadas - Nivel 2 (3 tonos más oscuro) */
+  --bg-card-nested: #2a374e;
+  --border-color-nested: #1e2a3e;
+  --text-primary-nested: #f8f8f8;
+  --text-secondary-nested: #e8e8e8;
+  
+  /* Cards anidadas - Nivel 3 (3 tonos más oscuro que nivel 2) */
+  --bg-card-deep: #1e2a3e;
+  --border-color-deep: #0f1a2a;
+  --text-primary-deep: #ffffff;
+  --text-secondary-deep: #f0f0f0;
+  --bg-navbar: #2a374e;
+  --bg-footer: #1e2a3e;
+
+  --border-color: #4a5c7a;
+  --border-color-light: #3c4a6e;
+  --border-color-dark: #5a6c8a;
+
+  --hover-bg: #4a5c7a;
+  --hover-text: #e6e6e6;
+}
+
+/* Tema Arena (tema claro cálido) */
+.theme-sand {
+  --bg-primary: #e8e0d8;
+  --bg-secondary: #d8d0c8;
+  --bg-tertiary: #c8c0b8;
+  --text-primary: #3e2723;
+  --text-secondary: #5d4037;
+  --text-muted: #8d6e63;
+  --text-inverse: #faf7f0;
+
+  --bg-card: #ffffff;
+  --bg-modal: #ffffff;
+  --bg-input: #ffffff;
+  
+  /* Cards anidadas - Nivel 2 (3 tonos más oscuro) */
+  --bg-card-nested: #b8b0a8;
+  --border-color-nested: #a8a098;
+  --text-primary-nested: #1a1a1a;
+  --text-secondary-nested: #2a2a2a;
+  
+  /* Cards anidadas - Nivel 3 (3 tonos más oscuro que nivel 2) */
+  --bg-card-deep: #a89888;
+  --border-color-deep: #988878;
+  --text-primary-deep: #0a0a0a;
+  --text-secondary-deep: #1a1a1a;
+  --bg-navbar: #8d6e63;
+  --bg-footer: #e0d8d0;
+
+  --border-color: #8d6e63;
+  --border-color-light: #a1887f;
+  --border-color-dark: #6d4c41;
+
+  --hover-bg: #f0ebe5;
+  --hover-text: #3e2723;
+}
+
+/* Tema Bosque (verde natural) */
+.theme-forest {
+  --bg-primary: #0b3d2e;
+  --bg-secondary: #124734;
+  --bg-tertiary: #1a5a3a;
+  --text-primary: #e7f6ef;
+  --text-secondary: #cce7dd;
+  --text-muted: #a8d5c0;
+  --text-inverse: #0b3d2e;
+
+  --bg-card: #124734;
+  --bg-modal: #124734;
+  --bg-input: #124734;
+  --bg-navbar: #0b3d2e;
+  --bg-footer: #06201a;
+
+  --border-color: #1a5a3a;
+  --border-color-light: #124734;
+  --border-color-dark: #2a7c4a;
+
+  --hover-bg: #1a5a3a;
+  --hover-text: #e7f6ef;
+}
+
+/* ========================================
+   APLICACIÓN AUTOMÁTICA A ELEMENTOS
+   ======================================== */
+
+/* Aplicar automáticamente a todos los elementos */
+* {
+  transition: var(--transition);
+}
+
+/* Body principal */
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: "Poppins", "Helvetica Neue", sans-serif;
+  line-height: 1.6;
+}
+
+/* Navegación */
+.navbar {
+  background-color: var(--bg-navbar) !important;
+  color: var(--text-inverse) !important;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.navbar-brand,
+.nav-link {
+  color: var(--text-inverse) !important;
+  font-weight: 600;
+}
+
+.nav-link:hover {
+  background-color: var(--hover-bg);
+  color: var(--hover-text) !important;
+  border-radius: var(--border-radius-md);
+}
+
+/* Cards */
+.card,
+.card-body,
+.card-header,
+.card-footer {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+}
+
+.card-header {
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.card-footer {
+  background-color: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+/* Modales */
+.modal-content {
+  background-color: var(--bg-modal);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+}
+
+.modal-header {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-footer {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-top: 1px solid var(--border-color);
+}
+
+/* Formularios */
+.form-control,
+.form-select,
+.input-group-text {
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 0.2rem rgba(14, 165, 233, 0.25);
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+}
+
+.form-label {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.form-text {
+  color: var(--text-muted);
+}
+
+/* Botones */
+.btn {
+  border-radius: var(--border-radius-md);
+  font-weight: 600;
+  transition: var(--transition);
+  border: none;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-primary {
+  background-color: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+}
+
+.btn-primary:hover {
+  background-color: var(--btn-primary-hover);
+  color: var(--btn-primary-text);
+}
+
+.btn-secondary {
+  background-color: var(--btn-secondary-bg);
+  color: var(--btn-secondary-text);
+}
+
+.btn-secondary:hover {
+  background-color: var(--btn-secondary-hover);
+  color: var(--btn-secondary-text);
+}
+
+.btn-success {
+  background-color: var(--btn-success-bg);
+  color: var(--btn-success-text);
+}
+
+.btn-success:hover {
+  background-color: var(--btn-success-hover);
+  color: var(--btn-success-text);
+}
+
+.btn-warning {
+  background-color: var(--btn-warning-bg);
+  color: var(--btn-warning-text);
+}
+
+.btn-warning:hover {
+  background-color: var(--btn-warning-hover);
+  color: var(--btn-warning-text);
+}
+
+.btn-danger {
+  background-color: var(--btn-danger-bg);
+  color: var(--btn-danger-text);
+}
+
+.btn-danger:hover {
+  background-color: var(--btn-danger-hover);
+  color: var(--btn-danger-text);
+}
+
+.btn-info {
+  background-color: var(--btn-info-bg);
+  color: var(--btn-info-text);
+}
+
+.btn-info:hover {
+  background-color: var(--btn-info-hover);
+  color: var(--btn-info-text);
+}
+
+/* Tablas */
+.table {
+  color: var(--text-primary);
+  background-color: var(--bg-card);
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+  background-color: var(--bg-secondary);
+}
+
+.table-hover tbody tr:hover {
+  background-color: var(--hover-bg);
+}
+
+.table th {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+  font-weight: 600;
+}
+
+.table td {
+  border-color: var(--border-color);
+}
+
+/* Alertas */
+.alert {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+}
+
+.alert-success {
+  background-color: var(--success-50);
+  color: var(--success-800);
+  border-color: var(--success-200);
+}
+
+.alert-warning {
+  background-color: var(--warning-50);
+  color: var(--warning-800);
+  border-color: var(--warning-200);
+}
+
+.alert-danger {
+  background-color: var(--danger-50);
+  color: var(--danger-800);
+  border-color: var(--danger-200);
+}
+
+.alert-info {
+  background-color: var(--info-50);
+  color: var(--info-800);
+  border-color: var(--info-200);
+}
+
+/* Enlaces */
+a {
+  color: var(--accent);
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+a:hover {
+  color: var(--accent-hover);
+  text-decoration: underline;
+}
+
+/* Footer */
+footer {
+  background-color: var(--bg-footer);
+  color: var(--text-inverse);
+  border-top: 1px solid var(--border-color);
+}
+
+/* Texto */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.text-muted {
+  color: var(--text-muted) !important;
+}
+
+.text-primary {
+  color: var(--text-primary) !important;
+}
+
+.text-secondary {
+  color: var(--text-secondary) !important;
+}
+
+/* Listas */
+.list-group-item {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+.list-group-item:hover {
+  background-color: var(--hover-bg);
+}
+
+/* Badges */
+.badge {
+  border-radius: var(--border-radius-full);
+  font-weight: 600;
+}
+
+.badge-primary {
+  background-color: var(--primary-600);
+  color: var(--neutral-50);
+}
+
+.badge-secondary {
+  background-color: var(--secondary-600);
+  color: var(--neutral-50);
+}
+
+.badge-success {
+  background-color: var(--success-600);
+  color: var(--neutral-50);
+}
+
+.badge-warning {
+  background-color: var(--warning-500);
+  color: var(--neutral-900);
+}
+
+.badge-danger {
+  background-color: var(--danger-600);
+  color: var(--neutral-50);
+}
+
+.badge-info {
+  background-color: var(--info-600);
+  color: var(--neutral-50);
+}
+
+/* Progress bars */
+.progress {
+  background-color: var(--neutral-200);
+  border-radius: var(--border-radius-full);
+}
+
+.progress-bar {
+  background-color: var(--primary-600);
+  border-radius: var(--border-radius-full);
+}
+
+/* Dropdowns */
+.dropdown-menu {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-lg);
+}
+
+.dropdown-item {
+  color: var(--text-primary);
+  transition: var(--transition);
+}
+
+.dropdown-item:hover {
+  background-color: var(--hover-bg);
+  color: var(--hover-text);
+}
+
+/* Accordion */
+.accordion-item {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.accordion-button {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border: none;
+}
+
+.accordion-button:not(.collapsed) {
+  background-color: var(--accent);
+  color: var(--text-inverse);
+}
+
+.accordion-button:focus {
+  box-shadow: 0 0 0 0.2rem rgba(14, 165, 233, 0.25);
+}
+
+.accordion-body {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+}
+
+/* ========================================
+   RESPONSIVE Y ACCESIBILIDAD
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (prefers-contrast: high) {
+  :root {
+    --border-color: currentColor;
+    --border-color-light: currentColor;
+    --border-color-dark: currentColor;
+  }
+  
+  .card, .modal-content, .form-control {
+    border-width: 2px !important;
+  }
+}
+
+/* ========================================
+   CLASES UTILITARIAS
+   ======================================== */
+
+.bg-primary { background-color: var(--bg-primary) !important; }
+.bg-secondary { background-color: var(--bg-secondary) !important; }
+.bg-card { background-color: var(--bg-card) !important; }
+.bg-navbar { background-color: var(--bg-navbar) !important; }
+.bg-footer { background-color: var(--bg-footer) !important; }
+
+.text-primary { color: var(--text-primary) !important; }
+.text-secondary { color: var(--text-secondary) !important; }
+.text-muted { color: var(--text-muted) !important; }
+.text-inverse { color: var(--text-inverse) !important; }
+
+.border-primary { border-color: var(--border-color) !important; }
+.border-light { border-color: var(--border-color-light) !important; }
+.border-dark { border-color: var(--border-color-dark) !important; }
+
+.shadow-sm { box-shadow: var(--shadow-sm) !important; }
+.shadow-md { box-shadow: var(--shadow-md) !important; }
+.shadow-lg { box-shadow: var(--shadow-lg) !important; }
+.shadow-xl { box-shadow: var(--shadow-xl) !important; }
+
+.rounded-sm { border-radius: var(--border-radius-sm) !important; }
+.rounded-md { border-radius: var(--border-radius-md) !important; }
+.rounded-lg { border-radius: var(--border-radius-lg) !important; }
+.rounded-xl { border-radius: var(--border-radius-xl) !important; }
+.rounded-full { border-radius: var(--border-radius-full) !important; }
+
+/* ========================================
+   BOTONES DE TEMA
+   ======================================== */
+
+.theme-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.9);
+  cursor: pointer;
+  display: inline-block;
+  transition: all 0.3s ease;
+  margin: 0 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.theme-btn:hover {
+  transform: scale(1.15);
+  border-color: var(--primary-600);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.theme-btn.piedra { 
+  background-color: #2a374e;
+  border-color: #1a252f;
+}
+
+.theme-btn.sand { 
+  background-color: #faf7f0;
+  border-color: #e8e0d8;
+}
+
+/* Indicador de tema activo */
+.theme-btn.active {
+  border-color: var(--primary-600);
+  box-shadow: 0 0 0 3px rgba(var(--primary-600), 0.3);
+}
+
+/* ========================================
+   NAVBAR HOVER
+   ======================================== */
+
+.navbar-nav .nav-link:hover {
+  color: var(--primary-600) !important;
+  background-color: var(--hover-bg);
+  border-radius: var(--border-radius-sm);
+}
+
+.navbar-nav .dropdown-item:hover {
+  background-color: var(--primary-100);
+  color: var(--primary-700);
+}
+
+/* ========================================
+   NAVBAR TEMA CONTROLS
+   ======================================== */
+
+.navbar-nav .nav-item.d-flex {
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.navbar-nav .nav-item .theme-btn {
+  position: relative;
+  z-index: 10;
+}
+
+/* Asegurar visibilidad en diferentes temas */
+.theme-piedra .theme-btn {
+  border-color: rgba(255,255,255,0.8);
+}
+
+.theme-sand .theme-btn {
+  border-color: rgba(0,0,0,0.3);
+}
+
+/* Mejorar contraste para el texto del navbar */
+.navbar-nav .nav-item span.me-2 {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* ========================================
+   CARDS ANIDADAS - SISTEMA AUTOMÁTICO
+   ======================================== */
+
+/* Nivel 2: Card dentro de Card */
+.card .card {
+  background-color: var(--bg-card-nested);
+  border-color: var(--border-color-nested);
+  box-shadow: var(--shadow-sm);
+  margin: var(--spacing-sm);
+  border-radius: var(--border-radius-md);
+  opacity: 0.95;
+}
+
+.card .card .card-title {
+  color: var(--text-primary-nested);
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: var(--spacing-sm);
+}
+
+.card .card .card-text {
+  color: var(--text-secondary-nested);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.card .card .card-body {
+  padding: var(--spacing-sm);
+}
+
+.card .card .card-header {
+  background-color: var(--bg-card-nested);
+  border-bottom-color: var(--border-color-nested);
+  padding: var(--spacing-sm);
+}
+
+.card .card .card-footer {
+  background-color: var(--bg-card-nested);
+  border-top-color: var(--border-color-nested);
+  padding: var(--spacing-sm);
+}
+
+/* Nivel 3: Card dentro de Card dentro de Card */
+.card .card .card {
+  background-color: var(--bg-card-deep);
+  border-color: var(--border-color-deep);
+  box-shadow: none;
+  margin: var(--spacing-xs);
+  border-radius: var(--border-radius-sm);
+  opacity: 0.9;
+}
+
+.card .card .card .card-title {
+  color: var(--text-primary-deep);
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-bottom: var(--spacing-xs);
+}
+
+.card .card .card .card-text {
+  color: var(--text-secondary-deep);
+  font-size: 0.75rem;
+  line-height: 1.3;
+}
+
+.card .card .card .card-body {
+  padding: var(--spacing-xs);
+}
+
+.card .card .card .card-header {
+  background-color: var(--bg-card-deep);
+  border-bottom-color: var(--border-color-deep);
+  padding: var(--spacing-xs);
+}
+
+.card .card .card .card-footer {
+  background-color: var(--bg-card-deep);
+  border-top-color: var(--border-color-deep);
+  padding: var(--spacing-xs);
+}
+
+/* Efectos visuales adicionales */
+.card .card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.card .card .card:hover {
+  transform: translateY(-0.5px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ========================================
+   PIZARRA - SISTEMA DE ANIDACIÓN
+   ======================================== */
+
+/* Pizarra cell (equivalente a card principal) */
+.pizarra-cell {
+  background-color: var(--bg-card);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+/* Vehiculo item dentro de pizarra cell (nivel 2) */
+.pizarra-cell .vehiculo-item {
+  background-color: var(--bg-card-nested);
+  border-color: var(--border-color-nested);
+  color: var(--text-primary-nested);
+  margin-bottom: var(--spacing-sm);
+  border-radius: var(--border-radius-md);
+  opacity: 0.95;
+}
+
+.pizarra-cell .vehiculo-item:hover {
+  background-color: var(--hover-bg);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Placa dentro de vehiculo item (nivel 3) */
+.pizarra-cell .vehiculo-item .placa-chile {
+  background-color: var(--bg-card-deep);
+  border-color: var(--border-color-deep);
+  color: var(--text-primary-deep);
+  opacity: 0.9;
+}
+
+/* Progress bar dentro de vehiculo item */
+.pizarra-cell .vehiculo-item .progress {
+  background-color: var(--bg-card-deep);
+  border-radius: var(--border-radius-sm);
+}
+
+.pizarra-cell .vehiculo-item .progress-bar {
+  background-color: var(--accent);
+  border-radius: var(--border-radius-sm);
+}

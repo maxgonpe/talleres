@@ -3,73 +3,69 @@
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     grid-template-rows: repeat(2, 1fr);
-    gap: 1rem;
+    gap: var(--spacing-md);
     height: 80vh;
   }
+  
   .pizarra-cell {
-    border: 2px solid #ddd;
-    border-radius: 8px;
-    padding: 1rem;
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-md);
     overflow-y: auto;
-    /* 👇 quitamos background fijo */
+    background-color: var(--bg-card);
+    color: var(--text-primary);
   }
-
-  /* Estilos para pizarra-cell */
-.pizarra-cell {
-    border: 2px solid #ddd;
-    border-radius: 8px;
-    padding: 1rem;
-    overflow-y: auto;
-}
-
-/* Herencia de background según el tema */
-.theme-rojo .pizarra-cell {
-    background-color: #F1948A; /* Color de fondo para el tema rojo */
-}
-
-.theme-amarillo .pizarra-cell {
-    background-color: #fef9e7; /* Color de fondo para el tema amarillo */
-}
-
-.theme-celeste .pizarra-cell {
-    background-color: #9BCDED; /* Color de fondo para el tema celeste */
-}
-
-.theme-gris .pizarra-cell {
-    background-color: #555; /* Color de fondo para el tema gris */
-}
-
-
-
 
   .pizarra-cell h4 {
     text-align: center;
-    margin-bottom: 1rem;
+    margin-bottom: var(--spacing-md);
     font-weight: bold;
+    color: var(--text-primary);
   }
+  
   .vehiculo-item {
     font-size: 1rem;
-    margin-bottom: 0.8rem;
-    padding: 0.4rem 0.6rem;
-    border-radius: 6px;
-    background: rgba(255,255,255,0.3); /* semitransparente para ver contraste */
+    margin-bottom: var(--spacing-sm);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
     display: flex;
     align-items: center;
     justify-content: space-between;
+    transition: var(--transition);
   }
+  
+  .vehiculo-item:hover {
+    background-color: var(--hover-bg);
+  }
+  
   .vehiculo-icon {
     font-size: 1.5rem;
-    margin-right: 0.5rem;
+    margin-right: var(--spacing-sm);
   }
-  .vehiculo-info { flex-grow: 1; }
-  .progress { height: 8px; margin-top: 0.3rem; }
+  
+  .vehiculo-info { 
+    flex-grow: 1; 
+  }
+  
+  .progress { 
+    height: 8px; 
+    margin-top: var(--spacing-xs);
+    background-color: var(--neutral-200);
+  }
+  
+  .progress-bar {
+    background-color: var(--accent);
+  }
+  
   .placa-chile {
     display: inline-block;
-    padding: 0.2rem 0.6rem;
-    border: 2px solid black;
-    border-radius: 4px;
-    background-color: white;
-    color: black;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border: 2px solid var(--text-primary);
+    border-radius: var(--border-radius-sm);
+    background-color: var(--bg-card);
+    color: var(--text-primary);
     font-weight: bold;
     font-family: 'Arial Black', sans-serif;
     letter-spacing: 2px;
@@ -89,12 +85,12 @@
         <div class="vehiculo-info">
           <span class="placa-chile">{{ t.vehiculo.placa|default:"(sin patente)" }}</span><strong> - {{ t.vehiculo.cliente.nombre }}</strong>
           <div class="progress">
-            <div class="progress-bar bg-warning" style="width: {{ t.porcentaje_avance }}%">{{ t.porcentaje_avance }}%</div>
+            <div class="progress-bar bg-warning" style="width: {{ t.porcentaje_avance }}%;">{{ t.porcentaje_avance }}%</div>
           </div>
         </div>
       </div>
     {% empty %}
-      <p class="text-muted">Sin trabajos en esta etapa</p>
+      <p class="text-secondary">Sin trabajos en esta etapa</p>
     {% endfor %}
   </div>
 
@@ -109,12 +105,12 @@
         <div class="vehiculo-info">
           <span class="placa-chile">{{ t.vehiculo.placa|default:"(sin patente)" }}</span><strong> - {{ t.vehiculo.cliente.nombre }}</strong>
           <div class="progress">
-            <div class="progress-bar bg-primary" style="width: {{ t.porcentaje_avance }}%">{{ t.porcentaje_avance }}%</div>
+            <div class="progress-bar bg-primary" style="width: {{ t.porcentaje_avance }}%;">{{ t.porcentaje_avance }}%</div>
           </div>
         </div>
       </div>
     {% empty %}
-      <p class="text-muted">Sin trabajos en esta etapa</p>
+      <p class="text-secondary">Sin trabajos en esta etapa</p>
     {% endfor %}
   </div>
 
@@ -129,12 +125,12 @@
         <div class="vehiculo-info">
           <span class="placa-chile">{{ t.vehiculo.placa|default:"(sin patente)" }}</span><strong> - {{ t.vehiculo.cliente.nombre }}</strong>
           <div class="progress">
-            <div class="progress-bar bg-success" style="width: {{ t.porcentaje_avance }}%">{{ t.porcentaje_avance }}%</div>
+            <div class="progress-bar bg-success" style="width: {{ t.porcentaje_avance }}%;">{{ t.porcentaje_avance }}%</div>
           </div>
         </div>
       </div>
     {% empty %}
-      <p class="text-muted">Sin trabajos en esta etapa</p>
+      <p class="text-secondary">Sin trabajos en esta etapa</p>
     {% endfor %}
   </div>
 
@@ -149,12 +145,12 @@
         <div class="vehiculo-info">
           <span class="placa-chile">{{ t.vehiculo.placa|default:"(sin patente)" }}</span><strong> - {{ t.vehiculo.cliente.nombre }}</strong>
           <div class="progress">
-            <div class="progress-bar bg-dark" style="width: {{ t.porcentaje_avance }}%">{{ t.porcentaje_avance }}%</div>
+            <div class="progress-bar bg-primary" style="width: {{ t.porcentaje_avance }}%;">{{ t.porcentaje_avance }}%</div>
           </div>
         </div>
       </div>
     {% empty %}
-      <p class="text-muted">Sin trabajos en esta etapa</p>
+      <p class="text-secondary">Sin trabajos en esta etapa</p>
     {% endfor %}
   </div>
 </div>

@@ -2,6 +2,10 @@
 {% load static %}
 {% load humanize %}
 
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+{% endblock %}
+
 {% block title %}Punto de Venta - POS{% endblock %}
 
 {% block extra_head %}
@@ -22,7 +26,7 @@
     .pos-header {
         background: linear-gradient(135deg, var(--btn-bg) 0%, var(--muted) 100%);
         color: var(--btn-fg);
-        padding: 1rem;
+        padding: var(--spacing-md);
         position: sticky;
         top: 0;
         z-index: 1000;
@@ -30,17 +34,17 @@
     
     .search-container {
         background: var(--card-bg);
-        border-radius: 10px;
-        padding: 1rem;
-        margin: 1rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-md);
+        margin: var(--spacing-md);
+        box-shadow: var(--shadow-md);
     }
     
     .search-results {
         max-height: 300px;
         overflow-y: auto;
         border: 1px solid var(--muted);
-        border-radius: 5px;
+        border-radius: var(--border-radius-sm);
         background: var(--card-bg);
         position: absolute;
         width: 100%;
@@ -52,7 +56,7 @@
         padding: 0.75rem;
         border-bottom: 1px solid var(--muted);
         cursor: pointer;
-        transition: background-color 0.2s;
+        transition: var(--transition-fast);
         color: var(--fg);
     }
     
@@ -74,10 +78,10 @@
     
     .carrito-container {
         background: var(--card-bg);
-        border-radius: 10px;
-        margin: 1rem;
-        padding: 1rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        border-radius: var(--border-radius-lg);
+        margin: var(--spacing-md);
+        padding: var(--spacing-md);
+        box-shadow: var(--shadow-md);
         max-height: 400px;
         overflow-y: auto;
     }
@@ -87,10 +91,10 @@
         justify-content: space-between;
         align-items: center;
         padding: 0.75rem;
-        border-bottom: 1px solid #eee;
-        background: #f8f9fa;
+        border-bottom: 1px solid var(--border-color);
+        background-color: var(--bg-secondary);
         margin-bottom: 0.5rem;
-        border-radius: 5px;
+        border-radius: var(--border-radius-sm);
         gap: 1rem;
     }
     
@@ -124,15 +128,15 @@
     
     .total-container {
         background: #28a745;
-        color: white;
-        padding: 1rem;
-        margin: 1rem;
-        border-radius: 10px;
+        color: var(--text-inverse);
+        padding: var(--spacing-md);
+        margin: var(--spacing-md);
+        border-radius: var(--border-radius-lg);
         text-align: center;
     }
     
     .btn-pos {
-        border-radius: 25px;
+        border-radius: var(--border-radius-full);
         padding: 0.75rem 1.5rem;
         font-weight: 600;
         text-transform: uppercase;
@@ -157,16 +161,16 @@
     .stats-row {
         display: flex;
         justify-content: space-around;
-        margin: 1rem;
+        margin: var(--spacing-md);
         gap: 0.5rem;
     }
     
     .stat-card {
         background: var(--card-bg);
-        border-radius: 10px;
-        padding: 1rem;
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-md);
         text-align: center;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        box-shadow: var(--shadow-md);
         flex: 1;
     }
     
@@ -191,11 +195,11 @@
         .search-container,
         .carrito-container,
         .total-container {
-            margin: 0.5rem;
+            margin: var(--spacing-sm);
         }
         
         .stats-row {
-            margin: 0.5rem;
+            margin: var(--spacing-sm);
         }
         
         .carrito-item {
@@ -288,7 +292,7 @@
                 <div class="carrito-item" data-item-id="{{ item.id }}">
                     <div class="item-info">
                         <div class="fw-bold">{{ item.repuesto.nombre }}</div>
-                        <small class="text-muted">
+                        <small class="text-secondary">
                             SKU: {{ item.repuesto.sku|default:"N/A" }} | 
                             Stock: {{ item.repuesto.stock_total|default:0 }}
                         </small>
@@ -299,7 +303,7 @@
                                value="{{ item.cantidad }}" 
                                min="1"
                                onchange="actualizarCantidad({{ item.id }}, this.value)">
-                        <span class="text-muted">x</span>
+                        <span class="text-secondary">x</span>
                         <input type="number" 
                                class="form-control price-input" 
                                value="{{ item.precio_unitario }}" 
@@ -321,7 +325,7 @@
                     </div>
                 </div>
             {% empty %}
-                <div class="text-center text-muted py-4">
+                <div class="text-center text-secondary py-4">
                     <i class="fas fa-shopping-cart fa-3x mb-3"></i>
                     <p>El carrito está vacío</p>
                     <small>Busca repuestos para agregar al carrito</small>
@@ -478,12 +482,12 @@ function mostrarResultados(repuestos) {
     const resultsContainer = document.getElementById('search-results');
     
     if (repuestos.length === 0) {
-        resultsContainer.innerHTML = '<div class="search-item text-muted">No se encontraron repuestos</div>';
+        resultsContainer.innerHTML = '<div class="search-item text-secondary">No se encontraron repuestos</div>';
     } else {
         resultsContainer.innerHTML = repuestos.map(repuesto => `
             <div class="search-item" onclick="agregarAlCarrito(${repuesto.id}, '${repuesto.nombre}', ${repuesto.precio_venta}, ${repuesto.stock})">
                 <div class="fw-bold">${repuesto.nombre}</div>
-                <small class="text-muted">
+                <small class="text-secondary">
                     SKU: ${repuesto.sku} | Stock: ${repuesto.stock} | $${repuesto.precio_venta}
                 </small>
             </div>
@@ -874,7 +878,7 @@ function cargarCompatibilidad(repuestoId) {
                                         <span class="badge ${badgeClass}">${badgeText}</span>
                                     </div>
                                     <p class="card-text">
-                                        <small class="text-muted">
+                                        <small class="text-secondary">
                                             Años: ${vehiculo.anio_desde}-${vehiculo.anio_hasta}<br>
                                             ${vehiculo.motor ? `Motor: ${vehiculo.motor}<br>` : ''}
                                             ${vehiculo.carroceria ? `Carrocería: ${vehiculo.carroceria}<br>` : ''}
@@ -891,7 +895,7 @@ function cargarCompatibilidad(repuestoId) {
                 content.innerHTML = html;
             } else {
                 content.innerHTML = `
-                    <div class="text-center text-muted">
+                    <div class="text-center text-secondary">
                         <i class="fas fa-car fa-3x mb-3"></i>
                         <p>No hay vehículos compatibles registrados para este repuesto.</p>
                     </div>

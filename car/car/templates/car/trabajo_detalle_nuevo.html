@@ -2,6 +2,10 @@
 {% load static %}
 {% load humanize %}
 
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+{% endblock %}
+
 {% block title %}Trabajo #{{ trabajo.id }} - {{ trabajo.vehiculo }}{% endblock %}
 
 {% block extra_head %}
@@ -9,84 +13,80 @@
     .trabajo-container {
         max-width: 100%;
         margin: 0;
-        padding: 0.5rem;
+        padding: var(--spacing-sm);
     }
     
     .trabajo-header {
-        background: linear-gradient(135deg, var(--btn-bg) 0%, var(--muted) 100%);
-        color: var(--btn-fg);
-        padding: 1rem;
-        border-radius: 10px;
-        margin-bottom: 1rem;
+        background: linear-gradient(135deg, var(--accent) 0%, var(--primary-600) 100%);
+        color: var(--text-inverse);
+        padding: var(--spacing-md);
+        border-radius: var(--border-radius-lg);
+        margin-bottom: var(--spacing-md);
         text-align: center;
     }
     
     .estado-badge {
         font-size: 1.1rem;
-        padding: 0.5rem 1rem;
-        border-radius: 25px;
+        padding: var(--spacing-sm) var(--spacing-md);
+        border-radius: var(--border-radius-full);
         font-weight: 600;
-        margin: 0.5rem;
+        margin: var(--spacing-sm);
         display: inline-block;
         min-width: 120px;
     }
     
-    .estado-iniciado { background: #ffc107; color: #000; }
-    .estado-trabajando { background: #0d6efd; color: #fff; }
-    .estado-completado { background: #198754; color: #fff; }
-    .estado-entregado { background: #6c757d; color: #fff; }
+    .estado-iniciado { 
+        background-color: var(--warning-500); 
+        color: var(--warning-50); 
+    }
+    .estado-trabajando { 
+        background-color: var(--primary-600); 
+        color: var(--text-inverse); 
+    }
+    .estado-completado { 
+        background-color: var(--success-600); 
+        color: var(--text-inverse); 
+    }
+    .estado-entregado { 
+        background-color: var(--neutral-600); 
+        color: var(--text-inverse); 
+    }
     
     .tab-container {
-        background: var(--card-bg);
-        border-radius: 10px;
-        margin-bottom: 1rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    
-    /* Esquemas claros - Tab-container con tonos más oscuros para mejor contraste */
-    .theme-cyan .tab-container {
-        background-color: #b2dfdb !important; /* Tono más oscuro del cyan */
-    }
-    
-    .theme-sand .tab-container {
-        background-color: #d7ccc8 !important; /* Tono más oscuro del sand */
-    }
-    
-    .theme-sage .tab-container {
-        background-color: #c8e6c9 !important; /* Tono más oscuro del sage */
-    }
-    
-    .theme-sky .tab-container {
-        background-color: #bbdefb !important; /* Tono más oscuro del sky */
+        background-color: var(--bg-card);
+        border-radius: var(--border-radius-lg);
+        margin-bottom: var(--spacing-md);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-color);
     }
     
     .tab-nav {
         display: flex;
-        background: var(--muted);
-        border-radius: 10px 10px 0 0;
+        background-color: var(--bg-secondary);
+        border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
         overflow-x: auto;
     }
     
     .tab-btn {
         flex: 1;
-        padding: 0.75rem;
+        padding: var(--spacing-sm);
         border: none;
         background: transparent;
-        color: var(--fg);
+        color: var(--text-primary);
         font-weight: 600;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: var(--transition);
         white-space: nowrap;
         min-width: 80px;
     }
     
     .tab-btn.active {
-        background: var(--btn-bg);
-        color: var(--btn-fg);
+        background-color: var(--accent);
+        color: var(--text-inverse);
     }
     
     .tab-content {
-        padding: 1rem;
+        padding: var(--spacing-md);
         display: none;
     }
     
@@ -95,36 +95,20 @@
     }
     
     .info-card {
-        background: var(--card-bg);
-        border-radius: 10px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    
-    /* Esquemas claros - Cards con tonos más oscuros para mejor contraste */
-    .theme-cyan .info-card {
-        background-color: #b2dfdb !important; /* Tono más oscuro del cyan */
-    }
-    
-    .theme-sand .info-card {
-        background-color: #d7ccc8 !important; /* Tono más oscuro del sand */
-    }
-    
-    .theme-sage .info-card {
-        background-color: #c8e6c9 !important; /* Tono más oscuro del sage */
-    }
-    
-    .theme-sky .info-card {
-        background-color: #bbdefb !important; /* Tono más oscuro del sky */
+        background-color: var(--bg-card);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-md);
+        margin-bottom: var(--spacing-md);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-color);
     }
     
     .info-row {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 0.5rem 0;
-        border-bottom: 1px solid var(--muted);
+        padding: var(--spacing-sm) 0;
+        border-bottom: 1px solid var(--border-color);
     }
     
     .info-row:last-child {
@@ -133,26 +117,26 @@
     
     .info-label {
         font-weight: 600;
-        color: var(--btn-bg);
+        color: var(--accent);
     }
     
     .info-value {
-        color: var(--fg);
+        color: var(--text-primary);
         text-align: right;
     }
     
     .btn-action {
-        border-radius: 25px;
-        padding: 0.5rem 1rem;
+        border-radius: var(--border-radius-full);
+        padding: var(--spacing-sm) var(--spacing-md);
         font-weight: 600;
-        margin: 0.25rem;
+        margin: var(--spacing-xs);
         min-width: 100px;
         font-size: 0.9rem;
     }
     
     .btn-mobile {
         width: 100%;
-        padding: 1rem;
+        padding: var(--spacing-md);
         font-size: 1.1rem;
         margin-bottom: 0.5rem;
     }
@@ -165,7 +149,7 @@
         background: var(--card-bg);
         border: 2px solid var(--muted);
         color: var(--fg);
-        border-radius: 8px;
+        border-radius: var(--border-radius-md);
         padding: 0.75rem;
     }
     
@@ -181,7 +165,7 @@
     .theme-cyan ul li input[type="checkbox"]:checked + label {
         background-color: #004d40 !important; /* Color de botón cyan */
         border-color: #004d40 !important;
-        color: #ffffff !important;
+        color: var(--text-inverse) !important;
     }
     
     .theme-sand input[type="checkbox"]:checked,
@@ -190,7 +174,7 @@
     .theme-sand ul li input[type="checkbox"]:checked + label {
         background-color: #3e2723 !important; /* Color de botón sand */
         border-color: #3e2723 !important;
-        color: #ffffff !important;
+        color: var(--text-inverse) !important;
     }
     
     .theme-sage input[type="checkbox"]:checked,
@@ -199,7 +183,7 @@
     .theme-sage ul li input[type="checkbox"]:checked + label {
         background-color: #1b5e20 !important; /* Color de botón sage */
         border-color: #1b5e20 !important;
-        color: #ffffff !important;
+        color: var(--text-inverse) !important;
     }
     
     .theme-sky input[type="checkbox"]:checked,
@@ -208,19 +192,19 @@
     .theme-sky ul li input[type="checkbox"]:checked + label {
         background-color: #0d47a1 !important; /* Color de botón sky */
         border-color: #0d47a1 !important;
-        color: #ffffff !important;
+        color: var(--text-inverse) !important;
     }
     
     .item-list {
         background: var(--card-bg);
-        border-radius: 10px;
-        padding: 1rem;
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-md);
         margin-bottom: 1rem;
     }
     
     .item-card {
         background: var(--muted);
-        border-radius: 8px;
+        border-radius: var(--border-radius-md);
         padding: 0.75rem;
         margin-bottom: 0.5rem;
         display: flex;
@@ -361,17 +345,17 @@
     
     .toggle-btn {
         border: none;
-        border-radius: 20px;
-        padding: 0.25rem 0.75rem;
+        border-radius: var(--border-radius-xl);
+        padding: var(--spacing-xs) 0.75rem;
         font-size: 0.8rem;
         font-weight: 600;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: var(--transition);
     }
     
     .toggle-btn.completado {
         background: #198754;
-        color: white;
+        color: var(--text-inverse);
     }
     
     .toggle-btn.pendiente {
@@ -381,15 +365,15 @@
     
     .progress-container {
         background: var(--card-bg);
-        border-radius: 10px;
-        padding: 1rem;
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-md);
         margin-bottom: 1rem;
     }
     
     .progress-bar-custom {
         height: 25px;
         background: var(--muted);
-        border-radius: 15px;
+        border-radius: var(--border-radius-xl);
         overflow: hidden;
         position: relative;
     }
@@ -397,12 +381,12 @@
     .progress-fill {
         height: 100%;
         background: linear-gradient(90deg, #ffc107 0%, #198754 100%);
-        border-radius: 15px;
+        border-radius: var(--border-radius-xl);
         transition: width 0.5s ease;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: white;
+        color: var(--text-inverse);
         font-weight: 600;
     }
     
@@ -415,7 +399,7 @@
     
     .foto-item {
         aspect-ratio: 1;
-        border-radius: 8px;
+        border-radius: var(--border-radius-md);
         overflow: hidden;
         position: relative;
     }
@@ -431,7 +415,7 @@
         top: 2px;
         right: 2px;
         background: rgba(220, 53, 69, 0.8);
-        color: white;
+        color: var(--text-inverse);
         border: none;
         border-radius: 50%;
         width: 20px;
@@ -442,8 +426,8 @@
     
     .add-form {
         background: var(--muted);
-        border-radius: 8px;
-        padding: 1rem;
+        border-radius: var(--border-radius-md);
+        padding: var(--spacing-md);
         margin-bottom: 1rem;
         display: none;
     }
@@ -459,7 +443,7 @@
     
     @media (max-width: 768px) {
         .trabajo-container {
-            padding: 0.25rem;
+            padding: var(--spacing-xs);
         }
         
         .tab-nav {
@@ -486,7 +470,7 @@
         
         .btn-action {
             width: 100%;
-            margin: 0.25rem 0;
+            margin: var(--spacing-xs) 0;
         }
     }
 </style>
@@ -601,7 +585,7 @@
                         </div>
                     {% endfor %}
                 {% else %}
-                    <p class="text-muted">No hay mecánicos asignados</p>
+                    <p class="text-secondary">No hay mecánicos asignados</p>
                 {% endif %}
                 
                 <form method="post">
@@ -621,30 +605,20 @@
                 
                 <!-- Acordeón de Componentes (como en ingreso.html) -->
                 <h6 class="mt-3 mb-2">📋 Seleccionar Componentes</h6>
-                <div class="accordion" id="componentesAccordion" style="
-                    --bs-accordion-bg: #ffffff !important;
-                    --bs-accordion-color: #212529 !important;
-                    --bs-accordion-border-color: #dee2e6 !important;
-                    --bs-accordion-btn-bg: #ffffff !important;
-                    --bs-accordion-btn-color: #212529 !important;
-                    --bs-accordion-btn-focus-border-color: #dee2e6 !important;
-                    --bs-accordion-btn-focus-box-shadow: 0 0 0 0.25rem rgba(0, 0, 0, 0.125) !important;
-                    --bs-accordion-active-bg: #ffffff !important;
-                    --bs-accordion-active-color: #212529 !important;
-                ">
+                <div class="accordion" id="componentesAccordion" style="--bs-accordion-bg: var(--bg-card);">
                     {% for padre in componentes %}
-                        <div class="accordion-item" style="background-color: #ffffff !important; border-color: #dee2e6 !important;">
+                        <div class="accordion-item" style="background-color: var(--bg-card) !important;">
                             <h2 class="accordion-header" id="heading-{{ padre.id }}">
                                 <button class="accordion-button collapsed" type="button"
                                         data-bs-toggle="collapse" data-bs-target="#collapse-{{ padre.id }}"
                                         aria-expanded="false" aria-controls="collapse-{{ padre.id }}"
-                                        style="background-color: #ffffff !important; color: #212529 !important; border-color: #dee2e6 !important; font-weight: 600 !important;">
+                                        style="background-color: var(--bg-card) !important;">
                                     {{ padre.nombre }}
                                 </button>
                             </h2>
                             <div id="collapse-{{ padre.id }}" class="accordion-collapse collapse"
                                  aria-labelledby="heading-{{ padre.id }}" data-bs-parent="#componentesAccordion">
-                                <div class="accordion-body" style="background-color: #ffffff !important; color: #212529 !important; border-color: #dee2e6 !important;">
+                                <div class="accordion-body" style="background-color: var(--bg-card) !important;">
                                     {% for hijo in padre.hijos.all %}
                                         <div class="form-check">
                                             <input class="form-check-input componente-checkbox"
@@ -655,12 +629,12 @@
                                                    data-componente-id="{{ hijo.id }}"
                                                    data-componente-nombre="{{ hijo.nombre }}"
                                                    onclick="console.log('🎯 CLICK EN CHECKBOX:', this.id, this.dataset.componenteId, this.dataset.componenteNombre, 'Checked:', this.checked); if(this.checked) { agregarComponenteSeleccionado(this.dataset.componenteId, this.dataset.componenteNombre); } else { removerComponenteSeleccionado(this.dataset.componenteId); }">
-                                            <label class="form-check-label" for="comp-{{ hijo.id }}" style="color: #212529 !important; font-weight: 500 !important;">
+                                            <label class="form-check-label" for="comp-{{ hijo.id }}" style="color: var(--text-primary) !important; font-weight: bold;">
                                                 {{ hijo.nombre }}
                                             </label>
                                         </div>
                                     {% empty %}
-                                        <p class="text-muted small">No hay subcomponentes registrados.</p>
+                                        <p class="text-secondary small">No hay subcomponentes registrados.</p>
                                     {% endfor %}
                                 </div>
                             </div>
@@ -694,7 +668,7 @@
                                     </button>
                                 </div>
                                 <div class="text-end">
-                                    <div class="small text-muted">Total mano de obra</div>
+                                    <div class="small text-secondary">Total mano de obra</div>
                                     <div class="fw-bold" id="total_mano_obra">$0</div>
                                 </div>
                             </div>
@@ -736,7 +710,7 @@
                         </div>
                     </div>
                 {% empty %}
-                    <p class="text-muted">No hay acciones registradas</p>
+                    <p class="text-secondary">No hay acciones registradas</p>
                 {% endfor %}
             </div>
         </div>
@@ -767,7 +741,7 @@
                 <div id="repuestos-list-trabajo"
                      data-preview-url="{% url 'sugerir_repuestos_preview' %}"
                      data-with-id-template="{% url 'sugerir_repuestos' 0 %}">
-                    <p class="text-muted">Aquí aparecerán los repuestos sugeridos basados en los componentes del trabajo.</p>
+                    <p class="text-secondary">Aquí aparecerán los repuestos sugeridos basados en los componentes del trabajo.</p>
                 </div>
 
                 <hr>
@@ -804,7 +778,7 @@
                             </div>
                         </div>
                     {% empty %}
-                        <p class="text-muted">No hay repuestos registrados</p>
+                        <p class="text-secondary">No hay repuestos registrados</p>
                     {% endfor %}
                 </div>
                 
@@ -840,7 +814,7 @@
                             <button class="delete-btn" onclick="eliminarFoto({{ foto.id }})" title="Eliminar foto">×</button>
                         </div>
                     {% empty %}
-                        <p class="text-muted">No hay fotos subidas</p>
+                        <p class="text-secondary">No hay fotos subidas</p>
                     {% endfor %}
                 </div>
             </div>
@@ -850,7 +824,7 @@
         <div id="tab-estado" class="tab-content {% if active_tab == 'estado' %}active{% endif %}">
             <div class="info-card">
                 <h5>⚡ Cambiar Estado del Trabajo</h5>
-                <p class="text-muted">Selecciona el nuevo estado para este trabajo:</p>
+                <p class="text-secondary">Selecciona el nuevo estado para este trabajo:</p>
                 
                 <form method="post">
                     {% csrf_token %}
@@ -1055,7 +1029,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 infoDiv.innerHTML = `
-                    <small class="text-muted">
+                    <small class="text-secondary">
                         <strong>Compatibilidad:</strong><br>
                         ${compatibilidadText}
                     </small>
@@ -1186,7 +1160,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="col-12 col-md-5">
                             <div class="fw-semibold">${componenteNombre}</div>
                             <div class="text-primary small">${accion.accion_nombre}</div>
-                            <div class="text-muted small">ID: ${componenteId} • Acción: ${accion.accion_id}</div>
+                            <div class="text-secondary small">ID: ${componenteId} • Acción: ${accion.accion_id}</div>
                         </div>
                         <div class="col-8 col-md-4">
                             <label class="form-label mb-0 small">Precio personalizado</label>
@@ -1194,7 +1168,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                    placeholder="${precioBase > 0 ? precioBase : '0.00'}" 
                                    value="${ACC[accionKey].precio || ''}"
                                    data-accion-key="${accionKey}">
-                            <small class="text-muted">Base: ${precioFormateado}</small>
+                            <small class="text-secondary">Base: ${precioFormateado}</small>
                         </div>
                         <div class="col-4 col-md-2 text-end">
                             <div class="fw-bold text-success" data-precio-display="${accionKey}">
@@ -1546,7 +1520,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <b>${escapeHtml(r.nombre)}</b> (${escapeHtml(r.oem || "sin OEM")})<br>
                             <small>${escapeHtml(r.sku || "")} • ${escapeHtml(r.posicion || "")}</small><br>
                             Stock: ${r.disponible} – 💰 $${(r.precio_venta || 0).toFixed(0)}<br>
-                            ${r.compatibilidad_texto ? `<small class="text-muted">${r.compatibilidad_texto} (${r.compatibilidad}%)</small>` : ''}
+                            ${r.compatibilidad_texto ? `<small class="text-secondary">${r.compatibilidad_texto} (${r.compatibilidad}%)</small>` : ''}
                         </label>
                         <div class="mt-1 d-flex justify-content-between align-items-center">
                             <div>
@@ -1556,7 +1530,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                        data-id="${r.id}"
                                        min="1"
                                        value="1"
-                                       style="max-width:80px;">
+                                       style="max-width: 80px;">
                             </div>
                             <button type="button" class="btn btn-sm btn-outline-danger" onclick="descartarRepuestoTrabajo(this)">
                                 ✕

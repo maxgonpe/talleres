@@ -1,3 +1,4 @@
+{% load static %}
 {% extends 'base.html' %}
 {% load humanize %}
 {% block content %}
@@ -38,7 +39,7 @@
   <div class="card-body">
     <strong>Vehículo:</strong> {{ diagnostico.vehiculo }}<br>
     
-    <strong>VIN:</strong> <strong style="color: red;"> {{ diagnostico.vehiculo.vin }}</strong> <br>
+    <strong>VIN:</strong> <strong style="color: var(--danger-600);"> {{ diagnostico.vehiculo.vin }}</strong> <br>
     <strong>Cliente:</strong> {{ diagnostico.vehiculo.cliente.nombre }}<br>
     <strong>Teléfono:</strong> {{ diagnostico.vehiculo.cliente.telefono }}<br>
 
@@ -72,7 +73,7 @@
           ${{ diagnostico.total_mano_obra|default:0|floatformat:0|intcomma }}
         </div>
       {% else %}
-        <span class="text-muted">No se registraron acciones</span>
+        <span class="text-secondary">No se registraron acciones</span>
       {% endif %}
     {% endwith %}
 
@@ -97,7 +98,7 @@
           ${{ diagnostico.total_repuestos|default:0|floatformat:0|intcomma }}
         </div>
       {% else %}
-        <span class="text-muted">No se registraron repuestos</span>
+        <span class="text-secondary">No se registraron repuestos</span>
       {% endif %}
     {% endwith %}
 

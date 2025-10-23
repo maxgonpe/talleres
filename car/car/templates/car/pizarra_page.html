@@ -1,4 +1,10 @@
+{% load static %}
 {% extends "base.html" %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
   <h2>📋 Pizarra de Trabajos</h2>

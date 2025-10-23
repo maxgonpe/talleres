@@ -88,3 +88,4 @@ class Command(BaseCommand):
         
         self.stdout.write(f"\n✅ Corregidos {corregidos} vehículos")
         self.stdout.write(self.style.SUCCESS("🎉 Verificación completada"))
+

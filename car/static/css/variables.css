@@ -1,0 +1,240 @@
+/* ========================================
+   SISTEMA DE TEMAS CENTRALIZADO
+   ======================================== */
+
+/* ========================================
+   DEFINICIÓN DE TEMAS
+   ======================================== */
+
+/* TEMA OSCURO: PIEDRA */
+.theme-piedra {
+  --bg: #2a374e;
+  --fg: #e6e6e6;
+  --card-bg: #3c4a6e;
+  --muted: #a8b3c7;
+  --footer-bg: #1e2a3e;
+  --btn-bg: #4a5c7a;
+  --btn-fg: #ffffff;
+  --hover-bg: #5a6c8a;
+}
+
+/* TEMA CLARO: SAND */
+.theme-sand {
+  --bg: #f0ebe5;
+  --fg: #3e2723;
+  --card-bg: #e8e0d8;
+  --muted: #8d6e63;
+  --footer-bg: #e0d8d0;
+  --btn-bg: #8d6e63;
+  --btn-fg: #ffffff;
+  --hover-bg: #6d4c41;
+}
+
+/* ========================================
+   BOTONES DE TEMA
+   ======================================== */
+
+.theme-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  cursor: pointer;
+  margin: 0 5px;
+  display: inline-block;
+  transition: all 0.3s ease;
+}
+
+.theme-btn:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 10px rgba(255,255,255,0.5);
+}
+
+.theme-btn.piedra {
+  background-color: #2a374e;
+}
+
+.theme-btn.sand {
+  background-color: #f0ebe5;
+}
+
+/* ========================================
+   APLICACIÓN DE VARIABLES
+   ======================================== */
+
+body {
+  background-color: var(--bg) !important;
+  color: var(--fg) !important;
+}
+
+.navbar {
+  background-color: var(--card-bg) !important;
+  border-bottom: 1px solid var(--muted);
+}
+
+.navbar-brand, .nav-link {
+  color: var(--fg) !important;
+  font-size: 1.1rem !important;
+  font-weight: 600 !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3) !important;
+}
+
+.container, .card, .btn {
+  background-color: var(--card-bg) !important;
+  color: var(--fg) !important;
+}
+
+.card {
+  background-color: var(--card-bg) !important;
+  color: var(--fg) !important;
+  border: 1px solid var(--muted) !important;
+}
+
+.theme-sand .card {
+  background-color: var(--card-bg) !important;
+  color: var(--fg) !important;
+  border: 1px solid var(--muted) !important;
+}
+
+/* ========================================
+   CARDS DE TRABAJOS ESPECÍFICAS
+   ======================================== */
+
+.theme-piedra .card {
+  background-color: #2d3a52 !important;
+  border: 2px solid #4a5c7a !important;
+}
+
+.theme-sand .card {
+  background-color: #d8d0c8 !important;
+  border: 2px solid #8d6e63 !important;
+}
+
+/* ========================================
+   BOTONES SIMPLIFICADOS
+   ======================================== */
+
+.theme-piedra .btn {
+  background-color: var(--btn-bg) !important;
+  border-color: var(--btn-bg) !important;
+  color: var(--btn-fg) !important;
+}
+
+.theme-piedra .btn:hover {
+  background-color: var(--hover-bg) !important;
+  border-color: var(--hover-bg) !important;
+}
+
+.theme-sand .btn {
+  background-color: var(--btn-bg) !important;
+  border-color: var(--btn-bg) !important;
+  color: var(--btn-fg) !important;
+}
+
+.theme-sand .btn:hover {
+  background-color: var(--hover-bg) !important;
+  border-color: var(--hover-bg) !important;
+}
+
+/* ========================================
+   FOOTER
+   ======================================== */
+
+.footer {
+  background-color: var(--footer-bg) !important;
+  color: var(--fg) !important;
+}
+
+/* ========================================
+   ELEMENTOS ESPECÍFICOS
+   ======================================== */
+
+.text-muted {
+  color: var(--muted) !important;
+}
+
+a {
+  color: var(--fg) !important;
+}
+
+a:hover {
+  color: var(--hover-bg) !important;
+}
+
+.table {
+  background-color: var(--card-bg) !important;
+  color: var(--fg) !important;
+}
+
+.table th {
+  background-color: var(--muted) !important;
+  color: var(--fg) !important;
+}
+
+.form-control, .form-select {
+  background-color: var(--card-bg) !important;
+  color: var(--fg) !important;
+  border-color: var(--muted) !important;
+}
+
+.form-control:focus, .form-select:focus {
+  background-color: var(--card-bg) !important;
+  color: var(--fg) !important;
+  border-color: var(--btn-bg) !important;
+  box-shadow: 0 0 0 0.2rem rgba(74, 92, 122, 0.25) !important;
+}
+
+.list-group-item {
+  background-color: var(--card-bg) !important;
+  color: var(--fg) !important;
+  border-color: var(--muted) !important;
+}
+
+.badge {
+  background-color: var(--btn-bg) !important;
+  color: var(--btn-fg) !important;
+}
+
+.progress {
+  background-color: var(--muted) !important;
+}
+
+/* ========================================
+   HOVER Y FOCUS MEJORADOS
+   ======================================== */
+
+html body.theme-piedra .navbar-nav .nav-link:hover,
+html body.theme-piedra .navbar-nav .nav-link:focus {
+  background-color: transparent !important;
+  border: 2px solid #4a5c7a !important;
+  border-radius: 8px !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+}
+
+html body.theme-sand .navbar-nav .nav-link:hover,
+html body.theme-sand .navbar-nav .nav-link:focus {
+  background-color: transparent !important;
+  border: 2px solid #8d6e63 !important;
+  border-radius: 8px !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+}
+
+html body.theme-piedra .dropdown-item:hover,
+html body.theme-piedra .dropdown-item:focus {
+  background-color: transparent !important;
+  border: 2px solid #4a5c7a !important;
+  border-radius: 6px !important;
+  transform: translateX(4px) !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
+}
+
+html body.theme-sand .dropdown-item:hover,
+html body.theme-sand .dropdown-item:focus {
+  background-color: transparent !important;
+  border: 2px solid #8d6e63 !important;
+  border-radius: 6px !important;
+  transform: translateX(4px) !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
+}

@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% load static %}
 
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+{% endblock %}
+
 {% block title %}Iniciar Sesión{% endblock %}
 
 {% block content %}
@@ -46,12 +50,12 @@
             </div>
 
             <div class="col-md-6">
-              <div class="p-3 p-md-4 rounded-3 border" style="background: linear-gradient(135deg, rgba(255,241,230,.7), rgba(255,231,208,.7));">
+              <div class="p-3 p-md-4 rounded-3 border" style="background: linear-gradient(135deg, var(--warning-50), var(--warning-100));">
                 <div class="d-flex align-items-center mb-3">
                   <img src="{% static 'images/Logo1.svg' %}" alt="Taller" style="height:40px" class="me-2">
                   <h5 class="mb-0">Seguimiento de vehículo</h5>
                 </div>
-                <p class="text-muted small mb-2">Ingresa la placa para ver el avance si tu vehículo está en taller.</p>
+                <p class="text-secondary small mb-2">Ingresa la placa para ver el avance si tu vehículo está en taller.</p>
                 <div class="input-group mb-2">
                   <input id="tracking-placa" type="text" class="form-control" placeholder="Ej: JGCX79">
                   <button id="tracking-buscar" class="btn btn-primary" type="button">Ver</button>
@@ -62,7 +66,7 @@
           </div>
 
           <div class="text-center mt-3">
-            <small class="text-muted">¿Olvidaste tu contraseña? <a href="#">Recupérala aquí</a></small>
+            <small class="text-secondary">¿Olvidaste tu contraseña? <a href="#">Recupérala aquí</a></small>
           </div>
         </div>
       </div>

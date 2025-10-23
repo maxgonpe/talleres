@@ -5,17 +5,18 @@
 {% block title %}NetGoGo - Compatibilidad de Vehículos{% endblock %}
 
 {% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
 <style>
     .vehiculos-container {
         max-width: 100%;
         margin: 0;
-        padding: 1rem;
+        padding: var(--spacing-md);
     }
     
     .vehiculos-header {
         background: var(--gradient);
         color: var(--btn-fg);
-        padding: 2rem;
+        padding: var(--spacing-xl);
         text-align: center;
         border-radius: var(--border-radius-lg);
         margin-bottom: 2rem;
@@ -32,7 +33,7 @@
     .search-container {
         background: var(--card-bg);
         border-radius: var(--border-radius-lg);
-        padding: 1.5rem;
+        padding: var(--spacing-lg);
         margin-bottom: 2rem;
         box-shadow: var(--card-shadow);
     }
@@ -42,7 +43,7 @@
         border: 2px solid var(--muted);
         background: var(--bg);
         color: var(--fg);
-        padding: 1rem;
+        padding: var(--spacing-md);
         font-size: 1.1rem;
         transition: var(--transition);
     }
@@ -60,7 +61,7 @@
     .stats-container {
         background: var(--card-bg);
         border-radius: var(--border-radius-lg);
-        padding: 1.5rem;
+        padding: var(--spacing-lg);
         margin-bottom: 2rem;
         box-shadow: var(--card-shadow);
     }
@@ -73,7 +74,7 @@
     
     .stat-card {
         background: var(--hover-bg);
-        padding: 1rem;
+        padding: var(--spacing-md);
         border-radius: var(--border-radius);
         text-align: center;
         border-left: 4px solid var(--accent);
@@ -97,7 +98,7 @@
     .tabs-container {
         background: var(--card-bg);
         border-radius: var(--border-radius-lg);
-        padding: 1.5rem;
+        padding: var(--spacing-lg);
         margin-bottom: 2rem;
         box-shadow: var(--card-shadow);
     }
@@ -147,8 +148,8 @@
     .tab-count {
         background: rgba(255,255,255,0.2);
         color: inherit;
-        padding: 0.25rem 0.5rem;
-        border-radius: 12px;
+        padding: var(--spacing-xs) 0.5rem;
+        border-radius: var(--border-radius-lg);
         font-size: 0.8rem;
         font-weight: 700;
     }
@@ -161,7 +162,7 @@
     .vehiculos-content {
         background: var(--card-bg);
         border-radius: var(--border-radius-lg);
-        padding: 1.5rem;
+        padding: var(--spacing-lg);
         box-shadow: var(--card-shadow);
         min-height: 400px;
     }
@@ -177,7 +178,7 @@
         background: var(--hover-bg);
         border: 2px solid var(--muted);
         border-radius: var(--border-radius);
-        padding: 1.5rem;
+        padding: var(--spacing-lg);
         transition: var(--transition);
         position: relative;
         overflow: hidden;
@@ -241,7 +242,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 0.5rem 0;
+        padding: var(--spacing-sm) 0;
         border-bottom: 1px solid var(--muted);
     }
     
@@ -263,8 +264,8 @@
     .year-badge {
         background: var(--accent);
         color: var(--btn-fg);
-        padding: 0.25rem 0.75rem;
-        border-radius: 12px;
+        padding: var(--spacing-xs) 0.75rem;
+        border-radius: var(--border-radius-lg);
         font-size: 0.8rem;
         font-weight: 600;
     }
@@ -277,7 +278,7 @@
     
     .btn-action {
         border-radius: var(--border-radius);
-        padding: 0.5rem 0.75rem;
+        padding: var(--spacing-sm) 0.75rem;
         font-size: 0.85rem;
         min-width: 38px;
         height: 38px;
@@ -350,14 +351,14 @@
     /* Responsive */
     @media (max-width: 768px) {
         .vehiculos-container {
-            padding: 0.25rem;
+            padding: var(--spacing-xs);
         }
         
         .search-container,
         .stats-container,
         .tabs-container,
         .vehiculos-content {
-            margin: 0.25rem;
+            margin: var(--spacing-xs);
             padding: 0.75rem;
         }
         
@@ -371,7 +372,7 @@
         }
         
         .tab-btn {
-            padding: 0.5rem 1rem;
+            padding: var(--spacing-sm) 1rem;
             font-size: 0.8rem;
         }
         
@@ -381,7 +382,7 @@
         }
         
         .vehiculo-card {
-            padding: 1rem;
+            padding: var(--spacing-md);
         }
         
         .vehiculo-actions {

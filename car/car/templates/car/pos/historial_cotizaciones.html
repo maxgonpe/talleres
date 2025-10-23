@@ -2,6 +2,10 @@
 {% load static %}
 {% load humanize %}
 
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+{% endblock %}
+
 {% block title %}Historial de Cotizaciones - POS{% endblock %}
 
 {% block extra_head %}
@@ -14,25 +18,25 @@
     
     .historial-header {
         background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
-        color: white;
-        padding: 1rem;
+        color: var(--text-inverse);
+        padding: var(--spacing-md);
         text-align: center;
     }
     
     .filtros-container {
-        background: white;
-        border-radius: 10px;
-        margin: 1rem;
-        padding: 1rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        background-color: var(--bg-card);
+        border-radius: var(--border-radius-lg);
+        margin: var(--spacing-md);
+        padding: var(--spacing-md);
+        box-shadow: var(--shadow-md);
     }
     
     .cotizacion-card {
-        background: white;
-        border-radius: 10px;
-        margin: 0.5rem 1rem;
-        padding: 1rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        background-color: var(--bg-card);
+        border-radius: var(--border-radius-lg);
+        margin: var(--spacing-sm) 1rem;
+        padding: var(--spacing-md);
+        box-shadow: var(--shadow-md);
         border-left: 4px solid #17a2b8;
     }
     
@@ -45,12 +49,12 @@
     
     .cotizacion-numero {
         font-weight: bold;
-        color: #17a2b8;
+        color: var(--info-600);
         font-size: 1.1rem;
     }
     
     .cotizacion-fecha {
-        color: #6c757d;
+        color: var(--text-muted);
         font-size: 0.9rem;
     }
     
@@ -67,13 +71,13 @@
     
     .cotizacion-total {
         font-weight: bold;
-        color: #17a2b8;
+        color: var(--info-600);
         font-size: 1.2rem;
     }
     
     .cotizacion-estado {
-        padding: 0.25rem 0.5rem;
-        border-radius: 10px;
+        padding: var(--spacing-xs) 0.5rem;
+        border-radius: var(--border-radius-lg);
         font-size: 0.8rem;
         font-weight: 600;
     }
@@ -101,50 +105,50 @@
     .btn-ver {
         background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
         border: none;
-        border-radius: 20px;
-        padding: 0.5rem 1rem;
-        color: white;
+        border-radius: var(--border-radius-xl);
+        padding: var(--spacing-sm) 1rem;
+        color: var(--text-inverse);
         font-weight: 600;
         text-decoration: none;
         display: inline-block;
     }
     
     .btn-ver:hover {
-        color: white;
+        color: var(--text-inverse);
         transform: translateY(-1px);
         box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }
     
     .pagination-container {
-        background: white;
-        border-radius: 10px;
-        margin: 1rem;
-        padding: 1rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        background-color: var(--bg-card);
+        border-radius: var(--border-radius-lg);
+        margin: var(--spacing-md);
+        padding: var(--spacing-md);
+        box-shadow: var(--shadow-md);
         text-align: center;
     }
     
     .stats-container {
-        background: white;
-        border-radius: 10px;
-        margin: 1rem;
-        padding: 1rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        background-color: var(--bg-card);
+        border-radius: var(--border-radius-lg);
+        margin: var(--spacing-md);
+        padding: var(--spacing-md);
+        box-shadow: var(--shadow-md);
     }
     
     .stat-item {
         text-align: center;
-        padding: 1rem;
+        padding: var(--spacing-md);
     }
     
     .stat-number {
         font-size: 2rem;
         font-weight: bold;
-        color: #17a2b8;
+        color: var(--info-600);
     }
     
     .stat-label {
-        color: #6c757d;
+        color: var(--text-muted);
         font-size: 0.9rem;
         text-transform: uppercase;
         letter-spacing: 0.5px;
@@ -153,7 +157,7 @@
     .empty-state {
         text-align: center;
         padding: 3rem 1rem;
-        color: #6c757d;
+        color: var(--text-muted);
     }
     
     .empty-state i {
@@ -171,7 +175,7 @@
         .cotizacion-card,
         .pagination-container,
         .stats-container {
-            margin: 0.5rem;
+            margin: var(--spacing-sm);
         }
         
         .cotizacion-header,
@@ -280,7 +284,7 @@
                 </div>
                 
                 <div class="d-flex justify-content-between align-items-center">
-                    <small class="text-muted">
+                    <small class="text-secondary">
                         Válida hasta: {{ cotizacion.valida_hasta|date:"d/m/Y" }}
                         {% if cotizacion.descuento > 0 %}
                             | Descuento: ${{ cotizacion.descuento|floatformat:0|intcomma }}

@@ -1,6 +1,448 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
 {% load static %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+  <style>
+    .ingreso-container {
+      background: var(--bg-card);
+      border-radius: var(--border-radius-lg);
+      padding: var(--spacing-lg);
+      box-shadow: var(--shadow-md);
+      margin-bottom: var(--spacing-lg);
+    }
+    
+    .ingreso-header {
+      background: var(--gradient);
+      color: var(--text-inverse);
+      padding: var(--spacing-lg);
+      border-radius: var(--border-radius-lg);
+      margin-bottom: var(--spacing-lg);
+      text-align: center;
+    }
+    
+    .ingreso-header h2 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    
+    .form-section {
+      background: var(--bg-card);
+      border-radius: var(--border-radius-lg);
+      padding: var(--spacing-lg);
+      margin-bottom: var(--spacing-lg);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+    }
+    
+    .form-section h3 {
+      color: var(--primary-600);
+      font-weight: 600;
+      margin-bottom: var(--spacing-md);
+      padding-bottom: var(--spacing-sm);
+      border-bottom: 2px solid var(--border-color);
+    }
+    
+    .form-label {
+      color: var(--text-primary);
+      font-weight: 500;
+      margin-bottom: var(--spacing-sm);
+    }
+    
+    .form-control, .form-select {
+      background: var(--bg);
+      border: 2px solid var(--border-color);
+      color: var(--text-primary);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-sm);
+      transition: var(--transition);
+    }
+    
+    .form-control:focus, .form-select:focus {
+      border-color: var(--primary-600);
+      box-shadow: 0 0 0 0.2rem rgba(var(--primary-600), 0.25);
+      outline: none;
+    }
+    
+    .form-control::placeholder {
+      color: var(--text-secondary);
+    }
+    
+    .btn {
+      border-radius: var(--border-radius);
+      font-weight: 500;
+      transition: var(--transition);
+      padding: var(--spacing-sm) var(--spacing-md);
+    }
+    
+    .btn-primary {
+      background: var(--primary-600);
+      border-color: var(--primary-600);
+    }
+    
+    .btn-primary:hover {
+      background: var(--primary-700);
+      border-color: var(--primary-700);
+    }
+    
+    .btn-outline-primary {
+      color: var(--primary-600);
+      border-color: var(--primary-600);
+    }
+    
+    .btn-outline-primary:hover {
+      background: var(--primary-600);
+      border-color: var(--primary-600);
+      color: var(--text-inverse);
+    }
+    
+    .btn-success {
+      background: var(--success-600);
+      border-color: var(--success-600);
+    }
+    
+    .btn-success:hover {
+      background: var(--success-700);
+      border-color: var(--success-700);
+    }
+    
+    .btn-warning {
+      background: var(--warning-600);
+      border-color: var(--warning-600);
+    }
+    
+    .btn-warning:hover {
+      background: var(--warning-700);
+      border-color: var(--warning-700);
+    }
+    
+    .btn-danger {
+      background: var(--danger-600);
+      border-color: var(--danger-600);
+    }
+    
+    .btn-danger:hover {
+      background: var(--danger-700);
+      border-color: var(--danger-700);
+    }
+    
+    .btn-secondary {
+      background: var(--neutral-600);
+      border-color: var(--neutral-600);
+    }
+    
+    .btn-secondary:hover {
+      background: var(--neutral-700);
+      border-color: var(--neutral-700);
+    }
+    
+    .input-group .btn {
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+    }
+    
+    .input-group .form-control {
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+    
+    .alert {
+      border-radius: var(--border-radius);
+      padding: var(--spacing-md);
+      margin-bottom: var(--spacing-md);
+      border: 1px solid transparent;
+    }
+    
+    .alert-success {
+      background: var(--success-100);
+      border-color: var(--success-200);
+      color: var(--success-800);
+    }
+    
+    .alert-warning {
+      background: var(--warning-100);
+      border-color: var(--warning-200);
+      color: var(--warning-800);
+    }
+    
+    .alert-danger {
+      background: var(--danger-100);
+      border-color: var(--danger-200);
+      color: var(--danger-800);
+    }
+    
+    .alert-info {
+      background: var(--info-100);
+      border-color: var(--info-200);
+      color: var(--info-800);
+    }
+    
+    .badge {
+      border-radius: var(--border-radius-sm);
+      font-weight: 500;
+      padding: var(--spacing-xs) var(--spacing-sm);
+    }
+    
+    .badge.bg-success {
+      background: var(--success-600) !important;
+      color: var(--text-inverse);
+    }
+    
+    .badge.bg-warning {
+      background: var(--warning-600) !important;
+      color: var(--text-inverse);
+    }
+    
+    .badge.bg-danger {
+      background: var(--danger-600) !important;
+      color: var(--text-inverse);
+    }
+    
+    .badge.bg-info {
+      background: var(--info-600) !important;
+      color: var(--text-inverse);
+    }
+    
+    .badge.bg-primary {
+      background: var(--primary-600) !important;
+      color: var(--text-inverse);
+    }
+    
+    .badge.bg-secondary {
+      background: var(--neutral-600) !important;
+      color: var(--text-inverse);
+    }
+    
+    .text-muted {
+      color: var(--text-secondary) !important;
+    }
+    
+    .text-success {
+      color: var(--success-600) !important;
+    }
+    
+    .text-warning {
+      color: var(--warning-600) !important;
+    }
+    
+    .text-danger {
+      color: var(--danger-600) !important;
+    }
+    
+    .text-info {
+      color: var(--info-600) !important;
+    }
+    
+    .text-primary {
+      color: var(--primary-600) !important;
+    }
+    
+    .mb-3 {
+      margin-bottom: var(--spacing-md) !important;
+    }
+    
+    .mb-4 {
+      margin-bottom: var(--spacing-lg) !important;
+    }
+    
+    .mt-3 {
+      margin-top: var(--spacing-md) !important;
+    }
+    
+    .py-4 {
+      padding-top: var(--spacing-lg) !important;
+      padding-bottom: var(--spacing-lg) !important;
+    }
+    
+    .px-3 {
+      padding-left: var(--spacing-md) !important;
+      padding-right: var(--spacing-md) !important;
+    }
+    
+    .py-3 {
+      padding-top: var(--spacing-md) !important;
+      padding-bottom: var(--spacing-md) !important;
+    }
+    
+    .shadow-sm {
+      box-shadow: var(--shadow-sm) !important;
+    }
+    
+    .shadow {
+      box-shadow: var(--shadow-md) !important;
+    }
+    
+    .shadow-lg {
+      box-shadow: var(--shadow-lg) !important;
+    }
+    
+    .border {
+      border: 1px solid var(--border-color) !important;
+    }
+    
+    .border-top {
+      border-top: 1px solid var(--border-color) !important;
+    }
+    
+    .border-bottom {
+      border-bottom: 1px solid var(--border-color) !important;
+    }
+    
+    .rounded {
+      border-radius: var(--border-radius) !important;
+    }
+    
+    .rounded-lg {
+      border-radius: var(--border-radius-lg) !important;
+    }
+    
+    .d-flex {
+      display: flex !important;
+    }
+    
+    .justify-content-between {
+      justify-content: space-between !important;
+    }
+    
+    .align-items-center {
+      align-items: center !important;
+    }
+    
+    .w-100 {
+      width: 100% !important;
+    }
+    
+    .flex-wrap {
+      flex-wrap: wrap !important;
+    }
+    
+    .gap-2 {
+      gap: var(--spacing-sm) !important;
+    }
+    
+    .gap-3 {
+      gap: var(--spacing-md) !important;
+    }
+    
+    .text-center {
+      text-align: center !important;
+    }
+    
+    .text-end {
+      text-align: end !important;
+    }
+    
+    .fw-bold {
+      font-weight: 600 !important;
+    }
+    
+    .fw-normal {
+      font-weight: 400 !important;
+    }
+    
+    .small {
+      font-size: 0.875rem !important;
+    }
+    
+    .fs-6 {
+      font-size: 1rem !important;
+    }
+    
+    .fs-5 {
+      font-size: 1.25rem !important;
+    }
+    
+    .fs-4 {
+      font-size: 1.5rem !important;
+    }
+    
+    .fs-3 {
+      font-size: 1.75rem !important;
+    }
+    
+    .fs-2 {
+      font-size: 2rem !important;
+    }
+    
+    .fs-1 {
+      font-size: 2.5rem !important;
+    }
+    
+    .container {
+      max-width: 100%;
+      margin: 0 auto;
+      padding: 0 var(--spacing-md);
+    }
+    
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      margin: 0 -0.5rem;
+    }
+    
+    .col-md-6 {
+      flex: 0 0 50%;
+      max-width: 50%;
+      padding: 0 0.5rem;
+    }
+    
+    .col-md-4 {
+      flex: 0 0 33.333333%;
+      max-width: 33.333333%;
+      padding: 0 0.5rem;
+    }
+    
+    .col-md-3 {
+      flex: 0 0 25%;
+      max-width: 25%;
+      padding: 0 0.5rem;
+    }
+    
+    .col-md-2 {
+      flex: 0 0 16.666667%;
+      max-width: 16.666667%;
+      padding: 0 0.5rem;
+    }
+    
+    .col-md-1 {
+      flex: 0 0 8.333333%;
+      max-width: 8.333333%;
+      padding: 0 0.5rem;
+    }
+    
+    .col-12 {
+      flex: 0 0 100%;
+      max-width: 100%;
+      padding: 0 0.5rem;
+    }
+    
+    @media (max-width: 768px) {
+      .col-md-6, .col-md-4, .col-md-3, .col-md-2, .col-md-1 {
+        flex: 0 0 100%;
+        max-width: 100%;
+      }
+      
+      .ingreso-container {
+        padding: var(--spacing-sm);
+      }
+      
+      .ingreso-header {
+        padding: var(--spacing-md);
+      }
+      
+      .ingreso-header h2 {
+        font-size: 1.5rem;
+      }
+      
+      .form-section {
+        padding: var(--spacing-md);
+      }
+    }
+  </style>
+{% endblock %}
+
 {% block content %}
 
 <div class="container py-4">
@@ -86,7 +528,7 @@
                       </label>
                     </div>
                   {% empty %}
-                    <p class="text-muted small">No hay subcomponentes registrados.</p>
+                    <p class="text-secondary small">No hay subcomponentes registrados.</p>
                   {% endfor %}
                 </div>
               </div>
@@ -103,7 +545,7 @@
         </button>
 
         <div id="plano-container"
-             style="border:1px solid #ccc; max-height:800px; overflow:auto;"
+             style="border:1px solid var(--border-color); max-height:800px; overflow:auto;"
              data-inicial-url="{% static 'images/vehiculo-desde-abajo.svg' %}">
           <div style="transform:scale(1.024); transform-origin: top left;">
             {{ svg|safe }}
@@ -123,7 +565,7 @@
               <input type="hidden" id="acciones_componentes_json" name="acciones_componentes_json" value="[]">
               <div class="d-flex justify-content-end mt-2">
                 <div class="text-end">
-                  <div class="small text-muted">Total mano de obra</div>
+                  <div class="small text-secondary">Total mano de obra</div>
                   <div class="fw-bold" id="total_mano_obra">$0</div>
                 </div>
               </div>
@@ -148,7 +590,7 @@
           <div id="repuestos-list"
                data-preview-url="{% url 'sugerir_repuestos_preview' %}"
                data-with-id-template="{% url 'sugerir_repuestos' 0 %}">
-            <p class="text-muted">Aquí aparecerán los repuestos sugeridos.</p>
+            <p class="text-secondary">Aquí aparecerán los repuestos sugeridos.</p>
           </div>
 
           <hr>
@@ -223,7 +665,7 @@
 /* Asegurar que el texto sea visible en temas oscuros */
 [data-bs-theme="dark"] .accordion-button {
     color: #2c3e50 !important;
-    background-color: #f8f9fa !important;
+    background-color: var(--bg-secondary) !important;
 }
 
 [data-bs-theme="dark"] .accordion-button:not(.collapsed) {
@@ -233,7 +675,7 @@
 
 [data-bs-theme="dark"] .accordion-body {
     color: #2c3e50 !important;
-    background-color: #f8f9fa !important;
+    background-color: var(--bg-secondary) !important;
 }
 
 [data-bs-theme="dark"] .form-check-label {
@@ -254,7 +696,7 @@
 [data-bs-theme="dark"] .accordion-body .form-check,
 [data-bs-theme="dark"] .accordion-body .form-check-label {
     color: #2c3e50 !important;
-    background-color: #f8f9fa !important;
+    background-color: var(--bg-secondary) !important;
 }
 
 [data-bs-theme="dark"] .accordion-body .form-check-input {
@@ -337,7 +779,7 @@ body[data-bs-theme="dark"] .accordion-body .form-check-label {
 
 /* Animación suave para cambios de estado */
 .list-group-item {
-    transition: all 0.3s ease;
+    transition: var(--transition);
 }
 
 /* Mejorar contraste para precios */

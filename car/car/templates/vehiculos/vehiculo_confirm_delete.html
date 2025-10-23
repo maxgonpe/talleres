@@ -4,11 +4,12 @@
 {% block title %}Eliminar Vehículo Compatible - NetGoGo{% endblock %}
 
 {% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
 <style>
     .delete-container {
         max-width: 600px;
-        margin: 2rem auto;
-        padding: 2rem;
+        margin: var(--spacing-xl) auto;
+        padding: var(--spacing-xl);
         background: var(--card-bg);
         border-radius: var(--border-radius-lg);
         box-shadow: var(--card-shadow);
@@ -16,8 +17,8 @@
     
     .delete-header {
         background: linear-gradient(135deg, #dc3545, #c82333);
-        color: white;
-        padding: 1.5rem;
+        color: var(--text-inverse);
+        padding: var(--spacing-lg);
         text-align: center;
         border-radius: var(--border-radius-lg);
         margin-bottom: 2rem;
@@ -33,7 +34,7 @@
     
     .vehiculo-info {
         background: var(--hover-bg);
-        padding: 1.5rem;
+        padding: var(--spacing-lg);
         border-radius: var(--border-radius);
         margin-bottom: 2rem;
         border-left: 4px solid var(--accent);
@@ -53,7 +54,7 @@
     
     .info-item {
         background: var(--bg);
-        padding: 1rem;
+        padding: var(--spacing-md);
         border-radius: var(--border-radius);
         text-align: center;
         border: 1px solid var(--muted);
@@ -78,7 +79,7 @@
         background: rgba(255, 193, 7, 0.1);
         border: 1px solid #ffc107;
         border-left: 4px solid #ffc107;
-        padding: 1rem;
+        padding: var(--spacing-md);
         border-radius: var(--border-radius);
         margin-bottom: 2rem;
     }
@@ -113,12 +114,12 @@
     
     .btn-danger {
         background: #dc3545;
-        color: white;
+        color: var(--text-inverse);
     }
     
     .btn-danger:hover {
         background: #c82333;
-        color: white;
+        color: var(--text-inverse);
     }
     
     .btn-secondary {
@@ -145,13 +146,13 @@
         background: rgba(220, 53, 69, 0.05);
         border: 1px solid rgba(220, 53, 69, 0.2);
         border-left: 4px solid #dc3545;
-        padding: 1rem;
+        padding: var(--spacing-md);
         border-radius: var(--border-radius);
         margin-bottom: 2rem;
     }
     
     .impact-list h6 {
-        color: #dc3545;
+        color: var(--danger-600);
         margin-bottom: 0.5rem;
         font-weight: 600;
     }
@@ -170,8 +171,8 @@
     /* Responsive */
     @media (max-width: 768px) {
         .delete-container {
-            margin: 1rem;
-            padding: 1rem;
+            margin: var(--spacing-md);
+            padding: var(--spacing-md);
         }
         
         .delete-header h2 {

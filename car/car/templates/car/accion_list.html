@@ -1,4 +1,113 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+  <style>
+    .accion-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-lg);
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition);
+    }
+    
+    .accion-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+    
+    .card-body {
+      background: var(--bg-card);
+      color: var(--text-primary);
+    }
+    
+    .btn {
+      border-radius: var(--border-radius-sm);
+      font-weight: 500;
+      transition: var(--transition);
+    }
+    
+    .btn-success {
+      background: var(--success-600);
+      border-color: var(--success-600);
+    }
+    
+    .btn-success:hover {
+      background: var(--success-700);
+      border-color: var(--success-700);
+    }
+    
+    .btn-info {
+      background: var(--info-600);
+      border-color: var(--info-600);
+    }
+    
+    .btn-info:hover {
+      background: var(--info-700);
+      border-color: var(--info-700);
+    }
+    
+    .btn-danger {
+      background: var(--danger-600);
+      border-color: var(--danger-600);
+    }
+    
+    .btn-danger:hover {
+      background: var(--danger-700);
+      border-color: var(--danger-700);
+    }
+    
+    .btn-outline-primary {
+      color: var(--primary-600);
+      border-color: var(--primary-600);
+    }
+    
+    .btn-outline-primary:hover {
+      background: var(--primary-600);
+      border-color: var(--primary-600);
+    }
+    
+    .btn-warning {
+      background: var(--warning-600);
+      border-color: var(--warning-600);
+    }
+    
+    .btn-warning:hover {
+      background: var(--warning-700);
+      border-color: var(--warning-700);
+    }
+    
+    .btn-secondary {
+      background: var(--neutral-600);
+      border-color: var(--neutral-600);
+    }
+    
+    .btn-secondary:hover {
+      background: var(--neutral-700);
+      border-color: var(--neutral-700);
+    }
+    
+    .form-control {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      border-radius: var(--border-radius-sm);
+    }
+    
+    .form-control:focus {
+      background: var(--bg-card);
+      border-color: var(--primary-600);
+      color: var(--text-primary);
+      box-shadow: 0 0 0 0.2rem var(--primary-200);
+    }
+    
+    .text-muted {
+      color: var(--text-secondary) !important;
+    }
+  </style>
+{% endblock %}
+
 {% block content %}
 <h2>Acciones (verbos)</h2>
 
@@ -24,7 +133,7 @@
     </div>
   </div>
   {% empty %}
-  <p class="text-muted">No hay acciones registradas.</p>
+  <p class="text-secondary">No hay acciones registradas.</p>
   {% endfor %}
 </div>
 

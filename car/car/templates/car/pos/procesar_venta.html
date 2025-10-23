@@ -2,6 +2,10 @@
 {% load static %}
 {% load humanize %}
 
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+{% endblock %}
+
 {% block title %}Procesar Venta - POS{% endblock %}
 
 {% block extra_head %}
@@ -13,75 +17,95 @@
     }
     
     .venta-header {
-        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-        color: white;
-        padding: 1rem;
+        background: linear-gradient(135deg, var(--success-600) 0%, var(--success-500) 100%);
+        color: var(--text-inverse);
+        padding: var(--spacing-md);
         text-align: center;
     }
     
     .resumen-container {
-        background: white;
-        border-radius: 10px;
-        margin: 1rem;
-        padding: 1rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        background-color: var(--bg-card);
+        border-radius: var(--border-radius-lg);
+        margin: var(--spacing-md);
+        padding: var(--spacing-md);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-color);
     }
     
     .resumen-item {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 0.5rem 0;
-        border-bottom: 1px solid #eee;
+        padding: var(--spacing-sm) 0;
+        border-bottom: 1px solid var(--border-color);
     }
     
     .resumen-item:last-child {
         border-bottom: none;
         font-weight: bold;
         font-size: 1.2rem;
-        color: #28a745;
+        color: var(--success-600);
     }
     
     .form-container {
-        background: white;
-        border-radius: 10px;
-        margin: 1rem;
-        padding: 1rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        background-color: var(--bg-card);
+        border-radius: var(--border-radius-lg);
+        margin: var(--spacing-md);
+        padding: var(--spacing-md);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-color);
     }
     
     .btn-venta {
-        border-radius: 25px;
-        padding: 1rem 2rem;
+        border-radius: var(--border-radius-full);
+        padding: var(--spacing-md) var(--spacing-xl);
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         font-size: 1.1rem;
+        transition: var(--transition);
     }
     
     .btn-success-venta {
-        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        background: linear-gradient(135deg, var(--success-600) 0%, var(--success-500) 100%);
         border: none;
+        color: var(--text-inverse);
+    }
+    
+    .btn-success-venta:hover {
+        background: linear-gradient(135deg, var(--success-700) 0%, var(--success-600) 100%);
+        color: var(--text-inverse);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
     }
     
     .btn-secondary-venta {
-        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        background: linear-gradient(135deg, var(--neutral-600) 0%, var(--neutral-700) 100%);
         border: none;
+        color: var(--text-inverse);
+    }
+    
+    .btn-secondary-venta:hover {
+        background: linear-gradient(135deg, var(--neutral-700) 0%, var(--neutral-800) 100%);
+        color: var(--text-inverse);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
     }
     
     .cliente-rapido {
-        background: #f8f9fa;
-        border-radius: 5px;
-        padding: 1rem;
-        margin-top: 1rem;
+        background-color: var(--bg-secondary);
+        border-radius: var(--border-radius-md);
+        padding: var(--spacing-md);
+        margin-top: var(--spacing-md);
+        border: 1px solid var(--border-color);
     }
     
     .descuento-container {
-        background: #fff3cd;
-        border: 1px solid #ffeaa7;
-        border-radius: 5px;
-        padding: 1rem;
-        margin: 1rem 0;
+        background-color: var(--warning-50);
+        border: 1px solid var(--warning-200);
+        border-radius: var(--border-radius-md);
+        padding: var(--spacing-md);
+        margin: var(--spacing-md) 0;
     }
     
     @media (max-width: 768px) {
@@ -91,7 +115,7 @@
         
         .resumen-container,
         .form-container {
-            margin: 0.5rem;
+            margin: var(--spacing-sm);
         }
     }
 </style>
@@ -113,7 +137,7 @@
             <div class="resumen-item">
                 <div>
                     <div class="fw-bold">{{ item.repuesto.nombre }}</div>
-                    <small class="text-muted">{{ item.cantidad }} x ${{ item.precio_unitario|floatformat:0|intcomma }}</small>
+                    <small class="text-secondary">{{ item.cantidad }} x ${{ item.precio_unitario|floatformat:0|intcomma }}</small>
                 </div>
                 <div class="fw-bold">${{ item.subtotal|floatformat:0|intcomma }}</div>
             </div>
@@ -148,7 +172,7 @@
                     <span class="input-group-text">$</span>
                     {{ form.descuento }}
                 </div>
-                <small class="text-muted">Ingresa el monto del descuento</small>
+                <small class="text-secondary">Ingresa el monto del descuento</small>
             </div>
 
             <!-- Método de pago -->

@@ -23,8 +23,8 @@
           <div class="col-md-6">
             <h5>Buscar repuesto</h5>
             <label for="producto-search" class="form-label">SKU, OEM, referencia, nombre, marca, código</label>
-            <input type="text" id="producto-search" style="width:100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;"/>
-            <div id="search-results" class="mt-2" style="border: 1px solid #ccc; max-height: 200px; overflow-y: auto;"></div>
+            <input type="text" id="producto-search" style="border: 1px solid var(--border-color);"/>
+            <div id="search-results" class="mt-2" style="border: 1px solid var(--border-color);"></div>
             <div class="mt-2">
               <button type="button" id="add-selected" class="btn btn-primary me-2">➕ Agregar</button>
               <button type="button" id="clear-search" class="btn btn-light">Limpiar</button>
@@ -39,11 +39,11 @@
         <table id="productos-table" class="table table-sm table-striped align-middle">
           <thead class="table-light">
             <tr>
-              <th style="width:50%">Repuesto</th>
-              <th style="width:10%">Cant</th>
-              <th style="width:15%">Precio</th>
-              <th style="width:15%">Subtotal</th>
-              <th style="width:10%"></th>
+              <th style="width: 50%;">Repuesto</th>
+              <th style="width: 10%;">Cant</th>
+              <th style="width: 15%;">Precio</th>
+              <th style="width: 15%;">Subtotal</th>
+              <th style="width: 10%;"></th>
             </tr>
           </thead>
           <tbody>
@@ -52,7 +52,7 @@
         </table>
 
         <div class="d-flex justify-content-between align-items-center mt-3">
-          <small class="text-muted">Puedes buscar y agregar varios productos antes de guardar.</small>
+          <small class="text-secondary">Puedes buscar y agregar varios productos antes de guardar.</small>
           <h4>Total: $ <span id="total">0</span></h4>
         </div>
 
@@ -85,9 +85,9 @@
       <!-- Totales -->
       <div class="row text-center mt-3">
         <div class="col-md-3">
-          <div class="card bg-light border-success">
+          <div class="card bg-secondary border-success">
             <div class="card-body">
-              <h6 class="text-muted">Efectivo</h6>
+              <h6 class="text-secondary">Efectivo</h6>
               <h4 class="text-success">${{ total_efectivo|default:"0"|floatformat:0|intcomma }}</h4>
             </div>
           </div>
@@ -95,7 +95,7 @@
         <div class="col-md-3">
           <div class="card bg-light border-info">
             <div class="card-body">
-              <h6 class="text-muted">Tarjeta</h6>
+              <h6 class="text-secondary">Tarjeta</h6>
               <h4 class="text-info">${{ total_tarjeta|default:"0"|floatformat:0|intcomma }}</h4>
             </div>
           </div>
@@ -103,7 +103,7 @@
         <div class="col-md-3">
           <div class="card bg-light border-warning">
             <div class="card-body">
-              <h6 class="text-muted">Transferencia</h6>
+              <h6 class="text-secondary">Transferencia</h6>
               <h4 class="text-warning">${{ total_transferencia|default:"0"|floatformat:0|intcomma }}</h4>
             </div>
           </div>
@@ -111,8 +111,8 @@
         <div class="col-md-3">
           <div class="card bg-light border-dark">
             <div class="card-body">
-              <h6 class="text-muted">Total General</h6>
-              <h4 class="text-dark">${{ total_general|default:"0"|floatformat:0|intcomma }}</h4>
+              <h6 class="text-secondary">Total General</h6>
+              <h4 class="text-primary">${{ total_general|default:"0"|floatformat:0|intcomma }}</h4>
             </div>
           </div>
         </div>
@@ -146,8 +146,8 @@ $(function() {
     const tbody = $('#productos-table tbody').empty();
     cart.forEach((it, i) => {
       const tr = $('<tr/>');
-      const repCol = $('<td/>').html(`<div><strong>${it.repuesto_nombre}</strong></div><div class="text-muted small">${it.text}</div><div class="text-muted small">Dep: ${it.deposito} — Stock: ${it.stock}</div>`);
-      const qtyInput = $(`<input type="number" class="form-control form-control-sm qty" min="1" value="${it.cantidad}" style="width:90px">`);
+      const repCol = $('<td/>').html(`<div><strong>${it.repuesto_nombre}</strong></div><div class="text-secondary small">${it.text}</div><div class="text-secondary small">Dep: ${it.deposito} — Stock: ${it.stock}</div>`);
+      const qtyInput = $(`<input type="number" class="form-control form-control-sm qty" min="1" value="${it.cantidad}" style="width: 90px;">`);
       qtyInput.on('change input', function() {
         let q = parseInt($(this).val() || 0);
         if (q < 1) { q = 1; $(this).val(q); }
@@ -158,7 +158,7 @@ $(function() {
       });
       const qtyCol = $('<td/>').append(qtyInput);
       const priceCol = $('<td/>').text(Math.round(parseFloat(it.precio_unitario)));
-      const subtotalInput = $('<input type="text" readonly class="form-control form-control-sm subtotal" style="width:120px">').val(Math.round(parseFloat(it.subtotal)));
+      const subtotalInput = $('<input type="text" readonly class="form-control form-control-sm subtotal" style="width: 120px;">').val(Math.round(parseFloat(it.subtotal)));
       const subCol = $('<td/>').append(subtotalInput);
       const delBtn = $('<button type="button" class="btn btn-danger btn-sm">✖</button>');
       delBtn.on('click', function() {
@@ -191,7 +191,7 @@ $(function() {
         // Mostrar los resultados de búsqueda
         let resultsContainer = $('#search-results').empty();
         data.results.forEach(item => {
-          const resultItem = $('<div class="result-item" style="cursor:pointer; padding: 5px;">')
+          const resultItem = $('<div class="result-item" style="cursor: pointer; padding: var(--spacing-xs);">')
             .text(item.text + ` (Stock: ${item.stock})`)
             .data('item', item) // Guardamos el item en el elemento
             .on('click', function() {

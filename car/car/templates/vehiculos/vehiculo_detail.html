@@ -5,11 +5,12 @@
 {% block title %}{{ vehiculo.marca }} {{ vehiculo.modelo }} - Compatibilidad - NetGoGo{% endblock %}
 
 {% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
 <style>
     .detail-container {
         max-width: 1000px;
-        margin: 2rem auto;
-        padding: 2rem;
+        margin: var(--spacing-xl) auto;
+        padding: var(--spacing-xl);
         background: var(--card-bg);
         border-radius: var(--border-radius-lg);
         box-shadow: var(--card-shadow);
@@ -18,11 +19,11 @@
     .detail-header {
         background: var(--gradient);
         color: var(--btn-fg);
-        padding: 2rem;
+        padding: var(--spacing-xl);
         text-align: center;
         border-radius: var(--border-radius-lg);
         margin-bottom: 2rem;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        box-shadow: var(--shadow-lg);
     }
     
     .detail-header h2 {
@@ -34,9 +35,9 @@
     
     .detail-header .year-badge {
         background: rgba(255,255,255,0.2);
-        color: white;
-        padding: 0.5rem 1rem;
-        border-radius: 20px;
+        color: var(--text-inverse);
+        padding: var(--spacing-sm) 1rem;
+        border-radius: var(--border-radius-xl);
         font-size: 1.1rem;
         font-weight: 600;
         display: inline-block;
@@ -52,7 +53,7 @@
     
     .info-card {
         background: var(--hover-bg);
-        padding: 1.5rem;
+        padding: var(--spacing-lg);
         border-radius: var(--border-radius);
         border-left: 4px solid var(--accent);
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
@@ -74,7 +75,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 0.5rem 0;
+        padding: var(--spacing-sm) 0;
         border-bottom: 1px solid var(--muted);
     }
     
@@ -94,14 +95,14 @@
     
     .repuestos-section {
         background: var(--hover-bg);
-        padding: 1.5rem;
+        padding: var(--spacing-lg);
         border-radius: var(--border-radius);
         border-left: 4px solid #28a745;
         margin-bottom: 2rem;
     }
     
     .repuestos-section h5 {
-        color: #28a745;
+        color: var(--success-600);
         margin-bottom: 1rem;
         font-weight: 600;
         display: flex;
@@ -120,7 +121,7 @@
     
     .repuesto-card {
         background: var(--bg);
-        padding: 1rem;
+        padding: var(--spacing-md);
         border-radius: var(--border-radius);
         border: 1px solid var(--muted);
         transition: var(--transition);
@@ -152,7 +153,7 @@
     .no-repuestos {
         text-align: center;
         color: var(--muted);
-        padding: 2rem;
+        padding: var(--spacing-xl);
         font-style: italic;
     }
     
@@ -186,22 +187,22 @@
     
     .btn-warning {
         background: #ffc107;
-        color: #212529;
+        color: var(--text-primary);
     }
     
     .btn-warning:hover {
         background: #e0a800;
-        color: #212529;
+        color: var(--text-primary);
     }
     
     .btn-danger {
         background: #dc3545;
-        color: white;
+        color: var(--text-inverse);
     }
     
     .btn-danger:hover {
         background: #c82333;
-        color: white;
+        color: var(--text-inverse);
     }
     
     .btn-secondary {
@@ -218,8 +219,8 @@
     /* Responsive */
     @media (max-width: 768px) {
         .detail-container {
-            margin: 1rem;
-            padding: 1rem;
+            margin: var(--spacing-md);
+            padding: var(--spacing-md);
         }
         
         .detail-header h2 {
@@ -290,9 +291,9 @@
                 <span class="info-label">Estado:</span>
                 <span class="info-value">
                     {% if repuestos_compatibles.count > 0 %}
-                        <span style="color: #28a745;">Activo</span>
+                        <span style="color: var(--success-600);">Activo</span>
                     {% else %}
-                        <span style="color: #6c757d;">Sin repuestos</span>
+                        <span style="color: var(--text-muted);">Sin repuestos</span>
                     {% endif %}
                 </span>
             </div>

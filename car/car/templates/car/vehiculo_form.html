@@ -3,28 +3,32 @@
 
 {% block title %}{{ view.object|default:"Nuevo Vehículo" }}{% endblock %}
 
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+{% endblock %}
+
 {% block extra_head %}
 <style>
     .vehiculo-container {
         max-width: 100%;
         margin: 0;
-        padding: 1rem;
+        padding: var(--spacing-md);
     }
     
     .vehiculo-header {
         background: linear-gradient(135deg, var(--btn-bg) 0%, var(--muted) 100%);
         color: var(--btn-fg);
-        padding: 1rem;
+        padding: var(--spacing-md);
         text-align: center;
-        border-radius: 10px;
+        border-radius: var(--border-radius-lg);
         margin-bottom: 1rem;
     }
     
     .form-card {
         background: var(--card-bg);
-        border-radius: 10px;
-        padding: 1.5rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-lg);
+        box-shadow: var(--shadow-md);
         margin-bottom: 1rem;
     }
     
@@ -53,7 +57,7 @@
         background: var(--card-bg);
         border: 2px solid var(--muted);
         color: var(--fg);
-        border-radius: 8px;
+        border-radius: var(--border-radius-md);
     }
     
     .form-control:focus, .form-select:focus {
@@ -71,8 +75,8 @@
         background: var(--btn-bg);
         border: none;
         color: var(--btn-fg);
-        padding: 0.5rem 1rem;
-        border-radius: 8px;
+        padding: var(--spacing-sm) 1rem;
+        border-radius: var(--border-radius-md);
         font-weight: 600;
     }
     
@@ -92,7 +96,7 @@
         border: none;
         color: var(--btn-fg);
         padding: 0.75rem 2rem;
-        border-radius: 25px;
+        border-radius: var(--border-radius-full);
         font-weight: 600;
     }
     
@@ -101,7 +105,7 @@
         border: 2px solid var(--muted);
         color: var(--muted);
         padding: 0.75rem 2rem;
-        border-radius: 25px;
+        border-radius: var(--border-radius-full);
         font-weight: 600;
     }
     
@@ -133,8 +137,8 @@
     
     .api-status {
         margin-top: 0.5rem;
-        padding: 0.5rem;
-        border-radius: 5px;
+        padding: var(--spacing-sm);
+        border-radius: var(--border-radius-sm);
         font-size: 0.9rem;
         display: none;
     }
@@ -164,11 +168,11 @@
     
     @media (max-width: 768px) {
         .vehiculo-container {
-            padding: 0.5rem;
+            padding: var(--spacing-sm);
         }
         
         .form-card {
-            padding: 1rem;
+            padding: var(--spacing-md);
         }
         
         .row {
@@ -176,7 +180,7 @@
         }
         
         .col-md-6 {
-            padding: 0.25rem;
+            padding: var(--spacing-xs);
         }
     }
 </style>

@@ -5,17 +5,18 @@
 {% block title %}NetGoGo - Inventario de Repuestos{% endblock %}
 
 {% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
 <style>
     .repuestos-container {
         max-width: 100%;
         margin: 0;
-        padding: 1rem;
+        padding: var(--spacing-md);
     }
     
     .repuestos-header {
         background: var(--gradient);
         color: var(--btn-fg);
-        padding: 2rem;
+        padding: var(--spacing-xl);
         text-align: center;
         border-radius: var(--border-radius-lg);
         margin-bottom: 2rem;
@@ -32,7 +33,7 @@
     .search-container {
         background: var(--card-bg);
         border-radius: var(--border-radius-lg);
-        padding: 1.5rem;
+        padding: var(--spacing-lg);
         margin-bottom: 2rem;
         box-shadow: var(--card-shadow);
     }
@@ -42,7 +43,7 @@
         border: 2px solid var(--muted);
         background: var(--bg);
         color: var(--fg);
-        padding: 1rem;
+        padding: var(--spacing-md);
         font-size: 1.1rem;
         transition: var(--transition);
     }
@@ -60,7 +61,7 @@
     .table-container {
         background: var(--card-bg);
         border-radius: var(--border-radius-lg);
-        padding: 1.5rem;
+        padding: var(--spacing-lg);
         box-shadow: var(--card-shadow);
         overflow: hidden;
     }
@@ -77,7 +78,7 @@
         color: var(--btn-fg);
         border: none;
         font-weight: 600;
-        padding: 1rem;
+        padding: var(--spacing-md);
         text-align: center;
     }
     
@@ -93,7 +94,7 @@
     
     .btn-action {
         border-radius: var(--border-radius);
-        padding: 0.5rem 0.75rem;
+        padding: var(--spacing-sm) 0.75rem;
         font-size: 0.85rem;
         margin: 0 0.15rem;
         min-width: 38px;
@@ -166,7 +167,7 @@
         background-color: var(--card-bg);
         margin: 2% auto;
         padding: 20px;
-        border-radius: 15px;
+        border-radius: var(--border-radius-xl);
         width: 95%;
         max-width: 1200px;
         max-height: 90vh;
@@ -306,12 +307,12 @@
     
     @media (max-width: 768px) {
         .repuestos-container {
-            padding: 0.25rem;
+            padding: var(--spacing-xs);
         }
         
         .search-container,
         .table-container {
-            margin: 0.25rem;
+            margin: var(--spacing-xs);
             padding: 0.75rem;
         }
         
@@ -431,7 +432,7 @@
                         <td>{{ repuesto.marca|default:"-" }}</td>
                         <td>{{ repuesto.marca_veh|default:"-" }}</td>
                         <td>
-                            <span class="badge {% if repuesto.stock_total > 0 %}bg-success{% else %}bg-danger{% endif %}">
+                            <span class="badge {% if repuesto.stock_total > 0 %}bg-success text-inverse{% else %}bg-danger text-inverse{% endif %}">
                                 {{ repuesto.stock_total }}
                             </span>
                         </td>
@@ -455,7 +456,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="8" class="text-center text-muted">No hay repuestos registrados.</td>
+                        <td colspan="8" class="text-center text-secondary">No hay repuestos registrados.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -624,7 +625,7 @@ function mostrarFicha(repuestoId) {
             <div class="ficha-field">
                 <div class="ficha-label">Stock Total</div>
                 <div class="ficha-value">
-                    <span class="badge ${repuesto.stock_total > 0 ? 'bg-success' : 'bg-danger'}">
+                    <span class="badge ${repuesto.stock_total > 0 ? 'bg-success text-inverse' : 'bg-danger text-inverse'}">
                         ${repuesto.stock_total}
                     </span>
                 </div>
@@ -724,7 +725,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const noResultsRow = document.createElement('tr');
                 noResultsRow.id = 'no-results-message';
                 noResultsRow.innerHTML = `
-                    <td colspan="8" class="text-center text-muted">
+                    <td colspan="8" class="text-center text-secondary">
                         🔍 No se encontraron repuestos que coincidan con "${termino}"
                     </td>
                 `;

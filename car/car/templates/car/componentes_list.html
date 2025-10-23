@@ -1,4 +1,94 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+  <style>
+    .container {
+      background: var(--bg-card);
+      border-radius: var(--border-radius-lg);
+      padding: var(--spacing-lg);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .btn {
+      border-radius: var(--border-radius-sm);
+      font-weight: 500;
+      transition: var(--transition);
+    }
+    
+    .btn-success {
+      background: var(--success-600);
+      border-color: var(--success-600);
+    }
+    
+    .btn-success:hover {
+      background: var(--success-700);
+      border-color: var(--success-700);
+    }
+    
+    .btn-info {
+      background: var(--info-600);
+      border-color: var(--info-600);
+    }
+    
+    .btn-info:hover {
+      background: var(--info-700);
+      border-color: var(--info-700);
+    }
+    
+    .btn-danger {
+      background: var(--danger-600);
+      border-color: var(--danger-600);
+    }
+    
+    .btn-danger:hover {
+      background: var(--danger-700);
+      border-color: var(--danger-700);
+    }
+    
+    .btn-warning {
+      background: var(--warning-600);
+      border-color: var(--warning-600);
+    }
+    
+    .btn-warning:hover {
+      background: var(--warning-700);
+      border-color: var(--warning-700);
+    }
+    
+    .form-control {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      border-radius: var(--border-radius-sm);
+    }
+    
+    .form-control:focus {
+      background: var(--bg-card);
+      border-color: var(--primary-600);
+      color: var(--text-primary);
+      box-shadow: 0 0 0 0.2rem var(--primary-200);
+    }
+    
+    .input-group {
+      border-radius: var(--border-radius-sm);
+    }
+    
+    h4 {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+    
+    #componentes-container {
+      background: var(--bg-card);
+      border-radius: var(--border-radius-lg);
+      padding: var(--spacing-md);
+      margin-top: var(--spacing-md);
+    }
+  </style>
+{% endblock %}
+
 {% block content %}
 
 <div class="container py-4">

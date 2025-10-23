@@ -4,55 +4,55 @@
 {% block title %}Panel Principal - Taller Mecánico{% endblock %}
 
 {% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
 <style>
     .panel-container {
         max-width: 100%;
         margin: 0;
-        padding: 0.5rem;
+        padding: var(--spacing-sm);
     }
     
     .panel-header {
-        background: linear-gradient(135deg, var(--btn-bg) 0%, var(--muted) 100%);
-        color: var(--btn-fg);
-        padding: 1rem;
+        background: linear-gradient(135deg, var(--accent) 0%, var(--primary-600) 100%);
+        color: var(--text-inverse);
+        padding: var(--spacing-md);
         text-align: center;
-        border-radius: 10px;
-        margin-bottom: 1rem;
+        border-radius: var(--border-radius-lg);
+        margin-bottom: var(--spacing-md);
     }
     
     /* NAVEGACIÓN POR TABS */
     .nav-tabs {
-        border-bottom: 2px solid var(--muted);
-        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-color);
+        margin-bottom: var(--spacing-lg);
     }
     
     .nav-tabs .nav-link {
         border: none;
         background: transparent;
-        color: var(--muted);
+        color: var(--text-muted);
         font-weight: 600;
-        padding: 0.75rem 1.5rem;
-        border-radius: 10px 10px 0 0;
-        transition: all 0.3s ease;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        padding: var(--spacing-sm) var(--spacing-lg);
+        border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+        transition: var(--transition);
     }
     
     .nav-tabs .nav-link:hover {
         background: var(--hover-bg);
-        color: var(--fg);
+        color: var(--text-primary);
     }
     
     .nav-tabs .nav-link.active {
-        background: var(--btn-bg);
-        color: var(--btn-fg);
+        background: var(--accent);
+        color: var(--text-inverse);
         border: none;
     }
     
     .tab-content {
         background: var(--card-bg);
-        border-radius: 15px;
-        padding: 1.5rem;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border-radius: var(--border-radius-xl);
+        padding: var(--spacing-lg);
+        box-shadow: var(--shadow-lg);
         min-height: 500px;
     }
     
@@ -68,10 +68,10 @@
     
     .stat-card {
         background: var(--card-bg) !important;
-        border-radius: 10px;
-        padding: 1rem;
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-md);
         text-align: center;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        box-shadow: var(--shadow-md);
         border-left: 4px solid var(--btn-bg);
         transition: transform 0.2s ease;
         position: relative;
@@ -117,11 +117,11 @@
     
     .action-card {
         background: var(--hover-bg);
-        border-radius: 15px;
-        padding: 1.5rem;
+        border-radius: var(--border-radius-xl);
+        padding: var(--spacing-lg);
         text-align: center;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        transition: all 0.3s ease;
+        box-shadow: var(--shadow-lg);
+        transition: var(--transition);
         border: 2px solid transparent;
         text-decoration: none;
         color: var(--fg);
@@ -157,9 +157,9 @@
     /* PIZARRA COMPLETA */
     .pizarra-section {
         background: var(--hover-bg);
-        border-radius: 15px;
-        padding: 1.5rem;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border-radius: var(--border-radius-xl);
+        padding: var(--spacing-lg);
+        box-shadow: var(--shadow-lg);
         margin-bottom: 1rem;
     }
     
@@ -187,8 +187,8 @@
     
     .pizarra-cell {
         background: var(--card-bg);
-        border-radius: 12px;
-        padding: 1rem;
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-md);
         min-height: 300px;
         border: 2px solid var(--muted);
     }
@@ -205,11 +205,11 @@
     
     .vehiculo-item {
         background: var(--hover-bg);
-        border-radius: 8px;
+        border-radius: var(--border-radius-md);
         padding: 0.75rem;
         margin-bottom: 0.75rem;
         border-left: 3px solid var(--btn-bg);
-        transition: all 0.2s ease;
+        transition: var(--transition-fast) ease;
     }
     
     .vehiculo-item:hover {
@@ -246,14 +246,14 @@
         display: inline-block;
         padding: 0.2rem 0.6rem;
         border: 2px solid var(--fg);
-        border-radius: 4px;
+        border-radius: var(--border-radius-sm);
         background-color: var(--card-bg);
         color: var(--fg);
         font-weight: bold;
         font-family: 'Arial Black', sans-serif;
         letter-spacing: 1px;
         font-size: 0.9rem;
-        transition: all 0.2s ease;
+        transition: var(--transition-fast) ease;
         cursor: pointer;
     }
     
@@ -275,21 +275,21 @@
     .progress {
         height: 12px;
         background-color: var(--muted);
-        border-radius: 6px;
+        border-radius: var(--border-radius-md);
         margin-top: 0.5rem;
         overflow: hidden;
     }
     
     .progress-bar {
         height: 100%;
-        border-radius: 6px;
+        border-radius: var(--border-radius-md);
         transition: width 0.3s ease;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 0.7rem;
         font-weight: bold;
-        color: white;
+        color: var(--text-inverse);
     }
     
     .progress-bar.bg-warning {
@@ -311,11 +311,11 @@
     
     @media (max-width: 768px) {
         .panel-container {
-            padding: 0.25rem;
+            padding: var(--spacing-xs);
         }
         
         .nav-tabs .nav-link {
-            padding: 0.5rem 1rem;
+            padding: var(--spacing-sm) 1rem;
             font-size: 0.9rem;
         }
         
@@ -334,11 +334,11 @@
         }
         
         .action-card {
-            padding: 1rem;
+            padding: var(--spacing-md);
         }
         
         .tab-content {
-            padding: 1rem;
+            padding: var(--spacing-md);
         }
         
         .pizarra-cell {
@@ -480,7 +480,7 @@
                             </div>
                         </div>
                         {% empty %}
-                        <div class="text-muted text-center">No hay trabajos iniciados</div>
+                        <div class="text-secondary text-center">No hay trabajos iniciados</div>
                         {% endfor %}
                     </div>
 
@@ -507,7 +507,7 @@
                             </div>
                         </div>
                         {% empty %}
-                        <div class="text-muted text-center">No hay trabajos en progreso</div>
+                        <div class="text-secondary text-center">No hay trabajos en progreso</div>
                         {% endfor %}
                     </div>
 
@@ -534,7 +534,7 @@
                             </div>
                         </div>
                         {% empty %}
-                        <div class="text-muted text-center">No hay trabajos completados</div>
+                        <div class="text-secondary text-center">No hay trabajos completados</div>
                         {% endfor %}
                     </div>
 
@@ -555,13 +555,13 @@
                                 </div>
                             </div>
                             <div class="progress">
-                                <div class="progress-bar bg-dark" style="width: {{ trabajo.porcentaje_avance|default:100 }}%">
+                                <div class="progress-bar bg-primary" style="width: {{ trabajo.porcentaje_avance|default:100 }}%">
                                     {{ trabajo.porcentaje_avance|default:100 }}%
                                 </div>
                             </div>
                         </div>
                         {% empty %}
-                        <div class="text-muted text-center">No hay trabajos entregados</div>
+                        <div class="text-secondary text-center">No hay trabajos entregados</div>
                         {% endfor %}
                     </div>
                 </div>

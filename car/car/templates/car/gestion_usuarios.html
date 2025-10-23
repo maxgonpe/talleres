@@ -3,36 +3,40 @@
 
 {% block title %}Gestión de Usuarios y Permisos{% endblock %}
 
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+{% endblock %}
+
 {% block extra_head %}
 <style>
     .usuarios-container {
         max-width: 100%;
         margin: 0;
-        padding: 0.5rem;
+        padding: var(--spacing-sm);
     }
     
     .usuarios-header {
         background: linear-gradient(135deg, var(--btn-bg) 0%, var(--muted) 100%);
         color: var(--btn-fg);
-        padding: 1rem;
-        border-radius: 10px;
+        padding: var(--spacing-md);
+        border-radius: var(--border-radius-lg);
         margin-bottom: 1rem;
         text-align: center;
     }
     
     .crear-usuario-card {
         background: var(--card-bg);
-        border-radius: 15px;
-        padding: 1.5rem;
+        border-radius: var(--border-radius-xl);
+        padding: var(--spacing-lg);
         margin-bottom: 2rem;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        box-shadow: var(--shadow-lg);
     }
     
     .usuarios-table {
         background: var(--card-bg);
-        border-radius: 15px;
-        padding: 1.5rem;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border-radius: var(--border-radius-xl);
+        padding: var(--spacing-lg);
+        box-shadow: var(--shadow-lg);
     }
     
     .table {
@@ -52,26 +56,26 @@
     }
     
     .rol-badge {
-        padding: 0.25rem 0.75rem;
-        border-radius: 15px;
+        padding: var(--spacing-xs) 0.75rem;
+        border-radius: var(--border-radius-xl);
         font-size: 0.8rem;
         font-weight: 600;
         text-transform: uppercase;
     }
     
     .rol-mecanico {
-        background: #007bff;
-        color: white;
+        background: var(--primary-600);
+        color: var(--text-inverse);
     }
     
     .rol-vendedor {
-        background: #28a745;
-        color: white;
+        background: var(--success-600);
+        color: var(--text-inverse);
     }
     
     .rol-admin {
-        background: #dc3545;
-        color: white;
+        background: var(--danger-600);
+        color: var(--text-inverse);
     }
     
     .permiso-checkbox {
@@ -80,17 +84,17 @@
     }
     
     .btn-eliminar {
-        background: #dc3545;
+        background: var(--danger-600);
         border: none;
-        color: white;
-        padding: 0.25rem 0.5rem;
-        border-radius: 5px;
+        color: var(--text-inverse);
+        padding: var(--spacing-xs) 0.5rem;
+        border-radius: var(--border-radius-sm);
         font-size: 0.8rem;
     }
     
     .btn-eliminar:hover {
-        background: #c82333;
-        color: white;
+        background: var(--danger-700);
+        color: var(--text-inverse);
     }
     
     .form-control, .form-select {
@@ -101,9 +105,9 @@
     
     .form-control:focus, .form-select:focus {
         background: var(--card-bg);
-        border-color: var(--btn-bg);
+        border-color: var(--primary-600);
         color: var(--fg);
-        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        box-shadow: 0 0 0 0.2rem var(--primary-200);
     }
 </style>
 {% endblock %}
@@ -269,7 +273,7 @@
                                 </button>
                             </form>
                             {% else %}
-                            <span class="text-muted">No disponible</span>
+                            <span class="text-secondary">No disponible</span>
                             {% endif %}
                         </td>
                     </tr>
@@ -278,7 +282,7 @@
             </table>
         </div>
         {% else %}
-        <div class="text-center text-muted py-4">
+        <div class="text-center text-secondary py-4">
             <h5>No hay usuarios registrados</h5>
             <p>Crea el primer usuario del sistema</p>
         </div>
@@ -317,6 +321,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endblock %}
+
 
 
 

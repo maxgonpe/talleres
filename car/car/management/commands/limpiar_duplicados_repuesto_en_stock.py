@@ -158,3 +158,4 @@ class Command(BaseCommand):
         
         self.stdout.write(f"\n🎉 ¡Limpieza completada exitosamente!")
         self.stdout.write(f"   Ahora cada repuesto tiene un solo registro en RepuestoEnStock")
+

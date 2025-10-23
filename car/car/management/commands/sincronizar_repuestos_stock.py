@@ -152,3 +152,4 @@ class Command(BaseCommand):
         
         self.stdout.write(f"\n🎉 ¡Sincronización completada exitosamente!")
         self.stdout.write(f"   Todos los repuestos ahora tienen clon en RepuestoEnStock")
+

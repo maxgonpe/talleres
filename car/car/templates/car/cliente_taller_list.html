@@ -1,4 +1,147 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+  <style>
+    .container {
+      background: var(--bg-card);
+      border-radius: var(--border-radius-lg);
+      padding: var(--spacing-lg);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .table {
+      color: var(--text-primary);
+    }
+    
+    .table-dark {
+      background: var(--primary-600) !important;
+    }
+    
+    .table-dark th {
+      background: var(--primary-600);
+      color: var(--text-inverse);
+      border: none;
+      font-weight: 600;
+    }
+    
+    .table td {
+      border-color: var(--border-color);
+      vertical-align: middle;
+    }
+    
+    .table-striped tbody tr:nth-of-type(odd) {
+      background-color: var(--bg-secondary);
+    }
+    
+    .table-hover tbody tr:hover {
+      background-color: var(--bg-secondary);
+    }
+    
+    .btn {
+      border-radius: var(--border-radius-sm);
+      font-weight: 500;
+      transition: var(--transition);
+    }
+    
+    .btn-primary {
+      background: var(--primary-600);
+      border-color: var(--primary-600);
+    }
+    
+    .btn-primary:hover {
+      background: var(--primary-700);
+      border-color: var(--primary-700);
+    }
+    
+    .btn-outline-primary {
+      color: var(--primary-600);
+      border-color: var(--primary-600);
+    }
+    
+    .btn-outline-primary:hover {
+      background: var(--primary-600);
+      border-color: var(--primary-600);
+      color: var(--text-inverse);
+    }
+    
+    .btn-secondary {
+      background: var(--neutral-600);
+      border-color: var(--neutral-600);
+    }
+    
+    .btn-secondary:hover {
+      background: var(--neutral-700);
+      border-color: var(--neutral-700);
+    }
+    
+    .btn-warning {
+      background: var(--warning-600);
+      border-color: var(--warning-600);
+    }
+    
+    .btn-warning:hover {
+      background: var(--warning-700);
+      border-color: var(--warning-700);
+    }
+    
+    .btn-danger {
+      background: var(--danger-600);
+      border-color: var(--danger-600);
+    }
+    
+    .btn-danger:hover {
+      background: var(--danger-700);
+      border-color: var(--danger-700);
+    }
+    
+    .form-control {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      border-radius: var(--border-radius-sm);
+    }
+    
+    .form-control:focus {
+      background: var(--bg-card);
+      border-color: var(--primary-600);
+      color: var(--text-primary);
+      box-shadow: 0 0 0 0.2rem var(--primary-200);
+    }
+    
+    .pagination .page-link {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+    }
+    
+    .pagination .page-link:hover {
+      background: var(--bg-secondary);
+      border-color: var(--primary-600);
+      color: var(--primary-600);
+    }
+    
+    .pagination .page-item.active .page-link {
+      background: var(--primary-600);
+      border-color: var(--primary-600);
+      color: var(--text-inverse);
+    }
+    
+    h2 {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+    
+    code {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      padding: 0.2rem 0.4rem;
+      border-radius: var(--border-radius-sm);
+    }
+  </style>
+{% endblock %}
+
 {% block content %}
 <div class="container py-4">
   <h2>👥 Clientes del Taller</h2>
@@ -49,7 +192,7 @@
         </tr>
         {% empty %}
         <tr>
-          <td colspan="6" class="text-center text-muted">
+          <td colspan="6" class="text-center text-secondary">
             {% if request.GET.search %}
               No se encontraron clientes con "{{ request.GET.search }}"
             {% else %}

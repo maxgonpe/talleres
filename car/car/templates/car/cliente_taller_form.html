@@ -1,5 +1,112 @@
 {% extends 'base.html' %}
 {% load crispy_forms_tags %}
+{% load static %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+  <style>
+    .container {
+      background: var(--bg-card);
+      border-radius: var(--border-radius-lg);
+      padding: var(--spacing-lg);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-lg);
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .card-header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+    
+    .card-body {
+      background: var(--bg-card);
+      color: var(--text-primary);
+    }
+    
+    .btn {
+      border-radius: var(--border-radius-sm);
+      font-weight: 500;
+      transition: var(--transition);
+    }
+    
+    .btn-primary {
+      background: var(--primary-600);
+      border-color: var(--primary-600);
+    }
+    
+    .btn-primary:hover {
+      background: var(--primary-700);
+      border-color: var(--primary-700);
+    }
+    
+    .btn-secondary {
+      background: var(--neutral-600);
+      border-color: var(--neutral-600);
+    }
+    
+    .btn-secondary:hover {
+      background: var(--neutral-700);
+      border-color: var(--neutral-700);
+    }
+    
+    .form-control {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      border-radius: var(--border-radius-sm);
+    }
+    
+    .form-control:focus {
+      background: var(--bg-card);
+      border-color: var(--primary-600);
+      color: var(--text-primary);
+      box-shadow: 0 0 0 0.2rem var(--primary-200);
+    }
+    
+    .form-label {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+    
+    .text-muted {
+      color: var(--text-secondary) !important;
+    }
+    
+    .badge {
+      border-radius: var(--border-radius-sm);
+    }
+    
+    .badge.bg-success {
+      background: var(--success-600) !important;
+    }
+    
+    .badge.bg-danger {
+      background: var(--danger-600) !important;
+    }
+    
+    h2, h5, h6 {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+    
+    ul {
+      color: var(--text-primary);
+    }
+    
+    hr {
+      border-color: var(--border-color);
+    }
+  </style>
+{% endblock %}
+
 {% block content %}
 <div class="container py-4">
   <h2>
@@ -70,7 +177,7 @@
         </div>
         <div class="card-body">
           <h6>RUT</h6>
-          <p class="small text-muted">
+          <p class="small text-secondary">
             El RUT es el identificador único del cliente. Debe tener el formato: 12345678-9
           </p>
           
@@ -94,9 +201,9 @@
             <strong>Registrado:</strong> {{ object.fecha_registro|date:"d/m/Y H:i" }}<br>
             <strong>Estado:</strong> 
             {% if object.activo %}
-              <span class="badge bg-success">Activo</span>
+              <span class="badge bg-success text-inverse">Activo</span>
             {% else %}
-              <span class="badge bg-danger">Inactivo</span>
+              <span class="badge bg-danger text-inverse">Inactivo</span>
             {% endif %}
           </p>
           {% endif %}

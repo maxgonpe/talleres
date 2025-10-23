@@ -2,6 +2,10 @@
 {% load static %}
 {% load humanize %}
 
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+{% endblock %}
+
 {% block title %}Procesar Cotización - POS{% endblock %}
 
 {% block extra_head %}
@@ -14,45 +18,45 @@
     
     .cotizacion-header {
         background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
-        color: white;
-        padding: 1rem;
+        color: var(--text-inverse);
+        padding: var(--spacing-md);
         text-align: center;
     }
     
     .resumen-container {
-        background: white;
-        border-radius: 10px;
-        margin: 1rem;
-        padding: 1rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        background-color: var(--bg-card);
+        border-radius: var(--border-radius-lg);
+        margin: var(--spacing-md);
+        padding: var(--spacing-md);
+        box-shadow: var(--shadow-md);
     }
     
     .resumen-item {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 0.5rem 0;
-        border-bottom: 1px solid #eee;
+        padding: var(--spacing-sm) 0;
+        border-bottom: 1px solid var(--border-color);
     }
     
     .resumen-item:last-child {
         border-bottom: none;
         font-weight: bold;
         font-size: 1.2rem;
-        color: #17a2b8;
+        color: var(--info-600);
     }
     
     .form-container {
-        background: white;
-        border-radius: 10px;
-        margin: 1rem;
-        padding: 1rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        background-color: var(--bg-card);
+        border-radius: var(--border-radius-lg);
+        margin: var(--spacing-md);
+        padding: var(--spacing-md);
+        box-shadow: var(--shadow-md);
     }
     
     .btn-cotizacion {
-        border-radius: 25px;
-        padding: 1rem 2rem;
+        border-radius: var(--border-radius-full);
+        padding: var(--spacing-md) 2rem;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.5px;
@@ -70,26 +74,26 @@
     }
     
     .cliente-rapido {
-        background: #f8f9fa;
-        border-radius: 5px;
-        padding: 1rem;
+        background-color: var(--bg-secondary);
+        border-radius: var(--border-radius-sm);
+        padding: var(--spacing-md);
         margin-top: 1rem;
     }
     
     .descuento-container {
         background: #d1ecf1;
         border: 1px solid #bee5eb;
-        border-radius: 5px;
-        padding: 1rem;
-        margin: 1rem 0;
+        border-radius: var(--border-radius-sm);
+        padding: var(--spacing-md);
+        margin: var(--spacing-md) 0;
     }
     
     .fecha-vencimiento {
         background: #fff3cd;
         border: 1px solid #ffeaa7;
-        border-radius: 5px;
-        padding: 1rem;
-        margin: 1rem 0;
+        border-radius: var(--border-radius-sm);
+        padding: var(--spacing-md);
+        margin: var(--spacing-md) 0;
     }
     
     @media (max-width: 768px) {
@@ -99,7 +103,7 @@
         
         .resumen-container,
         .form-container {
-            margin: 0.5rem;
+            margin: var(--spacing-sm);
         }
     }
 </style>
@@ -121,7 +125,7 @@
             <div class="resumen-item">
                 <div>
                     <div class="fw-bold">{{ item.repuesto.nombre }}</div>
-                    <small class="text-muted">{{ item.cantidad }} x ${{ item.precio_unitario|floatformat:0|intcomma }}</small>
+                    <small class="text-secondary">{{ item.cantidad }} x ${{ item.precio_unitario|floatformat:0|intcomma }}</small>
                 </div>
                 <div class="fw-bold">${{ item.subtotal|floatformat:0|intcomma }}</div>
             </div>
@@ -153,7 +157,7 @@
             <div class="fecha-vencimiento">
                 <label class="form-label">📅 Fecha de Vencimiento</label>
                 {{ form.valida_hasta }}
-                <small class="text-muted">La cotización será válida hasta esta fecha</small>
+                <small class="text-secondary">La cotización será válida hasta esta fecha</small>
             </div>
 
             <!-- Descuento -->
@@ -163,7 +167,7 @@
                     <span class="input-group-text">$</span>
                     {{ form.descuento }}
                 </div>
-                <small class="text-muted">Ingresa el monto del descuento</small>
+                <small class="text-secondary">Ingresa el monto del descuento</small>
             </div>
 
             <!-- Observaciones -->

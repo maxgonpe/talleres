@@ -1,10 +1,106 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+  <style>
+    .container {
+      background: var(--bg-card);
+      border-radius: var(--border-radius-lg);
+      padding: var(--spacing-lg);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-lg);
+      box-shadow: var(--shadow-lg);
+    }
+    
+    .card-header {
+      background: var(--danger-600) !important;
+      color: var(--text-inverse) !important;
+      border-bottom: 1px solid var(--danger-700);
+      font-weight: 600;
+    }
+    
+    .card-body {
+      background: var(--bg-card);
+      color: var(--text-primary);
+    }
+    
+    .alert {
+      border-radius: var(--border-radius-sm);
+      border: none;
+    }
+    
+    .alert-warning {
+      background: var(--warning-100);
+      color: var(--warning-800);
+      border-left: 4px solid var(--warning-600);
+    }
+    
+    .alert-info {
+      background: var(--info-100);
+      color: var(--info-800);
+      border-left: 4px solid var(--info-600);
+    }
+    
+    .btn {
+      border-radius: var(--border-radius-sm);
+      font-weight: 500;
+      transition: var(--transition);
+    }
+    
+    .btn-danger {
+      background: var(--danger-600);
+      border-color: var(--danger-600);
+    }
+    
+    .btn-danger:hover {
+      background: var(--danger-700);
+      border-color: var(--danger-700);
+    }
+    
+    .btn-secondary {
+      background: var(--neutral-600);
+      border-color: var(--neutral-600);
+    }
+    
+    .btn-secondary:hover {
+      background: var(--neutral-700);
+      border-color: var(--neutral-700);
+    }
+    
+    h4, h5 {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+    
+    ul {
+      color: var(--text-primary);
+    }
+    
+    code {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      padding: 0.2rem 0.4rem;
+      border-radius: var(--border-radius-sm);
+    }
+    
+    strong {
+      color: var(--text-primary);
+    }
+  </style>
+{% endblock %}
+
 {% block content %}
 <div class="container py-4">
   <div class="row justify-content-center">
     <div class="col-md-6">
       <div class="card">
-        <div class="card-header bg-danger text-white">
+        <div class="card-header">
           <h4 class="mb-0">⚠️ Confirmar Eliminación</h4>
         </div>
         <div class="card-body">

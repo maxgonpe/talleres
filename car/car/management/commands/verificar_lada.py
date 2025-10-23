@@ -47,3 +47,4 @@ class Command(BaseCommand):
                 self.stdout.write(f"   - {vehiculo.marca} {vehiculo.modelo}: {vehiculo.anio_desde}-{vehiculo.anio_hasta}")
         else:
             self.stdout.write(f"\n✅ Todos los vehículos Lada tienen años normales")
+

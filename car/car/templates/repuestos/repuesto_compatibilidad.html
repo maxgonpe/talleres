@@ -4,17 +4,18 @@
 {% block title %}Compatibilidad - {{ repuesto.nombre }}{% endblock %}
 
 {% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
 <style>
     .compatibilidad-container {
         max-width: 1200px;
         margin: 0 auto;
-        padding: 1rem;
+        padding: var(--spacing-md);
     }
     
     .compatibilidad-header {
         background: var(--gradient);
         color: var(--btn-fg);
-        padding: 2rem;
+        padding: var(--spacing-xl);
         text-align: center;
         border-radius: var(--border-radius-lg);
         margin-bottom: 2rem;
@@ -31,7 +32,7 @@
     .repuesto-info {
         background: var(--card-bg);
         border-radius: var(--border-radius-lg);
-        padding: 1.5rem;
+        padding: var(--spacing-lg);
         margin-bottom: 2rem;
         box-shadow: var(--card-shadow);
     }
@@ -69,7 +70,7 @@
     .compatibilidad-form {
         background: var(--card-bg);
         border-radius: var(--border-radius-lg);
-        padding: 2rem;
+        padding: var(--spacing-xl);
         box-shadow: var(--card-shadow);
     }
     
@@ -88,7 +89,7 @@
         margin-bottom: 1.5rem;
         background: var(--card-bg);
         border-radius: var(--border-radius-lg);
-        padding: 1rem;
+        padding: var(--spacing-md);
         box-shadow: var(--card-shadow);
     }
 
@@ -107,7 +108,7 @@
         color: var(--fg);
         cursor: pointer;
         border-radius: var(--border-radius);
-        transition: all 0.3s ease;
+        transition: var(--transition);
         font-weight: 600;
         display: flex;
         align-items: center;
@@ -148,14 +149,14 @@
         overflow-y: auto;
         border: 1px solid var(--muted);
         border-radius: var(--border-radius);
-        padding: 1rem;
+        padding: var(--spacing-md);
     }
     
     .vehiculo-item {
         background: var(--hover-bg);
         border: 2px solid var(--muted);
         border-radius: var(--border-radius);
-        padding: 1rem;
+        padding: var(--spacing-md);
         transition: var(--transition);
         cursor: pointer;
     }
@@ -206,7 +207,7 @@
     
     .posicion-input {
         width: 100%;
-        padding: 0.5rem;
+        padding: var(--spacing-sm);
         border: 1px solid var(--muted);
         border-radius: var(--border-radius);
         background: var(--bg);
@@ -223,7 +224,7 @@
     .aplicaciones-actuales {
         background: var(--card-bg);
         border-radius: var(--border-radius-lg);
-        padding: 1.5rem;
+        padding: var(--spacing-lg);
         margin-bottom: 2rem;
         box-shadow: var(--card-shadow);
     }
@@ -231,7 +232,7 @@
     .aplicacion-item {
         background: var(--hover-bg);
         border-left: 4px solid var(--accent);
-        padding: 1rem;
+        padding: var(--spacing-md);
         margin-bottom: 0.5rem;
         border-radius: var(--border-radius);
         display: flex;
@@ -317,12 +318,12 @@
         text-align: center;
         color: var(--muted);
         font-style: italic;
-        padding: 2rem;
+        padding: var(--spacing-xl);
     }
     
     @media (max-width: 768px) {
         .compatibilidad-container {
-            padding: 0.5rem;
+            padding: var(--spacing-sm);
         }
         
         .vehiculos-grid {
