@@ -286,11 +286,6 @@ def buscar_repuestos_compra(request):
         Q(codigo_barra__icontains=query) |
         Q(oem__icontains=query) |
         Q(referencia__icontains=query)
-    ).exclude(
-        # Excluir registros con valores por defecto problemáticos
-        Q(oem__in=['oem', '']) |
-        Q(referencia__in=['no-tiene', '']) |
-        Q(marca__in=['general', ''])
     ).order_by('nombre')[:10]
     
     resultados = []
@@ -306,7 +301,6 @@ def buscar_repuestos_compra(request):
             'stock': repuesto.stock_total,  # Usar stock unificado
             'stock_actual': repuesto.stock_total,  # Alias para compatibilidad
         })
-    
     return JsonResponse({'repuestos': resultados})
 
 

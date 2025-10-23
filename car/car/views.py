@@ -2121,6 +2121,25 @@ class RepuestoCreateView(CreateView):
     form_class = RepuestoForm
     template_name = "repuestos/repuesto_form.html"
     success_url = reverse_lazy("repuesto_list")
+    
+    def form_valid(self, form):
+        """Sobrescribir para crear clon en RepuestoEnStock al crear repuesto"""
+        response = super().form_valid(form)
+        
+        # Crear clon en RepuestoEnStock
+        try:
+            from .views import clone_repuesto_to_stock
+            clone_repuesto_to_stock(
+                repuesto=self.object,
+                deposito='bodega-principal',
+                proveedor=''
+            )
+            self.request.session['repuesto_created'] = True
+        except Exception as e:
+            # Log del error pero no interrumpir el flujo
+            print(f"Error creando clon en RepuestoEnStock: {e}")
+        
+        return response
 
 
 class RepuestoUpdateView(UpdateView):
@@ -2128,6 +2147,25 @@ class RepuestoUpdateView(UpdateView):
     form_class = RepuestoForm
     template_name = "repuestos/repuesto_form.html"
     success_url = reverse_lazy("repuesto_list")
+    
+    def form_valid(self, form):
+        """Sobrescribir para sincronizar con RepuestoEnStock al actualizar repuesto"""
+        response = super().form_valid(form)
+        
+        # Sincronizar con RepuestoEnStock
+        try:
+            from .views import clone_repuesto_to_stock
+            clone_repuesto_to_stock(
+                repuesto=self.object,
+                deposito='bodega-principal',
+                proveedor=''
+            )
+            self.request.session['repuesto_updated'] = True
+        except Exception as e:
+            # Log del error pero no interrumpir el flujo
+            print(f"Error sincronizando con RepuestoEnStock: {e}")
+        
+        return response
 
 class RepuestoDeleteView(DeleteView):
     model = Repuesto
@@ -2183,34 +2221,49 @@ def clone_repuesto_to_stock(repuesto: Repuesto, deposito: str = "bodega-principa
     Copia: stock, precio_compra, precio_venta desde Repuesto.
     Retorna la instancia de RepuestoEnStock creada/actualizada.
     """
-    defaults = {
-        "stock": repuesto.stock or 0,  # Usar el stock del repuesto, o 0 si es None
-        "reservado": 0,
-        "precio_compra": repuesto.precio_costo,
-        "precio_venta": repuesto.precio_venta,
-    }
-
-    repstk, created = RepuestoEnStock.objects.get_or_create(
-        repuesto=repuesto,
-        deposito=deposito,
-        proveedor=proveedor,
-        defaults=defaults,
-    )
-
-    if not created:
-        # Actualizar precios si han cambiado
-        if repuesto.precio_costo is not None:
-            repstk.precio_compra = repuesto.precio_costo
-        if repuesto.precio_venta is not None:
-            repstk.precio_venta = repuesto.precio_venta
+    from django.db import transaction
+    
+    with transaction.atomic():
+        # Primero, eliminar cualquier registro duplicado existente
+        registros_existentes = RepuestoEnStock.objects.filter(
+            repuesto=repuesto,
+            deposito=deposito
+        )
         
-        # SIEMPRE sincronizar el stock - esto es lo que queremos para simplificar
-        if repuesto.stock is not None:
-            repstk.stock = repuesto.stock
-            
-        repstk.save()
+        if registros_existentes.count() > 1:
+            # Mantener solo el más reciente y eliminar los duplicados
+            registro_principal = registros_existentes.order_by('-id').first()
+            registros_duplicados = registros_existentes.exclude(id=registro_principal.id)
+            registros_duplicados.delete()
+        
+        defaults = {
+            "stock": repuesto.stock or 0,  # Usar el stock del repuesto, o 0 si es None
+            "reservado": 0,
+            "precio_compra": repuesto.precio_costo or 0,
+            "precio_venta": repuesto.precio_venta or 0,
+        }
 
-    return repstk
+        repstk, created = RepuestoEnStock.objects.get_or_create(
+            repuesto=repuesto,
+            deposito=deposito,
+            proveedor=proveedor,
+            defaults=defaults,
+        )
+
+        if not created:
+            # Actualizar precios si han cambiado
+            if repuesto.precio_costo is not None:
+                repstk.precio_compra = repuesto.precio_costo
+            if repuesto.precio_venta is not None:
+                repstk.precio_venta = repuesto.precio_venta
+            
+            # SIEMPRE sincronizar el stock - esto es lo que queremos para simplificar
+            if repuesto.stock is not None:
+                repstk.stock = repuesto.stock
+                
+            repstk.save()
+
+        return repstk
 
 
 def sincronizar_stock_repuestos():
