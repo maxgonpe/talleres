@@ -85,7 +85,8 @@ def buscar_repuestos_pos(request):
         Q(marca_veh__icontains=query) |
         Q(tipo_de_motor__icontains=query) |
         Q(cod_prov__icontains=query) |
-        Q(origen_repuesto__icontains=query)
+        Q(origen_repuesto__icontains=query) |
+        Q(carroceria__icontains=query)
     )
     
     # Si no hay resultados y el término contiene guiones, buscar por partes del SKU
@@ -127,6 +128,7 @@ def buscar_repuestos_pos(request):
                 'referencia': repuesto.referencia or '',
                 'marca_veh': repuesto.marca_veh or '',
                 'tipo_motor': repuesto.tipo_de_motor or '',
+                'carroceria': repuesto.carroceria or '',
             })
     
     return JsonResponse({'repuestos': resultados})

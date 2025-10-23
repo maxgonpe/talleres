@@ -445,6 +445,7 @@ class Repuesto(models.Model):
     cod_prov = models.CharField(max_length=100, blank=True, null=True, verbose_name="Código Proveedor")
     marca_veh = models.CharField(max_length=100, blank=True, null=True, default='xxx', verbose_name="Marca Vehículo")
     tipo_de_motor = models.TextField(blank=True, null=True, default='zzzzzz', verbose_name="Tipo de Motor")
+    carroceria = models.CharField(max_length=100, blank=True, null=True, default='yyyyyy', verbose_name="Carrocería")
 
     
     def save(self, *args, **kwargs):

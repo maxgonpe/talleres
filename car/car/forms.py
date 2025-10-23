@@ -234,7 +234,7 @@ class RepuestoForm(forms.ModelForm):
             "sku", "oem", "referencia", "nombre", "marca",
             "descripcion", "medida", "posicion", "unidad",
             "precio_costo", "precio_venta", "codigo_barra",
-            "stock", "origen_repuesto", "cod_prov", "marca_veh", "tipo_de_motor"
+            "stock", "origen_repuesto", "cod_prov", "marca_veh", "tipo_de_motor", "carroceria"
         ]
         widgets = {
             "descripcion": forms.Textarea(attrs={"rows": 3, "class": "form-control"}),
@@ -242,6 +242,7 @@ class RepuestoForm(forms.ModelForm):
             "origen_repuesto": forms.TextInput(attrs={"placeholder": "Ej: Original, Alternativo, Reconstruido", "class": "form-control"}),
             "cod_prov": forms.TextInput(attrs={"placeholder": "Código del proveedor", "class": "form-control"}),
             "marca_veh": forms.TextInput(attrs={"placeholder": "Ej: Toyota, Honda, Ford", "class": "form-control"}),
+            "carroceria": forms.TextInput(attrs={"placeholder": "Ej: Sedán, Hatchback, SUV, Pickup", "class": "form-control"}),
         }
 
 # ========================

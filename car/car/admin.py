@@ -145,9 +145,9 @@ class PrefijoRepuestoAdmin(admin.ModelAdmin):
 
 @admin.register(Repuesto)
 class RepuestoAdmin(admin.ModelAdmin):
-    list_display = ('id', 'sku', 'oem', 'referencia', 'nombre', 'precio_costo', 'precio_venta', 'stock', 'origen_repuesto', 'marca_veh')
-    search_fields = ('nombre', 'oem', 'sku', 'codigo_barra', 'origen_repuesto', 'cod_prov', 'marca_veh', 'tipo_de_motor')
-    list_filter = ("marca", "posicion", "origen_repuesto", "marca_veh")
+    list_display = ('id', 'sku', 'oem', 'referencia', 'nombre', 'precio_costo', 'precio_venta', 'stock', 'origen_repuesto', 'marca_veh', 'carroceria')
+    search_fields = ('nombre', 'oem', 'sku', 'codigo_barra', 'origen_repuesto', 'cod_prov', 'marca_veh', 'tipo_de_motor', 'carroceria')
+    list_filter = ("marca", "posicion", "origen_repuesto", "marca_veh", "carroceria")
     fieldsets = (
         ('Información Básica', {
             'fields': ('sku', 'oem', 'referencia', 'nombre', 'marca', 'descripcion')
@@ -159,7 +159,7 @@ class RepuestoAdmin(admin.ModelAdmin):
             'fields': ('precio_costo', 'precio_venta', 'stock')
         }),
         ('Información Adicional', {
-            'fields': ('origen_repuesto', 'cod_prov', 'marca_veh', 'tipo_de_motor'),
+            'fields': ('origen_repuesto', 'cod_prov', 'marca_veh', 'tipo_de_motor', 'carroceria'),
             'classes': ('collapse',)
         }),
     )

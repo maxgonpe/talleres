@@ -285,7 +285,11 @@ def buscar_repuestos_compra(request):
         Q(sku__icontains=query) |
         Q(codigo_barra__icontains=query) |
         Q(oem__icontains=query) |
-        Q(referencia__icontains=query)
+        Q(referencia__icontains=query) |
+        Q(marca__icontains=query) |
+        Q(marca_veh__icontains=query) |
+        Q(tipo_de_motor__icontains=query) |
+        Q(carroceria__icontains=query)
     ).order_by('nombre')[:10]
     
     resultados = []
@@ -300,6 +304,9 @@ def buscar_repuestos_compra(request):
             'precio_venta': float(repuesto.precio_venta or 0),
             'stock': repuesto.stock_total,  # Usar stock unificado
             'stock_actual': repuesto.stock_total,  # Alias para compatibilidad
+            'marca_veh': repuesto.marca_veh or '',
+            'tipo_motor': repuesto.tipo_de_motor or '',
+            'carroceria': repuesto.carroceria or '',
         })
     return JsonResponse({'repuestos': resultados})
 

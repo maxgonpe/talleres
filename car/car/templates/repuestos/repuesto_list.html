@@ -380,7 +380,7 @@
                     <input type="text" 
                            id="search-repuestos" 
                            class="form-control search-input" 
-                           placeholder="🔍 Buscar por nombre, SKU, código de barras, marca, OEM, origen, marca vehículo, tipo motor..."
+                           placeholder="🔍 Buscar por nombre, SKU, código de barras, marca, OEM, origen, marca vehículo, tipo motor, carrocería..."
                            autocomplete="off">
                 </div>
             </div>
@@ -423,7 +423,8 @@
                         data-origen="{{ repuesto.origen_repuesto|default:''|lower }}"
                         data-codigo-proveedor="{{ repuesto.cod_prov|default:''|lower }}"
                         data-marca-vehiculo="{{ repuesto.marca_veh|default:''|lower }}"
-                        data-tipo-motor="{{ repuesto.tipo_de_motor|default:''|lower }}">
+                        data-tipo-motor="{{ repuesto.tipo_de_motor|default:''|lower }}"
+                        data-carroceria="{{ repuesto.carroceria|default:''|lower }}">
                         <td>{{ repuesto.id }}</td>
                         <td>{{ repuesto.sku|default:"-" }}</td>
                         <td>{{ repuesto.nombre }}</td>
@@ -687,6 +688,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const codigoProveedor = row.dataset.codigoProveedor;
             const marcaVehiculo = row.dataset.marcaVehiculo;
             const tipoMotor = row.dataset.tipoMotor;
+            const carroceria = row.dataset.carroceria;
             
             // Búsqueda simple y directa (case-insensitive)
             const coincide = (id && id.toLowerCase().includes(terminoLower)) || 
@@ -698,7 +700,8 @@ document.addEventListener('DOMContentLoaded', function() {
                            (origen && origen.toLowerCase().includes(terminoLower)) ||
                            (codigoProveedor && codigoProveedor.toLowerCase().includes(terminoLower)) ||
                            (marcaVehiculo && marcaVehiculo.toLowerCase().includes(terminoLower)) ||
-                           (tipoMotor && tipoMotor.toLowerCase().includes(terminoLower));
+                           (tipoMotor && tipoMotor.toLowerCase().includes(terminoLower)) ||
+                           (carroceria && carroceria.toLowerCase().includes(terminoLower));
             
             // Log específico para SKUs con guiones
             if (terminoLower.includes('-') && sku && sku.toLowerCase().includes(terminoLower)) {
