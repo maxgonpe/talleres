@@ -91,6 +91,7 @@
         background: #f8f9fa;
         margin-bottom: 0.5rem;
         border-radius: 5px;
+        gap: 1rem;
     }
     
     .carrito-item:last-child {
@@ -106,15 +107,19 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        flex-wrap: nowrap;
+        min-width: 0;
     }
     
     .quantity-input {
-        width: 60px;
+        width: 80px;
         text-align: center;
+        min-width: 80px;
     }
     
     .price-input {
-        width: 80px;
+        width: 120px;
+        min-width: 120px;
     }
     
     .total-container {
