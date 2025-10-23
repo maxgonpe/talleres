@@ -2839,3 +2839,86 @@ def toggle_permiso_usuario(request):
     
     return JsonResponse({'error': 'Método no permitido'}, status=405)
 
+
+@login_required
+def repuesto_compatibilidad_api(request, repuesto_id):
+    """API para obtener vehículos compatibles de un repuesto"""
+    try:
+        repuesto = Repuesto.objects.get(id=repuesto_id)
+        
+        # 1. Obtener aplicaciones específicas (compatibilidad directa)
+        aplicaciones = RepuestoAplicacion.objects.filter(repuesto=repuesto).select_related('version')
+        vehiculos_directos = []
+        for aplicacion in aplicaciones:
+            vehiculos_directos.append({
+                'marca': aplicacion.version.marca,
+                'modelo': aplicacion.version.modelo,
+                'anio_desde': aplicacion.version.anio_desde,
+                'anio_hasta': aplicacion.version.anio_hasta,
+                'motor': aplicacion.motor or aplicacion.version.motor or '',
+                'carroceria': aplicacion.carroceria or aplicacion.version.carroceria or '',
+                'posicion': aplicacion.posicion or '',
+                'tipo': 'directo'
+            })
+        
+        # 2. Buscar coincidencias por motor y carrocería del repuesto
+        vehiculos_coincidencias = []
+        
+        # Si el repuesto tiene motor, buscar vehículos con ese motor
+        if repuesto.tipo_de_motor and repuesto.tipo_de_motor.strip() and repuesto.tipo_de_motor != 'zzzzzz':
+            vehiculos_motor = VehiculoVersion.objects.filter(
+                motor__icontains=repuesto.tipo_de_motor
+            ).exclude(
+                id__in=[a.version.id for a in aplicaciones]
+            )
+            for vehiculo in vehiculos_motor:
+                vehiculos_coincidencias.append({
+                    'marca': vehiculo.marca,
+                    'modelo': vehiculo.modelo,
+                    'anio_desde': vehiculo.anio_desde,
+                    'anio_hasta': vehiculo.anio_hasta,
+                    'motor': vehiculo.motor or '',
+                    'carroceria': vehiculo.carroceria or '',
+                    'posicion': '',
+                    'tipo': 'coincidencia_motor'
+                })
+        
+        # Si el repuesto tiene carrocería, buscar vehículos con esa carrocería
+        if repuesto.carroceria and repuesto.carroceria.strip() and repuesto.carroceria != 'yyyyyy':
+            vehiculos_carroceria = VehiculoVersion.objects.filter(
+                carroceria__icontains=repuesto.carroceria
+            ).exclude(
+                id__in=[a.version.id for a in aplicaciones]
+            )
+            for vehiculo in vehiculos_carroceria:
+                vehiculos_coincidencias.append({
+                    'marca': vehiculo.marca,
+                    'modelo': vehiculo.modelo,
+                    'anio_desde': vehiculo.anio_desde,
+                    'anio_hasta': vehiculo.anio_hasta,
+                    'motor': vehiculo.motor or '',
+                    'carroceria': vehiculo.carroceria or '',
+                    'posicion': '',
+                    'tipo': 'coincidencia_carroceria'
+                })
+        
+        # Combinar todos los vehículos
+        vehiculos = vehiculos_directos + vehiculos_coincidencias
+        
+        return JsonResponse({
+            'success': True,
+            'repuesto': {
+                'id': repuesto.id,
+                'nombre': repuesto.nombre,
+                'sku': repuesto.sku or '',
+                'tipo_motor': repuesto.tipo_de_motor or '',
+                'carroceria': repuesto.carroceria or ''
+            },
+            'vehiculos': vehiculos
+        })
+        
+    except Repuesto.DoesNotExist:
+        return JsonResponse({'error': 'Repuesto no encontrado'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+

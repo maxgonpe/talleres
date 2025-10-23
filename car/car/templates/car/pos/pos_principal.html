@@ -302,6 +302,13 @@
                                onchange="actualizarPrecio({{ item.id }}, this.value)">
                         <span class="fw-bold text-success">${{ item.subtotal|floatformat:0|intcomma }}</span>
                         <button type="button" 
+                                class="btn btn-outline-info btn-sm me-1" 
+                                onclick="mostrarCompatibilidad({{ item.repuesto.id }}, '{{ item.repuesto.nombre }}')"
+                                title="Ver vehículos compatibles"
+                                style="min-width: 35px; font-size: 14px;">
+                            🔗
+                        </button>
+                        <button type="button" 
                                 class="btn btn-outline-danger btn-sm" 
                                 onclick="eliminarItem({{ item.id }})">
                             ❌
@@ -779,5 +786,122 @@ document.addEventListener('DOMContentLoaded', function() {
         campoBusqueda.focus();
     }
 });
+
+// Función para mostrar compatibilidad de repuestos
+function mostrarCompatibilidad(repuestoId, repuestoNombre) {
+    // Crear modal dinámicamente
+    const modalHtml = `
+        <div class="modal fade" id="modalCompatibilidad" tabindex="-1" aria-labelledby="modalCompatibilidadLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalCompatibilidadLabel">
+                            🔗 Vehículos Compatibles
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <strong>Repuesto:</strong> ${repuestoNombre}
+                        </div>
+                        <div id="compatibilidad-content">
+                            <div class="text-center">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                                <p class="mt-2">Cargando vehículos compatibles...</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remover modal existente si existe
+    const existingModal = document.getElementById('modalCompatibilidad');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Agregar modal al DOM
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Mostrar modal
+    const modal = new bootstrap.Modal(document.getElementById('modalCompatibilidad'));
+    modal.show();
+    
+    // Cargar datos de compatibilidad
+    cargarCompatibilidad(repuestoId);
+}
+
+// Función para cargar datos de compatibilidad
+function cargarCompatibilidad(repuestoId) {
+    fetch(`/car/api/repuesto-compatibilidad/${repuestoId}/`)
+        .then(response => response.json())
+        .then(data => {
+            const content = document.getElementById('compatibilidad-content');
+            
+            if (data.vehiculos && data.vehiculos.length > 0) {
+                let html = '<div class="row">';
+                
+                data.vehiculos.forEach(vehiculo => {
+                    let badgeClass = 'bg-primary';
+                    let badgeText = 'Directo';
+                    
+                    if (vehiculo.tipo === 'coincidencia_motor') {
+                        badgeClass = 'bg-warning';
+                        badgeText = 'Coincidencia Motor';
+                    } else if (vehiculo.tipo === 'coincidencia_carroceria') {
+                        badgeClass = 'bg-info';
+                        badgeText = 'Coincidencia Carrocería';
+                    }
+                    
+                    html += `
+                        <div class="col-md-6 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="card-title mb-0">${vehiculo.marca} ${vehiculo.modelo}</h6>
+                                        <span class="badge ${badgeClass}">${badgeText}</span>
+                                    </div>
+                                    <p class="card-text">
+                                        <small class="text-muted">
+                                            Años: ${vehiculo.anio_desde}-${vehiculo.anio_hasta}<br>
+                                            ${vehiculo.motor ? `Motor: ${vehiculo.motor}<br>` : ''}
+                                            ${vehiculo.carroceria ? `Carrocería: ${vehiculo.carroceria}<br>` : ''}
+                                            ${vehiculo.posicion ? `Posición: ${vehiculo.posicion}` : ''}
+                                        </small>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+                content.innerHTML = html;
+            } else {
+                content.innerHTML = `
+                    <div class="text-center text-muted">
+                        <i class="fas fa-car fa-3x mb-3"></i>
+                        <p>No hay vehículos compatibles registrados para este repuesto.</p>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error cargando compatibilidad:', error);
+            document.getElementById('compatibilidad-content').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Error al cargar los vehículos compatibles.
+                </div>
+            `;
+        });
+}
 </script>
 {% endblock %}
