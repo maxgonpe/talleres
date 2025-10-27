@@ -3457,6 +3457,7 @@ def gestion_usuarios(request):
             first_name = request.POST.get('first_name', '').strip()
             last_name = request.POST.get('last_name', '').strip()
             email = request.POST.get('email', '').strip()
+            especialidad = request.POST.get('especialidad', '').strip()
             
             if User.objects.filter(username=username).exists():
                 messages.error(request, f"El usuario '{username}' ya existe")
@@ -3470,7 +3471,8 @@ def gestion_usuarios(request):
                 )
                 mecanico = Mecanico.objects.create(
                     user=user,
-                    rol=rol
+                    rol=rol,
+                    especialidad=especialidad
                 )
                 messages.success(request, f"✅ Usuario '{username}' creado como {mecanico.get_rol_display()}")
         
@@ -3479,6 +3481,7 @@ def gestion_usuarios(request):
             first_name = request.POST.get('first_name', '').strip()
             last_name = request.POST.get('last_name', '').strip()
             email = request.POST.get('email', '').strip()
+            especialidad = request.POST.get('especialidad', '').strip()
             is_active = request.POST.get('is_active') == 'on'
             
             try:
@@ -3488,6 +3491,12 @@ def gestion_usuarios(request):
                 user.email = email
                 user.is_active = is_active
                 user.save()
+                
+                # Actualizar especialidad del mecánico
+                if hasattr(user, 'mecanico'):
+                    user.mecanico.especialidad = especialidad
+                    user.mecanico.save()
+                
                 messages.success(request, f"✅ Información de '{user.username}' actualizada exitosamente")
             except User.DoesNotExist:
                 messages.error(request, "❌ Usuario no encontrado")

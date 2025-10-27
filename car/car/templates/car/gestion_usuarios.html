@@ -457,7 +457,7 @@
                 type="text" 
                 class="search-input" 
                 id="searchUsers" 
-                placeholder="🔍 Buscar por nombre, apellido, username o email..."
+                placeholder="🔍 Buscar por nombre, apellido, username, email o especialidad..."
             >
         </div>
     </div>
@@ -487,11 +487,11 @@
                 </div>
             </div>
             <div class="row g-3 mt-1">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label">Contraseña *</label>
                     <input type="password" class="form-control" name="password" required>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label">Rol *</label>
                     <select class="form-select" name="rol" required>
                         {% for value, label in roles_choices %}
@@ -499,7 +499,11 @@
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
+                    <label class="form-label">Especialidad / Cargo</label>
+                    <input type="text" class="form-control" name="especialidad" placeholder="Ej: Jefe de Taller, Mecánico, Ayudante">
+                </div>
+                <div class="col-md-3">
                     <label class="form-label">&nbsp;</label>
                     <button type="submit" class="btn btn-primary w-100">
                         ➕ Crear Usuario
@@ -521,6 +525,7 @@
                         <th style="text-align: left;">Usuario</th>
                         <th style="text-align: left;">Nombre</th>
                         <th style="text-align: left;">Email</th>
+                        <th style="text-align: left;">Especialidad</th>
                         <th>Estado</th>
                         <th>Rol</th>
                         <th class="col-permiso">
@@ -577,6 +582,13 @@
                                 {{ usuario.email }}
                             {% else %}
                                 <em style="color: var(--muted);">Sin email</em>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if usuario.mecanico.especialidad %}
+                                {{ usuario.mecanico.especialidad }}
+                            {% else %}
+                                <em style="color: var(--muted);">Sin definir</em>
                             {% endif %}
                         </td>
                         <td>
@@ -667,10 +679,21 @@
                             </form>
                         </td>
                         <td style="white-space: nowrap;">
-                            <button class="btn-editar" onclick="editUser({{ usuario.id }}, '{{ usuario.username }}', '{{ usuario.first_name }}', '{{ usuario.last_name }}', '{{ usuario.email }}', {{ usuario.is_active|lower }})" title="Editar información">
+                            <button class="btn-editar btn-editar-user" 
+                                    data-user-id="{{ usuario.id }}"
+                                    data-username="{{ usuario.username }}"
+                                    data-firstname="{{ usuario.first_name }}"
+                                    data-lastname="{{ usuario.last_name }}"
+                                    data-email="{{ usuario.email }}"
+                                    data-especialidad="{{ usuario.mecanico.especialidad|default:'' }}"
+                                    data-active="{{ usuario.is_active|lower }}"
+                                    title="Editar información">
                                 ✏️
                             </button>
-                            <button class="btn-password" onclick="changePassword({{ usuario.id }}, '{{ usuario.username }}')" title="Cambiar contraseña">
+                            <button class="btn-password btn-password-user" 
+                                    data-user-id="{{ usuario.id }}"
+                                    data-username="{{ usuario.username }}"
+                                    title="Cambiar contraseña">
                                 🔑
                             </button>
                             {% if usuario != request.user %}
@@ -712,7 +735,7 @@
             <div class="modal-body">
                 <div class="mb-3">
                     <label class="form-label">Username</label>
-                    <input type="text" class="form-control" id="editUsername" readonly style="background: var(--muted);">
+                    <input type="text" class="form-control" id="editUsername" readonly style="background: #e9ecef;">
                 </div>
                 
                 <div class="mb-3">
@@ -728,6 +751,12 @@
                 <div class="mb-3">
                     <label class="form-label">Email</label>
                     <input type="email" class="form-control" name="email" id="editEmail">
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Especialidad / Cargo</label>
+                    <input type="text" class="form-control" name="especialidad" id="editEspecialidad" placeholder="Ej: Jefe de Taller, Mecánico, Ayudante">
+                    <small class="text-muted">Define el cargo o especialidad del usuario</small>
                 </div>
                 
                 <div class="mb-3">
@@ -815,15 +844,41 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
+    
+    // Event listeners para botones de editar
+    document.querySelectorAll('.btn-editar-user').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const id = this.dataset.userId;
+            const username = this.dataset.username;
+            const firstName = this.dataset.firstname;
+            const lastName = this.dataset.lastname;
+            const email = this.dataset.email;
+            const especialidad = this.dataset.especialidad;
+            const isActive = this.dataset.active === 'true';
+            
+            editUser(id, username, firstName, lastName, email, especialidad, isActive);
+        });
+    });
+    
+    // Event listeners para botones de password
+    document.querySelectorAll('.btn-password-user').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const id = this.dataset.userId;
+            const username = this.dataset.username;
+            
+            changePassword(id, username);
+        });
+    });
 });
 
 // Editar usuario
-function editUser(id, username, firstName, lastName, email, isActive) {
+function editUser(id, username, firstName, lastName, email, especialidad, isActive) {
     document.getElementById('editUserId').value = id;
     document.getElementById('editUsername').value = username;
     document.getElementById('editFirstName').value = firstName;
     document.getElementById('editLastName').value = lastName;
     document.getElementById('editEmail').value = email;
+    document.getElementById('editEspecialidad').value = especialidad || '';
     document.getElementById('editIsActive').checked = isActive;
     
     openModal('modalEdit');
