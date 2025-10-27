@@ -49,3 +49,8 @@ class Command(BaseCommand):
             self.stdout.write(f"\n✅ Todos los vehículos Lada tienen años normales")
 
 
+
+
+
+
+

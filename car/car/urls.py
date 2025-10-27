@@ -32,8 +32,9 @@ urlpatterns = [
     path('ingreso/', views.ingreso_view, name='ingreso'),
     path('ingreso/exito/', views.ingreso_exitoso_view, name='ingreso_exitoso'),
     path('ingreso/editar/<int:pk>/', views.editar_diagnostico, name='editar_diagnostico'),
-    path('ingreso/eliminar/<int:pk>/', views.eliminar_diagnostico, name='eliminar_diagnostico'),
     path('diagnosticos/', views.lista_diagnosticos, name='lista_diagnosticos'),
+    path('diagnosticos/<int:pk>/editar/', views.editar_diagnostico, name='editar_diagnostico'),
+    path('ingreso/eliminar/<int:pk>/', views.eliminar_diagnostico, name='eliminar_diagnostico'),
 
     # === Plano interactivo ===
     path('plano/', views.mostrar_plano, name='plano_interactivo'),

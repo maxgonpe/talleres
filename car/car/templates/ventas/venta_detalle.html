@@ -1,5 +1,10 @@
-{% load static %}
 {% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+{% endblock %}
+
 {% block content %}
 <h2>🧾 Venta #{{ venta.id }}</h2>
 <p><strong>Cliente:</strong> {{ venta.cliente }}</p>

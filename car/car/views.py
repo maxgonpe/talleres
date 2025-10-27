@@ -484,6 +484,356 @@ def lista_diagnosticos(request):
     })
 
 @login_required
+@requiere_permiso('diagnosticos')
+def editar_diagnostico(request, pk):
+    """Editar diagnóstico con pestañas para acciones, repuestos e insumos"""
+    diagnostico = get_object_or_404(Diagnostico, pk=pk)
+    
+    # 🔹 Helper para redirects con pestaña activa
+    def redirect_with_tab(tab_name):
+        from django.http import HttpResponseRedirect
+        return HttpResponseRedirect(f"/car/diagnosticos/{diagnostico.pk}/editar/?tab={tab_name}")
+    
+    # Formularios
+    from .forms import DiagnosticoForm
+    diagnostico_form = DiagnosticoForm(instance=diagnostico)
+    
+    # Obtener datos para los formularios de agregar
+    from .models import Componente, Accion, Repuesto
+    from django.db.models import Q
+    acciones_disponibles = Accion.objects.all()
+    
+    # 🔹 COMPONENTES DISPONIBLES (solo componentes padre con sus hijos)
+    componentes = Componente.objects.filter(padre__isnull=True, activo=True).prefetch_related('hijos')
+    
+    # 🔹 FILTRO INTELIGENTE DE REPUESTOS basado en el vehículo del diagnóstico
+    repuestos_disponibles = Repuesto.objects.all()
+    if diagnostico.vehiculo:
+        veh = diagnostico.vehiculo
+        veh_marca = veh.marca
+        veh_modelo = veh.modelo
+        veh_anio = veh.anio
+        
+        # Filtro inteligente por marca, modelo y año
+        repuestos_disponibles = repuestos_disponibles.filter(
+            Q(marca_veh__icontains=veh_marca) |
+            Q(marca_veh__icontains=veh_modelo) |
+            Q(marca_veh__icontains=str(veh_anio)) |
+            Q(marca_veh__isnull=True) |  # Incluir repuestos sin marca específica
+            Q(marca_veh="")  # Incluir repuestos con marca vacía
+        ).distinct()
+    
+    # 🔹 Detectar pestaña activa desde parámetros URL
+    active_tab = request.GET.get('tab', 'acciones')
+    
+    # 🔹 Obtener componentes ya seleccionados en el diagnóstico
+    componentes_diagnostico = list(diagnostico.componentes.values_list('id', flat=True))
+    
+    # Obtener configuración del taller
+    config = AdministracionTaller.get_configuracion_activa()
+    
+    # 🔹 Manejo de formularios POST
+    if request.method == "POST":
+        # 🔹 Actualizar descripción del diagnóstico
+        if "actualizar_descripcion" in request.POST:
+            diagnostico_form = DiagnosticoForm(request.POST, instance=diagnostico)
+            if diagnostico_form.is_valid():
+                diagnostico_form.save()
+                messages.success(request, "Descripción del diagnóstico actualizada.")
+                return redirect_with_tab("acciones")
+        
+        # 🔹 Agregar acción al diagnóstico
+        elif "agregar_accion" in request.POST:
+            componente_id = request.POST.get("componente")
+            accion_id = request.POST.get("accion")
+            precio_mano_obra = request.POST.get("precio_mano_obra", 0)
+            
+            if componente_id and accion_id:
+                try:
+                    from .models import DiagnosticoComponenteAccion
+                    componente = Componente.objects.get(id=componente_id)
+                    accion = Accion.objects.get(id=accion_id)
+                    
+                    # Verificar si ya existe esta combinación
+                    if not DiagnosticoComponenteAccion.objects.filter(
+                        diagnostico=diagnostico,
+                        componente=componente,
+                        accion=accion
+                    ).exists():
+                        DiagnosticoComponenteAccion.objects.create(
+                            diagnostico=diagnostico,
+                            componente=componente,
+                            accion=accion,
+                            precio_mano_obra=float(precio_mano_obra) if precio_mano_obra else 0
+                        )
+                        messages.success(request, f"Acción '{accion.nombre}' agregada a '{componente.nombre}'.")
+                    else:
+                        messages.warning(request, "Esta acción ya está agregada para este componente.")
+                except (Componente.DoesNotExist, Accion.DoesNotExist):
+                    messages.error(request, "Componente o acción no válidos.")
+            else:
+                messages.error(request, "Debe seleccionar componente y acción.")
+            
+            return redirect_with_tab("acciones")
+        
+        # 🔹 Agregar múltiples acciones (nuevo método)
+        elif "agregar_acciones_multiples" in request.POST:
+            import json
+            import logging
+            logger = logging.getLogger(__name__)
+            
+            logger.info("🔍 INICIANDO AGREGAR ACCIONES MÚLTIPLES")
+            logger.info(f"📋 Diagnóstico ID: {diagnostico.id}")
+            logger.info(f"📋 POST data: {dict(request.POST)}")
+            
+            acciones_json = request.POST.get("acciones_json", "")
+            componente_id = request.POST.get("componente")
+            
+            logger.info(f"📋 Acciones JSON: {acciones_json}")
+            logger.info(f"📋 Componente ID: {componente_id}")
+            
+            if acciones_json and componente_id:
+                try:
+                    acciones_data = json.loads(acciones_json)
+                    logger.info(f"📋 Acciones parseadas: {acciones_data}")
+                    acciones_creadas = 0
+                    
+                    for accion_data in acciones_data:
+                        try:
+                            from .models import DiagnosticoComponenteAccion
+                            accion_id = int(accion_data.get("id"))
+                            precio_mano_obra = float(accion_data.get("precio", 0))
+                            
+                            logger.info(f"🛠️ Procesando acción ID: {accion_id}, Precio: {precio_mano_obra}")
+                            
+                            accion = Accion.objects.get(id=accion_id)
+                            componente = Componente.objects.get(id=componente_id)
+                            
+                            logger.info(f"🛠️ Acción encontrada: {accion.nombre}")
+                            logger.info(f"🛠️ Componente encontrado: {componente.nombre}")
+                            
+                            # Verificar si ya existe esta combinación
+                            if not DiagnosticoComponenteAccion.objects.filter(
+                                diagnostico=diagnostico,
+                                componente=componente,
+                                accion=accion
+                            ).exists():
+                                dca = DiagnosticoComponenteAccion.objects.create(
+                                    diagnostico=diagnostico,
+                                    componente=componente,
+                                    accion=accion,
+                                    precio_mano_obra=precio_mano_obra
+                                )
+                                logger.info(f"✅ Acción creada: {dca.id}")
+                                acciones_creadas += 1
+                            else:
+                                logger.info(f"⚠️ Acción ya existe para este componente")
+                                
+                        except (ValueError, Accion.DoesNotExist, Componente.DoesNotExist) as e:
+                            logger.error(f"❌ Error procesando acción: {e}")
+                            continue
+                    
+                    logger.info(f"📊 Total acciones creadas: {acciones_creadas}")
+                    
+                    if acciones_creadas > 0:
+                        messages.success(request, f"{acciones_creadas} acción(es) agregada(s) al diagnóstico.")
+                    else:
+                        messages.info(request, "No se agregaron acciones nuevas (posiblemente ya existían).")
+                        
+                except json.JSONDecodeError as e:
+                    logger.error(f"❌ Error parseando JSON: {e}")
+                    messages.error(request, "Error al procesar las acciones.")
+            else:
+                logger.error("❌ Faltan datos: acciones_json o componente_id")
+                messages.error(request, "No se recibieron acciones o componente para agregar.")
+            
+            return redirect_with_tab("acciones")
+        
+        # 🔹 Toggle acción completada / pendiente
+        elif "accion_toggle" in request.POST:
+            dca_id = request.POST.get("accion_toggle")
+            try:
+                from .models import DiagnosticoComponenteAccion
+                dca = DiagnosticoComponenteAccion.objects.get(id=dca_id, diagnostico=diagnostico)
+                dca.completado = not dca.completado
+                dca.fecha = timezone.now() if dca.completado else None
+                dca.save()
+                messages.success(request, f"Acción '{dca.accion.nombre}' actualizada.")
+            except DiagnosticoComponenteAccion.DoesNotExist:
+                messages.error(request, "Acción no encontrada.")
+            
+            return redirect_with_tab("acciones")
+        
+        # 🔹 Agregar repuesto al diagnóstico
+        elif "agregar_repuesto" in request.POST:
+            repuesto_id = request.POST.get("repuesto")
+            cantidad = request.POST.get("cantidad", 1)
+            precio_unitario = request.POST.get("precio_unitario", 0)
+            
+            if repuesto_id:
+                try:
+                    from .models import DiagnosticoRepuesto
+                    repuesto = Repuesto.objects.get(id=repuesto_id)
+                    
+                    # Verificar si ya existe este repuesto
+                    if not DiagnosticoRepuesto.objects.filter(
+                        diagnostico=diagnostico,
+                        repuesto=repuesto
+                    ).exists():
+                        DiagnosticoRepuesto.objects.create(
+                            diagnostico=diagnostico,
+                            repuesto=repuesto,
+                            cantidad=int(cantidad),
+                            precio_unitario=float(precio_unitario) if precio_unitario else 0,
+                            subtotal=int(cantidad) * (float(precio_unitario) if precio_unitario else 0)
+                        )
+                        messages.success(request, f"Repuesto '{repuesto.nombre}' agregado.")
+                    else:
+                        messages.warning(request, "Este repuesto ya está agregado.")
+                except Repuesto.DoesNotExist:
+                    messages.error(request, "Repuesto no válido.")
+            else:
+                messages.error(request, "Debe seleccionar un repuesto.")
+            
+            return redirect_with_tab("repuestos")
+        
+        # 🔹 Agregar múltiples repuestos (nuevo método)
+        elif "agregar_repuestos_multiples" in request.POST:
+            import json
+            repuestos_json = request.POST.get("repuestos_json", "")
+            
+            if repuestos_json:
+                try:
+                    repuestos_data = json.loads(repuestos_json)
+                    repuestos_creados = 0
+                    
+                    for repuesto_data in repuestos_data:
+                        try:
+                            from .models import DiagnosticoRepuesto
+                            repuesto_id = int(repuesto_data.get("id"))
+                            cantidad = int(repuesto_data.get("cantidad", 1))
+                            precio_unitario = float(repuesto_data.get("precio_unitario", 0))
+                            
+                            repuesto = Repuesto.objects.get(id=repuesto_id)
+                            
+                            # Verificar si ya existe este repuesto en el diagnóstico
+                            if not DiagnosticoRepuesto.objects.filter(
+                                diagnostico=diagnostico,
+                                repuesto=repuesto
+                            ).exists():
+                                DiagnosticoRepuesto.objects.create(
+                                    diagnostico=diagnostico,
+                                    repuesto=repuesto,
+                                    cantidad=cantidad,
+                                    precio_unitario=precio_unitario,
+                                    subtotal=cantidad * precio_unitario
+                                )
+                                repuestos_creados += 1
+                                
+                        except (ValueError, Repuesto.DoesNotExist):
+                            continue
+                    
+                    if repuestos_creados > 0:
+                        messages.success(request, f"{repuestos_creados} repuesto(s) agregado(s) al diagnóstico.")
+                    else:
+                        messages.info(request, "No se agregaron repuestos nuevos (posiblemente ya existían).")
+                        
+                except json.JSONDecodeError:
+                    messages.error(request, "Error al procesar los repuestos.")
+            else:
+                messages.error(request, "No se recibieron repuestos para agregar.")
+            
+            return redirect_with_tab("repuestos")
+        
+        # 🔹 Agregar múltiples insumos (nuevo método)
+        elif "agregar_insumos_multiples" in request.POST:
+            import json
+            insumos_json = request.POST.get("insumos_json", "")
+            
+            if insumos_json:
+                try:
+                    insumos_data = json.loads(insumos_json)
+                    insumos_creados = 0
+                    
+                    for insumo_data in insumos_data:
+                        try:
+                            from .models import DiagnosticoRepuesto
+                            repuesto_id = int(insumo_data.get("id"))
+                            cantidad = int(insumo_data.get("cantidad", 1))
+                            precio_unitario = float(insumo_data.get("precio_unitario", 0))
+                            
+                            repuesto = Repuesto.objects.get(id=repuesto_id)
+                            
+                            # Verificar si ya existe este repuesto en el diagnóstico
+                            if not DiagnosticoRepuesto.objects.filter(
+                                diagnostico=diagnostico,
+                                repuesto=repuesto
+                            ).exists():
+                                DiagnosticoRepuesto.objects.create(
+                                    diagnostico=diagnostico,
+                                    repuesto=repuesto,
+                                    cantidad=cantidad,
+                                    precio_unitario=precio_unitario,
+                                    subtotal=cantidad * precio_unitario
+                                )
+                                insumos_creados += 1
+                                
+                        except (ValueError, Repuesto.DoesNotExist):
+                            continue
+                    
+                    if insumos_creados > 0:
+                        messages.success(request, f"{insumos_creados} insumo(s) agregado(s) al diagnóstico.")
+                    else:
+                        messages.info(request, "No se agregaron insumos nuevos (posiblemente ya existían).")
+                        
+                except json.JSONDecodeError:
+                    messages.error(request, "Error al procesar los insumos.")
+            else:
+                messages.error(request, "No se recibieron insumos para agregar.")
+            
+            return redirect_with_tab("insumos")
+        
+        # 🔹 Quitar repuesto del diagnóstico
+        elif "quitar_repuesto" in request.POST:
+            rep_id = request.POST.get("quitar_repuesto")
+            try:
+                from .models import DiagnosticoRepuesto
+                rep = DiagnosticoRepuesto.objects.get(id=rep_id, diagnostico=diagnostico)
+                rep_nombre = rep.repuesto.nombre
+                rep.delete()
+                messages.success(request, f"Repuesto '{rep_nombre}' quitado del diagnóstico.")
+            except DiagnosticoRepuesto.DoesNotExist:
+                messages.error(request, "Repuesto no encontrado.")
+            
+            return redirect_with_tab("repuestos")
+        
+        # 🔹 Quitar acción del diagnóstico
+        elif "quitar_accion" in request.POST:
+            accion_id = request.POST.get("quitar_accion")
+            try:
+                from .models import DiagnosticoComponenteAccion
+                accion = DiagnosticoComponenteAccion.objects.get(id=accion_id, diagnostico=diagnostico)
+                accion_nombre = f"{accion.componente.nombre} — {accion.accion.nombre}"
+                accion.delete()
+                messages.success(request, f"Acción '{accion_nombre}' quitada del diagnóstico.")
+            except DiagnosticoComponenteAccion.DoesNotExist:
+                messages.error(request, "Acción no encontrada.")
+            
+            return redirect_with_tab("acciones")
+    
+    context = {
+        "diagnostico": diagnostico,
+        "diagnostico_form": diagnostico_form,
+        "componentes": componentes,
+        "componentes_diagnostico": componentes_diagnostico,
+        "acciones_disponibles": acciones_disponibles,
+        "repuestos_disponibles": repuestos_disponibles,
+        "active_tab": active_tab,
+        "config": config,
+    }
+    return render(request, "car/diagnostico_editar.html", context)
+
+@login_required
 def eliminar_diagnostico(request, pk):
     diagnostico = get_object_or_404(Diagnostico, pk=pk)
     if request.method == 'POST':
@@ -510,9 +860,11 @@ def acciones_por_componente(request, componente_id: int):
 
     data = [
         {
+            "id": ca.accion_id,
             "accion_id": ca.accion_id,
             "accion_nombre": ca.accion.nombre,
-            "precio_base": str(ca.precio_mano_obra),
+            "nombre": ca.accion.nombre,
+            "precio_base": float(ca.precio_mano_obra) if ca.precio_mano_obra else 0,
         }
         for ca in qs
     ]
@@ -1162,83 +1514,132 @@ def exportar_diagnosticos_pdf(request):
 
 @login_required
 def exportar_diagnostico_pdf(request, pk):
-    diag = get_object_or_404(Diagnostico, pk=pk)
-
-    response = HttpResponse(content_type="application/pdf")
-    response["Content-Disposition"] = f'inline; filename="diagnostico_{diag.pk}.pdf"'
-
-    doc = SimpleDocTemplate(response, pagesize=A4)
-    styles = getSampleStyleSheet()
-    # Define un nuevo estilo para el texto rojo
-    red_text_style = ParagraphStyle(
-    name='RedText',
-    fontName='Helvetica',
-    fontSize=10,
-    textColor=colors.red,  # Cambia el color a rojo
+    """Generar PDF del diagnóstico con la misma calidad que el PDF de trabajos"""
+    import logging
+    logger = logging.getLogger(__name__)
     
-)
-    elements = []
-
-    elements.append(Paragraph(f"<b>Diagnóstico #{diag.pk}</b>", styles["Title"]))
-    elements.append(Spacer(1, 12))
-    elements.append(Paragraph(f"<b>Fecha:</b> {diag.fecha.strftime('%d-%m-%Y')}", styles["Normal"]))
-    elements.append(Paragraph(f"<b>Cliente:</b> {diag.vehiculo.cliente.nombre}", styles["Normal"]))
-    elements.append(Paragraph(f"<b>Vehículo:</b> {diag.vehiculo}", styles["Normal"]))
-    elements.append(Paragraph(f"<b>VIN:</b> {diag.vehiculo.vin}", red_text_style))
-    elements.append(Paragraph(f"<b>Descripción:</b> {diag.descripcion_problema}", styles["Normal"]))
-    elements.append(Spacer(1, 12))
-
-    # Tabla de Acciones
-    acciones_data = [["Mano de Obra", "Precio"]]
-    total_mo = 0
-    for dca in diag.acciones_componentes.all():
-        acciones_data.append([f"{dca.componente.nombre} — {dca.accion.nombre}", f"${dca.precio_mano_obra or 0:,}"])
-        total_mo += dca.precio_mano_obra or 0
-    acciones_data.append(["Total Mano de Obra", f"${total_mo:,}"])
-
-    acciones_table = Table(acciones_data, colWidths=[290, 100])  # Ajustar colWidths
-    acciones_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('SIZE', (0, 0), (-1, 0), 14),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),
-    ]))
-    elements.append(acciones_table)
-    elements.append(Spacer(1, 12))
-
-    # Tabla de Repuestos
-    repuestos_data = [["Repuesto", "Cantidad", "Unitario", "Precio"]]
-    total_rep = 0
-    for dr in diag.repuestos.all():
-        subtotal = dr.subtotal or (dr.cantidad * (dr.precio_unitario or 0))
-        repuestos_data.append([dr.repuesto.nombre, dr.cantidad, f"${dr.precio_unitario:,}", f"${subtotal:,}"])
-        total_rep += subtotal
-    repuestos_data.append(["Total Repuestos", "", "", f"${total_rep:,}"])
-
-    repuestos_table = Table(repuestos_data, colWidths=[150, 70, 70, 100])  # Ajustar colWidths
-    repuestos_table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('SIZE', (0, 0), (-1, 0), 14),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),
-    ]))
-    elements.append(repuestos_table)
-    elements.append(Spacer(1, 12))
-
-    # Total Presupuesto
-    total_presupuesto = total_mo + total_rep
-    elements.append(Paragraph(f"<b>TOTAL PRESUPUESTO: ${total_presupuesto:,}</b>", styles["Heading2"]))
-
-    doc.build(elements)
-    return response
+    from django.http import HttpResponse
+    from django.template.loader import get_template
+    from django.conf import settings
+    import os
+    
+    logger.info(f"🔍 INICIANDO GENERACIÓN PDF - Diagnóstico ID: {pk}")
+    
+    diagnostico = get_object_or_404(Diagnostico, pk=pk)
+    logger.info(f"✅ Diagnóstico encontrado: {diagnostico.vehiculo} - Estado: {diagnostico.estado}")
+    
+    # Crear el PDF usando weasyprint
+    try:
+        from weasyprint import HTML, CSS
+        from weasyprint.text.fonts import FontConfiguration
+        logger.info("✅ WeasyPrint importado correctamente")
+        
+        # Template para el PDF
+        template = get_template('car/diagnostico_pdf.html')
+        logger.info("✅ Template cargado correctamente")
+        
+        # Preparar contexto con URLs absolutas para las imágenes
+        context = {
+            'diagnostico': diagnostico,
+            'request': request,  # Para generar URLs absolutas
+            'now': timezone.now(),
+        }
+        
+        # Log de datos del diagnóstico
+        logger.info(f"📋 Componentes: {diagnostico.componentes.count()}")
+        logger.info(f"🛠️ Acciones: {diagnostico.acciones_componentes.count()}")
+        logger.info(f"⚙️ Repuestos: {diagnostico.repuestos.count()}")
+        
+        html_content = template.render(context)
+        logger.info(f"✅ HTML renderizado - Tamaño: {len(html_content)} caracteres")
+        
+        # Configuración de fuentes
+        font_config = FontConfiguration()
+        logger.info("✅ Configuración de fuentes creada")
+        
+        # Crear el PDF
+        logger.info("🔄 Creando documento HTML para WeasyPrint...")
+        html_doc = HTML(string=html_content)
+        logger.info("✅ Documento HTML creado")
+        
+        css = CSS(string='''
+            @page {
+                size: A4;
+                margin: 1cm;
+            }
+            body {
+                font-family: Arial, sans-serif;
+                font-size: 12px;
+            }
+            .header {
+                text-align: center;
+                border-bottom: 2px solid #333;
+                padding-bottom: 10px;
+                margin-bottom: 20px;
+            }
+            .section {
+                margin-bottom: 15px;
+            }
+            .section h3 {
+                background: #f0f0f0;
+                padding: 5px;
+                margin: 0 0 10px 0;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-bottom: 10px;
+            }
+            th, td {
+                border: 1px solid #ddd;
+                padding: 5px;
+                text-align: left;
+            }
+            th {
+                background: #f0f0f0;
+            }
+            img {
+                max-width: 100%;
+                height: auto;
+            }
+        ''', font_config=font_config)
+        logger.info("✅ CSS aplicado")
+        
+        logger.info("🔄 Generando PDF con WeasyPrint...")
+        pdf_file = html_doc.write_pdf(stylesheets=[css], font_config=font_config)
+        logger.info(f"✅ PDF generado exitosamente - Tamaño: {len(pdf_file)} bytes")
+        
+        response = HttpResponse(pdf_file, content_type='application/pdf')
+        response['Content-Disposition'] = f'inline; filename="diagnostico_{diagnostico.id}_estado.pdf"'
+        response['Content-Length'] = str(len(pdf_file))
+        response['X-Content-Type-Options'] = 'nosniff'
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response['Pragma'] = 'no-cache'
+        response['Expires'] = '0'
+        logger.info("✅ Respuesta HTTP creada")
+        return response
+        
+    except ImportError as e:
+        logger.error(f"❌ ERROR: WeasyPrint no está disponible: {str(e)}")
+        # Si weasyprint no está disponible, usar una alternativa simple
+        from django.http import HttpResponse
+        content = f"Error: WeasyPrint no está instalado o configurado correctamente para generar PDFs. Por favor, instálalo: pip install WeasyPrint. Error: {str(e)}"
+        response = HttpResponse(content, content_type='text/plain')
+        response['Content-Disposition'] = f'attachment; filename="diagnostico_{diagnostico.id}_estado.txt"'
+        return response
+        
+    except Exception as e:
+        logger.error(f"❌ ERROR GENERAL generando PDF: {str(e)}")
+        logger.error(f"❌ Tipo de error: {type(e).__name__}")
+        import traceback
+        logger.error(f"❌ Traceback completo: {traceback.format_exc()}")
+        
+        # Respuesta de error
+        from django.http import HttpResponse
+        response = HttpResponse(content_type='text/plain')
+        response['Content-Disposition'] = f'attachment; filename="error_diagnostico_{diagnostico.id}.txt"'
+        response.write(f"Error generando PDF: {str(e)}")
+        return response
 
 
 # ---- CLIENTES ----
@@ -2301,7 +2702,7 @@ def repuesto_lookup(request):
 
 @login_required
 def buscar_insumos(request):
-    """Buscar insumos para la pestaña de insumos en trabajos - Búsqueda amplia sin filtros"""
+    """Buscar insumos para la pestaña de insumos en trabajos y diagnósticos - Búsqueda amplia sin filtros"""
     query = request.GET.get('q', '').strip()
     
     if len(query) < 2:
@@ -3052,16 +3453,62 @@ def gestion_usuarios(request):
             username = request.POST.get('username')
             password = request.POST.get('password')
             rol = request.POST.get('rol', 'mecanico')
+            # Nuevos campos
+            first_name = request.POST.get('first_name', '').strip()
+            last_name = request.POST.get('last_name', '').strip()
+            email = request.POST.get('email', '').strip()
             
             if User.objects.filter(username=username).exists():
                 messages.error(request, f"El usuario '{username}' ya existe")
             else:
-                user = User.objects.create_user(username=username, password=password)
+                user = User.objects.create_user(
+                    username=username, 
+                    password=password,
+                    first_name=first_name,
+                    last_name=last_name,
+                    email=email
+                )
                 mecanico = Mecanico.objects.create(
                     user=user,
                     rol=rol
                 )
-                messages.success(request, f"Usuario '{username}' creado como {mecanico.get_rol_display()}")
+                messages.success(request, f"✅ Usuario '{username}' creado como {mecanico.get_rol_display()}")
+        
+        elif action == 'editar_usuario':
+            user_id = request.POST.get('user_id')
+            first_name = request.POST.get('first_name', '').strip()
+            last_name = request.POST.get('last_name', '').strip()
+            email = request.POST.get('email', '').strip()
+            is_active = request.POST.get('is_active') == 'on'
+            
+            try:
+                user = User.objects.get(id=user_id)
+                user.first_name = first_name
+                user.last_name = last_name
+                user.email = email
+                user.is_active = is_active
+                user.save()
+                messages.success(request, f"✅ Información de '{user.username}' actualizada exitosamente")
+            except User.DoesNotExist:
+                messages.error(request, "❌ Usuario no encontrado")
+        
+        elif action == 'cambiar_password':
+            user_id = request.POST.get('user_id')
+            new_password = request.POST.get('new_password')
+            confirm_password = request.POST.get('confirm_password')
+            
+            try:
+                if new_password != confirm_password:
+                    messages.error(request, "❌ Las contraseñas no coinciden")
+                elif len(new_password) < 4:
+                    messages.error(request, "❌ La contraseña debe tener al menos 4 caracteres")
+                else:
+                    user = User.objects.get(id=user_id)
+                    user.set_password(new_password)
+                    user.save()
+                    messages.success(request, f"✅ Contraseña de '{user.username}' cambiada exitosamente. Nueva contraseña: {new_password}")
+            except User.DoesNotExist:
+                messages.error(request, "❌ Usuario no encontrado")
         
         elif action == 'cambiar_rol':
             user_id = request.POST.get('user_id')
@@ -3072,9 +3519,9 @@ def gestion_usuarios(request):
                 mecanico = user.mecanico
                 mecanico.rol = nuevo_rol
                 mecanico.save()
-                messages.success(request, f"Rol de {user.username} cambiado a {mecanico.get_rol_display()}")
+                messages.success(request, f"✅ Rol de {user.username} cambiado a {mecanico.get_rol_display()}")
             except User.DoesNotExist:
-                messages.error(request, "Usuario no encontrado")
+                messages.error(request, "❌ Usuario no encontrado")
         
         elif action == 'toggle_permiso':
             user_id = request.POST.get('user_id')
@@ -3086,9 +3533,9 @@ def gestion_usuarios(request):
                 mecanico = user.mecanico
                 setattr(mecanico, permiso, activo)
                 mecanico.save()
-                messages.success(request, f"Permiso '{permiso}' {'activado' if activo else 'desactivado'} para {user.username}")
+                messages.success(request, f"✅ Permiso '{permiso}' {'activado' if activo else 'desactivado'} para {user.username}")
             except User.DoesNotExist:
-                messages.error(request, "Usuario no encontrado")
+                messages.error(request, "❌ Usuario no encontrado")
         
         elif action == 'eliminar_usuario':
             user_id = request.POST.get('user_id')
@@ -3096,23 +3543,31 @@ def gestion_usuarios(request):
             try:
                 user = User.objects.get(id=user_id)
                 if user == request.user:
-                    messages.error(request, "No puedes eliminar tu propio usuario")
+                    messages.error(request, "❌ No puedes eliminar tu propio usuario")
                 else:
                     username = user.username
                     user.delete()
-                    messages.success(request, f"Usuario '{username}' eliminado")
+                    messages.success(request, f"✅ Usuario '{username}' eliminado exitosamente")
             except User.DoesNotExist:
-                messages.error(request, "Usuario no encontrado")
+                messages.error(request, "❌ Usuario no encontrado")
         
         return redirect('gestion_usuarios')
     
     # Obtener configuración del taller
     config = AdministracionTaller.get_configuracion_activa()
     
+    # Estadísticas
+    total_usuarios = usuarios.count()
+    usuarios_activos = usuarios.filter(is_active=True).count()
+    usuarios_inactivos = usuarios.filter(is_active=False).count()
+    
     return render(request, 'car/gestion_usuarios.html', {
         'usuarios': usuarios,
         'roles_choices': Mecanico.ROLES_CHOICES,
         'config': config,
+        'total_usuarios': total_usuarios,
+        'usuarios_activos': usuarios_activos,
+        'usuarios_inactivos': usuarios_inactivos,
     })
 
 

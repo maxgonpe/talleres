@@ -2,6 +2,10 @@
 {% extends "base.html" %}
 {% load static %}
 {% load humanize %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+{% endblock %}
+
 {% block content %}
 <div class="container mt-4">
 

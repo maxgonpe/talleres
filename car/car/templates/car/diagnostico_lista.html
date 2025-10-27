@@ -1,33 +1,146 @@
-{% load static %}
 {% extends 'base.html' %}
+{% load static %}
 {% load humanize %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+{% endblock %}
+
 {% block content %}
 
 <style>
-/* 🎨 Mejorar contraste del texto de componentes en diagnósticos */
-.diagnostico-card .list-group-item strong {
-    color: #1a252f !important; /* Texto muy oscuro para componentes */
+/* 🎨 Mejorar contraste del texto en diagnósticos usando variables centralizadas */
+
+/* Estilos generales para cards de diagnóstico */
+.diagnostico-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.diagnostico-card .card-body {
+    color: var(--text-primary);
 }
 
 .diagnostico-card .list-group-item {
-    color: #2c3e50 !important; /* Texto oscuro para descripciones */
+    background-color: var(--bg-card);
+    border-color: var(--border-color);
+    color: var(--text-primary);
 }
 
-/* Específico para temas claros */
+.diagnostico-card .list-group-item strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+/* Mejoras específicas para tema Piedra (oscuro) */
+.theme-piedra .diagnostico-card .list-group-item strong {
+    color: #ffffff !important; /* Blanco brillante para contraste máximo */
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.theme-piedra .diagnostico-card .list-group-item {
+    color: #e6e6e6 !important; /* Gris claro brillante */
+    background-color: var(--bg-card);
+}
+
+.theme-piedra .diagnostico-card .list-group-item:hover {
+    background-color: var(--bg-secondary);
+    color: #ffffff !important;
+}
+
+/* Mejoras para tema Charcoal (oscuro) */
+.theme-charcoal .diagnostico-card .list-group-item strong {
+    color: #ffffff !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.theme-charcoal .diagnostico-card .list-group-item {
+    color: #e6e6e6 !important;
+}
+
+/* Mejoras para tema Forest (oscuro) */
+.theme-forest .diagnostico-card .list-group-item strong {
+    color: #ffffff !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.theme-forest .diagnostico-card .list-group-item {
+    color: #e6e6e6 !important;
+}
+
+/* Mejoras para tema Plum (oscuro) */
+.theme-plum .diagnostico-card .list-group-item strong {
+    color: #ffffff !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.theme-plum .diagnostico-card .list-group-item {
+    color: #e6e6e6 !important;
+}
+
+/* Mejoras para tema Cyan (oscuro) */
 .theme-cyan .diagnostico-card .list-group-item strong {
-    color: #00251a !important; /* Verde muy oscuro para cyan */
+    color: #ffffff !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 
+.theme-cyan .diagnostico-card .list-group-item {
+    color: #e6e6e6 !important;
+}
+
+/* Estilos para temas claros (mantener contraste) */
 .theme-sand .diagnostico-card .list-group-item strong {
-    color: #1c0e0a !important; /* Marrón muy oscuro para sand */
+    color: #1a1a1a !important; /* Negro profundo para contraste */
+}
+
+.theme-sand .diagnostico-card .list-group-item {
+    color: #2c2c2c !important;
 }
 
 .theme-sage .diagnostico-card .list-group-item strong {
-    color: #0d3a0f !important; /* Verde muy oscuro para sage */
+    color: #1a1a1a !important;
+}
+
+.theme-sage .diagnostico-card .list-group-item {
+    color: #2c2c2c !important;
 }
 
 .theme-sky .diagnostico-card .list-group-item strong {
-    color: #051f4a !important; /* Azul muy oscuro para sky */
+    color: #1a1a1a !important;
+}
+
+.theme-sky .diagnostico-card .list-group-item {
+    color: #2c2c2c !important;
+}
+
+/* Mejoras adicionales para badges y elementos especiales */
+.diagnostico-card .badge {
+    color: var(--text-inverse) !important;
+    font-weight: 600;
+}
+
+.theme-piedra .diagnostico-card .badge {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* Mejorar contraste de enlaces */
+.diagnostico-card a {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.diagnostico-card a:hover {
+    color: var(--accent-600);
+    text-decoration: underline;
+}
+
+.theme-piedra .diagnostico-card a {
+    color: #87ceeb !important; /* Azul claro brillante */
+}
+
+.theme-piedra .diagnostico-card a:hover {
+    color: #ffffff !important;
 }
 </style>
 <h3>Diagnósticos ➡️ Presupuestos</h3>
@@ -113,7 +226,9 @@
     <!-- ==== Botones ==== -->
     <a href="{% url 'diagnostico_excel' diagnostico.pk %}" class="btn btn-success btn-sm mt-2">Excel</a>
     <a href="{% url 'diagnostico_pdf' diagnostico.pk %}" class="btn btn-danger btn-sm mt-2">PDF</a>
-    <a href="" class="btn btn-sm btn-secondary mt-2">Editar</a>
+    <a href="{% url 'editar_diagnostico' diagnostico.pk %}" class="btn btn-sm btn-primary mt-2">
+        <i class="fas fa-edit"></i> Editar
+    </a>
     <a href="{% url 'eliminar_diagnostico' diagnostico.pk %}" class="btn btn-sm btn-danger mt-2">Eliminar</a>
     <a href="{% url 'panel_principal' %}" class="btn btn-sm btn-warning mt-2">Regresar</a>
 

@@ -1288,8 +1288,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         const accion = ACC[accionKey];
-        if (accion && accion.precio) {
-            precioDisplay.textContent = CLP.format(parseFloat(accion.precio));
+        if (accion && accion.precio_base) {
+            precioDisplay.textContent = CLP.format(parseFloat(accion.precio_base));
             precioDisplay.className = 'fw-bold text-success';
         }
     }
@@ -1435,7 +1435,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const datosAcciones = accionesSeleccionadas.map(accion => ({
             componente_id: parseInt(accion.componente_id),
             accion_id: parseInt(accion.accion_id),
-            precio_mano_obra: parseFloat(accion.precio) || 0
+            precio_mano_obra: parseFloat(accion.precio_base) || 0
         }));
         
         console.log('📤 Datos a enviar:', datosAcciones);
