@@ -1944,14 +1944,35 @@ def trabajo_detalle(request, pk):
                     
                     for accion_data in acciones_data:
                         try:
+                            from decimal import Decimal
+                            
                             componente_id = int(accion_data.get("componente_id"))
                             accion_id = int(accion_data.get("accion_id"))
-                            precio_mano_obra = accion_data.get("precio", "0")
+                            precio_recibido = accion_data.get("precio", 0)
                             
-                            print(f"DEBUG: Procesando - componente_id: {componente_id}, accion_id: {accion_id}, precio: {precio_mano_obra}")
+                            # Convertir a Decimal de forma segura
+                            try:
+                                precio_mano_obra = Decimal(str(precio_recibido))
+                            except:
+                                precio_mano_obra = Decimal('0')
+                            
+                            print(f"DEBUG: Procesando - componente_id: {componente_id}, accion_id: {accion_id}, precio_recibido: {precio_recibido}, precio_decimal: {precio_mano_obra}")
                             
                             componente = Componente.objects.get(id=componente_id)
                             accion = Accion.objects.get(id=accion_id)
+                            
+                            # 🔹 Si el precio es 0, intentar obtenerlo de ComponenteAccion
+                            if precio_mano_obra == 0:
+                                try:
+                                    comp_accion = ComponenteAccion.objects.filter(
+                                        componente=componente,
+                                        accion=accion
+                                    ).first()
+                                    if comp_accion and comp_accion.precio_mano_obra:
+                                        precio_mano_obra = comp_accion.precio_mano_obra
+                                        print(f"DEBUG: ✅ Precio obtenido de ComponenteAccion: {precio_mano_obra}")
+                                except ComponenteAccion.DoesNotExist:
+                                    print(f"DEBUG: ⚠️ No se encontró ComponenteAccion para obtener precio")
                             
                             # Verificar si ya existe esta combinación
                             if not TrabajoAccion.objects.filter(
@@ -1963,12 +1984,12 @@ def trabajo_detalle(request, pk):
                                     trabajo=trabajo,
                                     componente=componente,
                                     accion=accion,
-                                    precio_mano_obra=precio_mano_obra or 0
+                                    precio_mano_obra=precio_mano_obra
                                 )
                                 acciones_creadas += 1
-                                print(f"DEBUG: Acción creada exitosamente")
+                                print(f"DEBUG: ✅ Acción creada exitosamente con precio: {precio_mano_obra}")
                             else:
-                                print(f"DEBUG: Acción ya existe, saltando")
+                                print(f"DEBUG: ⚠️ Acción ya existe, saltando")
                                 
                         except (ValueError, Componente.DoesNotExist, Accion.DoesNotExist) as e:
                             print(f"DEBUG: Error en acción individual: {str(e)}")
@@ -2240,6 +2261,53 @@ def trabajo_detalle(request, pk):
             rep.save()
             messages.success(request, f"Repuesto '{rep.repuesto.nombre}' actualizado.")
             return redirect("trabajo_detalle", pk=trabajo.pk)
+
+        # ========================
+        # 💵 GESTIÓN DE ABONOS
+        # ========================
+        elif "agregar_abono" in request.POST:
+            from .models import TrabajoAbono
+            from decimal import Decimal
+            
+            monto = request.POST.get("monto_abono")
+            metodo_pago = request.POST.get("metodo_pago", "efectivo")
+            descripcion = request.POST.get("descripcion_abono", "").strip()
+            
+            try:
+                monto_decimal = Decimal(monto)
+                if monto_decimal <= 0:
+                    messages.error(request, "❌ El monto del abono debe ser mayor a cero.")
+                else:
+                    abono = TrabajoAbono.objects.create(
+                        trabajo=trabajo,
+                        monto=monto_decimal,
+                        metodo_pago=metodo_pago,
+                        descripcion=descripcion,
+                        usuario=request.user
+                    )
+                    messages.success(request, f"✅ Abono de ${monto_decimal:,.0f} registrado exitosamente.")
+            except (ValueError, TypeError):
+                messages.error(request, "❌ El monto ingresado no es válido.")
+            except Exception as e:
+                messages.error(request, f"❌ Error al registrar el abono: {str(e)}")
+            
+            return redirect_with_tab("abonos")
+        
+        elif "eliminar_abono" in request.POST:
+            from .models import TrabajoAbono
+            
+            abono_id = request.POST.get("abono_id")
+            try:
+                abono = TrabajoAbono.objects.get(id=abono_id, trabajo=trabajo)
+                monto = abono.monto
+                abono.delete()
+                messages.success(request, f"✅ Abono de ${monto:,.0f} eliminado exitosamente.")
+            except TrabajoAbono.DoesNotExist:
+                messages.error(request, "❌ Abono no encontrado.")
+            except Exception as e:
+                messages.error(request, f"❌ Error al eliminar el abono: {str(e)}")
+            
+            return redirect_with_tab("abonos")
 
     # 🔹 Detectar pestaña activa desde parámetros URL
     active_tab = request.GET.get('tab', 'info')

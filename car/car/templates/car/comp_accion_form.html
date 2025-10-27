@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if modo == 'editar' %}Editar{% else %}Crear{% endif %} Precio de Mano de Obra{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+{% endblock %}
+
+{% block extra_head %}
+<style>
+    .form-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 0 var(--spacing-md);
+    }
+    
+    .form-card {
+        background: var(--card-bg);
+        border-radius: var(--border-radius-xl);
+        padding: var(--spacing-lg);
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--border-color);
+    }
+    
+    .form-header {
+        background: linear-gradient(135deg, var(--btn-bg) 0%, var(--muted) 100%);
+        color: var(--btn-fg);
+        padding: var(--spacing-md);
+        border-radius: var(--border-radius-lg);
+        margin-bottom: var(--spacing-md);
+        text-align: center;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: var(--fg);
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    
+    .form-control,
+    .form-select {
+        background: var(--card-bg);
+        border: 2px solid var(--muted);
+        color: var(--fg);
+        padding: 0.75rem;
+        border-radius: var(--border-radius-md);
+        width: 100%;
+    }
+    
+    .form-control:focus,
+    .form-select:focus {
+        background: var(--card-bg);
+        border-color: var(--primary-600);
+        color: var(--fg);
+        outline: none;
+        box-shadow: 0 0 0 0.2rem var(--primary-200);
+    }
+    
+    .btn-group-custom {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 2rem;
+    }
+    
+    .btn-action {
+        flex: 1;
+        padding: 0.75rem 1.5rem;
+        border-radius: var(--border-radius-full);
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-primary-custom {
+        background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
+        color: var(--text-inverse);
+    }
+    
+    .btn-primary-custom:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .btn-secondary-custom {
+        background: var(--muted);
+        color: var(--fg);
+    }
+    
+    .btn-secondary-custom:hover {
+        background: var(--hover-bg);
+        transform: translateY(-2px);
+    }
+    
+    .help-text {
+        font-size: 0.875rem;
+        color: var(--muted);
+        margin-top: 0.25rem;
+    }
+    
+    .current-value {
+        background: var(--muted);
+        padding: var(--spacing-sm);
+        border-radius: var(--border-radius-sm);
+        margin-bottom: var(--spacing-md);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <div class="form-header">
+        <h3 class="mb-0">
+            {% if modo == 'editar' %}
+                ✏️ Editar Precio de Mano de Obra
+            {% else %}
+                ➕ Crear Precio de Mano de Obra
+            {% endif %}
+        </h3>
+    </div>
+
+    <div class="form-card">
+        {% if modo == 'editar' and obj %}
+        <div class="current-value">
+            <strong>📋 Editando:</strong> {{ obj.componente.nombre }} - {{ obj.accion.nombre }}
+            <br>
+            <small class="text-secondary">Precio actual: ${{ obj.precio_mano_obra|floatformat:0 }}</small>
+        </div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label class="form-label">Componente *</label>
+                {{ form.componente }}
+                {% if form.componente.errors %}
+                    <div class="text-danger mt-1">{{ form.componente.errors }}</div>
+                {% endif %}
+                <small class="help-text">Selecciona el componente del vehículo</small>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Acción *</label>
+                {{ form.accion }}
+                {% if form.accion.errors %}
+                    <div class="text-danger mt-1">{{ form.accion.errors }}</div>
+                {% endif %}
+                <small class="help-text">Selecciona la acción a realizar</small>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Precio de Mano de Obra *</label>
+                {{ form.precio_mano_obra }}
+                {% if form.precio_mano_obra.errors %}
+                    <div class="text-danger mt-1">{{ form.precio_mano_obra.errors }}</div>
+                {% endif %}
+                <small class="help-text">Ingresa el precio en pesos (sin puntos ni comas)</small>
+            </div>
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <div class="btn-group-custom">
+                <button type="submit" class="btn-action btn-primary-custom">
+                    {% if modo == 'editar' %}
+                        💾 Guardar Cambios
+                    {% else %}
+                        ➕ Crear Precio
+                    {% endif %}
+                </button>
+                <a href="{% url 'comp_accion_list' %}" class="btn-action btn-secondary-custom">
+                    ← Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Aplicar tema automáticamente
+document.addEventListener('DOMContentLoaded', function() {
+    const saved = localStorage.getItem("theme") || "piedra";
+    document.body.className = `theme-${saved}`;
+});
+</script>
+{% endblock %}
+
+

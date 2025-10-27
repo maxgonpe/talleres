@@ -49,6 +49,41 @@
     flex-grow: 1; 
   }
   
+  .dias-taller {
+    display: inline-block;
+    background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-left: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+  
+  .dias-taller.pocos {
+    background: linear-gradient(135deg, #51cf66, #37b24d);
+  }
+  
+  .dias-taller.medios {
+    background: linear-gradient(135deg, #ffd43b, #fab005);
+  }
+  
+  .dias-taller.muchos {
+    background: linear-gradient(135deg, #ff6b6b, #c92a2a);
+  }
+  
+  .dias-taller.entregado {
+    background: linear-gradient(135deg, #868e96, #495057);
+    animation: none;
+  }
+  
   .progress { 
     height: 8px; 
     margin-top: var(--spacing-xs);
@@ -83,7 +118,13 @@
           <span class="vehiculo-icon">🚗</span>
         </a>
         <div class="vehiculo-info">
-          <span class="placa-chile">{{ t.vehiculo.placa|default:"(sin patente)" }}</span><strong> - {{ t.vehiculo.cliente.nombre }}</strong>
+          <div>
+            <span class="placa-chile">{{ t.vehiculo.placa|default:"(sin patente)" }}</span>
+            <strong> - {{ t.vehiculo.cliente.nombre }}</strong>
+            <span class="dias-taller {% if t.dias_en_taller <= 2 %}pocos{% elif t.dias_en_taller <= 5 %}medios{% else %}muchos{% endif %}">
+              📅 {{ t.dias_en_taller_texto }}
+            </span>
+          </div>
           <div class="progress">
             <div class="progress-bar bg-warning" style="width: {{ t.porcentaje_avance }}%;">{{ t.porcentaje_avance }}%</div>
           </div>
@@ -103,7 +144,13 @@
           <span class="vehiculo-icon">🚙</span>
         </a>
         <div class="vehiculo-info">
-          <span class="placa-chile">{{ t.vehiculo.placa|default:"(sin patente)" }}</span><strong> - {{ t.vehiculo.cliente.nombre }}</strong>
+          <div>
+            <span class="placa-chile">{{ t.vehiculo.placa|default:"(sin patente)" }}</span>
+            <strong> - {{ t.vehiculo.cliente.nombre }}</strong>
+            <span class="dias-taller {% if t.dias_en_taller <= 2 %}pocos{% elif t.dias_en_taller <= 5 %}medios{% else %}muchos{% endif %}">
+              📅 {{ t.dias_en_taller_texto }}
+            </span>
+          </div>
           <div class="progress">
             <div class="progress-bar bg-primary" style="width: {{ t.porcentaje_avance }}%;">{{ t.porcentaje_avance }}%</div>
           </div>
@@ -123,7 +170,13 @@
           <span class="vehiculo-icon">🚕</span>
         </a>
         <div class="vehiculo-info">
-          <span class="placa-chile">{{ t.vehiculo.placa|default:"(sin patente)" }}</span><strong> - {{ t.vehiculo.cliente.nombre }}</strong>
+          <div>
+            <span class="placa-chile">{{ t.vehiculo.placa|default:"(sin patente)" }}</span>
+            <strong> - {{ t.vehiculo.cliente.nombre }}</strong>
+            <span class="dias-taller {% if t.dias_en_taller <= 2 %}pocos{% elif t.dias_en_taller <= 5 %}medios{% else %}muchos{% endif %}">
+              📅 {{ t.dias_en_taller_texto }}
+            </span>
+          </div>
           <div class="progress">
             <div class="progress-bar bg-success" style="width: {{ t.porcentaje_avance }}%;">{{ t.porcentaje_avance }}%</div>
           </div>
@@ -143,7 +196,13 @@
           <span class="vehiculo-icon">🚐</span>
         </a>
         <div class="vehiculo-info">
-          <span class="placa-chile">{{ t.vehiculo.placa|default:"(sin patente)" }}</span><strong> - {{ t.vehiculo.cliente.nombre }}</strong>
+          <div>
+            <span class="placa-chile">{{ t.vehiculo.placa|default:"(sin patente)" }}</span>
+            <strong> - {{ t.vehiculo.cliente.nombre }}</strong>
+            <span class="dias-taller entregado">
+              📅 {{ t.dias_en_taller_texto }}
+            </span>
+          </div>
           <div class="progress">
             <div class="progress-bar bg-primary" style="width: {{ t.porcentaje_avance }}%;">{{ t.porcentaje_avance }}%</div>
           </div>

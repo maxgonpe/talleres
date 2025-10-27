@@ -270,6 +270,82 @@
         font-size: 0.85rem;
         font-weight: 500;
         text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+    
+    /* Contador de días en taller */
+    .dias-taller {
+        display: inline-block;
+        padding: 0.2rem 0.5rem;
+        border-radius: var(--border-radius-sm);
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-top: 0.25rem;
+        text-shadow: none;
+        white-space: nowrap;
+    }
+    
+    .dias-taller.pocos {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    
+    .dias-taller.medios {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+        animation: pulse-warning 2s ease-in-out infinite;
+    }
+    
+    .dias-taller.muchos {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+        animation: pulse-danger 1.5s ease-in-out infinite;
+    }
+    
+    .dias-taller.entregado {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+    }
+    
+    /* Animaciones para alertar sobre permanencia prolongada */
+    @keyframes pulse-warning {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+    
+    @keyframes pulse-danger {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.8; transform: scale(1.05); }
+    }
+    
+    /* Modo oscuro - ajustes de color para días en taller */
+    .theme-oscuro .dias-taller.pocos {
+        background: #1e4620;
+        color: #a3e6a9;
+        border-color: #2d682f;
+    }
+    
+    .theme-oscuro .dias-taller.medios {
+        background: #4a3c0f;
+        color: #ffd966;
+        border-color: #6b5720;
+    }
+    
+    .theme-oscuro .dias-taller.muchos {
+        background: #4a1e1e;
+        color: #ff9999;
+        border-color: #6b2929;
+    }
+    
+    .theme-oscuro .dias-taller.entregado {
+        background: #0f3540;
+        color: #7dd3e0;
+        border-color: #1a4f5c;
     }
     
     .progress {
@@ -471,6 +547,9 @@
                                         <span class="vehiculo-placa">{{ trabajo.vehiculo.placa|default:"(sin patente)" }}</span>
                                     </a>
                                     <span class="vehiculo-cliente">{{ trabajo.vehiculo.cliente.nombre }}</span>
+                                    <span class="dias-taller {{ trabajo.dias_en_taller_texto.css_class }}">
+                                        ⏱️ {{ trabajo.dias_en_taller_texto.texto }}
+                                    </span>
                                 </div>
                             </div>
                             <div class="progress">
@@ -498,6 +577,9 @@
                                         <span class="vehiculo-placa">{{ trabajo.vehiculo.placa|default:"(sin patente)" }}</span>
                                     </a>
                                     <span class="vehiculo-cliente">{{ trabajo.vehiculo.cliente.nombre }}</span>
+                                    <span class="dias-taller {{ trabajo.dias_en_taller_texto.css_class }}">
+                                        ⏱️ {{ trabajo.dias_en_taller_texto.texto }}
+                                    </span>
                                 </div>
                             </div>
                             <div class="progress">
@@ -525,6 +607,9 @@
                                         <span class="vehiculo-placa">{{ trabajo.vehiculo.placa|default:"(sin patente)" }}</span>
                                     </a>
                                     <span class="vehiculo-cliente">{{ trabajo.vehiculo.cliente.nombre }}</span>
+                                    <span class="dias-taller {{ trabajo.dias_en_taller_texto.css_class }}">
+                                        ⏱️ {{ trabajo.dias_en_taller_texto.texto }}
+                                    </span>
                                 </div>
                             </div>
                             <div class="progress">
@@ -552,6 +637,9 @@
                                         <span class="vehiculo-placa">{{ trabajo.vehiculo.placa|default:"(sin patente)" }}</span>
                                     </a>
                                     <span class="vehiculo-cliente">{{ trabajo.vehiculo.cliente.nombre }}</span>
+                                    <span class="dias-taller {{ trabajo.dias_en_taller_texto.css_class }}">
+                                        ⏱️ {{ trabajo.dias_en_taller_texto.texto }}
+                                    </span>
                                 </div>
                             </div>
                             <div class="progress">

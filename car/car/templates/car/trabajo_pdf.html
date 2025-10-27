@@ -332,7 +332,7 @@
                 <tbody>
                     {% for accion in trabajo.acciones.all %}
                         <tr>
-                            <td>{{ accion.componente.nombre }}</td>
+                            <td>{{ accion.componente.nombre|capfirst }}</td>
                             <td>{{ accion.accion.nombre }}</td>
                             <td>
                                 {% if accion.completado %}
@@ -423,10 +423,91 @@
     </div>
     {% endif %}
 
-    <!-- Total -->
-    <div class="total-section">
-        <h3>💰 Total del Trabajo</h3>
-        <div class="total-amount">${{ trabajo.total_general|default:0|floatformat:0|intcomma }}</div>
+    <!-- Abonos -->
+    {% if trabajo.abonos.all %}
+    <div class="section">
+        <h3>💵 Abonos Registrados</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Monto</th>
+                    <th>Método</th>
+                    <th>Descripción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for abono in trabajo.abonos.all %}
+                    <tr>
+                        <td>{{ abono.fecha|date:"d/m/Y H:i" }}</td>
+                        <td>${{ abono.monto|floatformat:0|intcomma }}</td>
+                        <td>
+                            {% if abono.metodo_pago == 'efectivo' %}Efectivo
+                            {% elif abono.metodo_pago == 'tarjeta' %}Tarjeta
+                            {% elif abono.metodo_pago == 'transferencia' %}Transferencia
+                            {% elif abono.metodo_pago == 'cheque' %}Cheque
+                            {% else %}Otro
+                            {% endif %}
+                        </td>
+                        <td>{{ abono.descripcion|default:"-" }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Resumen Financiero -->
+    <div class="section">
+        <h3>💰 Resumen Financiero</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th colspan="2">Concepto</th>
+                    <th style="text-align: right;">Monto</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td colspan="2"><strong>Total Presupuestado (Mano de Obra + Repuestos)</strong></td>
+                    <td style="text-align: right;"><strong>${{ trabajo.total_presupuesto|floatformat:0|intcomma }}</strong></td>
+                </tr>
+                <tr>
+                    <td style="padding-left: 20px;">Mano de Obra</td>
+                    <td></td>
+                    <td style="text-align: right;">${{ trabajo.total_mano_obra|floatformat:0|intcomma }}</td>
+                </tr>
+                <tr>
+                    <td style="padding-left: 20px;">Repuestos</td>
+                    <td></td>
+                    <td style="text-align: right;">${{ trabajo.total_repuestos|floatformat:0|intcomma }}</td>
+                </tr>
+                <tr style="background: #e7f9ef;">
+                    <td colspan="2"><strong>Total Realizado (Solo completados)</strong></td>
+                    <td style="text-align: right;"><strong>${{ trabajo.total_realizado|floatformat:0|intcomma }}</strong></td>
+                </tr>
+                <tr>
+                    <td style="padding-left: 20px;">Mano de Obra</td>
+                    <td></td>
+                    <td style="text-align: right;">${{ trabajo.total_realizado_mano_obra|floatformat:0|intcomma }}</td>
+                </tr>
+                <tr>
+                    <td style="padding-left: 20px;">Repuestos</td>
+                    <td></td>
+                    <td style="text-align: right;">${{ trabajo.total_realizado_repuestos|floatformat:0|intcomma }}</td>
+                </tr>
+                <tr style="background: #fff3cd;">
+                    <td colspan="2"><strong>(-) Total Abonos</strong></td>
+                    <td style="text-align: right;"><strong>-${{ trabajo.total_abonos|floatformat:0|intcomma }}</strong></td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr style="background: {% if trabajo.saldo_pendiente > 0 %}#f8d7da{% else %}#d1e7dd{% endif %};">
+                    <td colspan="2"><strong style="font-size: 14px;">SALDO PENDIENTE</strong></td>
+                    <td style="text-align: right;"><strong style="font-size: 16px; color: {% if trabajo.saldo_pendiente > 0 %}#dc3545{% else %}#198754{% endif %};">${{ trabajo.saldo_pendiente|floatformat:0|intcomma }}</strong></td>
+                </tr>
+            </tfoot>
+        </table>
     </div>
 
     <!-- Footer -->

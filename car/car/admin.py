@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import (
     Cliente, Cliente_Taller, Vehiculo, Mecanico,
     Diagnostico, DiagnosticoComponenteAccion, DiagnosticoRepuesto,
-    Trabajo, TrabajoAccion, TrabajoRepuesto,TrabajoFoto,
+    Trabajo, TrabajoAccion, TrabajoRepuesto, TrabajoFoto, TrabajoAbono,
     Componente, Accion, ComponenteAccion,
     Repuesto, RepuestoEnStock, StockMovimiento,
     VehiculoVersion, ComponenteRepuesto, RepuestoAplicacion,
@@ -125,12 +125,27 @@ class TrabajoRepuestoInline(admin.TabularInline):
     autocomplete_fields = ['repuesto']
 
 
+class TrabajoAbonoInline(admin.TabularInline):
+    model = TrabajoAbono
+    extra = 0
+    readonly_fields = ['fecha', 'usuario']
+    fields = ['fecha', 'monto', 'metodo_pago', 'descripcion', 'usuario']
+
+
 @admin.register(Trabajo)
 class TrabajoAdmin(admin.ModelAdmin):
     list_display = ('id', 'vehiculo', 'estado', 'fecha_inicio', 'fecha_fin')
     list_filter = ('estado', 'fecha_inicio', 'fecha_fin')
     search_fields = ('vehiculo__placa', 'vehiculo__marca')
-    inlines = [TrabajoAccionInline, TrabajoRepuestoInline]
+    inlines = [TrabajoAccionInline, TrabajoRepuestoInline, TrabajoAbonoInline]
+
+
+@admin.register(TrabajoAbono)
+class TrabajoAbonoAdmin(admin.ModelAdmin):
+    list_display = ('id', 'trabajo', 'fecha', 'monto', 'metodo_pago', 'usuario')
+    list_filter = ('metodo_pago', 'fecha')
+    search_fields = ('trabajo__id', 'descripcion')
+    readonly_fields = ['fecha']
 
 
 # ======================

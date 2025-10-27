@@ -736,20 +736,78 @@ class Trabajo(models.Model):
     def __str__(self):
         return f"Trabajo #{self.id} - {self.vehiculo}"
 
+    # ========================
+    # TOTALES PRESUPUESTADOS (TODO)
+    # ========================
     @property
     def total_mano_obra(self):
+        """Total de mano de obra presupuestada (TODAS las acciones)"""
         return sum(a.precio_mano_obra for a in self.acciones.all())
 
     @property
     def total_repuestos(self):
+        """Total de repuestos presupuestados (TODOS los repuestos)"""
         return sum(r.subtotal or 0 for r in self.repuestos.all())
 
     @property
     def total_general(self):
+        """Total presupuestado completo (TODO el trabajo)"""
         return self.total_mano_obra + self.total_repuestos
+    
+    # Alias para mayor claridad
+    @property
+    def total_presupuesto(self):
+        """Alias de total_general - Total presupuestado"""
+        return self.total_general
 
+    # ========================
+    # TOTALES REALIZADOS (COMPLETADOS)
+    # ========================
+    @property
+    def total_realizado_mano_obra(self):
+        """Total de mano de obra REALIZADA (solo acciones completadas)"""
+        return sum(
+            a.precio_mano_obra 
+            for a in self.acciones.filter(completado=True)
+        )
+    
+    @property
+    def total_realizado_repuestos(self):
+        """Total de repuestos INSTALADOS (solo repuestos completados)"""
+        return sum(
+            r.subtotal or 0 
+            for r in self.repuestos.filter(completado=True)
+        )
+    
+    @property
+    def total_realizado(self):
+        """Total de trabajo REALIZADO hasta el momento"""
+        return self.total_realizado_mano_obra + self.total_realizado_repuestos
+
+    # ========================
+    # ABONOS Y SALDOS
+    # ========================
+    @property
+    def total_abonos(self):
+        """Total de abonos/pagos parciales recibidos"""
+        return sum(abono.monto for abono in self.abonos.all())
+    
+    @property
+    def saldo_pendiente(self):
+        """Saldo que falta por cobrar (Total Realizado - Abonos)"""
+        return self.total_realizado - self.total_abonos
+    
+    @property
+    def saldo_presupuesto(self):
+        """Diferencia entre lo presupuestado y lo realizado"""
+        return self.total_presupuesto - self.total_realizado
+
+    # ========================
+    # PORCENTAJE DE AVANCE
+    # ========================
     @property
     def porcentaje_avance(self):
+        """Porcentaje de avance basado en items completados"""
         acciones_total = self.acciones.count()
         repuestos_total = self.repuestos.count()
         total_items = acciones_total + repuestos_total
@@ -762,6 +820,70 @@ class Trabajo(models.Model):
         completados = acciones_completadas + repuestos_instalados
 
         return int((completados / total_items) * 100)
+    
+    @property
+    def porcentaje_cobrado(self):
+        """Porcentaje cobrado del total realizado"""
+        if self.total_realizado == 0:
+            return 0
+        return int((self.total_abonos / self.total_realizado) * 100)
+    
+    # ========================
+    # DÍAS EN EL TALLER
+    # ========================
+    @property
+    def dias_en_taller(self):
+        """
+        Calcula cuántos días ha estado el vehículo en el taller.
+        Si está entregado, cuenta hasta fecha_fin.
+        Si no está entregado, cuenta hasta hoy.
+        """
+        from django.utils import timezone
+        from datetime import datetime
+        
+        if not self.fecha_inicio:
+            return 0
+        
+        # Si está entregado, usar fecha_fin
+        if self.estado == 'entregado' and self.fecha_fin:
+            fecha_final = self.fecha_fin
+        else:
+            # Si no está entregado, usar fecha actual
+            fecha_final = timezone.now()
+        
+        # Calcular diferencia en días
+        diferencia = fecha_final - self.fecha_inicio
+        return diferencia.days
+    
+    @property
+    def dias_en_taller_texto(self):
+        """
+        Retorna el texto formateado de días en taller con su clase CSS
+        """
+        dias = self.dias_en_taller
+        
+        # Determinar el texto
+        if dias == 0:
+            texto = "Hoy"
+        elif dias == 1:
+            texto = "1 día"
+        else:
+            texto = f"{dias} días"
+        
+        # Determinar la clase CSS según el rango de días
+        if self.estado == 'entregado':
+            css_class = "entregado"
+        elif dias <= 3:
+            css_class = "pocos"
+        elif dias <= 7:
+            css_class = "medios"
+        else:
+            css_class = "muchos"
+        
+        return {
+            'texto': texto,
+            'css_class': css_class
+        }
 
 class TrabajoFoto(models.Model):
     trabajo = models.ForeignKey(Trabajo, on_delete=models.CASCADE, related_name="fotos")
@@ -803,6 +925,41 @@ class TrabajoRepuesto(models.Model):
 
     def __str__(self):
         return f"{self.repuesto} (x{self.cantidad})"
+
+
+class TrabajoAbono(models.Model):
+    """
+    Modelo para registrar abonos/pagos parciales del cliente
+    mientras el vehículo está en el taller
+    """
+    METODOS_PAGO = [
+        ("efectivo", "Efectivo"),
+        ("tarjeta", "Tarjeta"),
+        ("transferencia", "Transferencia"),
+        ("cheque", "Cheque"),
+        ("otro", "Otro"),
+    ]
+    
+    trabajo = models.ForeignKey(Trabajo, on_delete=models.CASCADE, related_name="abonos")
+    fecha = models.DateTimeField(auto_now_add=True)
+    monto = models.DecimalField(max_digits=12, decimal_places=2)
+    metodo_pago = models.CharField(max_length=20, choices=METODOS_PAGO, default="efectivo")
+    descripcion = models.TextField(blank=True, null=True, help_text="Descripción o nota del abono")
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.SET_NULL, 
+        null=True,
+        help_text="Usuario que registró el abono"
+    )
+    
+    class Meta:
+        ordering = ['-fecha']
+        verbose_name = "Abono de Trabajo"
+        verbose_name_plural = "Abonos de Trabajos"
+    
+    def __str__(self):
+        return f"Abono ${self.monto} - {self.get_metodo_pago_display()} - {self.fecha.strftime('%d/%m/%Y')}"
+
 
 # ventas/models.py  (puedes ponerlo en la app extintores o crear app nueva "ventas")
 

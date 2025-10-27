@@ -4,6 +4,71 @@
 
 {% block extra_css %}
   <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+  <style>
+    /* Pestañas temporales para diagnósticos */
+    .tiempo-tabs {
+      display: flex;
+      gap: var(--spacing-xs);
+      margin-bottom: var(--spacing-lg);
+      overflow-x: auto;
+      padding: var(--spacing-xs);
+      background: var(--bg-card);
+      border-radius: var(--border-radius-lg);
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .tiempo-tab {
+      flex: 1;
+      min-width: 120px;
+      padding: var(--spacing-sm) var(--spacing-md);
+      background: var(--bg);
+      border: 2px solid var(--border-color);
+      border-radius: var(--border-radius);
+      color: var(--text-primary);
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-align: center;
+      cursor: pointer;
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+    
+    .tiempo-tab:hover {
+      background: var(--hover-bg);
+      transform: translateY(-2px);
+    }
+    
+    .tiempo-tab.active {
+      background: var(--primary-600);
+      color: var(--text-inverse);
+      border-color: var(--primary-600);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .tiempo-tab .count {
+      display: block;
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-top: 0.25rem;
+    }
+    
+    @media (max-width: 768px) {
+      .tiempo-tabs {
+        flex-wrap: nowrap;
+        gap: var(--spacing-xs);
+      }
+      
+      .tiempo-tab {
+        min-width: 90px;
+        padding: var(--spacing-xs) var(--spacing-sm);
+        font-size: 0.8rem;
+      }
+      
+      .tiempo-tab .count {
+        font-size: 1rem;
+      }
+    }
+  </style>
 {% endblock %}
 
 {% block content %}
@@ -16,10 +81,109 @@
     background-color: var(--bg-card);
     border: 1px solid var(--border-color);
     color: var(--text-primary);
+    position: relative;
+    overflow: hidden;
 }
 
+/* Ribbon/Triángulo APROBADO en esquina superior derecha */
+.diagnostico-card.aprobado::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 0 80px 80px 0;
+    border-color: transparent #28a745 transparent transparent;
+    z-index: 5;
+    pointer-events: none;
+}
+
+.diagnostico-card.aprobado::after {
+    content: '✅';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    color: white;
+    font-size: 2rem;
+    font-weight: 900;
+    z-index: 6;
+    pointer-events: none;
+    transform: rotate(0deg);
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Badge "APROBADO" adicional debajo del triángulo */
+.diagnostico-card.aprobado .card-body::before {
+    content: 'APROBADO';
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: #28a745;
+    color: white;
+    padding: 8px 20px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    border-radius: 20px;
+    z-index: 4;
+    pointer-events: none;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Contenido sobre la marca de agua */
 .diagnostico-card .card-body {
-    color: var(--text-primary);
+    position: relative;
+    z-index: 2;
+}
+
+/* Botón ACEPTAR destacado */
+.btn-aceptar-destacado {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+    border: 3px solid #28a745 !important;
+    color: white !important;
+    font-size: 1.2rem !important;
+    font-weight: 700 !important;
+    padding: 0.75rem 2rem !important;
+    border-radius: 50px !important;
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4) !important;
+    transition: all 0.3s ease !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+    animation: pulse-aceptar 2s ease-in-out infinite;
+}
+
+.btn-aceptar-destacado:hover {
+    background: linear-gradient(135deg, #20c997 0%, #28a745 100%) !important;
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.6) !important;
+    transform: translateY(-2px) scale(1.05) !important;
+}
+
+.btn-aceptar-destacado:active {
+    transform: translateY(0) scale(1) !important;
+}
+
+@keyframes pulse-aceptar {
+    0%, 100% {
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+    }
+    50% {
+        box-shadow: 0 4px 25px rgba(40, 167, 69, 0.7);
+    }
+}
+
+/* Badge APROBADO */
+.badge-aprobado-grande {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+    color: white !important;
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    padding: 0.5rem 1.5rem !important;
+    border-radius: 25px !important;
+    box-shadow: 0 2px 10px rgba(40, 167, 69, 0.3) !important;
+    border: 2px solid rgba(255, 255, 255, 0.3) !important;
 }
 
 .diagnostico-card .list-group-item {
@@ -147,8 +311,28 @@
 
 <input type="text" id="filterInput" class="form-control my-2" placeholder="Buscar por vehículo, cliente, teléfono, diagnóstico, partes...">
 
+<!-- Pestañas de filtrado temporal -->
+<div class="tiempo-tabs">
+  <div class="tiempo-tab active" data-tiempo="todos">
+    <span>🔍 Todos</span>
+    <span class="count" id="count-todos">{{ diagnosticos|length }}</span>
+  </div>
+  <div class="tiempo-tab" data-tiempo="hoy">
+    <span>📅 Hoy</span>
+    <span class="count" id="count-hoy">0</span>
+  </div>
+  <div class="tiempo-tab" data-tiempo="semana">
+    <span>📆 Esta Semana</span>
+    <span class="count" id="count-semana">0</span>
+  </div>
+  <div class="tiempo-tab" data-tiempo="antiguos">
+    <span>📜 Más de 2 Semanas</span>
+    <span class="count" id="count-antiguos">0</span>
+  </div>
+</div>
+
 {% for diagnostico in diagnosticos %}
-<div class="card mb-3 diagnostico-card">
+<div class="card mb-3 diagnostico-card diagnostico-item {% if diagnostico.estado == 'aprobado' %}aprobado{% endif %}" data-fecha="{{ diagnostico.fecha|date:'Y-m-d' }}">
   <div class="card-body">
     <strong>Vehículo:</strong> {{ diagnostico.vehiculo }}<br>
     
@@ -234,11 +418,11 @@
 
     <!-- ==== Botón Aceptar / Estado ==== -->
     {% if diagnostico.estado == "pendiente" %}
-      <a href="{% url 'aprobar_diagnostico' diagnostico.pk %}" class="btn btn-sm btn-primary mt-2">
-        ✅ Aceptar
+      <a href="{% url 'aprobar_diagnostico' diagnostico.pk %}" class="btn btn-aceptar-destacado mt-3">
+        ✅ Aceptar Presupuesto
       </a>
     {% elif diagnostico.estado == "aprobado" %}
-      <span class="btn btn-sm btn-success mt-2">✅ Aprobado</span>
+      <span class="badge badge-aprobado-grande mt-3">✅ Presupuesto Aprobado</span>
     {% endif %}
 
   </div>
@@ -250,17 +434,105 @@
 <a href="javascript:history.back()" class="btn btn-sm btn-warning mt-2">Regresar</a>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-  const filterInput = document.getElementById('filterInput');
-  const cards = document.querySelectorAll('.card');
+let tiempoActivo = 'todos';
 
+document.addEventListener('DOMContentLoaded', function () {
+  // Contar diagnósticos por tiempo
+  contarDiagnosticos();
+  
+  // Filtro de búsqueda
+  const filterInput = document.getElementById('filterInput');
+  const diagnosticoItems = document.querySelectorAll('.diagnostico-item');
+  
   filterInput.addEventListener('keyup', function () {
     const filterValue = filterInput.value.toLowerCase();
-    cards.forEach(function (card) {
-      const text = card.textContent.toLowerCase();
-      card.style.display = text.includes(filterValue) ? 'block' : 'none';
+    diagnosticoItems.forEach(function (item) {
+      const text = item.textContent.toLowerCase();
+      const matchesSearch = text.includes(filterValue);
+      const matchesTiempo = tiempoActivo === 'todos' || cumpleFiltro(item.dataset.fecha, tiempoActivo);
+      
+      item.style.display = (matchesSearch && matchesTiempo) ? 'block' : 'none';
+    });
+  });
+  
+  // Event listeners para las pestañas temporales
+  document.querySelectorAll('.tiempo-tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+      filtrarPorTiempo(this.dataset.tiempo);
     });
   });
 });
+
+function filtrarPorTiempo(tiempo) {
+  tiempoActivo = tiempo;
+  const diagnosticoItems = document.querySelectorAll('.diagnostico-item');
+  const filterInput = document.getElementById('filterInput');
+  const filterValue = filterInput.value.toLowerCase();
+  
+  // Actualizar pestañas activas
+  document.querySelectorAll('.tiempo-tab').forEach(tab => {
+    tab.classList.remove('active');
+  });
+  document.querySelector(`.tiempo-tab[data-tiempo="${tiempo}"]`).classList.add('active');
+  
+  // Filtrar diagnósticos
+  diagnosticoItems.forEach(function (item) {
+    const matchesTiempo = tiempo === 'todos' || cumpleFiltro(item.dataset.fecha, tiempo);
+    const matchesSearch = filterValue === '' || item.textContent.toLowerCase().includes(filterValue);
+    
+    item.style.display = (matchesTiempo && matchesSearch) ? 'block' : 'none';
+  });
+}
+
+function cumpleFiltro(fechaStr, filtro) {
+  // Normalizar fechas para comparación (sin hora)
+  const fecha = new Date(fechaStr + 'T00:00:00');
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  
+  // Calcular días de diferencia (hoy - fecha = positivo si fecha es anterior)
+  const diffTime = hoy.getTime() - fecha.getTime();
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  
+  console.log(`Fecha: ${fechaStr}, Diff días: ${diffDays}, Filtro: ${filtro}`);
+  
+  switch(filtro) {
+    case 'hoy':
+      return diffDays === 0; // Exactamente hoy
+    case 'semana':
+      return diffDays >= 0 && diffDays <= 7; // Últimos 7 días (incluye hoy)
+    case 'antiguos':
+      return diffDays > 14; // Más de 2 semanas
+    default:
+      return true;
+  }
+}
+
+function contarDiagnosticos() {
+  const diagnosticoItems = document.querySelectorAll('.diagnostico-item');
+  const contadores = {
+    'hoy': 0,
+    'semana': 0,
+    'antiguos': 0
+  };
+  
+  diagnosticoItems.forEach(item => {
+    const fecha = item.dataset.fecha;
+    if (cumpleFiltro(fecha, 'hoy')) {
+      contadores['hoy']++;
+    }
+    if (cumpleFiltro(fecha, 'semana')) {
+      contadores['semana']++;
+    }
+    if (cumpleFiltro(fecha, 'antiguos')) {
+      contadores['antiguos']++;
+    }
+  });
+  
+  // Actualizar los contadores en las pestañas
+  document.getElementById('count-hoy').textContent = contadores['hoy'];
+  document.getElementById('count-semana').textContent = contadores['semana'];
+  document.getElementById('count-antiguos').textContent = contadores['antiguos'];
+}
 </script>
 {% endblock %}
