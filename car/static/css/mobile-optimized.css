@@ -1,0 +1,489 @@
+/* ========================================
+   OPTIMIZACIÓN MÓVIL - TALLER MECÁNICO
+   Diseño específico para teléfonos móviles
+   Enfoque: Botones grandes, fácil uso con manos
+   ======================================== */
+
+/* ========================================
+   BASES: Solo aplica en móviles
+   ======================================== */
+@media (max-width: 768px) {
+  
+  /* ========================================
+     BOTONES - MÁS GRANDES Y FÁCILES DE TOCAR
+     ======================================== */
+  
+  /* Todos los botones más grandes en móvil */
+  .btn,
+  button,
+  input[type="submit"],
+  input[type="button"],
+  a.btn {
+    min-height: 48px; /* Tamaño mínimo recomendado para touch */
+    padding: 12px 20px !important;
+    font-size: 16px !important; /* Evita zoom automático en iOS */
+    font-weight: 600;
+    border-radius: 8px;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+    touch-action: manipulation; /* Mejora respuesta táctil */
+    margin-bottom: 12px;
+  }
+  
+  /* Botones pequeños también más grandes */
+  .btn-sm {
+    min-height: 44px;
+    padding: 10px 16px !important;
+    font-size: 15px !important;
+  }
+  
+  /* Botones de acción importantes - aún más grandes */
+  .btn-primary,
+  .btn-success,
+  .btn-danger,
+  .btn-warning {
+    min-height: 52px;
+    padding: 14px 24px !important;
+    font-size: 17px !important;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  /* Botones de estado (iniciado, trabajando, etc.) */
+  .btn-mobile,
+  .btn-action {
+    width: 100% !important;
+    min-height: 56px !important;
+    padding: 16px !important;
+    font-size: 18px !important;
+    font-weight: 700;
+    margin-bottom: 10px;
+    border-radius: 12px;
+  }
+  
+  /* Grupos de botones apilados verticalmente */
+  .btn-group,
+  .btn-group-vertical {
+    width: 100%;
+    flex-direction: column;
+  }
+  
+  .btn-group .btn,
+  .btn-group-vertical .btn {
+    width: 100%;
+    margin-bottom: 8px;
+    border-radius: 8px !important;
+  }
+  
+  
+  /* ========================================
+     FORMULARIOS - CAMPOS MÁS GRANDES
+     ======================================== */
+  
+  input[type="text"],
+  input[type="email"],
+  input[type="number"],
+  input[type="date"],
+  input[type="datetime-local"],
+  input[type="password"],
+  input[type="search"],
+  textarea,
+  select,
+  .form-control {
+    min-height: 48px !important;
+    padding: 12px 16px !important;
+    font-size: 16px !important; /* Evita zoom automático en iOS */
+    border-radius: 8px;
+    border: 2px solid var(--border-color, #ddd);
+    -webkit-appearance: none; /* Mejora en iOS */
+    appearance: none;
+  }
+  
+  textarea {
+    min-height: 120px;
+    padding: 12px 16px !important;
+  }
+  
+  /* Labels más grandes y espaciados */
+  label,
+  .form-label {
+    font-size: 16px !important;
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: block;
+  }
+  
+  /* Grupos de formularios con más espacio */
+  .form-group,
+  .mb-3 {
+    margin-bottom: 20px !important;
+  }
+  
+  /* Checkboxes y radios más grandes */
+  input[type="checkbox"],
+  input[type="radio"] {
+    width: 24px !important;
+    height: 24px !important;
+    margin-right: 12px;
+    cursor: pointer;
+  }
+  
+  
+  /* ========================================
+     NAVEGACIÓN - MÁS ACCESIBLE
+     ======================================== */
+  
+  /* Navbar más compacta pero con botones grandes */
+  .navbar {
+    padding: 12px 0 !important;
+  }
+  
+  .navbar-brand {
+    font-size: 18px !important;
+  }
+  
+  .navbar-brand img {
+    max-height: 40px !important;
+  }
+  
+  /* Botón hamburguesa más grande */
+  .navbar-toggler {
+    min-width: 48px;
+    min-height: 48px;
+    padding: 10px;
+    border: 2px solid currentColor;
+    border-radius: 8px;
+  }
+  
+  /* Menú colapsable más espaciado */
+  .navbar-nav {
+    padding-top: 16px;
+  }
+  
+  .nav-link {
+    min-height: 48px;
+    padding: 12px 16px !important;
+    font-size: 16px !important;
+    display: flex;
+    align-items: center;
+    border-radius: 8px;
+    margin-bottom: 4px;
+  }
+  
+  /* Dropdown items más grandes */
+  .dropdown-item {
+    min-height: 48px;
+    padding: 12px 16px !important;
+    font-size: 16px !important;
+    display: flex;
+    align-items: center;
+  }
+  
+  
+  /* ========================================
+     TARJETAS Y CONTENEDORES
+     ======================================== */
+  
+  .card,
+  .info-card {
+    border-radius: 12px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .card-body {
+    padding: 16px !important;
+  }
+  
+  /* Contenedores con menos padding horizontal */
+  .container,
+  .container-fluid {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+  
+  
+  /* ========================================
+     TABLAS - SCROLL HORIZONTAL MEJORADO
+     ======================================== */
+  
+  .table-responsive {
+    border-radius: 12px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch; /* Scroll suave en iOS */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .table {
+    font-size: 14px;
+    min-width: 600px; /* Ancho mínimo para scroll horizontal */
+  }
+  
+  .table th,
+  .table td {
+    padding: 12px 8px !important;
+    white-space: nowrap;
+  }
+  
+  .table th {
+    font-size: 15px;
+    font-weight: 700;
+    background-color: var(--bg-secondary, #f8f9fa);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  
+  
+  /* ========================================
+     TABS - MÁS VISIBLES Y FÁCILES
+     ======================================== */
+  
+  .nav-tabs,
+  .tab-nav {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    margin-bottom: 16px;
+    padding-bottom: 4px;
+  }
+  
+  .nav-tabs .nav-link,
+  .tab-btn {
+    min-height: 48px;
+    padding: 12px 20px !important;
+    font-size: 16px !important;
+    white-space: nowrap;
+    border-radius: 8px 8px 0 0;
+    margin-right: 4px;
+  }
+  
+  .tab-content {
+    padding: 16px !important;
+  }
+  
+  
+  /* ========================================
+     MODALES - PANTALLA COMPLETA EN MÓVIL
+     ======================================== */
+  
+  .modal-dialog {
+    margin: 0;
+    max-width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .modal-content {
+    border-radius: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .modal-header {
+    padding: 16px;
+    border-bottom: 2px solid var(--border-color, #ddd);
+  }
+  
+  .modal-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .modal-footer {
+    padding: 16px;
+    border-top: 2px solid var(--border-color, #ddd);
+    flex-direction: column;
+  }
+  
+  .modal-footer .btn {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+  
+  
+  /* ========================================
+     BADGES Y ETIQUETAS
+     ======================================== */
+  
+  .badge {
+    font-size: 14px !important;
+    padding: 6px 12px !important;
+    border-radius: 6px;
+    font-weight: 600;
+  }
+  
+  .estado-badge {
+    font-size: 16px !important;
+    padding: 10px 16px !important;
+    display: block;
+    width: 100%;
+    text-align: center;
+    margin-bottom: 12px;
+  }
+  
+  
+  /* ========================================
+     ESPACIADO GENERAL
+     ======================================== */
+  
+  /* Más espacio entre elementos */
+  .mb-1 { margin-bottom: 8px !important; }
+  .mb-2 { margin-bottom: 12px !important; }
+  .mb-3 { margin-bottom: 20px !important; }
+  .mb-4 { margin-bottom: 24px !important; }
+  .mb-5 { margin-bottom: 32px !important; }
+  
+  .mt-1 { margin-top: 8px !important; }
+  .mt-2 { margin-top: 12px !important; }
+  .mt-3 { margin-top: 20px !important; }
+  .mt-4 { margin-top: 24px !important; }
+  .mt-5 { margin-top: 32px !important; }
+  
+  /* Padding vertical en contenedores principales */
+  main,
+  .main-content {
+    padding-bottom: 80px; /* Espacio para menú fijo si lo agregas */
+  }
+  
+  
+  /* ========================================
+     TIPOGRAFÍA - MÁS LEGIBLE
+     ======================================== */
+  
+  h1 { font-size: 28px !important; line-height: 1.3; }
+  h2 { font-size: 24px !important; line-height: 1.3; }
+  h3 { font-size: 20px !important; line-height: 1.4; }
+  h4 { font-size: 18px !important; line-height: 1.4; }
+  h5 { font-size: 16px !important; line-height: 1.5; }
+  h6 { font-size: 15px !important; line-height: 1.5; }
+  
+  body,
+  p {
+    font-size: 16px !important;
+    line-height: 1.6;
+  }
+  
+  .small,
+  small {
+    font-size: 14px !important;
+  }
+  
+  
+  /* ========================================
+     UTILIDADES ESPECIALES
+     ======================================== */
+  
+  /* Ocultar elementos innecesarios en móvil */
+  .d-mobile-none {
+    display: none !important;
+  }
+  
+  /* Mostrar solo en móvil */
+  .d-mobile-only {
+    display: block !important;
+  }
+  
+  /* Evitar zoom en inputs (iOS) */
+  @supports (-webkit-touch-callout: none) {
+    input[type="color"],
+    input[type="date"],
+    input[type="datetime-local"],
+    input[type="email"],
+    input[type="month"],
+    input[type="number"],
+    input[type="password"],
+    input[type="search"],
+    input[type="tel"],
+    input[type="text"],
+    input[type="time"],
+    input[type="url"],
+    input[type="week"],
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
+  }
+  
+  /* Mejorar área de toque */
+  a,
+  button,
+  [role="button"],
+  input,
+  textarea,
+  select {
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.05);
+  }
+  
+  /* Scroll suave */
+  html {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+
+/* ========================================
+   TELÉFONOS PEQUEÑOS (extra small)
+   ======================================== */
+@media (max-width: 480px) {
+  
+  /* Botones aún más grandes */
+  .btn {
+    min-height: 52px;
+    padding: 14px 20px !important;
+    font-size: 17px !important;
+  }
+  
+  .btn-mobile {
+    min-height: 60px !important;
+    padding: 18px !important;
+    font-size: 19px !important;
+  }
+  
+  /* Contenedores aún más compactos */
+  .container,
+  .container-fluid {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+  
+  .card-body {
+    padding: 12px !important;
+  }
+  
+  /* Tipografía ligeramente más pequeña */
+  h1 { font-size: 24px !important; }
+  h2 { font-size: 20px !important; }
+  h3 { font-size: 18px !important; }
+}
+
+
+/* ========================================
+   MODO LANDSCAPE (horizontal) - Optimizaciones
+   ======================================== */
+@media (max-width: 768px) and (orientation: landscape) {
+  
+  .navbar {
+    padding: 8px 0 !important;
+  }
+  
+  /* Modales menos altos en landscape */
+  .modal-dialog {
+    height: auto;
+    margin: 16px auto;
+    max-height: 90vh;
+  }
+  
+  .modal-content {
+    height: auto;
+  }
+}
+

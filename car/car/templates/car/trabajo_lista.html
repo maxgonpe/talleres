@@ -2,6 +2,11 @@
 {% load static %}
 {% load humanize %}
 
+{% block mobile_components %}
+  {% include 'car/mobile_bottom_nav.html' %}
+  {% include 'car/mobile_fab.html' %}
+{% endblock %}
+
 {% block extra_css %}
   <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
   <style>
@@ -461,7 +466,13 @@
           <ul class="list-group list-group-flush small mb-2">
             {% for rep in trabajo.repuestos.all|slice:":3" %}
               <li class="list-group-item d-flex justify-content-between align-items-center">
-                {{ rep.repuesto.nombre }} (x{{ rep.cantidad }})
+                {% if rep.repuesto_externo %}
+                  🌐 {{ rep.repuesto_externo.nombre }} (x{{ rep.cantidad }})
+                {% elif rep.repuesto %}
+                  {{ rep.repuesto.nombre }} (x{{ rep.cantidad }})
+                {% else %}
+                  Repuesto (x{{ rep.cantidad }})
+                {% endif %}
                 <span class="badge {% if rep.completado %}bg-success text-inverse{% else %}bg-warning text-inverse{% endif %}">
                   {% if rep.completado %}✔️ Instalado{% else %}Pendiente{% endif %}
                 </span>

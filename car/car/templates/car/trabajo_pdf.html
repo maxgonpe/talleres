@@ -374,7 +374,15 @@
                 <tbody>
                     {% for repuesto in trabajo.repuestos.all %}
                         <tr>
-                            <td>{{ repuesto.repuesto.nombre }}</td>
+                            <td>
+                                {% if repuesto.repuesto_externo %}
+                                    🌐 {{ repuesto.repuesto_externo.nombre }}
+                                {% elif repuesto.repuesto %}
+                                    {{ repuesto.repuesto.nombre }}
+                                {% else %}
+                                    Repuesto sin nombre
+                                {% endif %}
+                            </td>
                             <td>{{ repuesto.cantidad }}</td>
                             <td>
                                 {% if repuesto.precio_unitario %}

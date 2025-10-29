@@ -4,7 +4,7 @@ from .models import (
     Diagnostico, DiagnosticoComponenteAccion, DiagnosticoRepuesto,
     Trabajo, TrabajoAccion, TrabajoRepuesto, TrabajoFoto, TrabajoAbono,
     Componente, Accion, ComponenteAccion,
-    Repuesto, RepuestoEnStock, StockMovimiento,
+    Repuesto, RepuestoEnStock, StockMovimiento, RepuestoExterno,
     VehiculoVersion, ComponenteRepuesto, RepuestoAplicacion,
     Venta, VentaItem, PrefijoRepuesto,
     # Modelos POS
@@ -179,6 +179,39 @@ class RepuestoAdmin(admin.ModelAdmin):
         }),
     )
 
+
+@admin.register(RepuestoExterno)
+class RepuestoExternoAdmin(admin.ModelAdmin):
+    list_display = ('id', 'nombre', 'proveedor', 'precio_referencial', 'veces_usado', 'activo', 'fecha_creacion')
+    search_fields = ('nombre', 'codigo_proveedor', 'marca', 'descripcion')
+    list_filter = ('proveedor', 'activo', 'fecha_creacion')
+    readonly_fields = ('fecha_creacion', 'fecha_actualizacion', 'veces_usado', 'creado_por')
+    filter_horizontal = ('vehiculos_compatibles',)
+    
+    fieldsets = (
+        ('Información Básica', {
+            'fields': ('nombre', 'proveedor', 'proveedor_nombre', 'codigo_proveedor', 'marca')
+        }),
+        ('Precio y URL', {
+            'fields': ('precio_referencial', 'url_producto')
+        }),
+        ('Descripción', {
+            'fields': ('descripcion',)
+        }),
+        ('Compatibilidad', {
+            'fields': ('vehiculos_compatibles',),
+            'classes': ('collapse',)
+        }),
+        ('Metadata', {
+            'fields': ('activo', 'veces_usado', 'creado_por', 'fecha_creacion', 'fecha_actualizacion'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def save_model(self, request, obj, form, change):
+        if not change:  # Si es nuevo
+            obj.creado_por = request.user
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(ComponenteRepuesto)

@@ -172,6 +172,12 @@ urlpatterns = [
     path("vehiculos-compatibilidad/<int:pk>/", views_vehiculos.vehiculo_detail, name="vehiculo_compatibilidad_detail"),
     path("vehiculos-compatibilidad/<int:pk>/editar/", views_vehiculos.vehiculo_update, name="vehiculo_compatibilidad_update"),
     path("vehiculos-compatibilidad/<int:pk>/eliminar/", views_vehiculos.vehiculo_delete, name="vehiculo_compatibilidad_delete"),
+    
+    # === REPUESTOS EXTERNOS ===
+    path("api/repuestos-externos/buscar/", views.buscar_repuestos_externos_json, name="buscar_repuestos_externos_json"),
+    path("api/repuestos-externos/agregar/", views.agregar_repuesto_externo, name="agregar_repuesto_externo"),
+    path("api/repuestos-externos/agregar-rapido/", views.agregar_repuesto_externo_rapido, name="agregar_repuesto_externo_rapido"),
+    path("repuestos-externos/bookmarklet/", views.bookmarklet_info, name="bookmarklet_info"),
 
 ]
 

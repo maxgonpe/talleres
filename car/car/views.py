@@ -250,6 +250,42 @@ def ingreso_view(request):
 # ====================================================
 
             # ====================================================
+            # 🌐 Repuestos Externos (Referencias)
+            # ====================================================
+            repuestos_externos_json = (request.POST.get("repuestos_externos_json") or "").strip()
+            if repuestos_externos_json:
+                try:
+                    from .models import RepuestoExterno
+                    repuestos_externos_data = json.loads(repuestos_externos_json)
+                    for r_ext in repuestos_externos_data:
+                        try:
+                            repuesto_ext_id = int(r_ext.get("id"))
+                            repuesto_externo = RepuestoExterno.objects.get(pk=repuesto_ext_id)
+                            
+                            cantidad = int(r_ext.get("cantidad", 1))
+                            precio = float(r_ext.get("precio", repuesto_externo.precio_referencial))
+                            
+                            # Crear el DiagnosticoRepuesto con referencia externa
+                            DiagnosticoRepuesto.objects.create(
+                                diagnostico=diagnostico,
+                                repuesto=None,  # Sin repuesto del inventario
+                                repuesto_externo=repuesto_externo,  # NUEVO: Referencia al repuesto externo
+                                repuesto_stock=None,
+                                cantidad=cantidad,
+                                precio_unitario=precio,
+                                subtotal=cantidad * precio
+                            )
+                            
+                            # Incrementar contador de uso
+                            repuesto_externo.incrementar_uso()
+                            
+                        except (ValueError, RepuestoExterno.DoesNotExist, KeyError) as e:
+                            print(f"Error procesando repuesto externo: {e}")
+                            continue
+                except json.JSONDecodeError as e:
+                    print(f"Error decodificando JSON de repuestos externos: {e}")
+                    pass
+            # ====================================================
 
             messages.success(request, "Ingreso guardado correctamente.")
             return redirect('panel_principal')
@@ -2060,6 +2096,37 @@ def trabajo_detalle(request, pk):
                     messages.error(request, "Repuesto no encontrado.")
             return redirect_with_tab("repuestos")
 
+        # 🔹 Agregar repuesto externo
+        elif "agregar_repuesto_externo" in request.POST:
+            from .models import RepuestoExterno
+            
+            repuesto_externo_id = request.POST.get("repuesto_externo_id")
+            cantidad = request.POST.get("cantidad", 1)
+            
+            if repuesto_externo_id:
+                try:
+                    repuesto_externo = RepuestoExterno.objects.get(id=repuesto_externo_id)
+                    
+                    precio_unitario = repuesto_externo.precio_referencial
+                    subtotal = float(precio_unitario) * int(cantidad)
+                    
+                    TrabajoRepuesto.objects.create(
+                        trabajo=trabajo,
+                        repuesto=None,
+                        repuesto_externo=repuesto_externo,
+                        cantidad=cantidad,
+                        precio_unitario=precio_unitario,
+                        subtotal=subtotal
+                    )
+                    
+                    # Incrementar contador de uso
+                    repuesto_externo.incrementar_uso()
+                    
+                    messages.success(request, f"🌐 Repuesto externo agregado: {repuesto_externo.nombre}")
+                except RepuestoExterno.DoesNotExist:
+                    messages.error(request, "Repuesto externo no encontrado.")
+            return redirect_with_tab("repuestos")
+
         # 🔹 Toggle repuesto completado / pendiente
         elif "toggle_repuesto" in request.POST:
             repuesto_id = request.POST.get("repuesto_id")
@@ -3788,4 +3855,174 @@ def repuesto_compatibilidad_api(request, repuesto_id):
         return JsonResponse({'error': 'Repuesto no encontrado'}, status=404)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+
+# ========================
+# REPUESTOS EXTERNOS
+# ========================
+
+@login_required
+def buscar_repuestos_externos_json(request):
+    """
+    Busca repuestos externos (referencias) para mostrar junto a los del inventario
+    """
+    from .models import RepuestoExterno
+    from django.db.models import Q
+    
+    termino = request.GET.get('termino', '').strip()
+    
+    if not termino or len(termino) < 2:
+        return JsonResponse({'repuestos': []})
+    
+    # Buscar en repuestos externos activos
+    repuestos_externos = RepuestoExterno.objects.filter(
+        activo=True
+    ).filter(
+        Q(nombre__icontains=termino) |
+        Q(marca__icontains=termino) |
+        Q(codigo_proveedor__icontains=termino) |
+        Q(descripcion__icontains=termino)
+    )[:10]
+    
+    resultados = []
+    for rep in repuestos_externos:
+        proveedor_display = rep.get_proveedor_display() if rep.proveedor != 'otro' else rep.proveedor_nombre
+        resultados.append({
+            'id': rep.id,
+            'nombre': rep.nombre,
+            'proveedor': proveedor_display,
+            'precio': int(rep.precio_referencial),
+            'marca': rep.marca or '',
+            'codigo': rep.codigo_proveedor or '',
+            'url': rep.get_url_busqueda(),
+            'es_externo': True
+        })
+    
+    return JsonResponse({'repuestos': resultados})
+
+
+@login_required
+def agregar_repuesto_externo(request):
+    """
+    Vista para agregar una referencia de repuesto externo
+    """
+    from .models import RepuestoExterno
+    
+    if request.method == 'POST':
+        try:
+            nombre = request.POST.get('nombre', '').strip()
+            proveedor = request.POST.get('proveedor', 'otro')
+            proveedor_nombre = request.POST.get('proveedor_nombre', '').strip()
+            codigo_proveedor = request.POST.get('codigo_proveedor', '').strip()
+            precio_referencial = request.POST.get('precio_referencial', '0')
+            url_producto = request.POST.get('url_producto', '').strip()
+            descripcion = request.POST.get('descripcion', '').strip()
+            marca = request.POST.get('marca', '').strip()
+            
+            if not nombre:
+                return JsonResponse({'success': False, 'error': 'El nombre es obligatorio'}, status=400)
+            
+            # Convertir precio
+            try:
+                precio = Decimal(precio_referencial)
+            except:
+                precio = Decimal('0')
+            
+            # Crear repuesto externo
+            repuesto = RepuestoExterno.objects.create(
+                nombre=nombre,
+                proveedor=proveedor,
+                proveedor_nombre=proveedor_nombre if proveedor == 'otro' else None,
+                codigo_proveedor=codigo_proveedor,
+                precio_referencial=precio,
+                url_producto=url_producto if url_producto else None,
+                descripcion=descripcion,
+                marca=marca,
+                creado_por=request.user
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'repuesto': {
+                    'id': repuesto.id,
+                    'nombre': repuesto.nombre,
+                    'proveedor': repuesto.get_proveedor_display() if repuesto.proveedor != 'otro' else repuesto.proveedor_nombre,
+                    'precio': int(repuesto.precio_referencial),
+                    'url': repuesto.get_url_busqueda()
+                }
+            })
+            
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
+    
+    return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
+
+
+@login_required
+def agregar_repuesto_externo_rapido(request):
+    """
+    Vista que recibe datos del bookmarklet y muestra un formulario pre-llenado
+    """
+    from .models import RepuestoExterno
+    
+    # Obtener datos de query params (enviados por el bookmarklet)
+    datos_bookmarklet = {
+        'nombre': request.GET.get('nombre', ''),
+        'precio': request.GET.get('precio', '0'),
+        'marca': request.GET.get('marca', ''),
+        'codigo': request.GET.get('codigo', ''),
+        'proveedor': request.GET.get('proveedor', 'otro'),
+        'url_producto': request.GET.get('url_producto', ''),
+    }
+    
+    if request.method == 'POST':
+        # Guardar la referencia
+        try:
+            nombre = request.POST.get('nombre', '').strip()
+            proveedor = request.POST.get('proveedor', 'otro')
+            proveedor_nombre = request.POST.get('proveedor_nombre', '').strip()
+            codigo_proveedor = request.POST.get('codigo_proveedor', '').strip()
+            precio_referencial = request.POST.get('precio_referencial', '0')
+            url_producto = request.POST.get('url_producto', '').strip()
+            descripcion = request.POST.get('descripcion', '').strip()
+            marca = request.POST.get('marca', '').strip()
+            
+            if not nombre:
+                messages.error(request, 'El nombre es obligatorio')
+                return render(request, 'car/agregar_repuesto_externo_rapido.html', {'datos': datos_bookmarklet})
+            
+            # Convertir precio
+            try:
+                precio = Decimal(precio_referencial)
+            except:
+                precio = Decimal('0')
+            
+            # Crear repuesto externo
+            repuesto = RepuestoExterno.objects.create(
+                nombre=nombre,
+                proveedor=proveedor,
+                proveedor_nombre=proveedor_nombre if proveedor == 'otro' else None,
+                codigo_proveedor=codigo_proveedor,
+                precio_referencial=precio,
+                url_producto=url_producto if url_producto else None,
+                descripcion=descripcion,
+                marca=marca,
+                creado_por=request.user
+            )
+            
+            messages.success(request, f'✅ Referencia guardada: {repuesto.nombre}')
+            return redirect('panel_principal')
+            
+        except Exception as e:
+            messages.error(request, f'Error al guardar: {str(e)}')
+    
+    return render(request, 'car/agregar_repuesto_externo_rapido.html', {'datos': datos_bookmarklet})
+
+
+@login_required
+def bookmarklet_info(request):
+    """
+    Página de información del bookmarklet
+    """
+    return render(request, 'car/bookmarklet_repuestos.html')
 

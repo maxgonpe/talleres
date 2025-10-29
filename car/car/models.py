@@ -322,19 +322,16 @@ class Diagnostico(models.Model):
                     completado=False  # arranca pendiente
                 )
 
-            # 🔹 Clonar Repuestos asociados
+            # 🔹 Clonar Repuestos asociados (incluyendo externos)
             for dr in self.repuestos.all():
                 TrabajoRepuesto.objects.create(
                     trabajo=trabajo,
-                    #componente=dr.componente if hasattr(dr, "componente") else None,
                     componente=getattr(dr, "componente", None),  # si no existe, queda None
-                    repuesto=dr.repuesto,
-                    #repuesto_stock=dr.repuesto_stock,
+                    repuesto=dr.repuesto,  # Puede ser None si es externo
+                    repuesto_externo=dr.repuesto_externo,  # NUEVO: copiar repuesto externo
                     cantidad=dr.cantidad,
                     precio_unitario=dr.precio_unitario or 0,
                     subtotal=dr.subtotal or 0,
-                    #estado="pendiente",  # nuevo campo sugerido en TrabajoRepuesto
-                    #componente=dr.componente if hasattr(dr, "componente") else None
                 )
 
             # Cambiar estado del diagnóstico
@@ -699,7 +696,8 @@ class StockMovimiento(models.Model):
 
 class DiagnosticoRepuesto(models.Model):
     diagnostico = models.ForeignKey('Diagnostico', on_delete=models.CASCADE, related_name='repuestos')
-    repuesto = models.ForeignKey(Repuesto, on_delete=models.PROTECT)
+    repuesto = models.ForeignKey(Repuesto, on_delete=models.PROTECT, null=True, blank=True)  # Ahora puede ser NULL
+    repuesto_externo = models.ForeignKey('RepuestoExterno', on_delete=models.SET_NULL, null=True, blank=True, related_name='diagnosticos')  # NUEVO
     repuesto_stock = models.ForeignKey(RepuestoEnStock, on_delete=models.SET_NULL, null=True, blank=True)
     cantidad = models.IntegerField(default=1)
     precio_unitario = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
@@ -708,7 +706,11 @@ class DiagnosticoRepuesto(models.Model):
     creado = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.repuesto} (x{self.cantidad})"
+        if self.repuesto_externo:
+            return f"🌐 {self.repuesto_externo.nombre} (x{self.cantidad})"
+        elif self.repuesto:
+            return f"{self.repuesto} (x{self.cantidad})"
+        return f"Repuesto (x{self.cantidad})"
 
 # ========================
 # Trabajo (clonado desde Diagnóstico aprobado)
@@ -916,7 +918,8 @@ class TrabajoAccion(models.Model):
 class TrabajoRepuesto(models.Model):
     trabajo = models.ForeignKey(Trabajo, on_delete=models.CASCADE, related_name="repuestos")
     componente = models.ForeignKey(Componente, on_delete=models.CASCADE, null=True, blank=True)
-    repuesto = models.ForeignKey("Repuesto", on_delete=models.PROTECT)
+    repuesto = models.ForeignKey("Repuesto", on_delete=models.PROTECT, null=True, blank=True)  # Ahora puede ser NULL
+    repuesto_externo = models.ForeignKey('RepuestoExterno', on_delete=models.SET_NULL, null=True, blank=True, related_name='trabajos')  # NUEVO
     cantidad = models.IntegerField(default=1)
     precio_unitario = models.DecimalField(max_digits=12, decimal_places=2)
     subtotal = models.DecimalField(max_digits=14, decimal_places=2)
@@ -924,7 +927,11 @@ class TrabajoRepuesto(models.Model):
     fecha = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.repuesto} (x{self.cantidad})"
+        if self.repuesto_externo:
+            return f"🌐 {self.repuesto_externo.nombre} (x{self.cantidad})"
+        elif self.repuesto:
+            return f"{self.repuesto} (x{self.cantidad})"
+        return f"Repuesto (x{self.cantidad})"
 
 
 class TrabajoAbono(models.Model):
@@ -1464,4 +1471,76 @@ class CompraItem(models.Model):
                 referencia=f'COMPRA-{self.compra.id}',
                 usuario=usuario
             )
+
+
+# ========================
+# REPUESTOS EXTERNOS (REFERENCIAS)
+# ========================
+
+class RepuestoExterno(models.Model):
+    """
+    Referencias de repuestos de proveedores externos.
+    No están en inventario, pero se pueden referenciar en diagnósticos y trabajos.
+    """
+    PROVEEDOR_CHOICES = [
+        ('mundo_repuestos', '🛒 Mundo Repuestos'),
+        ('autoplanet', '🚗 AutoPlanet'),
+        ('otro', '📦 Otro Proveedor'),
+    ]
+    
+    # Información básica
+    nombre = models.CharField(max_length=255, help_text="Nombre del repuesto")
+    proveedor = models.CharField(max_length=50, choices=PROVEEDOR_CHOICES, default='otro')
+    proveedor_nombre = models.CharField(max_length=100, blank=True, null=True, help_text="Si es 'otro', especificar nombre")
+    codigo_proveedor = models.CharField(max_length=100, blank=True, null=True, help_text="SKU o código del proveedor")
+    
+    # Precio y disponibilidad
+    precio_referencial = models.DecimalField(max_digits=10, decimal_places=0, help_text="Precio de referencia en pesos")
+    url_producto = models.URLField(max_length=500, blank=True, null=True, help_text="Link directo al producto")
+    
+    # Información adicional
+    descripcion = models.TextField(blank=True, null=True, help_text="Descripción o notas adicionales")
+    marca = models.CharField(max_length=100, blank=True, null=True)
+    
+    # Compatibilidad
+    vehiculos_compatibles = models.ManyToManyField('Vehiculo', blank=True, related_name='repuestos_externos_compatibles')
+    
+    # Metadata
+    creado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='repuestos_externos_creados')
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_actualizacion = models.DateTimeField(auto_now=True)
+    activo = models.BooleanField(default=True, help_text="Desactivar si ya no está disponible")
+    
+    # Estadísticas de uso
+    veces_usado = models.IntegerField(default=0, help_text="Contador de veces que se ha referenciado")
+    
+    class Meta:
+        verbose_name = "Repuesto Externo"
+        verbose_name_plural = "Repuestos Externos"
+        ordering = ['-veces_usado', '-fecha_creacion']
+    
+    def __str__(self):
+        proveedor_display = self.get_proveedor_display() if self.proveedor != 'otro' else self.proveedor_nombre
+        return f"{self.nombre} - {proveedor_display}"
+    
+    def incrementar_uso(self):
+        """Incrementa el contador de uso"""
+        self.veces_usado += 1
+        self.save(update_fields=['veces_usado'])
+    
+    def get_url_busqueda(self):
+        """Genera URL de búsqueda en el proveedor si no hay URL directa"""
+        if self.url_producto:
+            return self.url_producto
+        
+        termino = self.nombre
+        
+        if self.proveedor == 'mundo_repuestos':
+            termino_formateado = termino.replace(' ', '--')
+            return f"https://mundorepuestos.com/busqueda/{termino_formateado}"
+        elif self.proveedor == 'autoplanet':
+            from urllib.parse import quote
+            return f"https://www.autoplanet.cl/busqueda/{quote(termino)}"
+        
+        return "#"
 

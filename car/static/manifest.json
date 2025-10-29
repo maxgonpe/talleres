@@ -1,0 +1,44 @@
+{
+  "name": "Taller Mecánico - Sistema de Gestión",
+  "short_name": "Taller",
+  "description": "Sistema de gestión para talleres mecánicos. Control de trabajos, clientes, repuestos y más.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0d6efd",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/static/images/pwa-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/images/pwa-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Nuevo Trabajo",
+      "short_name": "Trabajo",
+      "description": "Crear un nuevo trabajo",
+      "url": "/car/ingreso/",
+      "icons": [{ "src": "/static/images/pwa-icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Lista de Trabajos",
+      "short_name": "Trabajos",
+      "description": "Ver todos los trabajos",
+      "url": "/car/trabajos/",
+      "icons": [{ "src": "/static/images/pwa-icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
+

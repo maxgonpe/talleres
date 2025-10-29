@@ -1,4 +1,9 @@
 {% extends 'base.html' %}
+
+{% block mobile_components %}
+  {% include 'car/mobile_bottom_nav.html' %}
+  {% include 'car/mobile_fab.html' %}
+{% endblock %}
 {% load crispy_forms_tags %}
 {% load static %}
 
@@ -581,16 +586,21 @@
           </div>
 
           <hr>
-          <h3>🔧 Repuestos sugeridos</h3>
-          <button type="button" class="btn btn-outline-primary mb-2" onclick="cargarRepuestos()">
-            Buscar repuestos sugeridos
-          </button>
+          <h3>🔧 Repuestos</h3>
+          <div class="btn-group mb-3 w-100" role="group">
+            <button type="button" class="btn btn-outline-primary" onclick="cargarRepuestos()">
+              📦 Inventario Propio
+            </button>
+            <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#modalRepuestosExternos">
+              🌐 Proveedores Externos
+            </button>
+          </div>
 
           <!-- Un solo contenedor #repuestos-list -->
           <div id="repuestos-list"
                data-preview-url="{% url 'sugerir_repuestos_preview' %}"
                data-with-id-template="{% url 'sugerir_repuestos' 0 %}">
-            <p class="text-secondary">Aquí aparecerán los repuestos sugeridos.</p>
+            <p class="text-secondary">Busca en inventario propio o proveedores externos.</p>
           </div>
 
           <hr>
@@ -608,6 +618,8 @@
     </div>
     <!-- hidden que envía los repuestos seleccionados -->
     <input type="hidden" name="repuestos_json" id="repuestos-json">
+    <!-- hidden que envía los repuestos externos -->
+    <input type="hidden" name="repuestos_externos_json" id="repuestos-externos-json">
 
 
     <button type="submit" class="btn btn-primary">Guardar</button>
@@ -970,7 +982,440 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 });
 
+</script>
+
+<!-- Estilos para modal de repuestos externos -->
+<style>
+#modalRepuestosExternos .modal-dialog {
+    max-width: 90vw !important;
+    margin: 1.75rem auto !important;
+}
+
+#modalRepuestosExternos .modal-content {
+    background: #fff !important;
+    color: #212529 !important;
+    max-height: 90vh !important;
+    overflow: visible !important;
+}
+
+#modalRepuestosExternos .modal-body {
+    background: #fff !important;
+    color: #212529 !important;
+    max-height: calc(90vh - 150px) !important;
+    overflow-y: auto !important;
+    padding: 1.5rem !important;
+}
+
+#modalRepuestosExternos .form-control,
+#modalRepuestosExternos .form-select,
+#modalRepuestosExternos input,
+#modalRepuestosExternos textarea,
+#modalRepuestosExternos select {
+    background: #fff !important;
+    color: #212529 !important;
+    border: 1px solid #ced4da !important;
+}
+
+#modalRepuestosExternos .form-label {
+    color: #212529 !important;
+    font-weight: 500 !important;
+}
+
+#modalRepuestosExternos .text-muted,
+#modalRepuestosExternos small {
+    color: #6c757d !important;
+}
+
+#modalRepuestosExternos .alert {
+    background: #d1ecf1 !important;
+    color: #0c5460 !important;
+    border: 1px solid #bee5eb !important;
+}
+
+#modalRepuestosExternos .list-group-item {
+    background: #fff !important;
+    color: #212529 !important;
+    border: 1px solid #dee2e6 !important;
+}
+
+#modalRepuestosExternos .tab-content {
+    background: #fff !important;
+    color: #212529 !important;
+    min-height: 500px !important;
+}
+
+#modalRepuestosExternos .tab-pane {
+    background: #fff !important;
+    color: #212529 !important;
+    padding: 1.5rem !important;
+}
+
+#modalRepuestosExternos .nav-tabs {
+    background: #f8f9fa !important;
+    padding: 0.5rem !important;
+    border-radius: 0.25rem !important;
+}
+
+#modalRepuestosExternos .nav-link {
+    color: #212529 !important;
+}
+
+#modalRepuestosExternos .nav-link.active {
+    background: #fff !important;
+    color: #198754 !important;
+    font-weight: bold !important;
+}
+</style>
+
+<!-- Modal de Repuestos Externos -->
+<div class="modal fade" id="modalRepuestosExternos" tabindex="-1" aria-labelledby="modalRepuestosExternosLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title" id="modalRepuestosExternosLabel">
+          🌐 Buscar Repuestos en Proveedores Externos
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Búsqueda de Repuestos Externos -->
+            <div class="row mb-3">
+              <div class="col-md-8">
+                <input type="text" class="form-control" id="buscarRepuestoExterno" placeholder="Buscar repuestos externos guardados...">
+              </div>
+              <div class="col-md-4">
+                <button class="btn btn-primary w-100" onclick="buscarRepuestosExternos()">
+                  🔍 Buscar
+                </button>
+              </div>
+            </div>
+
+            <div id="resultadosExternos" class="mb-3">
+              <p class="text-muted">Ingresa un término para buscar en las referencias guardadas.</p>
+            </div>
+
+            <div class="alert alert-info">
+              <strong>💡 Tip:</strong> Si no encuentras el repuesto guardado, búscalo en los proveedores con los botones de abajo. Usa el <strong>bookmarklet</strong> para guardar nuevas referencias rápidamente.
+            </div>
+
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-success flex-fill" onclick="buscarEnMundoRepuestos()">
+                🛒 Buscar en Mundo Repuestos
+              </button>
+              <button type="button" class="btn btn-primary flex-fill" onclick="buscarEnAutoPlanet()">
+                🚗 Buscar en AutoPlanet
+              </button>
+              <button type="button" class="btn btn-warning flex-fill" onclick="buscarEnAmbosProveedores()">
+                ⚡ Buscar en AMBOS
+              </button>
+            </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ========================================
+// REPUESTOS EXTERNOS - Sistema Simplificado
+// ========================================
+
+// Buscar repuestos externos
+async function buscarRepuestosExternos() {
+  const termino = document.getElementById('buscarRepuestoExterno').value.trim();
+  const container = document.getElementById('resultadosExternos');
   
+  if (!termino || termino.length < 2) {
+    container.innerHTML = '<p class="text-warning">⚠️ Ingresa al menos 2 caracteres.</p>';
+    return;
+  }
+  
+  container.innerHTML = '<div class="text-center"><div class="spinner-border text-success" role="status"></div><p>Buscando...</p></div>';
+  
+  try {
+    const response = await fetch(`/car/api/repuestos-externos/buscar/?termino=${encodeURIComponent(termino)}`);
+    const data = await response.json();
+    
+    if (!data.repuestos || data.repuestos.length === 0) {
+      container.innerHTML = '<p class="text-muted">No se encontraron repuestos con ese término.</p>';
+      return;
+    }
+    
+    let html = '<div class="list-group">';
+    data.repuestos.forEach(rep => {
+      html += `
+        <div class="list-group-item">
+          <div class="d-flex justify-content-between align-items-start">
+            <div class="flex-grow-1">
+              <h6 class="mb-1">${rep.nombre}</h6>
+              <p class="mb-1 text-muted small">
+                ${rep.proveedor} ${rep.marca ? '• ' + rep.marca : ''} ${rep.codigo ? '• Cód: ' + rep.codigo : ''}
+              </p>
+              <p class="mb-0 fw-bold text-success">$${rep.precio.toLocaleString('es-CL')}</p>
+            </div>
+            <div class="d-flex flex-column gap-1">
+              <button class="btn btn-sm btn-outline-primary" onclick="window.open('${rep.url}', '_blank')">
+                🔗 Ver
+              </button>
+              <button class="btn btn-sm btn-success" onclick="referenciarRepuestoExterno(${rep.id}, '${rep.nombre.replace(/'/g, "\\'")}', ${rep.precio})">
+                ✅ Usar
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    html += '</div>';
+    
+    container.innerHTML = html;
+  } catch (error) {
+    container.innerHTML = '<p class="text-danger">❌ Error al buscar: ' + error.message + '</p>';
+  }
+}
+
+// Array para almacenar repuestos externos agregados
+window.repuestosExternos = window.repuestosExternos || [];
+
+// Referenciar repuesto externo en el diagnóstico (agregar a la lista)
+function referenciarRepuestoExterno(id, nombre, precio) {
+  // Verificar si ya existe
+  const existe = window.repuestosExternos.find(r => r.id === id);
+  if (existe) {
+    alert('⚠️ Este repuesto externo ya está agregado');
+    return;
+  }
+  
+  // Agregar al array
+  window.repuestosExternos.push({
+    id: id,
+    nombre: nombre,
+    precio: precio,
+    cantidad: 1,
+    es_externo: true
+  });
+  
+  // Actualizar la visualización
+  actualizarTablaRepuestosExternos();
+  
+  // Cerrar modal
+  const modal = bootstrap.Modal.getInstance(document.getElementById('modalRepuestosExternos'));
+  if (modal) modal.hide();
+  
+  // Notificar éxito
+  mostrarNotificacion(`✅ Referencia agregada: ${nombre}`, 'success');
+}
+
+// Actualizar la tabla de repuestos (incluyendo externos)
+function actualizarTablaRepuestosExternos() {
+  const tablaContenido = document.getElementById('tabla-contenido');
+  
+  if (!tablaContenido) return;
+  
+  if (window.repuestosExternos.length === 0) {
+    tablaContenido.innerHTML = '<p class="text-muted">No hay repuestos externos agregados aún.</p>';
+    return;
+  }
+  
+  let html = `
+    <div class="alert alert-info mb-2">
+      <strong>ℹ️ Referencias Externas:</strong> Estos repuestos están marcados con 🌐 y son referencias de proveedores externos.
+    </div>
+    <table class="table table-sm table-bordered table-hover">
+      <thead class="table-success">
+        <tr>
+          <th style="width: 5%;">Tipo</th>
+          <th style="width: 40%;">Nombre</th>
+          <th style="width: 15%;">Cantidad</th>
+          <th style="width: 15%;">Precio Ref.</th>
+          <th style="width: 15%;">Subtotal</th>
+          <th style="width: 10%;">Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+  
+  let total = 0;
+  
+  window.repuestosExternos.forEach((rep, index) => {
+    const subtotal = rep.precio * rep.cantidad;
+    total += subtotal;
+    
+    html += `
+      <tr>
+        <td class="text-center">🌐</td>
+        <td>${rep.nombre}</td>
+        <td>
+          <input type="number" 
+                 class="form-control form-control-sm" 
+                 value="${rep.cantidad}" 
+                 min="1" 
+                 style="width: 80px;"
+                 onchange="actualizarCantidadExterna(${index}, this.value)">
+        </td>
+        <td class="text-end">$${rep.precio.toLocaleString('es-CL')}</td>
+        <td class="text-end fw-bold">$${subtotal.toLocaleString('es-CL')}</td>
+        <td class="text-center">
+          <button class="btn btn-sm btn-outline-danger" onclick="eliminarRepuestoExterno(${index})" title="Eliminar">
+            🗑️
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+  
+  html += `
+      </tbody>
+      <tfoot>
+        <tr class="table-light">
+          <td colspan="4" class="text-end fw-bold">TOTAL REFERENCIAS EXTERNAS:</td>
+          <td class="text-end fw-bold text-success">$${total.toLocaleString('es-CL')}</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+  `;
+  
+  tablaContenido.innerHTML = html;
+}
+
+// Actualizar cantidad de repuesto externo
+function actualizarCantidadExterna(index, nuevaCantidad) {
+  const cantidad = parseInt(nuevaCantidad) || 1;
+  if (cantidad < 1) {
+    alert('❌ La cantidad debe ser al menos 1');
+    return;
+  }
+  
+  window.repuestosExternos[index].cantidad = cantidad;
+  actualizarTablaRepuestosExternos();
+}
+
+// Eliminar repuesto externo
+function eliminarRepuestoExterno(index) {
+  if (confirm('¿Eliminar esta referencia externa?')) {
+    window.repuestosExternos.splice(index, 1);
+    actualizarTablaRepuestosExternos();
+    mostrarNotificacion('🗑️ Referencia eliminada', 'info');
+  }
+}
+
+// Mostrar notificación temporal
+function mostrarNotificacion(mensaje, tipo = 'success') {
+  const colores = {
+    'success': '#28a745',
+    'info': '#17a2b8',
+    'warning': '#ffc107',
+    'danger': '#dc3545'
+  };
+  
+  const notif = document.createElement('div');
+  notif.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: ${colores[tipo] || colores.success};
+    color: white;
+    padding: 15px 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    z-index: 9999;
+    animation: slideInRight 0.3s ease;
+    max-width: 350px;
+  `;
+  notif.textContent = mensaje;
+  document.body.appendChild(notif);
+  
+  setTimeout(() => {
+    notif.style.animation = 'slideOutRight 0.3s ease';
+    setTimeout(() => notif.remove(), 300);
+  }, 3000);
+}
+
+// Agregar CSS para animaciones
+const styleNotif = document.createElement('style');
+styleNotif.textContent = `
+  @keyframes slideInRight {
+    from { transform: translateX(400px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes slideOutRight {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(400px); opacity: 0; }
+  }
+`;
+document.head.appendChild(styleNotif);
+
+// Preparar repuestos externos antes de enviar el formulario
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.querySelector('form');
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      // Preparar JSON de repuestos externos
+      const hiddenExternos = document.getElementById('repuestos-externos-json');
+      if (hiddenExternos && window.repuestosExternos) {
+        hiddenExternos.value = JSON.stringify(window.repuestosExternos);
+        console.log('✅ Repuestos externos preparados:', hiddenExternos.value);
+      }
+    });
+  }
+});
+
+// Buscar al presionar Enter
+document.getElementById('buscarRepuestoExterno')?.addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    buscarRepuestosExternos();
+  }
+});
+
+// Buscar directamente en Mundo Repuestos
+function buscarEnMundoRepuestos() {
+  const termino = document.getElementById('buscarRepuestoExterno').value.trim();
+  
+  if (!termino) {
+    alert('❌ Por favor ingresa un término de búsqueda');
+    document.getElementById('buscarRepuestoExterno').focus();
+    return;
+  }
+  
+  // Formato: espacios se convierten en dobles guiones
+  const terminoFormateado = termino.replace(/\s+/g, '--');
+  const url = `https://mundorepuestos.com/busqueda/${terminoFormateado}`;
+  
+  window.open(url, '_blank');
+}
+
+// Buscar directamente en AutoPlanet
+function buscarEnAutoPlanet() {
+  const termino = document.getElementById('buscarRepuestoExterno').value.trim();
+  
+  if (!termino) {
+    alert('❌ Por favor ingresa un término de búsqueda');
+    document.getElementById('buscarRepuestoExterno').focus();
+    return;
+  }
+  
+  const url = `https://www.autoplanet.cl/busqueda/${encodeURIComponent(termino)}`;
+  
+  window.open(url, '_blank');
+}
+
+// Buscar en ambos proveedores simultáneamente
+function buscarEnAmbosProveedores() {
+  const termino = document.getElementById('buscarRepuestoExterno').value.trim();
+  
+  if (!termino) {
+    alert('❌ Por favor ingresa un término de búsqueda');
+    document.getElementById('buscarRepuestoExterno').focus();
+    return;
+  }
+  
+  // Abrir ambos con un pequeño delay
+  buscarEnMundoRepuestos();
+  
+  setTimeout(() => {
+    buscarEnAutoPlanet();
+  }, 300);
+}
 </script>
 
 {% endblock %}

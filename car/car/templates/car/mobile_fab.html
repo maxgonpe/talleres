@@ -1,0 +1,81 @@
+{% load static %}
+{% url 'ingreso' as ingreso_url %}
+{% url 'lista_trabajos' as lista_trabajos_url %}
+{% url 'pos_principal' as pos_principal_url %}
+
+<!-- Botón Flotante de Acción Rápida (FAB) -->
+<div class="mobile-fab d-md-none">
+  <button class="mobile-fab-main" id="mobile-fab-btn" aria-label="Acciones rápidas">
+    <i class="fas fa-plus"></i>
+  </button>
+  
+  <div class="mobile-fab-menu" id="mobile-fab-menu">
+    <a href="{{ ingreso_url }}" class="mobile-fab-action">
+      <i class="fas fa-wrench"></i>
+      <span>Nuevo Diagnóstico</span>
+    </a>
+    <a href="{{ lista_trabajos_url }}" class="mobile-fab-action">
+      <i class="fas fa-list"></i>
+      <span>Ver Trabajos</span>
+    </a>
+    <a href="{{ pos_principal_url }}" class="mobile-fab-action">
+      <i class="fas fa-cash-register"></i>
+      <span>Punto de Venta</span>
+    </a>
+  </div>
+  
+  <div class="mobile-fab-overlay" id="mobile-fab-overlay"></div>
+</div>
+
+<link rel="stylesheet" href="{% static 'css/mobile-fab.css' %}">
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const fabBtn = document.getElementById('mobile-fab-btn');
+  const fabMenu = document.getElementById('mobile-fab-menu');
+  const fabContainer = document.querySelector('.mobile-fab');
+  const overlay = document.getElementById('mobile-fab-overlay');
+  
+  if (!fabBtn) return;
+  
+  function toggleFab() {
+    const isActive = fabContainer.classList.contains('active');
+    
+    if (isActive) {
+      fabContainer.classList.remove('active');
+      fabMenu.classList.remove('active');
+      overlay.classList.remove('active');
+    } else {
+      fabContainer.classList.add('active');
+      fabMenu.classList.add('active');
+      overlay.classList.add('active');
+    }
+  }
+  
+  function closeFab() {
+    fabContainer.classList.remove('active');
+    fabMenu.classList.remove('active');
+    overlay.classList.remove('active');
+  }
+  
+  // Event listeners
+  fabBtn.addEventListener('click', toggleFab);
+  
+  if (overlay) {
+    overlay.addEventListener('click', closeFab);
+  }
+  
+  // Cerrar al hacer clic en una acción
+  const fabActions = fabMenu.querySelectorAll('.mobile-fab-action');
+  fabActions.forEach(action => {
+    action.addEventListener('click', function() {
+      // Pequeño delay para que se vea la animación
+      setTimeout(closeFab, 100);
+    });
+  });
+  
+  // Cerrar con botón atrás del navegador
+  window.addEventListener('popstate', closeFab);
+});
+</script>
+

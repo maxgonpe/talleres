@@ -1,0 +1,389 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}📌 Bookmarklet - Extractor de Repuestos{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Header -->
+            <div class="text-center mb-5">
+                <h1 class="display-4">🔖 Extractor Mágico de Repuestos</h1>
+                <p class="lead text-muted">
+                    Arrastra el botón a tus marcadores y extrae datos de productos con un solo click
+                </p>
+            </div>
+
+            <!-- Instrucciones -->
+            <div class="card shadow-lg mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">📋 Instrucciones - Solo 2 pasos</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="p-4 bg-light rounded mb-3">
+                                <h4 class="text-primary">Paso 1️⃣ - Instalación (Una sola vez)</h4>
+                                <p>Arrastra este botón a tu <strong>barra de marcadores</strong>:</p>
+                                
+                                <div class="text-center p-4 bg-white border border-primary rounded">
+                                    <a href="#" 
+                                       id="bookmarkletLink"
+                                       draggable="true"
+                                       class="btn btn-lg btn-success px-5 py-3 d-inline-block"
+                                       style="cursor: move; font-size: 1.2rem; font-weight: bold; user-select: none; -webkit-user-drag: element;"
+                                       onmousedown="event.preventDefault(); return false;">
+                                        🔖 Arrástrame a Marcadores
+                                    </a>
+                                </div>
+                                
+                                <div class="alert alert-success mt-3" id="urlInfo">
+                                    <strong>✅ Este bookmarklet está configurado para:</strong><br>
+                                    <code id="currentURL"></code>
+                                </div>
+                                
+                                <!-- Instrucciones para móvil -->
+                                <div class="alert alert-warning mt-3 d-block d-md-none" id="instruccionesMovil">
+                                    <strong>📱 Instrucciones para MÓVIL:</strong>
+                                    <ol class="mb-2 mt-2">
+                                        <li>Click en el botón de abajo para copiar el código</li>
+                                        <li>Ve a Mundo Repuestos o AutoPlanet en tu navegador</li>
+                                        <li>Guarda esa página en marcadores</li>
+                                        <li>Edita el marcador y pega el código copiado en la URL</li>
+                                        <li>Guarda y usa el marcador desde cualquier producto</li>
+                                    </ol>
+                                    <button class="btn btn-lg btn-success w-100 mt-2" onclick="copiarBookmarklet()">
+                                        📋 Copiar Código para Móvil
+                                    </button>
+                                    <small class="d-block mt-2 text-muted">
+                                        <strong>Navegadores recomendados:</strong><br>
+                                        • Safari (iOS) - ✅ Funciona<br>
+                                        • Firefox (Android) - ✅ Funciona<br>
+                                        • Chrome (Android) - ⚠️ Limitado
+                                    </small>
+                                </div>
+                                
+                                <!-- Instrucciones para desktop -->
+                                <div class="alert alert-info mt-3 d-none d-md-block" id="copiarAlternativa">
+                                    <strong>💡 Alternativa si no puedes arrastrar:</strong>
+                                    <button class="btn btn-sm btn-primary mt-2" onclick="copiarBookmarklet()">
+                                        📋 Copiar código al portapapeles
+                                    </button>
+                                    <small class="d-block mt-2">Luego crea un marcador manualmente y pega el código copiado en la URL del marcador</small>
+                                </div>
+                                
+                                <div class="alert alert-info mt-3 d-none d-md-block">
+                                    <strong>💡 Tip:</strong> Si no tienes visible la barra de marcadores:
+                                    <ul class="mb-0 mt-2">
+                                        <li><strong>Chrome:</strong> Ctrl+Shift+B</li>
+                                        <li><strong>Firefox:</strong> Ctrl+Shift+B</li>
+                                        <li><strong>Safari:</strong> Cmd+Shift+B</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="p-4 bg-light rounded">
+                                <h4 class="text-success">Paso 2️⃣ - Uso diario</h4>
+                                <ol class="mb-0">
+                                    <li>Busca el repuesto en <strong>Mundo Repuestos</strong> o <strong>AutoPlanet</strong></li>
+                                    <li>Entra a la página del producto específico</li>
+                                    <li><strong>Click en el marcador</strong> que arrastraste</li>
+                                    <li>✨ ¡Se abre automáticamente el formulario con los datos!</li>
+                                    <li>Verifica que todo esté correcto</li>
+                                    <li>Click en "Guardar"</li>
+                                </ol>
+                                
+                                <div class="alert alert-success mt-3">
+                                    <strong>✅ Listo!</strong> La referencia queda guardada para siempre.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Video/GIF demo -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-info text-white">
+                    <h3 class="mb-0">🎬 Demo Visual</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center mb-3">
+                            <div class="p-3 border rounded">
+                                <div class="display-1">1️⃣</div>
+                                <h5>Arrastra el botón</h5>
+                                <p class="text-muted small">A tu barra de marcadores</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center mb-3">
+                            <div class="p-3 border rounded">
+                                <div class="display-1">2️⃣</div>
+                                <h5>Busca el producto</h5>
+                                <p class="text-muted small">En Mundo Repuestos o AutoPlanet</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center mb-3">
+                            <div class="p-3 border rounded">
+                                <div class="display-1">✨</div>
+                                <h5>Click en marcador</h5>
+                                <p class="text-muted small">¡Datos extraídos automáticamente!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FAQ -->
+            <div class="card shadow">
+                <div class="card-header bg-warning">
+                    <h3 class="mb-0">❓ Preguntas Frecuentes</h3>
+                </div>
+                <div class="card-body">
+                    <div class="accordion" id="faqAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                    ¿Funciona en el teléfono?
+                                </button>
+                            </h2>
+                            <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    <strong>Sí, pero es más fácil en PC/laptop.</strong> En móvil, los bookmarklets son más difíciles de usar.
+                                    Para móvil, recomendamos copiar manualmente (solo 4 campos, toma 30 segundos).
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                    ¿Es seguro?
+                                </button>
+                            </h2>
+                            <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    <strong>100% seguro.</strong> El bookmarklet solo lee información de la página que estás viendo.
+                                    No tiene acceso a contraseñas ni datos sensibles. El código es visible y open-source.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                    ¿Qué pasa si no extrae todos los datos?
+                                </button>
+                            </h2>
+                            <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    <strong>No hay problema.</strong> El bookmarklet extrae lo que puede. Si falta algo (marca, código),
+                                    simplemente lo completas manualmente en el formulario. El nombre y precio casi siempre se extraen correctamente.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Volver -->
+            <div class="text-center mt-4">
+                <a href="{% url 'panel_principal' %}" class="btn btn-secondary">
+                    ← Volver al Panel Principal
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    border: none;
+    border-radius: 15px;
+}
+
+.card-header {
+    border-radius: 15px 15px 0 0 !important;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.btn-success:hover {
+    animation: pulse 1s infinite;
+}
+
+#bookmarkletLink {
+    text-decoration: none;
+}
+
+#bookmarkletLink:active {
+    opacity: 0.8;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Función para detectar el dominio base
+    function obtenerDominioBase() {
+        const hostname = window.location.hostname;
+        const protocol = window.location.protocol;
+        
+        // Detectar si es un subdominio de .netgogo.cl
+        if (hostname.endsWith('.netgogo.cl') || hostname === 'netgogo.cl') {
+            // Si es subdominio, mantener el subdominio completo
+            return `${protocol}//${hostname}`;
+        }
+        
+        // Fallback: usar el dominio actual
+        return `${protocol}//${hostname}`;
+    }
+    
+    // Obtener dominio base
+    const dominioBase = obtenerDominioBase();
+    
+    // Mostrar URL configurada
+    document.getElementById('currentURL').textContent = dominioBase;
+    
+    // Generar código del bookmarklet
+    const bookmarkletCode = `javascript:(function(){const url=window.location.href;let datos={nombre:'',precio:0,marca:'',codigo:'',url:url};const title=document.querySelector('meta[property="og:title"]')?.content||document.querySelector('title')?.innerText||'';datos.nombre=title.substring(0,200);const jsonLD=document.querySelector('script[type="application/ld+json"]');if(jsonLD){try{const ld=JSON.parse(jsonLD.textContent);datos.nombre=ld.name||datos.nombre;if(ld.offers?.price){datos.precio=parseInt(ld.offers.price.toString().replace(/[^\\d]/g,''))||0;}if(ld.brand){datos.marca=typeof ld.brand==='object'?ld.brand.name:ld.brand;}datos.codigo=ld.sku||ld.mpn||'';}catch(e){}}const priceElems=document.querySelectorAll('[class*="price"],[class*="precio"],[itemprop="price"]');for(const elem of priceElems){const txt=elem.textContent;const nums=txt.match(/\\d+/g);if(nums&&nums.length>0){datos.precio=parseInt(nums.join(''));break;}}const brandElems=document.querySelectorAll('[class*="brand"],[class*="marca"],[itemprop="brand"]');for(const elem of brandElems){const txt=elem.textContent.trim();if(txt&&txt.length<50){datos.marca=txt;break;}}const skuElems=document.querySelectorAll('[class*="sku"],[class*="codigo"],[itemprop="sku"]');for(const elem of skuElems){const txt=elem.textContent.trim();if(txt&&txt.length<50){datos.codigo=txt;break;}}const proveedor=url.includes('mundorepuestos')?'mundo_repuestos':url.includes('autoplanet')?'autoplanet':'otro';const params=new URLSearchParams({nombre:datos.nombre,precio:datos.precio,marca:datos.marca,codigo:datos.codigo,proveedor:proveedor,url_producto:url});window.open('${dominioBase}/car/api/repuestos-externos/agregar-rapido/?'+params.toString(),'_blank');})();`;
+    
+    // Configurar el enlace del bookmarklet
+    const bookmarkletLink = document.getElementById('bookmarkletLink');
+    bookmarkletLink.href = bookmarkletCode;
+    
+    // Hacer el botón arrastrable
+    bookmarkletLink.addEventListener('dragstart', function(e) {
+        // Guardar el código del bookmarklet en el evento drag
+        e.dataTransfer.setData('text/plain', bookmarkletCode);
+        e.dataTransfer.setData('text/uri-list', bookmarkletCode);
+        
+        // Mostrar información durante el arrastre
+        this.style.opacity = '0.5';
+    });
+    
+    bookmarkletLink.addEventListener('dragend', function(e) {
+        this.style.opacity = '1';
+    });
+    
+    // Detectar si el navegador soporta drag and drop de bookmarklets
+    setTimeout(function() {
+        // Si después de 2 segundos el usuario no ha arrastrado, mostrar fallback
+        const hasDragged = false;
+        // No forzamos el fallback, solo lo dejamos disponible
+    }, 2000);
+    
+    // Guardar código globalmente para la función de copiar
+    window.bookmarkletCode = bookmarkletCode;
+});
+
+// Detectar si es móvil
+function esMovil() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
+// Función para copiar el bookmarklet al portapapeles
+function copiarBookmarklet() {
+    if (!window.bookmarkletCode) {
+        alert('❌ Error: El código del bookmarklet no está disponible');
+        return;
+    }
+    
+    // Instrucciones específicas para móvil
+    const instruccionesMovil = esMovil() ? 
+        '✅ ¡Código copiado!\n\n📱 PASOS PARA MÓVIL:\n\n1. Ve a Mundo Repuestos o AutoPlanet\n2. Guarda esa página como marcador\n3. Edita el marcador guardado\n4. Reemplaza la URL con el código copiado\n5. Guarda y úsalo desde cualquier producto\n\n💡 Safari (iOS) y Firefox (Android) funcionan mejor.' :
+        '✅ ¡Código copiado al portapapeles!\n\nAhora:\n1. Crea un nuevo marcador\n2. Pega este código en la URL del marcador\n3. ¡Listo!';
+    
+    // Intentar usar la API moderna del portapapeles
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(window.bookmarkletCode).then(function() {
+            actualizarEstadoCopiado();
+            alert(instruccionesMovil);
+        }).catch(function(err) {
+            // Fallback: usar método antiguo
+            copiarFallback(instruccionesMovil);
+        });
+    } else {
+        copiarFallback(instruccionesMovil);
+    }
+}
+
+// Método alternativo para copiar (fallback)
+function copiarFallback(instrucciones) {
+    const textarea = document.createElement('textarea');
+    textarea.value = window.bookmarkletCode;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    
+    try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+            actualizarEstadoCopiado();
+            alert(instrucciones || '✅ ¡Código copiado al portapapeles!');
+        } else {
+            alert('⚠️ No se pudo copiar automáticamente. Selecciona y copia manualmente el código de abajo.');
+            mostrarCodigoCompleto();
+        }
+    } catch (err) {
+        alert('⚠️ No se pudo copiar automáticamente. Selecciona y copia manualmente el código de abajo.');
+        mostrarCodigoCompleto();
+    }
+    
+    document.body.removeChild(textarea);
+}
+
+// Actualizar estado visual después de copiar
+function actualizarEstadoCopiado() {
+    // Actualizar botón desktop
+    const fallbackDiv = document.getElementById('copiarAlternativa');
+    if (fallbackDiv) {
+        fallbackDiv.classList.remove('alert-info');
+        fallbackDiv.classList.add('alert-success');
+        const btn = fallbackDiv.querySelector('button');
+        if (btn) {
+            btn.classList.remove('btn-primary');
+            btn.classList.add('btn-success');
+            btn.innerHTML = '✅ ¡Copiado!';
+        }
+    }
+    
+    // Actualizar botón móvil
+    const movilDiv = document.getElementById('instruccionesMovil');
+    if (movilDiv) {
+        const btn = movilDiv.querySelector('button');
+        if (btn) {
+            btn.classList.remove('btn-success');
+            btn.classList.add('btn-success');
+            btn.innerHTML = '✅ ¡Código Copiado!';
+        }
+    }
+}
+
+// Mostrar código completo para copia manual
+function mostrarCodigoCompleto() {
+    // Intentar en desktop primero
+    let container = document.getElementById('copiarAlternativa');
+    if (!container) {
+        // Si no existe, usar el de móvil
+        container = document.getElementById('instruccionesMovil');
+    }
+    
+    if (container && !container.querySelector('textarea')) {
+        const codigoDiv = document.createElement('div');
+        codigoDiv.className = 'mt-3 p-3 bg-light rounded';
+        codigoDiv.innerHTML = '<strong>📋 Código completo (selecciona y copia):</strong><br><textarea class="form-control mt-2" rows="4" readonly style="font-size: 0.85rem; word-break: break-all;">' + window.bookmarkletCode + '</textarea>';
+        container.appendChild(codigoDiv);
+    }
+}
+</script>
+
+{% endblock %}
+
+
