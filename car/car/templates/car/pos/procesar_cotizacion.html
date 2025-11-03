@@ -88,12 +88,70 @@
         margin: var(--spacing-md) 0;
     }
     
+    .descuento-container .form-label,
+    .descuento-container label,
+    .descuento-container small,
+    .descuento-container input,
+    .descuento-container .input-group-text {
+        color: #0c5460 !important;
+        font-weight: 600;
+    }
+    
     .fecha-vencimiento {
         background: #fff3cd;
         border: 1px solid #ffeaa7;
         border-radius: var(--border-radius-sm);
         padding: var(--spacing-md);
         margin: var(--spacing-md) 0;
+    }
+    
+    .fecha-vencimiento .form-label,
+    .fecha-vencimiento label,
+    .fecha-vencimiento small,
+    .fecha-vencimiento input {
+        color: #856404 !important;
+        font-weight: 600;
+    }
+    
+    /* Modo oscuro - Ajustes para mejor contraste */
+    .theme-dark .descuento-container,
+    .theme-piedra .descuento-container {
+        background: rgba(13, 110, 253, 0.25);
+        border-color: rgba(13, 110, 253, 0.5);
+    }
+    
+    .theme-dark .descuento-container .form-label,
+    .theme-dark .descuento-container label,
+    .theme-dark .descuento-container small,
+    .theme-dark .descuento-container input,
+    .theme-dark .descuento-container .input-group-text,
+    .theme-piedra .descuento-container .form-label,
+    .theme-piedra .descuento-container label,
+    .theme-piedra .descuento-container small,
+    .theme-piedra .descuento-container input,
+    .theme-piedra .descuento-container .input-group-text {
+        color: #ffffff !important;
+        font-weight: 700;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+    
+    .theme-dark .fecha-vencimiento,
+    .theme-piedra .fecha-vencimiento {
+        background: rgba(255, 193, 7, 0.25);
+        border-color: rgba(255, 193, 7, 0.5);
+    }
+    
+    .theme-dark .fecha-vencimiento .form-label,
+    .theme-dark .fecha-vencimiento label,
+    .theme-dark .fecha-vencimiento small,
+    .theme-dark .fecha-vencimiento input,
+    .theme-piedra .fecha-vencimiento .form-label,
+    .theme-piedra .fecha-vencimiento label,
+    .theme-piedra .fecha-vencimiento small,
+    .theme-piedra .fecha-vencimiento input {
+        color: #ffffff !important;
+        font-weight: 700;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     }
     
     @media (max-width: 768px) {
