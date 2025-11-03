@@ -14,7 +14,9 @@ from .models import (
     # Modelos Administración
     AdministracionTaller,
     # Modelos Compras
-    Compra, CompraItem
+    Compra, CompraItem,
+    # Modelos Auditoría
+    RegistroEvento, ResumenTrabajo
 )
 
 @admin.register(Mecanico)
@@ -506,3 +508,96 @@ class CompraItemAdmin(admin.ModelAdmin):
     list_filter = ('recibido', 'compra__estado', 'compra__fecha_compra')
     search_fields = ('repuesto__nombre', 'repuesto__sku', 'compra__numero_compra')
     readonly_fields = ('subtotal', 'fecha_recibido')
+
+
+# ======================
+# Modelos de Auditoría
+# ======================
+@admin.register(RegistroEvento)
+class RegistroEventoAdmin(admin.ModelAdmin):
+    list_display = ('id', 'tipo_evento', 'trabajo_id', 'vehiculo_placa', 'cliente_nombre', 'fecha_evento', 'usuario_nombre')
+    list_filter = ('tipo_evento', 'fecha_evento', 'estado_nuevo', 'creado_en')
+    search_fields = ('vehiculo_placa', 'cliente_nombre', 'trabajo_id', 'usuario_nombre', 'descripcion')
+    readonly_fields = ('trabajo_id', 'diagnostico_id', 'vehiculo_id', 'fecha_evento', 'creado_en', 
+                       'vehiculo_placa', 'vehiculo_marca', 'vehiculo_modelo', 'cliente_nombre',
+                       'usuario_id', 'usuario_nombre', 'fecha_ingreso', 'fecha_entrega', 'dias_en_taller',
+                       'total_mano_obra', 'total_repuestos', 'total_general')
+    date_hierarchy = 'fecha_evento'
+    ordering = ('-fecha_evento', '-creado_en')
+    
+    fieldsets = (
+        ('Identificación', {
+            'fields': ('trabajo_id', 'diagnostico_id', 'vehiculo_id', 'tipo_evento', 'fecha_evento')
+        }),
+        ('Datos del Vehículo', {
+            'fields': ('vehiculo_placa', 'vehiculo_marca', 'vehiculo_modelo', 'cliente_nombre')
+        }),
+        ('Detalles del Evento', {
+            'fields': ('estado_anterior', 'estado_nuevo', 'accion_id', 'accion_nombre', 
+                      'componente_nombre', 'repuesto_id', 'repuesto_nombre', 'repuesto_cantidad', 'monto')
+        }),
+        ('Usuario y Mecánico', {
+            'fields': ('usuario_id', 'usuario_nombre', 'mecanico_id', 'mecanico_nombre')
+        }),
+        ('Estadísticas del Momento', {
+            'fields': ('fecha_ingreso', 'fecha_entrega', 'dias_en_taller', 
+                      'total_mano_obra', 'total_repuestos', 'total_general'),
+            'classes': ('collapse',)
+        }),
+        ('Descripción', {
+            'fields': ('descripcion',)
+        }),
+        ('Metadatos', {
+            'fields': ('creado_en',),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(ResumenTrabajo)
+class ResumenTrabajoAdmin(admin.ModelAdmin):
+    list_display = ('trabajo_id', 'vehiculo_placa', 'cliente_nombre', 'estado_actual', 
+                   'fecha_ingreso', 'fecha_entrega', 'porcentaje_avance', 'dias_en_taller')
+    list_filter = ('estado_actual', 'fecha_ingreso', 'fecha_entrega', 'ultima_actualizacion')
+    search_fields = ('trabajo_id', 'vehiculo_placa', 'cliente_nombre', 'vehiculo_marca', 'vehiculo_modelo')
+    readonly_fields = ('trabajo_id', 'vehiculo_placa', 'vehiculo_marca', 'vehiculo_modelo', 'cliente_nombre',
+                       'fecha_ingreso', 'fecha_ultimo_estado', 'fecha_entrega', 'estado_actual',
+                       'total_acciones', 'acciones_completadas', 'cantidad_repuestos', 'repuestos_instalados',
+                       'total_mano_obra', 'total_repuestos', 'total_general', 'total_abonos',
+                       'porcentaje_avance', 'porcentaje_cobrado', 'dias_en_taller', 'dias_desde_entrega',
+                       'mecanicos_asignados', 'ultima_actualizacion')
+    date_hierarchy = 'fecha_ingreso'
+    ordering = ('-fecha_ingreso',)
+    
+    fieldsets = (
+        ('Identificación', {
+            'fields': ('trabajo_id', 'vehiculo_placa', 'vehiculo_marca', 'vehiculo_modelo', 'cliente_nombre')
+        }),
+        ('Fechas', {
+            'fields': ('fecha_ingreso', 'fecha_ultimo_estado', 'fecha_entrega')
+        }),
+        ('Estado', {
+            'fields': ('estado_actual',)
+        }),
+        ('Contadores', {
+            'fields': ('total_acciones', 'acciones_completadas', 'cantidad_repuestos', 'repuestos_instalados'),
+            'description': 'Cantidad de acciones y repuestos'
+        }),
+        ('Totales Financieros', {
+            'fields': ('total_mano_obra', 'total_repuestos', 'total_general', 'total_abonos'),
+            'description': 'Totales monetarios'
+        }),
+        ('Porcentajes', {
+            'fields': ('porcentaje_avance', 'porcentaje_cobrado')
+        }),
+        ('Tiempos', {
+            'fields': ('dias_en_taller', 'dias_desde_entrega')
+        }),
+        ('Mecánicos', {
+            'fields': ('mecanicos_asignados',)
+        }),
+        ('Metadatos', {
+            'fields': ('ultima_actualizacion',),
+            'classes': ('collapse',)
+        }),
+    )

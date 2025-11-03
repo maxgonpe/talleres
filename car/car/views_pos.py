@@ -368,9 +368,25 @@ def pos_venta_detalle(request, venta_id):
         usuario=request.user
     )
     
+    # Obtener configuración del taller para el logo (igual que en cotización)
+    from .models import AdministracionTaller
+    
+    config = AdministracionTaller.get_configuracion_activa()
+    
+    # Generar URL absoluta para el logo (igual que en cotizacion_detalle)
+    logo_url = None
+    if config.logo_principal_png:
+        logo_url = request.build_absolute_uri(config.logo_principal_png.url)
+    elif config.logo_principal_svg:
+        logo_url = request.build_absolute_uri(config.logo_principal_svg.url)
+    else:
+        logo_url = request.build_absolute_uri('/static/images/Logo1.svg')
+    
     context = {
         'venta': venta,
         'items': venta.items.all(),
+        'config': config,
+        'logo_url': logo_url,
     }
     
     return render(request, 'car/pos/venta_detalle.html', context)

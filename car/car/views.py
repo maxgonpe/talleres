@@ -55,6 +55,13 @@ from .models import Diagnostico, Cliente_Taller, Vehiculo,\
 from django.contrib.auth.models import User
 from django.forms import modelformset_factory
 from django.forms import inlineformset_factory
+from .utils_auditoria import (
+    registrar_diagnostico_creado, registrar_diagnostico_aprobado, registrar_ingreso,
+    registrar_cambio_estado, registrar_accion_completada, registrar_accion_pendiente,
+    registrar_repuesto_instalado, registrar_repuesto_pendiente, registrar_entrega,
+    registrar_abono, registrar_foto_agregada, registrar_mecanico_asignado,
+    registrar_mecanico_removido, registrar_observacion
+)
 from .forms import ComponenteForm, ClienteTallerForm, ClienteTallerRapidoForm, VehiculoForm,\
                    DiagnosticoForm, AccionForm, ComponenteAccionForm,\
                    MecanicoForm, AsignarMecanicosForm, SubirFotoForm,\
@@ -190,6 +197,9 @@ def ingreso_view(request):
             diagnostico = diagnostico_form.save(commit=False)
             diagnostico.vehiculo = vehiculo
             diagnostico.save()
+            
+            # Registrar evento de diagnóstico creado
+            registrar_diagnostico_creado(diagnostico, request=request)
 
             # 🔹 Relación M2M con componentes
             diagnostico.componentes.set(selected_componentes_ids)
@@ -1855,6 +1865,13 @@ def aprobar_diagnostico(request, pk):
 
     if diagnostico.estado != "aprobado":
         trabajo = diagnostico.aprobar_y_clonar()
+        
+        # Registrar evento de diagnóstico aprobado (con días de diferencia)
+        registrar_diagnostico_aprobado(diagnostico, trabajo, request=request)
+        
+        # Registrar evento de ingreso
+        registrar_ingreso(trabajo, request=request)
+        
         messages.success(request, f"✅ Diagnóstico aprobado y trabajo #{trabajo.id} creado.")
     else:
         messages.info(request, "ℹ️ Este diagnóstico ya estaba aprobado.")
@@ -1985,12 +2002,32 @@ def trabajo_detalle(request, pk):
         elif "asignar_mecanicos" in request.POST:
             asignar_form = AsignarMecanicosForm(request.POST, instance=trabajo)
             if asignar_form.is_valid():
+                # Obtener mecánicos anteriores
+                mecanicos_anteriores = set(trabajo.mecanicos.all())
+                
                 trabajo = asignar_form.save(commit=False)
                 if trabajo.estado == "iniciado":
+                    estado_anterior = trabajo.estado
                     trabajo.estado = "trabajando"
                     trabajo.fecha_inicio = timezone.now()
+                    # Registrar cambio de estado si cambió
+                    registrar_cambio_estado(trabajo, estado_anterior, "trabajando", request=request)
                 trabajo.save()
                 asignar_form.save_m2m()
+                
+                # Obtener mecánicos nuevos
+                mecanicos_nuevos = set(trabajo.mecanicos.all())
+                
+                # Registrar mecánicos agregados
+                mecanicos_agregados = mecanicos_nuevos - mecanicos_anteriores
+                for mecanico in mecanicos_agregados:
+                    registrar_mecanico_asignado(trabajo, mecanico, request=request)
+                
+                # Registrar mecánicos removidos
+                mecanicos_removidos = mecanicos_anteriores - mecanicos_nuevos
+                for mecanico in mecanicos_removidos:
+                    registrar_mecanico_removido(trabajo, mecanico, request=request)
+                
                 messages.success(request, "Mecánicos asignados y trabajo iniciado.")
                 return redirect("trabajo_detalle", pk=trabajo.pk)
 
@@ -2500,6 +2537,10 @@ def trabajo_detalle(request, pk):
                 foto.trabajo = trabajo
                 foto.descripcion = request.POST.get("descripcion", "")
                 foto.save()
+                
+                # Registrar evento de auditoría
+                registrar_foto_agregada(trabajo, request=request, descripcion=foto.descripcion)
+                
                 messages.success(request, "Foto subida con éxito.")
                 return redirect_with_tab("fotos")
 
@@ -2518,6 +2559,7 @@ def trabajo_detalle(request, pk):
         elif "cambiar_estado" in request.POST:
             nuevo_estado = request.POST.get("cambiar_estado")
             if nuevo_estado in dict(Trabajo.ESTADOS).keys():
+                estado_anterior = trabajo.estado
                 trabajo.estado = nuevo_estado
                 if nuevo_estado == "trabajando" and not trabajo.fecha_inicio:
                     trabajo.fecha_inicio = timezone.now()
@@ -2526,6 +2568,14 @@ def trabajo_detalle(request, pk):
                 else:
                     trabajo.fecha_fin = None
                 trabajo.save()
+                
+                # Registrar evento de auditoría
+                registrar_cambio_estado(trabajo, estado_anterior, nuevo_estado, request=request)
+                
+                # Si es entrega, registrar también como entrega
+                if nuevo_estado == "entregado":
+                    registrar_entrega(trabajo, request=request)
+                
                 messages.success(request, f"Trabajo actualizado a {trabajo.get_estado_display()}.")
             return redirect_with_tab("estado")
 
@@ -2533,9 +2583,17 @@ def trabajo_detalle(request, pk):
         elif "accion_toggle" in request.POST:
             accion_id = request.POST.get("accion_toggle")
             accion = get_object_or_404(TrabajoAccion, id=accion_id, trabajo=trabajo)
+            estaba_completado = accion.completado
             accion.completado = not accion.completado
             accion.fecha = timezone.now() if accion.completado else None
             accion.save()
+            
+            # Registrar evento de auditoría
+            if accion.completado:
+                registrar_accion_completada(trabajo, accion, request=request)
+            else:
+                registrar_accion_pendiente(trabajo, accion, request=request)
+            
             messages.success(request, f"Acción '{accion.accion.nombre}' actualizada.")
             return redirect("trabajo_detalle", pk=trabajo.pk)
 
@@ -2543,10 +2601,19 @@ def trabajo_detalle(request, pk):
         elif "repuesto_toggle" in request.POST:
             rep_id = request.POST.get("repuesto_toggle")
             rep = get_object_or_404(TrabajoRepuesto, id=rep_id, trabajo=trabajo)
+            estaba_completado = rep.completado
             rep.completado = not rep.completado
             rep.fecha = timezone.now() if rep.completado else None
             rep.save()
-            messages.success(request, f"Repuesto '{rep.repuesto.nombre}' actualizado.")
+            
+            # Registrar evento de auditoría
+            if rep.completado:
+                registrar_repuesto_instalado(trabajo, rep, request=request)
+            else:
+                registrar_repuesto_pendiente(trabajo, rep, request=request)
+            
+            repuesto_nombre = rep.repuesto.nombre if rep.repuesto else (rep.repuesto_externo.nombre if rep.repuesto_externo else "Repuesto")
+            messages.success(request, f"Repuesto '{repuesto_nombre}' actualizado.")
             return redirect("trabajo_detalle", pk=trabajo.pk)
 
         # ========================
@@ -2572,6 +2639,10 @@ def trabajo_detalle(request, pk):
                         descripcion=descripcion,
                         usuario=request.user
                     )
+                    
+                    # Registrar evento de auditoría
+                    registrar_abono(trabajo, abono, request=request)
+                    
                     messages.success(request, f"✅ Abono de ${monto_decimal:,.0f} registrado exitosamente.")
             except (ValueError, TypeError):
                 messages.error(request, "❌ El monto ingresado no es válido.")
@@ -2616,7 +2687,13 @@ def trabajo_detalle(request, pk):
         "active_tab": active_tab,
         "config": config,
     }
-    return render(request, "car/trabajo_detalle_nuevo.html", context)
+    # Detectar móvil y usar template apropiado
+    if is_mobile_device(request):
+        template_name = "car/trabajo_detalle_movil.html"
+    else:
+        template_name = "car/trabajo_detalle_nuevo.html"
+    
+    return render(request, template_name, context)
 
 
 @login_required
@@ -2821,12 +2898,15 @@ def pizarra_view(request):
     config = AdministracionTaller.get_configuracion_activa()
     
     trabajos = Trabajo.objects.select_related("vehiculo", "vehiculo__cliente")
+    
+    # Filtrar trabajos entregados que tienen más de 3 días (no mostrar en pizarra)
+    trabajos_visibles = filtrar_trabajos_entregados_por_dias(trabajos, dias_desde_entrega=3)
 
     context = {
-        "iniciados": trabajos.filter(estado="iniciado"),
-        "trabajando": trabajos.filter(estado="trabajando"),
-        "completados": trabajos.filter(estado="completado"),
-        "entregados": trabajos.filter(estado="entregado"),
+        "iniciados": trabajos_visibles.filter(estado="iniciado"),
+        "trabajando": trabajos_visibles.filter(estado="trabajando"),
+        "completados": trabajos_visibles.filter(estado="completado"),
+        "entregados": trabajos_visibles.filter(estado="entregado"),  # Solo los recientes (últimos 3 días)
         "config": config,
     }
     return render(request, "car/pizarra_page.html", context)

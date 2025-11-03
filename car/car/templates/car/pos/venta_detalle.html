@@ -251,62 +251,559 @@
 {% block extra_js %}
 <script>
 function imprimirTicket() {
-    // Crear una ventana de impresión con el ticket
-    const ventanaImpresion = window.open('', '_blank');
+    console.log('🖨️ Iniciando impresión de venta - VERSIÓN PWA');
+    // Crear un modal en la misma ventana para mantener la PWA
+    const modal = document.createElement('div');
+    modal.id = 'venta-modal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.8);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        box-sizing: border-box;
+    `;
     
-    const contenidoTicket = `
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+        background: white;
+        border-radius: 10px;
+        max-width: 90%;
+        max-height: 90%;
+        overflow: auto;
+        position: relative;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    `;
+    
+    const closeButton = document.createElement('button');
+    closeButton.innerHTML = '✕';
+    closeButton.style.cssText = `
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+        z-index: 10000;
+    `;
+    
+    const printButton = document.createElement('button');
+    printButton.innerHTML = '🖨️ Imprimir';
+    printButton.style.cssText = `
+        position: absolute;
+        top: 10px;
+        right: 60px;
+        background: #28a745;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 8px 15px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: bold;
+        z-index: 10000;
+    `;
+    
+    const contenidoVenta = `
         <!DOCTYPE html>
         <html>
         <head>
-            <title>Ticket de Venta #{{ venta.id }}</title>
+            <title>Venta #{{ venta.id }}</title>
+            <meta charset="UTF-8">
             <style>
-                body { font-family: monospace; font-size: 12px; margin: 0; padding: var(--spacing-sm); }
-                .header { text-align: center; border-bottom: 1px solid #000; padding-bottom: 10px; margin-bottom: 10px; }
-                .item { display: flex; justify-content: space-between; margin-bottom: 5px; }
-                .total { border-top: 1px solid #000; padding-top: 10px; margin-top: 10px; text-align: center; font-weight: bold; }
-                .footer { text-align: center; margin-top: 20px; font-size: 10px; }
+                * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                }
+                
+                body { 
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                    font-size: 12px; 
+                    line-height: 1.4;
+                    color: #2c3e50;
+                    background: #ffffff;
+                }
+                
+                .container {
+                    max-width: 800px;
+                    margin: 0 auto;
+                    padding: 20px;
+                }
+                
+                /* HEADER */
+                .header {
+                    text-align: center;
+                    margin-bottom: 30px;
+                    border-bottom: 3px solid #28a745;
+                    padding-bottom: 20px;
+                }
+                
+                .taller-header {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 30px;
+                    margin-bottom: 20px;
+                }
+                
+                .taller-logo {
+                    max-width: 120px;
+                    max-height: 120px;
+                    object-fit: contain;
+                }
+                
+                .taller-name {
+                    font-size: 28px;
+                    font-weight: bold;
+                    color: #28a745;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    line-height: 1.2;
+                }
+                
+                .venta-title {
+                    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+                    color: white;
+                    padding: 15px 30px;
+                    border-radius: 10px;
+                    margin: 15px 0;
+                    font-size: 20px;
+                    font-weight: bold;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+                }
+                
+                .fecha-info {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-top: 15px;
+                    font-size: 14px;
+                }
+                
+                .fecha-item {
+                    background: #f8f9fa;
+                    padding: 8px 15px;
+                    border-radius: 20px;
+                    border: 1px solid #dee2e6;
+                }
+                
+                /* CLIENTE INFO */
+                .cliente-section {
+                    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+                    border: 2px solid #28a745;
+                    border-radius: 10px;
+                    padding: 20px;
+                    margin: 20px 0;
+                    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
+                }
+                
+                .cliente-title {
+                    font-size: 16px;
+                    font-weight: bold;
+                    color: #155724;
+                    margin-bottom: 10px;
+                    text-transform: uppercase;
+                }
+                
+                .cliente-details {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 10px;
+                }
+                
+                .cliente-detail {
+                    background: white;
+                    padding: 10px;
+                    border-radius: 5px;
+                    border-left: 4px solid #28a745;
+                }
+                
+                .cliente-detail strong {
+                    color: #155724;
+                }
+                
+                /* ITEMS SECTION */
+                .items-section {
+                    margin: 30px 0;
+                }
+                
+                .items-title {
+                    font-size: 18px;
+                    font-weight: bold;
+                    color: #28a745;
+                    margin-bottom: 20px;
+                    text-align: center;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                }
+                
+                .items-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    background: white;
+                    border-radius: 10px;
+                    overflow: hidden;
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                }
+                
+                .items-table thead {
+                    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+                    color: white;
+                }
+                
+                .items-table th {
+                    padding: 15px 10px;
+                    text-align: left;
+                    font-weight: bold;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    font-size: 11px;
+                }
+                
+                /* Alineación de encabezados para que coincidan con los datos */
+                .items-table th.th-quantity {
+                    text-align: center;
+                }
+                
+                .items-table th.th-price {
+                    text-align: right;
+                }
+                
+                .items-table th.th-subtotal {
+                    text-align: right;
+                }
+                
+                .items-table td {
+                    padding: 12px 10px;
+                    border-bottom: 1px solid #e9ecef;
+                }
+                
+                .items-table tbody tr:nth-child(even) {
+                    background: #f8f9fa;
+                }
+                
+                .items-table tbody tr:hover {
+                    background: #e8f5e9;
+                }
+                
+                .item-name {
+                    font-weight: bold;
+                    color: #2c3e50;
+                    font-size: 13px;
+                }
+                
+                .item-sku {
+                    color: #6c757d;
+                    font-size: 11px;
+                    margin-top: 2px;
+                }
+                
+                .item-quantity {
+                    text-align: center;
+                    font-weight: bold;
+                    color: #28a745;
+                }
+                
+                .item-price {
+                    text-align: right;
+                    font-weight: bold;
+                    color: #28a745;
+                }
+                
+                .item-subtotal {
+                    text-align: right;
+                    font-weight: bold;
+                    color: #155724;
+                    font-size: 14px;
+                }
+                
+                /* TOTALS SECTION */
+                .totals-section {
+                    background: linear-gradient(135deg, #e9ecef 0%, #f8f9fa 100%);
+                    border: 2px solid #28a745;
+                    border-radius: 10px;
+                    padding: 25px;
+                    margin: 30px 0;
+                    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.2);
+                }
+                
+                .totals-grid {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr 1fr;
+                    gap: 20px;
+                    text-align: center;
+                }
+                
+                .total-item {
+                    background: white;
+                    padding: 15px;
+                    border-radius: 8px;
+                    border: 1px solid #dee2e6;
+                }
+                
+                .total-label {
+                    font-size: 12px;
+                    color: #6c757d;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    margin-bottom: 5px;
+                }
+                
+                .total-value {
+                    font-size: 16px;
+                    font-weight: bold;
+                    color: #2c3e50;
+                }
+                
+                .total-final {
+                    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+                    color: white;
+                    border: none;
+                }
+                
+                .total-final .total-label {
+                    color: rgba(255,255,255,0.8);
+                }
+                
+                .total-final .total-value {
+                    color: white;
+                    font-size: 20px;
+                }
+                
+                /* OBSERVACIONES */
+                .observaciones-section {
+                    background: #f8f9fa;
+                    border-left: 4px solid #28a745;
+                    padding: 20px;
+                    margin: 20px 0;
+                    border-radius: 0 8px 8px 0;
+                }
+                
+                .observaciones-title {
+                    font-weight: bold;
+                    color: #28a745;
+                    margin-bottom: 10px;
+                    text-transform: uppercase;
+                    font-size: 14px;
+                }
+                
+                /* FOOTER */
+                .footer {
+                    text-align: center;
+                    margin-top: 40px;
+                    padding: 20px;
+                    background: #f8f9fa;
+                    border-radius: 10px;
+                    border-top: 3px solid #28a745;
+                }
+                
+                .footer-title {
+                    font-weight: bold;
+                    color: #28a745;
+                    font-size: 14px;
+                    margin-bottom: 10px;
+                }
+                
+                .footer-info {
+                    color: #6c757d;
+                    font-size: 11px;
+                    line-height: 1.6;
+                }
+                
+                /* PRINT STYLES */
+                @media print {
+                    body { 
+                        margin: 0; 
+                        padding: 10px; 
+                        font-size: 11px;
+                    }
+                    .container {
+                        max-width: 100%;
+                        padding: 10px;
+                    }
+                    .items-table {
+                        box-shadow: none;
+                    }
+                    .totals-section {
+                        box-shadow: none;
+                    }
+                }
             </style>
         </head>
         <body>
-            <div class="header">
-                <h3>TALLER MECÁNICO</h3>
-                <p>Venta #{{ venta.id }}</p>
-                <p>{{ venta.fecha|date:"d/m/Y H:i" }}</p>
-                {% if venta.cliente %}
-                    <p>Cliente: {{ venta.cliente.nombre }}</p>
-                {% endif %}
-            </div>
-            
-            <div class="items">
-                {% for item in items %}
-                    <div class="item">
-                        <span>{{ item.repuesto.nombre }} x{{ item.cantidad }}</span>
-                        <span>${{ item.subtotal|floatformat:0|intcomma }}</span>
+            <div class="container">
+                <!-- HEADER -->
+                <div class="header">
+                    <div class="taller-header">
+                        {% if logo_url %}
+                            <img src="{{ logo_url }}" alt="Logo del Taller" class="taller-logo">
+                        {% endif %}
+                        <div class="taller-name">
+                            {% if config.nombre_taller and config.nombre_taller != "Mi Taller Mecánico" %}
+                                {{ config.nombre_taller }}
+                            {% else %}
+                                TALLER MECÁNICO
+                            {% endif %}
+                        </div>
                     </div>
-                {% endfor %}
-            </div>
-            
-            <div class="total">
-                <p>Subtotal: ${{ venta.subtotal|floatformat:0|intcomma }}</p>
-                {% if venta.descuento > 0 %}
-                    <p>Descuento: -${{ venta.descuento|floatformat:0|intcomma }}</p>
+                    <div class="venta-title">VENTA #{{ venta.id }}</div>
+                    <div class="fecha-info">
+                        <div class="fecha-item">
+                            <strong>Fecha:</strong> {{ venta.fecha|date:"d/m/Y H:i" }}
+                        </div>
+                        <div class="fecha-item">
+                            <strong>Método de Pago:</strong> {{ venta.get_metodo_pago_display }}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- CLIENTE -->
+                {% if venta.cliente %}
+                    <div class="cliente-section">
+                        <div class="cliente-title">📋 Información del Cliente</div>
+                        <div class="cliente-details">
+                            <div class="cliente-detail">
+                                <strong>Nombre:</strong><br>
+                                {{ venta.cliente.nombre }}
+                            </div>
+                            {% if venta.cliente.telefono %}
+                                <div class="cliente-detail">
+                                    <strong>Teléfono:</strong><br>
+                                    {{ venta.cliente.telefono }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
                 {% endif %}
-                <p>TOTAL: ${{ venta.total|floatformat:0|intcomma }}</p>
-                <p>Método: {{ venta.get_metodo_pago_display }}</p>
-            </div>
-            
-            <div class="footer">
-                <p>¡Gracias por su compra!</p>
-                <p>{{ venta.fecha|date:"d/m/Y H:i:s" }}</p>
+                
+                <!-- PRODUCTOS -->
+                <div class="items-section">
+                    <div class="items-title">🛒 Productos Vendidos</div>
+                    <table class="items-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 40%;">Producto</th>
+                                <th style="width: 15%;" class="th-quantity">Cantidad</th>
+                                <th style="width: 20%;" class="th-price">Precio Unit.</th>
+                                <th style="width: 25%;" class="th-subtotal">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in items %}
+                                <tr>
+                                    <td>
+                                        <div class="item-name">{{ item.repuesto.nombre }}</div>
+                                        <div class="item-sku">SKU: {{ item.repuesto.sku|default:"N/A" }}</div>
+                                    </td>
+                                    <td class="item-quantity">{{ item.cantidad }}</td>
+                                    <td class="item-price">${{ item.precio_unitario|floatformat:0|intcomma }}</td>
+                                    <td class="item-subtotal">${{ item.subtotal|floatformat:0|intcomma }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- TOTALES -->
+                <div class="totals-section">
+                    <div class="totals-grid">
+                        <div class="total-item">
+                            <div class="total-label">Subtotal</div>
+                            <div class="total-value">${{ venta.subtotal|floatformat:0|intcomma }}</div>
+                        </div>
+                        {% if venta.descuento > 0 %}
+                            <div class="total-item">
+                                <div class="total-label">Descuento</div>
+                                <div class="total-value">-${{ venta.descuento|floatformat:0|intcomma }}</div>
+                            </div>
+                        {% endif %}
+                        <div class="total-item total-final">
+                            <div class="total-label">Total</div>
+                            <div class="total-value">${{ venta.total|floatformat:0|intcomma }}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- OBSERVACIONES -->
+                {% if venta.observaciones %}
+                    <div class="observaciones-section">
+                        <div class="observaciones-title">📝 Observaciones</div>
+                        <div>{{ venta.observaciones }}</div>
+                    </div>
+                {% endif %}
+                
+                <!-- FOOTER -->
+                <div class="footer">
+                    <div class="footer-title">✅ Venta Completada</div>
+                    <div class="footer-info">
+                        <p><strong>Fecha de venta:</strong> {{ venta.fecha|date:"d/m/Y H:i:s" }}</p>
+                        <p><strong>Método de pago:</strong> {{ venta.get_metodo_pago_display }}</p>
+                        <p>¡Gracias por su compra!</p>
+                    </div>
+                </div>
             </div>
         </body>
         </html>
     `;
     
-    ventanaImpresion.document.write(contenidoTicket);
-    ventanaImpresion.document.close();
-    ventanaImpresion.print();
-    ventanaImpresion.close();
+    // Insertar el contenido en el modal
+    modalContent.innerHTML = contenidoVenta;
+    modalContent.appendChild(closeButton);
+    modalContent.appendChild(printButton);
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+    
+    // Eventos de los botones
+    closeButton.onclick = function() {
+        document.body.removeChild(modal);
+    };
+    
+    printButton.onclick = function() {
+        console.log('🖨️ Botón imprimir clickeado - MANTENIENDO EN PWA');
+        console.log('🚫 NO USANDO window.open() - MANTENIENDO EN PWA');
+        // Imprimir directamente desde el modal sin abrir ventanas nuevas
+        const printContent = modalContent.innerHTML;
+        
+        // Crear un iframe oculto para la impresión
+        const iframe = document.createElement('iframe');
+        iframe.style.cssText = `
+            position: absolute;
+            width: 0;
+            height: 0;
+            border: none;
+        `;
+        document.body.appendChild(iframe);
+        
+        const iframeDoc = iframe.contentWindow.document;
+        iframeDoc.open();
+        iframeDoc.write(printContent);
+        iframeDoc.close();
+        
+        // Esperar a que el contenido se cargue antes de imprimir
+        iframe.onload = function() {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+            // Eliminar el iframe después de imprimir
+            setTimeout(() => {
+                document.body.removeChild(iframe);
+            }, 1000);
+        };
+    };
 }
 
 // Auto-focus para mejor UX

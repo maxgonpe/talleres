@@ -403,30 +403,115 @@
     }
     
     .foto-item {
-        aspect-ratio: 1;
         border-radius: var(--border-radius-md);
         overflow: hidden;
         position: relative;
+        background: var(--card-bg);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        display: flex;
+        flex-direction: column;
     }
     
     .foto-item img {
         width: 100%;
-        height: 100%;
+        aspect-ratio: 1;
         object-fit: cover;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    
+    .foto-item img:hover {
+        transform: scale(1.05);
     }
     
     .foto-item .delete-btn {
         position: absolute;
         top: 2px;
         right: 2px;
-        background: rgba(220, 53, 69, 0.8);
+        background: rgba(220, 53, 69, 0.9);
         color: var(--text-inverse);
         border: none;
         border-radius: 50%;
-        width: 20px;
-        height: 20px;
-        font-size: 0.7rem;
+        width: 24px;
+        height: 24px;
+        font-size: 0.9rem;
         cursor: pointer;
+        z-index: 10;
+    }
+    
+    .foto-descripcion {
+        padding: 0.5rem;
+        font-size: 0.85rem;
+        color: var(--fg);
+        background: var(--bg-secondary);
+        border-top: 1px solid var(--border-color);
+        min-height: 2rem;
+    }
+    
+    /* Modal para fotos expandidas */
+    .foto-modal {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.9);
+        overflow: auto;
+    }
+    
+    .foto-modal.active {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .foto-modal-content {
+        position: relative;
+        max-width: 90%;
+        max-height: 90%;
+        margin: auto;
+    }
+    
+    .foto-modal-content img {
+        width: 100%;
+        height: auto;
+        max-height: 90vh;
+        object-fit: contain;
+        border-radius: 0.5rem;
+    }
+    
+    .foto-modal-close {
+        position: absolute;
+        top: -40px;
+        right: 0;
+        color: #fff;
+        font-size: 2rem;
+        font-weight: bold;
+        cursor: pointer;
+        background: rgba(0,0,0,0.5);
+        border: none;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .foto-modal-close:hover {
+        background: rgba(0,0,0,0.8);
+    }
+    
+    .foto-modal-descripcion {
+        color: #fff;
+        text-align: center;
+        padding: 1rem;
+        font-size: 1rem;
+        background: rgba(0,0,0,0.5);
+        border-radius: 0.5rem;
+        margin-top: 1rem;
     }
     
     .add-form {
@@ -950,12 +1035,27 @@
                 <div class="foto-grid">
                     {% for foto in trabajo.fotos.all %}
                         <div class="foto-item">
-                            <img src="{{ foto.imagen.url }}" alt="{{ foto.descripcion|default:'Foto del trabajo' }}">
+                            <img src="{{ foto.imagen.url }}" alt="{{ foto.descripcion|default:'Foto del trabajo' }}" 
+                                 onclick="abrirFotoModal('{{ foto.imagen.url }}', '{{ foto.descripcion|default:""|escapejs }}')">
                             <button class="delete-btn" onclick="eliminarFoto({{ foto.id }})" title="Eliminar foto">×</button>
+                            {% if foto.descripcion %}
+                                <div class="foto-descripcion">
+                                    {{ foto.descripcion }}
+                                </div>
+                            {% endif %}
                         </div>
                     {% empty %}
                         <p class="text-secondary">No hay fotos subidas</p>
                     {% endfor %}
+                </div>
+                
+                <!-- Modal para fotos expandidas -->
+                <div id="fotoModal" class="foto-modal" onclick="cerrarFotoModal()">
+                    <div class="foto-modal-content" onclick="event.stopPropagation()">
+                        <button class="foto-modal-close" onclick="cerrarFotoModal()">&times;</button>
+                        <img id="fotoModalImg" src="" alt="Foto expandida">
+                        <div id="fotoModalDescripcion" class="foto-modal-descripcion"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1281,6 +1381,37 @@ function eliminarFoto(fotoId) {
         form.submit();
     }
 }
+
+// Funciones para modal de fotos expandidas
+function abrirFotoModal(url, descripcion) {
+    const modal = document.getElementById('fotoModal');
+    const img = document.getElementById('fotoModalImg');
+    const desc = document.getElementById('fotoModalDescripcion');
+    
+    img.src = url;
+    if (descripcion) {
+        desc.textContent = descripcion;
+        desc.style.display = 'block';
+    } else {
+        desc.style.display = 'none';
+    }
+    
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden'; // Prevenir scroll del body
+}
+
+function cerrarFotoModal() {
+    const modal = document.getElementById('fotoModal');
+    modal.classList.remove('active');
+    document.body.style.overflow = 'auto'; // Restaurar scroll del body
+}
+
+// Cerrar modal con tecla Escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        cerrarFotoModal();
+    }
+});
 
 // Función para generar PDF
 function generarPDF() {

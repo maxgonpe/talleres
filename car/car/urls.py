@@ -15,7 +15,8 @@ from .views import ClienteListView, ClienteTallerListView, ClienteTallerCreateVi
 from . import views_pos
 from . import views_compras
 from . import views_algoritmo
-from . import views_vehiculos 
+from . import views_vehiculos
+from . import views_estadisticas 
 
 urlpatterns = [
     path("login/", views.login_view, name="login"),
@@ -99,6 +100,8 @@ urlpatterns = [
     path("trabajos/<int:pk>/", views.trabajo_detalle, name="trabajo_detalle"),
     path("trabajos/<int:pk>/pdf/", views.trabajo_pdf, name="trabajo_pdf"),
     path("trabajos/<int:pk>/eliminar/", views.TrabajoDeleteView.as_view(), name="trabajo_delete"),
+    # === ESTADÍSTICAS ===
+    path("estadisticas/", views_estadisticas.estadisticas_trabajos, name="estadisticas_trabajos"),
     # Pizarra
     path("pizarra/", views.pizarra_view, name="pizarra"),
     # Ventas

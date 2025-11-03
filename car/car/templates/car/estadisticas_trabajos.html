@@ -1,0 +1,519 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Estadísticas de Trabajos - NetGoGo{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+  <style>
+    .estadisticas-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: var(--spacing-md);
+    }
+    
+    .estadisticas-header {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+        padding: var(--spacing-xl);
+        border-radius: var(--border-radius-lg);
+        margin-bottom: 2rem;
+        text-align: center;
+        box-shadow: var(--card-shadow);
+    }
+    
+    .estadisticas-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .estadisticas-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: var(--card-bg);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-lg);
+        box-shadow: var(--card-shadow);
+        border-left: 4px solid var(--accent);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    }
+    
+    .stat-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-card-title {
+        font-size: 0.9rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+    }
+    
+    .stat-card-icon {
+        font-size: 2rem;
+        opacity: 0.3;
+    }
+    
+    .stat-card-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--accent);
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-card-subtitle {
+        font-size: 0.85rem;
+        color: var(--muted);
+    }
+    
+    .stat-card.primary {
+        border-left-color: #17a2b8;
+    }
+    
+    .stat-card.primary .stat-card-value {
+        color: #17a2b8;
+    }
+    
+    .stat-card.success {
+        border-left-color: #28a745;
+    }
+    
+    .stat-card.success .stat-card-value {
+        color: #28a745;
+    }
+    
+    .stat-card.warning {
+        border-left-color: #ffc107;
+    }
+    
+    .stat-card.warning .stat-card-value {
+        color: #ffc107;
+    }
+    
+    .stat-card.danger {
+        border-left-color: #dc3545;
+    }
+    
+    .stat-card.danger .stat-card-value {
+        color: #dc3545;
+    }
+    
+    .stat-card.info {
+        border-left-color: #17a2b8;
+    }
+    
+    .stat-card.info .stat-card-value {
+        color: #17a2b8;
+    }
+    
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--fg);
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 3px solid var(--accent);
+    }
+    
+    .progress-bar-container {
+        background: var(--bg-secondary);
+        border-radius: var(--border-radius);
+        height: 30px;
+        margin: 0.5rem 0;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 0.85rem;
+        transition: width 0.5s ease;
+    }
+    
+    .table-stats {
+        width: 100%;
+        background: var(--card-bg);
+        border-radius: var(--border-radius-lg);
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+    }
+    
+    .table-stats thead {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+    }
+    
+    .table-stats th,
+    .table-stats td {
+        padding: 1rem;
+        text-align: left;
+    }
+    
+    .table-stats tbody tr {
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .table-stats tbody tr:hover {
+        background: var(--hover-bg);
+    }
+    
+    .badge-estado {
+        padding: 0.25rem 0.75rem;
+        border-radius: var(--border-radius-xl);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .badge-iniciado {
+        background: #ffc107;
+        color: #000;
+    }
+    
+    .badge-trabajando {
+        background: #17a2b8;
+        color: white;
+    }
+    
+    .badge-completado {
+        background: #28a745;
+        color: white;
+    }
+    
+    .badge-entregado {
+        background: #6c757d;
+        color: white;
+    }
+    
+    @media (max-width: 768px) {
+        .estadisticas-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .estadisticas-header h1 {
+            font-size: 1.8rem;
+        }
+        
+        .stat-card-value {
+            font-size: 2rem;
+        }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="estadisticas-container">
+    <!-- Header -->
+    <div class="estadisticas-header">
+        <h1>📊 Estadísticas de Trabajos</h1>
+        <p>Análisis completo de tiempos, eficiencia y productividad del taller</p>
+    </div>
+    
+    <!-- Resumen General -->
+    <h2 class="section-title">📈 Resumen General</h2>
+    <div class="estadisticas-grid">
+        <div class="stat-card primary">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Total de Trabajos</div>
+                <div class="stat-card-icon">🔧</div>
+            </div>
+            <div class="stat-card-value">{{ total_trabajos }}</div>
+            <div class="stat-card-subtitle">Trabajos registrados en el sistema</div>
+        </div>
+        
+        <div class="stat-card success">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Trabajos Activos</div>
+                <div class="stat-card-icon">⚙️</div>
+            </div>
+            <div class="stat-card-value">{{ trabajos_activos }}</div>
+            <div class="stat-card-subtitle">En proceso actualmente</div>
+        </div>
+        
+        <div class="stat-card warning">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Completados</div>
+                <div class="stat-card-icon">✅</div>
+            </div>
+            <div class="stat-card-value">{{ trabajos_completados }}</div>
+            <div class="stat-card-subtitle">{{ tasa_completacion|floatformat:1 }}% del total</div>
+        </div>
+        
+        <div class="stat-card info">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Entregados</div>
+                <div class="stat-card-icon">🚗</div>
+            </div>
+            <div class="stat-card-value">{{ trabajos_entregados }}</div>
+            <div class="stat-card-subtitle">{{ tasa_entrega|floatformat:1 }}% del total</div>
+        </div>
+    </div>
+    
+    <!-- Tiempos y Eficiencia -->
+    <h2 class="section-title">⏱️ Análisis de Tiempos</h2>
+    <div class="estadisticas-grid">
+        <div class="stat-card info">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Tiempo de Respuesta Promedio</div>
+                <div class="stat-card-icon">⏰</div>
+            </div>
+            <div class="stat-card-value">{{ tiempo_respuesta_promedio|floatformat:1 }}</div>
+            <div class="stat-card-subtitle">Horas desde diagnóstico hasta aprobación</div>
+        </div>
+        
+        <div class="stat-card primary">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Días Promedio en Taller</div>
+                <div class="stat-card-icon">📅</div>
+            </div>
+            <div class="stat-card-value">{{ dias_promedio_taller|floatformat:1 }}</div>
+            <div class="stat-card-subtitle">Tiempo promedio total de trabajo</div>
+        </div>
+        
+        <div class="stat-card warning">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Días en Etapa "Iniciado"</div>
+                <div class="stat-card-icon">🟡</div>
+            </div>
+            <div class="stat-card-value">{{ dias_promedio_por_etapa.iniciado|floatformat:1 }}</div>
+            <div class="stat-card-subtitle">Promedio de días en esta etapa</div>
+        </div>
+        
+        <div class="stat-card info">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Días en Etapa "Trabajando"</div>
+                <div class="stat-card-icon">🔨</div>
+            </div>
+            <div class="stat-card-value">{{ dias_promedio_por_etapa.trabajando|floatformat:1 }}</div>
+            <div class="stat-card-subtitle">Promedio de días en esta etapa</div>
+        </div>
+        
+        <div class="stat-card success">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Días en Etapa "Completado"</div>
+                <div class="stat-card-icon">✅</div>
+            </div>
+            <div class="stat-card-value">{{ dias_promedio_por_etapa.completado|floatformat:1 }}</div>
+            <div class="stat-card-subtitle">Promedio de días en esta etapa</div>
+        </div>
+    </div>
+    
+    <!-- Vehículos y Productividad -->
+    <h2 class="section-title">🚗 Vehículos Ingresados</h2>
+    <div class="estadisticas-grid">
+        <div class="stat-card success">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Esta Semana</div>
+                <div class="stat-card-icon">📊</div>
+            </div>
+            <div class="stat-card-value">{{ vehiculos_semana }}</div>
+            <div class="stat-card-subtitle">Vehículos ingresados en los últimos 7 días</div>
+        </div>
+        
+        <div class="stat-card primary">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Este Mes</div>
+                <div class="stat-card-icon">📈</div>
+            </div>
+            <div class="stat-card-value">{{ vehiculos_mes }}</div>
+            <div class="stat-card-subtitle">Vehículos ingresados en los últimos 30 días</div>
+        </div>
+        
+        <div class="stat-card info">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Promedio Semanal</div>
+                <div class="stat-card-icon">📉</div>
+            </div>
+            <div class="stat-card-value">{{ promedio_semanal|floatformat:1 }}</div>
+            <div class="stat-card-subtitle">Promedio de las últimas 4 semanas</div>
+        </div>
+        
+        <div class="stat-card warning">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Completados Esta Semana</div>
+                <div class="stat-card-icon">✨</div>
+            </div>
+            <div class="stat-card-value">{{ trabajos_completados_semana }}</div>
+            <div class="stat-card-subtitle">Trabajos finalizados en los últimos 7 días</div>
+        </div>
+    </div>
+    
+    <!-- Financiero -->
+    <h2 class="section-title">💰 Análisis Financiero</h2>
+    <div class="estadisticas-grid">
+        <div class="stat-card success">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Total Ingresos</div>
+                <div class="stat-card-icon">💵</div>
+            </div>
+            <div class="stat-card-value">${{ total_ingresos|floatformat:0|intcomma }}</div>
+            <div class="stat-card-subtitle">Mano de obra + Repuestos (todos los trabajos)</div>
+        </div>
+        
+        <div class="stat-card primary">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Total Mano de Obra</div>
+                <div class="stat-card-icon">🛠️</div>
+            </div>
+            <div class="stat-card-value">${{ total_mano_obra|floatformat:0|intcomma }}</div>
+            <div class="stat-card-subtitle">Promedio: ${{ promedio_mano_obra|floatformat:0|intcomma }} por trabajo</div>
+        </div>
+        
+        <div class="stat-card info">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Total Repuestos</div>
+                <div class="stat-card-icon">🔩</div>
+            </div>
+            <div class="stat-card-value">${{ total_repuestos|floatformat:0|intcomma }}</div>
+            <div class="stat-card-subtitle">Promedio: ${{ promedio_repuestos|floatformat:0|intcomma }} por trabajo</div>
+        </div>
+        
+        <div class="stat-card warning">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Ingresos Esta Semana</div>
+                <div class="stat-card-icon">📊</div>
+            </div>
+            <div class="stat-card-value">${{ ingresos_semana|floatformat:0|intcomma }}</div>
+            <div class="stat-card-subtitle">
+                MO: ${{ ingresos_semana_mano_obra|floatformat:0|intcomma }} | 
+                Rep: ${{ ingresos_semana_repuestos|floatformat:0|intcomma }}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Avance de Trabajos -->
+    <h2 class="section-title">📊 Avance de Trabajos</h2>
+    <div class="estadisticas-grid">
+        <div class="stat-card info">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Avance Promedio</div>
+                <div class="stat-card-icon">📈</div>
+            </div>
+            <div class="stat-card-value">{{ promedio_avance|floatformat:1 }}%</div>
+            <div class="stat-card-subtitle">Porcentaje promedio de avance de todos los trabajos</div>
+        </div>
+        
+        <div class="stat-card" style="grid-column: span 2;">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Distribución por Rango de Avance</div>
+            </div>
+            <div style="margin-top: 1rem;">
+                <div style="margin-bottom: 0.5rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                        <span>0% - 25%</span>
+                        <strong>{{ avance_0_25 }} trabajos</strong>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" style="width: {{ porcentaje_avance_0_25 }}%; background: #dc3545;">
+                            {{ porcentaje_avance_0_25 }}%
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-bottom: 0.5rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                        <span>25% - 50%</span>
+                        <strong>{{ avance_25_50 }} trabajos</strong>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" style="width: {{ porcentaje_avance_25_50 }}%; background: #ffc107;">
+                            {{ porcentaje_avance_25_50 }}%
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-bottom: 0.5rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                        <span>50% - 75%</span>
+                        <strong>{{ avance_50_75 }} trabajos</strong>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" style="width: {{ porcentaje_avance_50_75 }}%; background: #17a2b8;">
+                            {{ porcentaje_avance_50_75 }}%
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                        <span>75% - 100%</span>
+                        <strong>{{ avance_75_100 }} trabajos</strong>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" style="width: {{ porcentaje_avance_75_100 }}%; background: #28a745;">
+                            {{ porcentaje_avance_75_100 }}%
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Trabajos por Estado -->
+    <h2 class="section-title">📋 Distribución por Estado</h2>
+    <table class="table-stats">
+        <thead>
+            <tr>
+                <th>Estado</th>
+                <th>Cantidad</th>
+                <th>Porcentaje</th>
+                <th>Visualización</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for estado_data in trabajos_por_estado %}
+            <tr>
+                <td>
+                    <span class="badge-estado badge-{{ estado_data.estado }}">
+                        {{ estado_data.estado|capfirst }}
+                    </span>
+                </td>
+                <td><strong>{{ estado_data.cantidad }}</strong></td>
+                <td>
+                    {{ estado_data.porcentaje }}%
+                </td>
+                <td>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" style="width: {{ estado_data.porcentaje }}%;">
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" style="text-align: center; padding: 2rem; color: var(--muted);">
+                    No hay trabajos registrados aún
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <!-- Nota final -->
+    <div style="margin-top: 3rem; padding: 1.5rem; background: var(--bg-secondary); border-radius: var(--border-radius-lg); text-align: center; color: var(--muted);">
+        <p><strong>💡 Nota:</strong> Estas estadísticas se actualizan en tiempo real. Usa esta información para tomar decisiones informadas sobre la operación del taller.</p>
+        <p style="margin-top: 0.5rem; font-size: 0.9rem;">Reporte generado en tiempo real</p>
+    </div>
+</div>
+{% endblock %}
+
