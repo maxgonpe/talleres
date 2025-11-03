@@ -33,6 +33,14 @@
   --spacing-lg: 1.5rem;
   --spacing-xl: 2rem;
   --spacing-2xl: 3rem;
+
+  /* Typography - Font Weights (más fuertes para móvil) */
+  --font-weight-light: 300;
+  --font-weight-normal: 500;  /* Aumentado de 400 a 500 */
+  --font-weight-medium: 600;  /* Aumentado de 500 a 600 */
+  --font-weight-semibold: 700; /* Aumentado de 600 a 700 */
+  --font-weight-bold: 800;     /* Aumentado de 700 a 800 */
+  --font-weight-extrabold: 900;
 }
 
 /* ========================================
@@ -332,7 +340,10 @@ body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   font-family: "Poppins", "Helvetica Neue", sans-serif;
+  font-weight: var(--font-weight-normal);
   line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Navegación */
@@ -345,7 +356,7 @@ body {
 .navbar-brand,
 .nav-link {
   color: var(--text-inverse) !important;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .nav-link:hover {
@@ -420,7 +431,7 @@ body {
 
 .form-label {
   color: var(--text-primary);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .form-text {
@@ -430,7 +441,7 @@ body {
 /* Botones */
 .btn {
   border-radius: var(--border-radius-md);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   transition: var(--transition);
   border: none;
 }
@@ -518,7 +529,7 @@ body {
   background-color: var(--bg-secondary);
   color: var(--text-primary);
   border-color: var(--border-color);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .table td {
@@ -579,7 +590,17 @@ footer {
 /* Texto */
 h1, h2, h3, h4, h5, h6 {
   color: var(--text-primary);
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
+}
+
+/* Párrafos y texto general más fuerte */
+p, span, div, li, td {
+  font-weight: var(--font-weight-normal);
+}
+
+/* Texto fuerte por defecto */
+strong, b, .fw-bold {
+  font-weight: var(--font-weight-bold) !important;
 }
 
 .text-muted {
@@ -608,7 +629,7 @@ h1, h2, h3, h4, h5, h6 {
 /* Badges */
 .badge {
   border-radius: var(--border-radius-full);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .badge-primary {
@@ -701,6 +722,83 @@ h1, h2, h3, h4, h5, h6 {
 /* ========================================
    RESPONSIVE Y ACCESIBILIDAD
    ======================================== */
+
+/* Mejoras de tipografía para móvil - Texto más fuerte y notorio */
+@media (max-width: 768px) {
+  body {
+    font-weight: var(--font-weight-medium) !important;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* Todos los textos más fuertes en móvil */
+  p, span, div, li, td, label, .form-control, .form-select {
+    font-weight: var(--font-weight-medium) !important;
+  }
+  
+  /* Títulos más destacados */
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: var(--font-weight-extrabold) !important;
+  }
+  
+  /* Botones más notorios */
+  .btn {
+    font-weight: var(--font-weight-bold) !important;
+  }
+  
+  /* Labels y textos de formularios más fuertes */
+  .form-label, label {
+    font-weight: var(--font-weight-semibold) !important;
+  }
+  
+  /* Tablas más legibles */
+  .table th {
+    font-weight: var(--font-weight-bold) !important;
+  }
+  
+  .table td {
+    font-weight: var(--font-weight-medium) !important;
+  }
+  
+  /* Navegación más notoria */
+  .navbar-brand, .nav-link {
+    font-weight: var(--font-weight-bold) !important;
+  }
+  
+  /* Cards y contenido más legible */
+  .card-title, .card-header {
+    font-weight: var(--font-weight-bold) !important;
+  }
+  
+  .card-text, .card-body {
+    font-weight: var(--font-weight-medium) !important;
+  }
+  
+  /* Alertas más visibles */
+  .alert {
+    font-weight: var(--font-weight-medium) !important;
+  }
+  
+  .alert strong, .alert .fw-bold {
+    font-weight: var(--font-weight-bold) !important;
+  }
+  
+  /* Badges más notorios */
+  .badge {
+    font-weight: var(--font-weight-bold) !important;
+  }
+  
+  /* Listas más legibles */
+  .list-group-item {
+    font-weight: var(--font-weight-medium) !important;
+  }
+  
+  /* Texto muted pero aún legible */
+  .text-muted {
+    font-weight: var(--font-weight-normal) !important;
+    opacity: 0.85;
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
   * {

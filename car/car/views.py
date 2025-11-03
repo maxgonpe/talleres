@@ -89,6 +89,26 @@ def logout_view(request):
     return redirect("login")
 
 
+def is_mobile_device(request):
+    """
+    Detecta si el request viene de un dispositivo móvil.
+    Utiliza el User-Agent para identificar móviles, tablets y dispositivos táctiles.
+    
+    Returns:
+        bool: True si es un dispositivo móvil, False si es desktop.
+    """
+    user_agent = request.META.get('HTTP_USER_AGENT', '').lower()
+    mobile_keywords = [
+        'mobile', 'android', 'iphone', 'ipad', 'ipod',
+        'blackberry', 'windows phone', 'opera mini', 'iemobile',
+        'kindle', 'silk', 'fennec', 'maemo', 'tefpad', 'foma',
+        'w3c ', 'w3c-', 'netfront', 'opera mobi', 'opera mobi',
+        'skyfire', 'bolt', 'iris', 'dolfin', 'palm', 'series',
+        'symbian', 'symbos', 'series60', 'series80', 'series90',
+        'puffin', 'ucbrowser', 'baiduboxapp', 'miuibrowser'
+    ]
+    # También detectar por tamaño de pantalla si viene en headers (opcional)
+    return any(keyword in user_agent for keyword in mobile_keywords)
 
 
 @login_required
@@ -208,17 +228,23 @@ def ingreso_view(request):
             # ====================================================
             # 🔹 Repuestos seleccionados desde hidden JSON
             # ====================================================
-            # 🔹 Repuestos seleccionados desde hidden JSON
             repuestos_json = (request.POST.get("repuestos_json") or "").strip()
-            print("1 Antesss")
-            print("2 DEBUG repuestos_json:", repr(repuestos_json))
+            print("=" * 80)
+            print("📦 DEBUG REPUESTOS_JSON EN BACKEND")
+            print("=" * 80)
+            print(f"📋 repuestos_json recibido: {repr(repuestos_json)}")
+            print(f"📋 Longitud: {len(repuestos_json) if repuestos_json else 0}")
             if repuestos_json:
                 try:
                     repuestos_data = json.loads(repuestos_json)
-                    for r in repuestos_data:
+                    print(f"📦 Total repuestos parseados: {len(repuestos_data)}")
+                    print(f"📦 Datos completos: {repuestos_data}")
+                    
+                    for idx, r in enumerate(repuestos_data, 1):
                         try:
                             repuesto_id = int(r.get("id"))
                             repuesto = Repuesto.objects.get(pk=repuesto_id)
+                            print(f"✅ [{idx}/{len(repuestos_data)}] Procesando: {repuesto.nombre} (ID: {repuesto_id})")
 
                             stock_id_raw = r.get("repuesto_stock_id")
                             repuesto_stock = None
@@ -239,15 +265,19 @@ def ingreso_view(request):
                                 precio_unitario=precio,
                                 subtotal=cantidad * precio
                             )
-                            print("DEBUG repuestos_json:", repr(repuestos_json))
-                        except (ValueError, Repuesto.DoesNotExist, KeyError):
+                            print(f"   ✅ DiagnosticoRepuesto creado: {repuesto.nombre} x{cantidad}")
+                        except (ValueError, Repuesto.DoesNotExist, KeyError) as e:
+                            print(f"   ❌ Error procesando repuesto: {e}")
                             continue
-                except json.JSONDecodeError:
-                    print("3 pasando por el pass")
-                    print("4 DEBUG repuestos_json:", repr(repuestos_json))
+                    print("=" * 80)
+                except json.JSONDecodeError as e:
+                    print(f"❌ Error decodificando JSON de repuestos: {e}")
+                    print("=" * 80)
                     pass
-            print("5 DEBUG repuestos_json:", repr(repuestos_json))
-# ====================================================
+            else:
+                print("⚠️ repuestos_json está vacío o es None")
+                print("=" * 80)
+            # ====================================================
 
             # ====================================================
             # 🌐 Repuestos Externos (Referencias)
@@ -286,6 +316,9 @@ def ingreso_view(request):
                     print(f"Error decodificando JSON de repuestos externos: {e}")
                     pass
             # ====================================================
+            # 🧰 Nota: Los insumos ahora se agregan directamente a repuestos_json
+            # desde el frontend, por lo que ya fueron procesados arriba ⬆️
+            # ====================================================
 
             messages.success(request, "Ingreso guardado correctamente.")
             return redirect('panel_principal')
@@ -308,7 +341,10 @@ def ingreso_view(request):
     except FileNotFoundError:
         pass
 
-    return render(request, 'car/ingreso.html', {
+    # Determinar template según dispositivo (móvil o PC)
+    template_name = 'car/ingreso-movil.html' if is_mobile_device(request) else 'car/ingreso-pc.html'
+
+    return render(request, template_name, {
         'cliente_form': cliente_form,
         'vehiculo_form': vehiculo_form,
         'config': config,
@@ -508,11 +544,8 @@ def lista_diagnosticos(request):
         'repuestos'
     ).order_by('-fecha')
 
-    # Agregar campos calculados manualmente
-    for diag in diagnosticos:
-        diag.total_mano_obra = sum(dca.precio_mano_obra or 0 for dca in diag.acciones_componentes.all())
-        diag.total_repuestos = sum(dr.subtotal or (dr.cantidad * (dr.precio_unitario or 0)) for dr in diag.repuestos.all())
-        diag.total_presupuesto = diag.total_mano_obra + diag.total_repuestos
+    # Los totales ahora se calculan automáticamente usando @property en el modelo
+    # No es necesario calcularlos aquí - se acceden directamente en el template
 
     return render(request, 'car/diagnostico_lista.html', {
         'diagnosticos': diagnosticos,
@@ -1642,17 +1675,19 @@ def exportar_diagnostico_pdf(request, pk):
         logger.info("✅ CSS aplicado")
         
         logger.info("🔄 Generando PDF con WeasyPrint...")
+        
+        # Crear response PRIMERO (como en exportar_acciones_pdf que funciona)
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'inline; filename="diagnostico_{diagnostico.id}.pdf"'
+        
+        # Generar el PDF directamente en el response
         pdf_file = html_doc.write_pdf(stylesheets=[css], font_config=font_config)
         logger.info(f"✅ PDF generado exitosamente - Tamaño: {len(pdf_file)} bytes")
         
-        response = HttpResponse(pdf_file, content_type='application/pdf')
-        response['Content-Disposition'] = f'inline; filename="diagnostico_{diagnostico.id}_estado.pdf"'
-        response['Content-Length'] = str(len(pdf_file))
-        response['X-Content-Type-Options'] = 'nosniff'
-        response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-        response['Pragma'] = 'no-cache'
-        response['Expires'] = '0'
-        logger.info("✅ Respuesta HTTP creada")
+        # Escribir el PDF al response (como en exportar_acciones_pdf)
+        response.write(pdf_file)
+        
+        logger.info("✅ Respuesta HTTP creada con Content-Disposition: inline (método inline-first)")
         return response
         
     except ImportError as e:
@@ -1930,6 +1965,22 @@ def trabajo_detalle(request, pk):
             messages.success(request, "Observaciones guardadas.")
             return redirect("trabajo_detalle", pk=trabajo.pk)
 
+        # 🔹 Guardar kilometraje
+        elif "guardar_kilometraje" in request.POST:
+            kilometraje = request.POST.get("lectura_kilometraje_actual", "")
+            if kilometraje and kilometraje.strip():
+                try:
+                    trabajo.lectura_kilometraje_actual = int(kilometraje)
+                    trabajo.save()
+                    messages.success(request, f"Kilometraje guardado: {kilometraje} km")
+                except ValueError:
+                    messages.error(request, "El kilometraje debe ser un número válido.")
+            else:
+                trabajo.lectura_kilometraje_actual = None
+                trabajo.save()
+                messages.success(request, "Kilometraje eliminado.")
+            return redirect("trabajo_detalle", pk=trabajo.pk)
+
         # 🔹 Asignar mecánicos
         elif "asignar_mecanicos" in request.POST:
             asignar_form = AsignarMecanicosForm(request.POST, instance=trabajo)
@@ -2127,26 +2178,195 @@ def trabajo_detalle(request, pk):
                     messages.error(request, "Repuesto externo no encontrado.")
             return redirect_with_tab("repuestos")
 
-        # 🔹 Toggle repuesto completado / pendiente
+        # 🔹 Toggle repuesto completado / pendiente (CON ACTUALIZACIÓN DE STOCK)
         elif "toggle_repuesto" in request.POST:
             repuesto_id = request.POST.get("repuesto_id")
+            print(f"\n{'='*80}")
+            print(f"🔄 TOGGLE REPUESTO - ID: {repuesto_id}")
+            print(f"{'='*80}")
+            
             try:
-                repuesto = TrabajoRepuesto.objects.get(id=repuesto_id, trabajo=trabajo)
-                repuesto.completado = not repuesto.completado
-                repuesto.save()
-                messages.success(request, f"Repuesto marcado como {'completado' if repuesto.completado else 'pendiente'}.")
+                repuesto_trabajo = TrabajoRepuesto.objects.get(id=repuesto_id, trabajo=trabajo)
+                print(f"📦 Repuesto encontrado: {repuesto_trabajo}")
+                print(f"📦 Repuesto interno: {repuesto_trabajo.repuesto}")
+                print(f"📦 Repuesto externo: {repuesto_trabajo.repuesto_externo}")
+                print(f"📦 Estado anterior: {repuesto_trabajo.completado}")
+                print(f"📦 Cantidad: {repuesto_trabajo.cantidad}")
+                
+                # Guardar estado anterior para saber si aumentar o disminuir stock
+                estado_anterior = repuesto_trabajo.completado
+                
+                # Cambiar el estado
+                repuesto_trabajo.completado = not repuesto_trabajo.completado
+                repuesto_trabajo.save()
+                print(f"✅ Nuevo estado guardado: {repuesto_trabajo.completado}")
+                
+                # ACTUALIZAR STOCK SOLO SI ES REPUESTO DEL INVENTARIO PROPIO
+                if repuesto_trabajo.repuesto:  # Solo si es del inventario, no externo
+                    from .models import RepuestoEnStock
+                    
+                    print(f"🔍 Buscando stock para repuesto ID: {repuesto_trabajo.repuesto.id}")
+                    print(f"🔍 Nombre del repuesto: {repuesto_trabajo.repuesto.nombre}")
+                    
+                    try:
+                        # 🔥 BÚSQUEDA CONSISTENTE: Solo por repuesto y depósito principal
+                        stock_item = RepuestoEnStock.objects.filter(
+                            repuesto=repuesto_trabajo.repuesto,
+                            deposito='bodega-principal'
+                        ).first()
+                        
+                        print(f"🔍 Buscando stock en bodega-principal...")
+                        if stock_item:
+                            print(f"   ✅ Stock encontrado - ID: {stock_item.id}, Stock: {stock_item.stock}, Reservado: {stock_item.reservado}")
+                        
+                        if stock_item:
+                            stock_anterior = stock_item.stock
+                            repuesto_stock_anterior = repuesto_trabajo.repuesto.stock
+                            print(f"✅ Stock encontrado - Depósito: {stock_item.deposito}")
+                            print(f"📊 Stock en RepuestoEnStock ANTES: {stock_anterior}")
+                            print(f"📊 Stock en Repuesto ANTES: {repuesto_stock_anterior}")
+                            
+                            cantidad = repuesto_trabajo.cantidad or 0
+                            print(f"📦 Cantidad a procesar: {cantidad}")
+                            
+                            if repuesto_trabajo.completado and not estado_anterior:
+                                # Se marcó como completado: DESCONTAR del stock
+                                stock_item.stock = (stock_item.stock or 0) - cantidad
+                                stock_item.save()
+                                
+                                # 🔥 SINCRONIZAR con Repuesto.stock
+                                repuesto_obj = repuesto_trabajo.repuesto
+                                repuesto_obj.stock = (repuesto_obj.stock or 0) - cantidad
+                                repuesto_obj.save()
+                                
+                                print(f"➖ DESCUENTO APLICADO en RepuestoEnStock: {stock_anterior} - {cantidad} = {stock_item.stock}")
+                                print(f"➖ DESCUENTO APLICADO en Repuesto: {repuesto_stock_anterior} - {cantidad} = {repuesto_obj.stock}")
+                                print(f"✅ Stock actualizado en AMBAS tablas (RepuestoEnStock Y Repuesto)")
+                                messages.success(
+                                    request, 
+                                    f"✅ Repuesto completado. Stock descontado: {stock_item.repuesto.nombre} (Stock anterior: {repuesto_stock_anterior}, Stock actual: {repuesto_obj.stock})"
+                                )
+                            elif not repuesto_trabajo.completado and estado_anterior:
+                                # Se desmarcó: DEVOLVER al stock
+                                stock_item.stock = (stock_item.stock or 0) + cantidad
+                                stock_item.save()
+                                
+                                # 🔥 SINCRONIZAR con Repuesto.stock
+                                repuesto_obj = repuesto_trabajo.repuesto
+                                repuesto_obj.stock = (repuesto_obj.stock or 0) + cantidad
+                                repuesto_obj.save()
+                                
+                                print(f"➕ DEVOLUCIÓN APLICADA en RepuestoEnStock: {stock_anterior} + {cantidad} = {stock_item.stock}")
+                                print(f"➕ DEVOLUCIÓN APLICADA en Repuesto: {repuesto_stock_anterior} + {cantidad} = {repuesto_obj.stock}")
+                                print(f"✅ Stock restaurado en AMBAS tablas (RepuestoEnStock Y Repuesto)")
+                                messages.success(
+                                    request, 
+                                    f"↩️ Repuesto desmarcado. Stock restaurado: {stock_item.repuesto.nombre} (Stock anterior: {repuesto_stock_anterior}, Stock actual: {repuesto_obj.stock})"
+                                )
+                            else:
+                                print(f"⚠️ No se requiere cambio de stock (estado no cambió de pendiente→completado o viceversa)")
+                                messages.info(
+                                    request, 
+                                    f"Estado del repuesto actualizado."
+                                )
+                        else:
+                            # No hay stock registrado, solo cambiar estado sin actualizar inventario
+                            print(f"⚠️ NO SE ENCONTRÓ STOCK para repuesto ID: {repuesto_trabajo.repuesto.id}")
+                            messages.warning(
+                                request, 
+                                f"⚠️ Estado cambiado a {'completado' if repuesto_trabajo.completado else 'pendiente'}. No se encontró stock del repuesto '{repuesto_trabajo.repuesto.nombre}' en RepuestoEnStock."
+                            )
+                    except Exception as e:
+                        print(f"❌ ERROR actualizando stock: {str(e)}")
+                        import traceback
+                        print(traceback.format_exc())
+                        messages.error(request, f"❌ Error actualizando stock: {str(e)}")
+                else:
+                    # Es un repuesto externo, solo cambiar estado
+                    print(f"🌐 Repuesto externo detectado: {repuesto_trabajo.repuesto_externo}")
+                    messages.success(
+                        request, 
+                        f"🌐 Repuesto externo marcado como {'completado' if repuesto_trabajo.completado else 'pendiente'}: {repuesto_trabajo.repuesto_externo.nombre if repuesto_trabajo.repuesto_externo else 'Sin nombre'}"
+                    )
+                
+                print(f"{'='*80}\n")
+                    
             except TrabajoRepuesto.DoesNotExist:
+                print(f"❌ TrabajoRepuesto NO ENCONTRADO: ID {repuesto_id}")
                 messages.error(request, "Repuesto no encontrado.")
+            except Exception as e:
+                print(f"❌ ERROR GENERAL en toggle_repuesto: {str(e)}")
+                import traceback
+                print(traceback.format_exc())
+                messages.error(request, f"❌ Error: {str(e)}")
             return redirect_with_tab("repuestos")
 
-        # 🔹 Eliminar repuesto
+        # 🔹 Eliminar repuesto (CON DEVOLUCIÓN DE STOCK SI ESTABA COMPLETADO)
         elif "eliminar_repuesto" in request.POST:
             repuesto_id = request.POST.get("repuesto_id")
+            print(f"\n{'='*80}")
+            print(f"🗑️ ELIMINAR REPUESTO - ID: {repuesto_id}")
+            print(f"{'='*80}")
+            
             try:
-                repuesto = TrabajoRepuesto.objects.get(id=repuesto_id, trabajo=trabajo)
-                repuesto.delete()
-                messages.success(request, "Repuesto eliminado.")
+                repuesto_trabajo = TrabajoRepuesto.objects.get(id=repuesto_id, trabajo=trabajo)
+                print(f"📦 Repuesto a eliminar: {repuesto_trabajo}")
+                print(f"📦 Estado completado: {repuesto_trabajo.completado}")
+                
+                # Si el repuesto estaba completado, devolver al stock antes de eliminar
+                if repuesto_trabajo.completado and repuesto_trabajo.repuesto:
+                    from .models import RepuestoEnStock
+                    
+                    print(f"↩️ Repuesto completado detectado, devolviendo stock...")
+                    
+                    try:
+                        # 🔥 BÚSQUEDA CONSISTENTE: Solo por repuesto y depósito principal
+                        stock_item = RepuestoEnStock.objects.filter(
+                            repuesto=repuesto_trabajo.repuesto,
+                            deposito='bodega-principal'
+                        ).first()
+                        
+                        if stock_item:
+                            cantidad = repuesto_trabajo.cantidad or 0
+                            stock_anterior_enstock = stock_item.stock
+                            stock_anterior_repuesto = repuesto_trabajo.repuesto.stock
+                            
+                            # Devolver a RepuestoEnStock
+                            stock_item.stock = (stock_item.stock or 0) + cantidad
+                            stock_item.save()
+                            
+                            # 🔥 SINCRONIZAR con Repuesto.stock
+                            repuesto_obj = repuesto_trabajo.repuesto
+                            repuesto_obj.stock = (repuesto_obj.stock or 0) + cantidad
+                            repuesto_obj.save()
+                            
+                            print(f"➕ Stock devuelto en RepuestoEnStock: {stock_anterior_enstock} + {cantidad} = {stock_item.stock}")
+                            print(f"➕ Stock devuelto en Repuesto: {stock_anterior_repuesto} + {cantidad} = {repuesto_obj.stock}")
+                            print(f"✅ Stock restaurado en AMBAS tablas")
+                            
+                            messages.success(
+                                request, 
+                                f"🗑️ Repuesto eliminado. Stock devuelto: {stock_item.repuesto.nombre} (Stock: {repuesto_obj.stock})"
+                            )
+                        else:
+                            print(f"⚠️ No se encontró stock para devolver")
+                            messages.success(request, "🗑️ Repuesto eliminado (sin stock para devolver).")
+                    except Exception as e:
+                        print(f"❌ Error devolviendo stock: {str(e)}")
+                        import traceback
+                        print(traceback.format_exc())
+                        messages.error(request, f"Error devolviendo stock: {str(e)}")
+                        # Aún así eliminar el repuesto
+                else:
+                    print(f"ℹ️ Repuesto NO estaba completado o es externo, no hay stock que devolver")
+                    messages.success(request, "🗑️ Repuesto eliminado.")
+                
+                repuesto_trabajo.delete()
+                print(f"✅ Repuesto eliminado de la base de datos")
+                print(f"{'='*80}\n")
+                
             except TrabajoRepuesto.DoesNotExist:
+                print(f"❌ TrabajoRepuesto NO ENCONTRADO: ID {repuesto_id}")
                 messages.error(request, "Repuesto no encontrado.")
             return redirect_with_tab("repuestos")
 
@@ -2426,9 +2646,30 @@ def trabajo_pdf(request, pk):
         logger.info("✅ Template cargado correctamente")
         
         # Preparar contexto con URLs absolutas para las imágenes
+        config = AdministracionTaller.get_configuracion_activa()
+        
+        # Generar rutas de archivos locales para los logos (WeasyPrint necesita acceso directo)
+        logo_path = None
+        if config.logo_principal_png and os.path.exists(config.logo_principal_png.path):
+            logo_path = f"file://{config.logo_principal_png.path}"
+            logger.info(f"🖼️ Logo PNG disponible: {logo_path}")
+        elif config.logo_principal_svg and os.path.exists(config.logo_principal_svg.path):
+            logo_path = f"file://{config.logo_principal_svg.path}"
+            logger.info(f"🖼️ Logo SVG disponible: {logo_path}")
+        else:
+            # Usar logo por defecto desde static files
+            default_logo_path = os.path.join(settings.STATIC_ROOT or settings.STATICFILES_DIRS[0], 'images', 'Logo1.svg')
+            if os.path.exists(default_logo_path):
+                logo_path = f"file://{default_logo_path}"
+                logger.info(f"🖼️ Usando logo por defecto: {logo_path}")
+            else:
+                logger.warning("⚠️ No se encontró ningún logo disponible")
+        
         context = {
             'trabajo': trabajo,
             'request': request,  # Para generar URLs absolutas
+            'config': config,  # Configuración del taller para el logo
+            'logo_path': logo_path,  # Ruta local del logo para WeasyPrint
         }
         
         # Log de fotos del trabajo

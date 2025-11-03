@@ -266,13 +266,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Prepara JSON de repuestos seleccionados para enviar en el formulario
   function prepararRepuestosParaEnvio() {
-  const repuestos = [];
+  const repuestosNuevos = [];
   document.querySelectorAll("#repuestos-list input.repuesto-check:checked").forEach(chk => {
     const cantidadInput = document.querySelector(
       `#repuestos-list input.repuesto-cantidad[data-id="${chk.dataset.id}"]`
     );
     const cantidad = cantidadInput ? parseInt(cantidadInput.value) || 1 : 1;
-    repuestos.push({
+    repuestosNuevos.push({
       id: chk.dataset.id,
       repuesto_stock_id: chk.dataset.stockId || null,
       cantidad: cantidad,
@@ -281,10 +281,36 @@ document.addEventListener('DOMContentLoaded', function () {
       oem: chk.dataset.oem || ''
     });
   });
+  
   const hidden = document.getElementById("repuestos-json");
   if (hidden) {
-    hidden.value = JSON.stringify(repuestos);
-    console.log("✅ repuestos-json listo:", hidden.value);
+    // 🆕 COMBINAR con items existentes (pueden ser insumos agregados desde otra pestaña)
+    let itemsExistentes = [];
+    try {
+      if (hidden.value && hidden.value.trim()) {
+        itemsExistentes = JSON.parse(hidden.value);
+        if (!Array.isArray(itemsExistentes)) itemsExistentes = [];
+      }
+    } catch (e) {
+      console.warn('⚠️ Error parseando repuestos-json existente:', e);
+      itemsExistentes = [];
+    }
+    
+    // Combinar evitando duplicados (por ID)
+    const idsExistentes = new Set(itemsExistentes.map(item => item.id));
+    const itemsFinales = [...itemsExistentes];
+    
+    repuestosNuevos.forEach(rep => {
+      if (!idsExistentes.has(rep.id)) {
+        itemsFinales.push(rep);
+      }
+    });
+    
+    hidden.value = JSON.stringify(itemsFinales);
+    console.log("✅ repuestos-json listo (combinado):", itemsFinales.length, "items");
+    console.log("   - Items previos:", itemsExistentes.length);
+    console.log("   - Repuestos nuevos:", repuestosNuevos.length);
+    console.log("   - Total final:", itemsFinales.length);
   } else {
     console.warn("⚠️ No se encontró el input hidden #repuestos-json");
   }

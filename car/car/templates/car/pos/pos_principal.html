@@ -1121,3 +1121,9 @@ function cargarCompatibilidad(repuestoId) {
 {% include 'car/busqueda_externa_repuestos.html' %}
 
 {% endblock %}
+
+{% block mobile_components %}
+  <!-- Menú inferior y botón flotante para ventas -->
+  {% include 'car/mobile_bottom_nav.html' %}
+  {% include 'car/mobile_fab.html' %}
+{% endblock %}

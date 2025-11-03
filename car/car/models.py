@@ -294,6 +294,28 @@ class Diagnostico(models.Model):
     def __str__(self):
         return self.vehiculo.marca
     
+    @property
+    def total_mano_obra(self):
+        """Calcular el total de mano de obra sumando todas las acciones"""
+        from decimal import Decimal
+        total = Decimal('0')
+        for dca in self.acciones_componentes.all():
+            total += dca.precio_mano_obra or Decimal('0')
+        return total
+    
+    @property
+    def total_repuestos(self):
+        """Calcular el total de repuestos sumando todos los subtotales"""
+        from decimal import Decimal
+        total = Decimal('0')
+        for dr in self.repuestos.all():
+            total += dr.subtotal or Decimal('0')
+        return total
+    
+    @property
+    def total_presupuesto(self):
+        """Calcular el total del presupuesto (mano de obra + repuestos)"""
+        return self.total_mano_obra + self.total_repuestos
 
     def aprobar_y_clonar(self):
         """
@@ -598,6 +620,9 @@ class Repuesto(models.Model):
     
     def _sincronizar_con_stock_detallado(self, cantidad_entrada, precio_compra, proveedor=''):
         """Sincroniza con RepuestoEnStock para mantener consistencia"""
+        # 🔥 SIMPLIFICADO: Buscar SOLO por repuesto y depósito (sin proveedor como clave)
+        # Esto evita crear múltiples registros por proveedor
+        
         # Primero, eliminar cualquier registro duplicado existente
         registros_existentes = RepuestoEnStock.objects.filter(
             repuesto=self,
@@ -605,29 +630,39 @@ class Repuesto(models.Model):
         )
         
         if registros_existentes.count() > 1:
+            print(f"⚠️ Encontrados {registros_existentes.count()} registros duplicados para {self.nombre}")
             # Mantener solo el más reciente y eliminar los duplicados
             registro_principal = registros_existentes.order_by('-id').first()
             registros_duplicados = registros_existentes.exclude(id=registro_principal.id)
+            print(f"🗑️ Eliminando {registros_duplicados.count()} duplicados...")
             registros_duplicados.delete()
         
-        # Obtener o crear el registro principal en RepuestoEnStock
+        # 🔥 CAMBIO CLAVE: get_or_create solo por repuesto y deposito (no incluir proveedor)
         stock_principal, created = RepuestoEnStock.objects.get_or_create(
             repuesto=self,
             deposito='bodega-principal',
-            proveedor=proveedor,
             defaults={
                 'stock': 0,
                 'reservado': 0,
                 'precio_compra': precio_compra,
-                'precio_venta': self.precio_venta
+                'precio_venta': self.precio_venta,
+                'proveedor': proveedor  # Lo guardamos, pero no es clave de búsqueda
             }
         )
+        
+        if created:
+            print(f"✅ Creado nuevo registro RepuestoEnStock para {self.nombre}")
         
         # Actualizar el stock detallado para que coincida con el stock maestro
         stock_principal.stock = self.stock
         stock_principal.precio_compra = self.precio_costo
         stock_principal.precio_venta = self.precio_venta
+        # Actualizar proveedor si viene uno nuevo (pero sin crear registro duplicado)
+        if proveedor:
+            stock_principal.proveedor = proveedor
         stock_principal.save()
+        
+        print(f"🔄 Stock sincronizado: Repuesto.stock={self.stock} → RepuestoEnStock.stock={stock_principal.stock}")
 
 
 
@@ -730,6 +765,7 @@ class Trabajo(models.Model):
     fecha_fin = models.DateTimeField(null=True, blank=True)
     estado = models.CharField(max_length=20, choices=ESTADOS, default="iniciado")
     observaciones = models.TextField(blank=True, null=True)
+    lectura_kilometraje_actual = models.IntegerField(null=True, blank=True, verbose_name="Kilometraje Actual", help_text="Lectura del kilometraje al ingresar el vehículo")
     mecanicos = models.ManyToManyField("Mecanico", related_name="trabajos", blank=True)
 
     # 🔹 Nuevo: relacionar con componentes (igual que Diagnostico)
@@ -1109,16 +1145,22 @@ def actualizar_stock_venta_pos(venta_pos):
         if not item.repuesto.tiene_stock_suficiente(item.cantidad):
             raise ValueError(f"Stock insuficiente para {item.repuesto.nombre}")
         
-        # Buscar el stock disponible
+        # 🔥 BÚSQUEDA CONSISTENTE: Buscar en bodega-principal
         stock_disponible = RepuestoEnStock.objects.filter(
             repuesto=item.repuesto,
+            deposito='bodega-principal',
             stock__gte=item.cantidad
         ).first()
         
         if stock_disponible:
-            # Descontar stock
+            # Descontar stock en RepuestoEnStock
             stock_disponible.stock -= item.cantidad
             stock_disponible.save()
+            
+            # 🔥 SINCRONIZAR: Descontar también en Repuesto.stock
+            repuesto_obj = item.repuesto
+            repuesto_obj.stock = (repuesto_obj.stock or 0) - item.cantidad
+            repuesto_obj.save()
             
             # Registrar movimiento
             StockMovimiento.objects.create(
@@ -1435,42 +1477,55 @@ class CompraItem(models.Model):
     def recibir_item(self, usuario=None):
         """Marca el item como recibido y actualiza el stock usando precio promedio ponderado"""
         if not self.recibido:
+            print(f"\n{'='*80}")
+            print(f"📦 RECIBIENDO COMPRA - Item: {self.repuesto.nombre} x{self.cantidad}")
+            print(f"{'='*80}")
+            
             self.recibido = True
             self.fecha_recibido = now()
             self.save()
+            print(f"✅ Item marcado como recibido")
             
             # Actualizar stock del repuesto usando el nuevo sistema unificado
             repuesto = self.repuesto
+            print(f"📊 Stock ANTES de actualizar:")
+            print(f"   - Repuesto.stock: {repuesto.stock}")
             
             # Usar el nuevo método de actualización con precio promedio ponderado
+            # Este método YA sincroniza con RepuestoEnStock internamente
             resultado = repuesto.actualizar_stock_y_precio(
                 cantidad_entrada=self.cantidad,
                 precio_compra=self.precio_unitario,
                 proveedor=self.compra.proveedor
             )
             
-            # Crear movimiento de stock para auditoría
-            # Obtener o crear el registro de RepuestoEnStock
-            stock_principal, created = RepuestoEnStock.objects.get_or_create(
-                repuesto=self.repuesto,
-                deposito='bodega-principal',
-                proveedor=self.compra.proveedor,
-                defaults={
-                    'stock': 0,
-                    'reservado': 0,
-                    'precio_compra': self.repuesto.precio_costo,
-                    'precio_venta': self.repuesto.precio_venta
-                }
-            )
+            print(f"📊 Stock DESPUÉS de actualizar:")
+            print(f"   - Stock anterior: {resultado['stock_anterior']}")
+            print(f"   - Stock nuevo: {resultado['stock_nuevo']}")
+            print(f"   - Precio costo: ${resultado['precio_costo_nuevo']}")
+            print(f"   - Precio venta: ${resultado['precio_venta_nuevo']}")
             
-            StockMovimiento.objects.create(
-                repuesto_stock=stock_principal,
-                tipo='entrada',
-                cantidad=self.cantidad,
-                motivo=f'Compra #{self.compra.numero_compra}',
-                referencia=f'COMPRA-{self.compra.id}',
-                usuario=usuario
-            )
+            # Crear movimiento de stock para auditoría
+            # 🔥 SIMPLIFICADO: Solo buscar por repuesto y deposito (ya sincronizado arriba)
+            stock_principal = RepuestoEnStock.objects.filter(
+                repuesto=self.repuesto,
+                deposito='bodega-principal'
+            ).first()
+            
+            if stock_principal:
+                StockMovimiento.objects.create(
+                    repuesto_stock=stock_principal,
+                    tipo='entrada',
+                    cantidad=self.cantidad,
+                    motivo=f'Compra #{self.compra.numero_compra}',
+                    referencia=f'COMPRA-{self.compra.id}',
+                    usuario=usuario
+                )
+                print(f"📝 Movimiento de stock registrado")
+            else:
+                print(f"⚠️ No se encontró RepuestoEnStock para registrar movimiento")
+            
+            print(f"{'='*80}\n")
 
 
 # ========================

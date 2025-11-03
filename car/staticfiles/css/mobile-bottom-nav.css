@@ -1,0 +1,104 @@
+/* ========================================
+   MENÚ INFERIOR FIJO - MÓVIL
+   Acceso rápido a acciones principales
+   ======================================== */
+
+@media (max-width: 768px) {
+  
+  /* Menú inferior fijo */
+  .mobile-bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg-card, #fff);
+    border-top: 3px solid var(--border-color, #ddd);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+    padding: 8px 4px;
+    z-index: 1000;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    height: 70px;
+    max-height: 70px;
+  }
+  
+  /* Items del menú */
+  .mobile-bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 8px;
+    text-decoration: none;
+    color: var(--text-secondary, #666);
+    font-size: 11px;
+    font-weight: 600;
+    min-width: 55px;
+    flex: 1;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+    position: relative;
+  }
+  
+  .mobile-bottom-nav-item:hover,
+  .mobile-bottom-nav-item:focus {
+    color: var(--primary-600, #0d6efd);
+    background: var(--primary-50, #f0f9ff);
+    transform: translateY(-2px);
+  }
+  
+  .mobile-bottom-nav-item.active {
+    color: var(--primary-600, #0d6efd);
+    background: var(--primary-100, #e0f2fe);
+    font-weight: 700;
+  }
+  
+  .mobile-bottom-nav-item.active::before {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 30px;
+    height: 3px;
+    background: var(--primary-600, #0d6efd);
+    border-radius: 0 0 3px 3px;
+  }
+  
+  .mobile-bottom-nav-item i,
+  .mobile-bottom-nav-item svg {
+    font-size: 22px;
+    margin-bottom: 2px;
+    display: block;
+  }
+  
+  .mobile-bottom-nav-item span {
+    font-size: 10px;
+    line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+  
+  /* Espacio para que el contenido no quede oculto */
+  body.has-bottom-nav {
+    padding-bottom: 80px;
+  }
+  
+  /* Ajustar footer cuando hay menú inferior */
+  footer {
+    margin-bottom: 80px !important;
+  }
+  
+  /* Ajustar main content */
+  main {
+    padding-bottom: 90px !important;
+  }
+  
+}
+

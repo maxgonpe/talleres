@@ -176,3 +176,5 @@ Una vez subidos estos archivos, la PWA y optimización móvil estarán disponibl
 
 ¡Solo sube los 8 archivos y listo! 🚀
 
+
+

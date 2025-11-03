@@ -2,26 +2,103 @@
 {% url 'ingreso' as ingreso_url %}
 {% url 'lista_trabajos' as lista_trabajos_url %}
 {% url 'pos_principal' as pos_principal_url %}
+{% url 'cliente_taller_create' as cliente_create_url %}
+{% url 'repuesto_create' as repuesto_create_url %}
+{% url 'panel_principal' as panel_principal_url %}
+{% url 'pos_historial_ventas' as pos_historial_url %}
 
 <!-- Botón Flotante de Acción Rápida (FAB) -->
-<div class="mobile-fab d-md-none">
+<div class="mobile-fab d-md-none" data-current-page="{{ request.resolver_match.url_name }}">
   <button class="mobile-fab-main" id="mobile-fab-btn" aria-label="Acciones rápidas">
     <i class="fas fa-plus"></i>
   </button>
   
   <div class="mobile-fab-menu" id="mobile-fab-menu">
-    <a href="{{ ingreso_url }}" class="mobile-fab-action">
-      <i class="fas fa-wrench"></i>
-      <span>Nuevo Diagnóstico</span>
+    {% comment %} Acciones generales - siempre visibles {% endcomment %}
+    <a href="{{ panel_principal_url }}" class="mobile-fab-action" data-action="general">
+      <i class="fas fa-home"></i>
+      <span>Ir al Inicio</span>
     </a>
-    <a href="{{ lista_trabajos_url }}" class="mobile-fab-action">
-      <i class="fas fa-list"></i>
-      <span>Ver Trabajos</span>
-    </a>
-    <a href="{{ pos_principal_url }}" class="mobile-fab-action">
-      <i class="fas fa-cash-register"></i>
-      <span>Punto de Venta</span>
-    </a>
+    
+    {% comment %} Acciones para POS/Ventas {% endcomment %}
+    {% if request.resolver_match.url_name == 'pos_principal' or 'pos' in request.resolver_match.url_name %}
+      <a href="{{ cliente_create_url }}" class="mobile-fab-action" data-action="pos">
+        <i class="fas fa-user-plus"></i>
+        <span>Nuevo Cliente</span>
+      </a>
+      <a href="{{ repuesto_create_url }}" class="mobile-fab-action" data-action="pos">
+        <i class="fas fa-box"></i>
+        <span>Nuevo Repuesto</span>
+      </a>
+      <a href="{{ pos_historial_url }}" class="mobile-fab-action" data-action="pos">
+        <i class="fas fa-history"></i>
+        <span>Historial Ventas</span>
+      </a>
+    {% endif %}
+    
+    {% comment %} Acciones para Panel Principal {% endcomment %}
+    {% if request.resolver_match.url_name == 'panel_principal' %}
+      <a href="{{ ingreso_url }}" class="mobile-fab-action" data-action="panel">
+        <i class="fas fa-wrench"></i>
+        <span>Nuevo Diagnóstico</span>
+      </a>
+      <a href="{{ lista_trabajos_url }}" class="mobile-fab-action" data-action="panel">
+        <i class="fas fa-list"></i>
+        <span>Ver Trabajos</span>
+      </a>
+      <a href="{{ pos_principal_url }}" class="mobile-fab-action" data-action="panel">
+        <i class="fas fa-cash-register"></i>
+        <span>Punto de Venta</span>
+      </a>
+      <a href="{{ cliente_create_url }}" class="mobile-fab-action" data-action="panel">
+        <i class="fas fa-user-plus"></i>
+        <span>Nuevo Cliente</span>
+      </a>
+      <a href="{{ repuesto_create_url }}" class="mobile-fab-action" data-action="panel">
+        <i class="fas fa-box"></i>
+        <span>Nuevo Repuesto</span>
+      </a>
+    {% endif %}
+    
+    {% comment %} Acciones para Trabajos {% endcomment %}
+    {% if 'trabajo' in request.resolver_match.url_name %}
+      <a href="{{ ingreso_url }}" class="mobile-fab-action" data-action="trabajo">
+        <i class="fas fa-wrench"></i>
+        <span>Nuevo Diagnóstico</span>
+      </a>
+      <a href="{{ pos_principal_url }}" class="mobile-fab-action" data-action="trabajo">
+        <i class="fas fa-cash-register"></i>
+        <span>Punto de Venta</span>
+      </a>
+    {% endif %}
+    
+    {% comment %} Acciones para Diagnósticos/Ingreso {% endcomment %}
+    {% if request.resolver_match.url_name == 'ingreso' or 'diagnostico' in request.resolver_match.url_name %}
+      <a href="{{ lista_trabajos_url }}" class="mobile-fab-action" data-action="diagnostico">
+        <i class="fas fa-list"></i>
+        <span>Ver Trabajos</span>
+      </a>
+      <a href="{{ cliente_create_url }}" class="mobile-fab-action" data-action="diagnostico">
+        <i class="fas fa-user-plus"></i>
+        <span>Nuevo Cliente</span>
+      </a>
+    {% endif %}
+    
+    {% comment %} Acciones por defecto (si no coincide con ninguna condición) {% endcomment %}
+    {% if request.resolver_match.url_name != 'panel_principal' and request.resolver_match.url_name != 'pos_principal' and 'pos' not in request.resolver_match.url_name and 'trabajo' not in request.resolver_match.url_name and request.resolver_match.url_name != 'ingreso' and 'diagnostico' not in request.resolver_match.url_name %}
+      <a href="{{ ingreso_url }}" class="mobile-fab-action" data-action="default">
+        <i class="fas fa-wrench"></i>
+        <span>Nuevo Diagnóstico</span>
+      </a>
+      <a href="{{ lista_trabajos_url }}" class="mobile-fab-action" data-action="default">
+        <i class="fas fa-list"></i>
+        <span>Ver Trabajos</span>
+      </a>
+      <a href="{{ pos_principal_url }}" class="mobile-fab-action" data-action="default">
+        <i class="fas fa-cash-register"></i>
+        <span>Punto de Venta</span>
+      </a>
+    {% endif %}
   </div>
   
   <div class="mobile-fab-overlay" id="mobile-fab-overlay"></div>
@@ -65,14 +142,33 @@ document.addEventListener('DOMContentLoaded', function() {
     overlay.addEventListener('click', closeFab);
   }
   
-  // Cerrar al hacer clic en una acción
-  const fabActions = fabMenu.querySelectorAll('.mobile-fab-action');
-  fabActions.forEach(action => {
-    action.addEventListener('click', function() {
-      // Pequeño delay para que se vea la animación
-      setTimeout(closeFab, 100);
+  // Prevenir que el overlay bloquee los clics en el menú
+  if (fabMenu) {
+    fabMenu.addEventListener('click', function(e) {
+      e.stopPropagation(); // Evitar que el clic llegue al overlay
     });
-  });
+    
+    // Asegurar que los enlaces funcionen correctamente
+    const fabActions = fabMenu.querySelectorAll('.mobile-fab-action');
+    fabActions.forEach(action => {
+      // Verificar que tiene href válido
+      const href = action.getAttribute('href');
+      if (href && href !== '#' && href !== '') {
+        // Asegurar que el enlace sea clickeable
+        action.style.pointerEvents = 'auto';
+        action.style.cursor = 'pointer';
+        
+        // Cerrar el menú después de hacer clic (sin bloquear la navegación)
+        action.addEventListener('click', function(e) {
+          // No prevenir el comportamiento por defecto - permitir navegación normal
+          // Solo cerrar el menú después de un breve delay para feedback visual
+          setTimeout(function() {
+            closeFab();
+          }, 100);
+        });
+      }
+    });
+  }
   
   // Cerrar con botón atrás del navegador
   window.addEventListener('popstate', closeFab);

@@ -121,3 +121,5 @@ Para evitar este problema en el futuro:
 2. **Siempre obtener** el token del DOM: `document.querySelector('[name=csrfmiddlewaretoken]').value`
 3. **Usar el nombre correcto** del campo: `csrfmiddlewaretoken`
 
+
+

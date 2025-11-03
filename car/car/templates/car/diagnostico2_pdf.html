@@ -71,6 +71,22 @@
         .bg-success { background-color: #28a745; }
         .bg-danger { background-color: #dc3545; }
         .bg-info { background-color: #17a2b8; }
+        .progress-bar-container {
+            width: 100%;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        .progress-bar-fill {
+            height: 10px;
+            background-color: #007bff;
+            text-align: center;
+            color: white;
+            font-size: 8px;
+            line-height: 10px;
+            border-radius: 5px;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
@@ -96,6 +112,23 @@
         .total-row {
             font-weight: bold;
             background-color: #e9ecef;
+            font-size: 12px;
+        }
+        .total-row.total-final {
+            background-color: #28a745 !important;
+            color: white !important;
+            font-size: 14px;
+        }
+        .total-row.total-final td {
+            padding: 10px !important;
+            font-weight: 800;
+        }
+        .total-subtotal {
+            background-color: #d1ecf1;
+            border-left: 4px solid #0d6efd;
+        }
+        .total-subtotal td {
+            font-weight: 700;
             font-size: 11px;
         }
         .footer {
@@ -117,27 +150,6 @@
         .status-pendiente { background-color: #ffc107; color: #333; }
         .status-aprobado { background-color: #28a745; color: #fff; }
         .status-rechazado { background-color: #dc3545; color: #fff; }
-        
-        /* Estilos para totales destacados */
-        .total-row-destacado {
-            background-color: #d1ecf1;
-            border-left: 4px solid #0d6efd;
-            font-weight: bold;
-        }
-        .total-row-destacado td {
-            padding: 8px;
-            font-size: 12px;
-        }
-        .total-row-final {
-            background-color: #28a745;
-            color: white;
-            font-weight: bold;
-        }
-        .total-row-final td {
-            padding: 10px;
-            font-size: 14px;
-            font-weight: 800;
-        }
     </style>
 </head>
 <body>
@@ -164,7 +176,7 @@
                 <div class="info-item"><strong>VIN:</strong> {{ diagnostico.vehiculo.vin|default:"N/A" }}</div>
                 <div class="info-item"><strong>Kilometraje:</strong> {{ diagnostico.vehiculo.kilometraje|default:"N/A" }}</div>
             </div>
-            <p><strong>Descripción del Problema:</strong> {{ diagnostico.descripcion_problema|capfirst }}</p>
+            <p><strong>Descripción del Problema:</strong> {{ diagnostico.descripcion_problema }}</p>
         </div>
 
         <div class="section">
@@ -199,7 +211,7 @@
                         <tr>
                             <th>Componente</th>
                             <th>Acción</th>
-                            <th class="text-right">Precio Mano Obra</th>
+                            <th>Precio Mano Obra</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -210,9 +222,9 @@
                                 <td class="text-right">${{ dca.precio_mano_obra|default:0|floatformat:0|intcomma }}</td>
                             </tr>
                         {% endfor %}
-                        <tr class="total-row-destacado">
+                        <tr class="total-row total-subtotal" style="background-color: #d1ecf1; border-left: 4px solid #0d6efd;">
                             <td colspan="2" class="text-right"><strong>⚙️ Total Mano de Obra:</strong></td>
-                            <td class="text-right" style="color: #0d6efd;"><strong>${{ diagnostico.total_mano_obra|floatformat:0|intcomma }}</strong></td>
+                            <td class="text-right" style="font-size: 13px; color: #0d6efd;"><strong>${{ diagnostico.total_mano_obra|default:0|floatformat:0|intcomma }}</strong></td>
                         </tr>
                     </tbody>
                 </table>
@@ -228,9 +240,9 @@
                     <thead>
                         <tr>
                             <th>Repuesto/Insumo</th>
-                            <th class="text-right">Cantidad</th>
-                            <th class="text-right">Precio Unitario</th>
-                            <th class="text-right">Subtotal</th>
+                            <th>Cantidad</th>
+                            <th>Precio Unitario</th>
+                            <th>Subtotal</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -242,9 +254,9 @@
                                 <td class="text-right">${{ dr.subtotal|default:0|floatformat:0|intcomma }}</td>
                             </tr>
                         {% endfor %}
-                        <tr class="total-row-destacado" style="background-color: #f8d7da; border-left: 4px solid #dc3545;">
+                        <tr class="total-row total-subtotal" style="background-color: #f8d7da; border-left: 4px solid #dc3545;">
                             <td colspan="3" class="text-right"><strong>📦 Total Repuestos e Insumos:</strong></td>
-                            <td class="text-right" style="color: #dc3545;"><strong>${{ diagnostico.total_repuestos|floatformat:0|intcomma }}</strong></td>
+                            <td class="text-right" style="font-size: 13px; color: #dc3545;"><strong>${{ diagnostico.total_repuestos|default:0|floatformat:0|intcomma }}</strong></td>
                         </tr>
                     </tbody>
                 </table>
@@ -259,15 +271,17 @@
                 <tbody>
                     <tr>
                         <td><strong>⚙️ Mano de Obra:</strong></td>
-                        <td class="text-right"><strong>${{ diagnostico.total_mano_obra|floatformat:0|intcomma }}</strong></td>
+                        <td class="text-right"><strong>${{ diagnostico.total_mano_obra|default:0|floatformat:0|intcomma }}</strong></td>
                     </tr>
                     <tr>
                         <td><strong>📦 Repuestos e Insumos:</strong></td>
-                        <td class="text-right"><strong>${{ diagnostico.total_repuestos|floatformat:0|intcomma }}</strong></td>
+                        <td class="text-right"><strong>${{ diagnostico.total_repuestos|default:0|floatformat:0|intcomma }}</strong></td>
                     </tr>
-                    <tr class="total-row-final">
-                        <td><strong>💰 TOTAL PRESUPUESTO:</strong></td>
-                        <td class="text-right"><strong>${{ diagnostico.total_presupuesto|floatformat:0|intcomma }}</strong></td>
+                    <tr class="total-row total-final" style="background-color: #28a745; color: white; border: 3px solid #20c997;">
+                        <td style="font-size: 15px; padding: 12px;"><strong>💰 TOTAL PRESUPUESTO:</strong></td>
+                        <td class="text-right" style="font-size: 18px; font-weight: 800; padding: 12px; letter-spacing: 1px;">
+                            <strong>${{ diagnostico.total_mano_obra|default:0|add:diagnostico.total_repuestos|default:0|floatformat:0|intcomma }}</strong>
+                        </td>
                     </tr>
                 </tbody>
             </table>

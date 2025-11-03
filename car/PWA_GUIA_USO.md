@@ -183,3 +183,4 @@ Tu sistema ahora es una PWA completa. Pruébalo en tu teléfono siguiendo los pa
 
 **El banner de instalación aparecerá automáticamente cuando sea posible instalarla.**
 
+

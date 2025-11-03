@@ -613,9 +613,29 @@ def pos_cotizacion_detalle(request, cotizacion_id):
         usuario=request.user
     )
     
+    # Obtener configuración del taller para el logo
+    from .models import AdministracionTaller
+    
+    config = AdministracionTaller.get_configuracion_activa()
+    
+    # Generar URL absoluta para el logo (igual que en trabajo_pdf)
+    logo_url = None
+    if config.logo_principal_png:
+        logo_url = request.build_absolute_uri(config.logo_principal_png.url)
+    elif config.logo_principal_svg:
+        logo_url = request.build_absolute_uri(config.logo_principal_svg.url)
+    else:
+        logo_url = request.build_absolute_uri('/static/images/Logo1.svg')
+    
+    # Debug para verificar el nombre del taller
+    print(f"🔧 DEBUG COTIZACIÓN - Nombre del taller: '{config.nombre_taller}'")
+    print(f"🔧 DEBUG COTIZACIÓN - Logo URL: {logo_url}")
+    
     context = {
         'cotizacion': cotizacion,
         'items': cotizacion.items.all(),
+        'config': config,
+        'logo_url': logo_url,
     }
     
     return render(request, 'car/pos/cotizacion_detalle.html', context)

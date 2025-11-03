@@ -306,3 +306,9 @@ window.isDarkTheme = isDarkTheme;
 window.isLightTheme = isLightTheme;
 window.applyAutoContrast = applyAutoContrast;
 
+
+
+
+
+
+

@@ -124,3 +124,5 @@ La PWA instalada es un **bonus extra** (pantalla completa, funciona mejor offlin
 
 ¿Prefieres que funcionen los botones grandes o que se instale sin barra del navegador? **Ambos son opcionales** y pueden funcionar independientemente.
 
+
+

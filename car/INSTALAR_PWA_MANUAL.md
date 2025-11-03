@@ -126,3 +126,5 @@ Si después de agregarlo:
 
 **Lo importante:** La optimización móvil (botones grandes, etc.) **funciona en ambos casos** ✅
 
+
+

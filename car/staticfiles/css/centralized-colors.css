@@ -33,6 +33,14 @@
   --spacing-lg: 1.5rem;
   --spacing-xl: 2rem;
   --spacing-2xl: 3rem;
+
+  /* Typography - Font Weights (más fuertes para móvil) */
+  --font-weight-light: 300;
+  --font-weight-normal: 500;  /* Aumentado de 400 a 500 */
+  --font-weight-medium: 600;  /* Aumentado de 500 a 600 */
+  --font-weight-semibold: 700; /* Aumentado de 600 a 700 */
+  --font-weight-bold: 800;     /* Aumentado de 700 a 800 */
+  --font-weight-extrabold: 900;
 }
 
 /* ========================================
@@ -230,11 +238,23 @@
   --text-primary: #e6e6e6;
   --text-secondary: #b0c4de;
   --text-muted: #8a9bb5;
-  --text-inverse: #2a374e;
+  --text-inverse: #ffffff;
 
   --bg-card: #3c4a6e;
   --bg-modal: #3c4a6e;
   --bg-input: #3c4a6e;
+  
+  /* Cards anidadas - Nivel 2 (3 tonos más oscuro) */
+  --bg-card-nested: #2a374e;
+  --border-color-nested: #1e2a3e;
+  --text-primary-nested: #f8f8f8;
+  --text-secondary-nested: #e8e8e8;
+  
+  /* Cards anidadas - Nivel 3 (3 tonos más oscuro que nivel 2) */
+  --bg-card-deep: #1e2a3e;
+  --border-color-deep: #0f1a2a;
+  --text-primary-deep: #ffffff;
+  --text-secondary-deep: #f0f0f0;
   --bg-navbar: #2a374e;
   --bg-footer: #1e2a3e;
 
@@ -248,9 +268,9 @@
 
 /* Tema Arena (tema claro cálido) */
 .theme-sand {
-  --bg-primary: #faf7f0;
-  --bg-secondary: #f0ebe5;
-  --bg-tertiary: #e8e0d8;
+  --bg-primary: #e8e0d8;
+  --bg-secondary: #d8d0c8;
+  --bg-tertiary: #c8c0b8;
   --text-primary: #3e2723;
   --text-secondary: #5d4037;
   --text-muted: #8d6e63;
@@ -259,6 +279,18 @@
   --bg-card: #ffffff;
   --bg-modal: #ffffff;
   --bg-input: #ffffff;
+  
+  /* Cards anidadas - Nivel 2 (3 tonos más oscuro) */
+  --bg-card-nested: #b8b0a8;
+  --border-color-nested: #a8a098;
+  --text-primary-nested: #1a1a1a;
+  --text-secondary-nested: #2a2a2a;
+  
+  /* Cards anidadas - Nivel 3 (3 tonos más oscuro que nivel 2) */
+  --bg-card-deep: #a89888;
+  --border-color-deep: #988878;
+  --text-primary-deep: #0a0a0a;
+  --text-secondary-deep: #1a1a1a;
   --bg-navbar: #8d6e63;
   --bg-footer: #e0d8d0;
 
@@ -308,7 +340,10 @@ body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   font-family: "Poppins", "Helvetica Neue", sans-serif;
+  font-weight: var(--font-weight-normal);
   line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Navegación */
@@ -321,7 +356,7 @@ body {
 .navbar-brand,
 .nav-link {
   color: var(--text-inverse) !important;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .nav-link:hover {
@@ -396,7 +431,7 @@ body {
 
 .form-label {
   color: var(--text-primary);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .form-text {
@@ -406,7 +441,7 @@ body {
 /* Botones */
 .btn {
   border-radius: var(--border-radius-md);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   transition: var(--transition);
   border: none;
 }
@@ -494,7 +529,7 @@ body {
   background-color: var(--bg-secondary);
   color: var(--text-primary);
   border-color: var(--border-color);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .table td {
@@ -555,7 +590,17 @@ footer {
 /* Texto */
 h1, h2, h3, h4, h5, h6 {
   color: var(--text-primary);
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
+}
+
+/* Párrafos y texto general más fuerte */
+p, span, div, li, td {
+  font-weight: var(--font-weight-normal);
+}
+
+/* Texto fuerte por defecto */
+strong, b, .fw-bold {
+  font-weight: var(--font-weight-bold) !important;
 }
 
 .text-muted {
@@ -584,7 +629,7 @@ h1, h2, h3, h4, h5, h6 {
 /* Badges */
 .badge {
   border-radius: var(--border-radius-full);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .badge-primary {
@@ -678,6 +723,83 @@ h1, h2, h3, h4, h5, h6 {
    RESPONSIVE Y ACCESIBILIDAD
    ======================================== */
 
+/* Mejoras de tipografía para móvil - Texto más fuerte y notorio */
+@media (max-width: 768px) {
+  body {
+    font-weight: var(--font-weight-medium) !important;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* Todos los textos más fuertes en móvil */
+  p, span, div, li, td, label, .form-control, .form-select {
+    font-weight: var(--font-weight-medium) !important;
+  }
+  
+  /* Títulos más destacados */
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: var(--font-weight-extrabold) !important;
+  }
+  
+  /* Botones más notorios */
+  .btn {
+    font-weight: var(--font-weight-bold) !important;
+  }
+  
+  /* Labels y textos de formularios más fuertes */
+  .form-label, label {
+    font-weight: var(--font-weight-semibold) !important;
+  }
+  
+  /* Tablas más legibles */
+  .table th {
+    font-weight: var(--font-weight-bold) !important;
+  }
+  
+  .table td {
+    font-weight: var(--font-weight-medium) !important;
+  }
+  
+  /* Navegación más notoria */
+  .navbar-brand, .nav-link {
+    font-weight: var(--font-weight-bold) !important;
+  }
+  
+  /* Cards y contenido más legible */
+  .card-title, .card-header {
+    font-weight: var(--font-weight-bold) !important;
+  }
+  
+  .card-text, .card-body {
+    font-weight: var(--font-weight-medium) !important;
+  }
+  
+  /* Alertas más visibles */
+  .alert {
+    font-weight: var(--font-weight-medium) !important;
+  }
+  
+  .alert strong, .alert .fw-bold {
+    font-weight: var(--font-weight-bold) !important;
+  }
+  
+  /* Badges más notorios */
+  .badge {
+    font-weight: var(--font-weight-bold) !important;
+  }
+  
+  /* Listas más legibles */
+  .list-group-item {
+    font-weight: var(--font-weight-medium) !important;
+  }
+  
+  /* Texto muted pero aún legible */
+  .text-muted {
+    font-weight: var(--font-weight-normal) !important;
+    opacity: 0.85;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;
@@ -727,3 +849,224 @@ h1, h2, h3, h4, h5, h6 {
 .rounded-lg { border-radius: var(--border-radius-lg) !important; }
 .rounded-xl { border-radius: var(--border-radius-xl) !important; }
 .rounded-full { border-radius: var(--border-radius-full) !important; }
+
+/* ========================================
+   BOTONES DE TEMA
+   ======================================== */
+
+.theme-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.9);
+  cursor: pointer;
+  display: inline-block;
+  transition: all 0.3s ease;
+  margin: 0 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.theme-btn:hover {
+  transform: scale(1.15);
+  border-color: var(--primary-600);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.theme-btn.piedra { 
+  background-color: #2a374e;
+  border-color: #1a252f;
+}
+
+.theme-btn.sand { 
+  background-color: #faf7f0;
+  border-color: #e8e0d8;
+}
+
+/* Indicador de tema activo */
+.theme-btn.active {
+  border-color: var(--primary-600);
+  box-shadow: 0 0 0 3px rgba(var(--primary-600), 0.3);
+}
+
+/* ========================================
+   NAVBAR HOVER
+   ======================================== */
+
+.navbar-nav .nav-link:hover {
+  color: var(--primary-600) !important;
+  background-color: var(--hover-bg);
+  border-radius: var(--border-radius-sm);
+}
+
+.navbar-nav .dropdown-item:hover {
+  background-color: var(--primary-100);
+  color: var(--primary-700);
+}
+
+/* ========================================
+   NAVBAR TEMA CONTROLS
+   ======================================== */
+
+.navbar-nav .nav-item.d-flex {
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.navbar-nav .nav-item .theme-btn {
+  position: relative;
+  z-index: 10;
+}
+
+/* Asegurar visibilidad en diferentes temas */
+.theme-piedra .theme-btn {
+  border-color: rgba(255,255,255,0.8);
+}
+
+.theme-sand .theme-btn {
+  border-color: rgba(0,0,0,0.3);
+}
+
+/* Mejorar contraste para el texto del navbar */
+.navbar-nav .nav-item span.me-2 {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* ========================================
+   CARDS ANIDADAS - SISTEMA AUTOMÁTICO
+   ======================================== */
+
+/* Nivel 2: Card dentro de Card */
+.card .card {
+  background-color: var(--bg-card-nested);
+  border-color: var(--border-color-nested);
+  box-shadow: var(--shadow-sm);
+  margin: var(--spacing-sm);
+  border-radius: var(--border-radius-md);
+  opacity: 0.95;
+}
+
+.card .card .card-title {
+  color: var(--text-primary-nested);
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: var(--spacing-sm);
+}
+
+.card .card .card-text {
+  color: var(--text-secondary-nested);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.card .card .card-body {
+  padding: var(--spacing-sm);
+}
+
+.card .card .card-header {
+  background-color: var(--bg-card-nested);
+  border-bottom-color: var(--border-color-nested);
+  padding: var(--spacing-sm);
+}
+
+.card .card .card-footer {
+  background-color: var(--bg-card-nested);
+  border-top-color: var(--border-color-nested);
+  padding: var(--spacing-sm);
+}
+
+/* Nivel 3: Card dentro de Card dentro de Card */
+.card .card .card {
+  background-color: var(--bg-card-deep);
+  border-color: var(--border-color-deep);
+  box-shadow: none;
+  margin: var(--spacing-xs);
+  border-radius: var(--border-radius-sm);
+  opacity: 0.9;
+}
+
+.card .card .card .card-title {
+  color: var(--text-primary-deep);
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-bottom: var(--spacing-xs);
+}
+
+.card .card .card .card-text {
+  color: var(--text-secondary-deep);
+  font-size: 0.75rem;
+  line-height: 1.3;
+}
+
+.card .card .card .card-body {
+  padding: var(--spacing-xs);
+}
+
+.card .card .card .card-header {
+  background-color: var(--bg-card-deep);
+  border-bottom-color: var(--border-color-deep);
+  padding: var(--spacing-xs);
+}
+
+.card .card .card .card-footer {
+  background-color: var(--bg-card-deep);
+  border-top-color: var(--border-color-deep);
+  padding: var(--spacing-xs);
+}
+
+/* Efectos visuales adicionales */
+.card .card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.card .card .card:hover {
+  transform: translateY(-0.5px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ========================================
+   PIZARRA - SISTEMA DE ANIDACIÓN
+   ======================================== */
+
+/* Pizarra cell (equivalente a card principal) */
+.pizarra-cell {
+  background-color: var(--bg-card);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+/* Vehiculo item dentro de pizarra cell (nivel 2) */
+.pizarra-cell .vehiculo-item {
+  background-color: var(--bg-card-nested);
+  border-color: var(--border-color-nested);
+  color: var(--text-primary-nested);
+  margin-bottom: var(--spacing-sm);
+  border-radius: var(--border-radius-md);
+  opacity: 0.95;
+}
+
+.pizarra-cell .vehiculo-item:hover {
+  background-color: var(--hover-bg);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Placa dentro de vehiculo item (nivel 3) */
+.pizarra-cell .vehiculo-item .placa-chile {
+  background-color: var(--bg-card-deep);
+  border-color: var(--border-color-deep);
+  color: var(--text-primary-deep);
+  opacity: 0.9;
+}
+
+/* Progress bar dentro de vehiculo item */
+.pizarra-cell .vehiculo-item .progress {
+  background-color: var(--bg-card-deep);
+  border-radius: var(--border-radius-sm);
+}
+
+.pizarra-cell .vehiculo-item .progress-bar {
+  background-color: var(--accent);
+  border-radius: var(--border-radius-sm);
+}

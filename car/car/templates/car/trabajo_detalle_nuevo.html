@@ -597,6 +597,29 @@
                 </form>
             </div>
 
+            <!-- Campo Kilometraje -->
+            <div class="info-card">
+                <h5>🚗 Kilometraje del Vehículo</h5>
+                <form method="post" id="kilometraje-form">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="lectura_kilometraje" class="form-label">Lectura del Odómetro (km) - Opcional</label>
+                        <input type="number" 
+                               name="lectura_kilometraje_actual" 
+                               id="lectura_kilometraje" 
+                               class="form-control" 
+                               value="{{ trabajo.lectura_kilometraje_actual|default:'' }}"
+                               placeholder="Ej: 45000"
+                               min="0"
+                               step="1">
+                        <small class="form-text text-muted">Registra el kilometraje actual del vehículo al momento del ingreso</small>
+                    </div>
+                    <button type="submit" name="guardar_kilometraje" class="btn btn-primary btn-action">
+                        💾 Guardar Kilometraje
+                    </button>
+                </form>
+            </div>
+
             <!-- Mecánicos Asignados -->
             <div class="info-card">
                 <h5>👷 Mecánicos Asignados</h5>

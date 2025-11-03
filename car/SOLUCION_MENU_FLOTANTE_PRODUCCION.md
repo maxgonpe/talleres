@@ -174,3 +174,5 @@ rsync -av car/templates/car/{panel_definitivo,trabajo_lista,trabajo_detalle_nuev
 
 ¡Después de esto, todo debería funcionar! 🚀
 
+
+
