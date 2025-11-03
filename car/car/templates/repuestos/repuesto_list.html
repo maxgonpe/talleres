@@ -236,8 +236,9 @@
         text-shadow: 0 1px 2px rgba(0,0,0,0.3);
     }
     
+    /* Color por defecto: oscuro para modo claro */
     .ficha-value {
-        color: #FFFFFF;
+        color: #212529;
         font-size: 0.9rem;
         word-break: break-word;
         line-height: 1.2;
@@ -245,7 +246,7 @@
     }
     
     .ficha-value.empty {
-        color: #CCCCCC;
+        color: #6c757d;
         font-style: italic;
         opacity: 0.8;
     }
@@ -262,14 +263,34 @@
     }
     
     /* Ajustes adicionales basados en variables CSS del tema */
+    /* Modo oscuro - texto blanco */
     .ficha-modal[data-theme="dark"] .ficha-value,
-    .ficha-modal.dark-theme .ficha-value {
-        color: #FFFFFF;
+    .ficha-modal.dark-theme .ficha-value,
+    .theme-dark .ficha-modal .ficha-value,
+    .theme-piedra .ficha-modal .ficha-value {
+        color: #FFFFFF !important;
     }
     
     .ficha-modal[data-theme="dark"] .ficha-value.empty,
-    .ficha-modal.dark-theme .ficha-value.empty {
-        color: #CCCCCC;
+    .ficha-modal.dark-theme .ficha-value.empty,
+    .theme-dark .ficha-modal .ficha-value.empty,
+    .theme-piedra .ficha-modal .ficha-value.empty {
+        color: #CCCCCC !important;
+    }
+    
+    /* Modo claro - texto oscuro (asegurar que se aplique) */
+    .ficha-modal[data-theme="light"] .ficha-value,
+    .ficha-modal.light-theme .ficha-value,
+    .theme-light .ficha-modal .ficha-value,
+    body:not(.theme-dark):not(.theme-piedra) .ficha-modal .ficha-value {
+        color: #212529 !important;
+    }
+    
+    .ficha-modal[data-theme="light"] .ficha-value.empty,
+    .ficha-modal.light-theme .ficha-value.empty,
+    .theme-light .ficha-modal .ficha-value.empty,
+    body:not(.theme-dark):not(.theme-piedra) .ficha-modal .ficha-value.empty {
+        color: #6c757d !important;
     }
     
     /* Media queries para diferentes tamaños de pantalla */
@@ -511,6 +532,16 @@ const repuestosData = {
 // Función para detectar el tema actual
 function detectarTema() {
     const body = document.body;
+    
+    // Primero verificar clases del body (más confiable)
+    if (body.classList.contains('theme-dark') || body.classList.contains('theme-piedra')) {
+        return 'dark';
+    }
+    if (body.classList.contains('theme-light') || body.classList.contains('theme-sand')) {
+        return 'light';
+    }
+    
+    // Si no hay clases, intentar detectar por color de fondo
     const computedStyle = getComputedStyle(body);
     const bgColor = computedStyle.backgroundColor;
     
@@ -547,7 +578,9 @@ function mostrarFicha(repuestoId) {
     modal.setAttribute('data-theme', tema);
     if (tema === 'dark') {
         modal.classList.add('dark-theme');
+        modal.classList.remove('light-theme');
     } else {
+        modal.classList.add('light-theme');
         modal.classList.remove('dark-theme');
     }
     
