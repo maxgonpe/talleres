@@ -543,22 +543,47 @@
                 {% if diagnostico.acciones_componentes.all %}
                     <div class="list-group">
                         {% for dca in diagnostico.acciones_componentes.all %}
-                            <div class="list-group-item d-flex justify-content-between align-items-center">
-                                <div>
-                                    <strong>{{ dca.componente.nombre }}</strong> — {{ dca.accion.nombre }}
-                                </div>
-                                <div>
-                                    <span class="badge bg-primary me-2">
-                                        ${{ dca.precio_mano_obra|default:0|floatformat:0|intcomma }}
-                                    </span>
-                                    <form method="post" style="display: inline;">
-                                        {% csrf_token %}
-                                        <button type="submit" name="quitar_accion" value="{{ dca.id }}" 
-                                                class="btn btn-sm btn-outline-danger"
-                                                onclick="return confirm('¿Quitar esta acción del diagnóstico?')">
-                                            🗑️ Quitar
-                                        </button>
-                                    </form>
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center flex-wrap">
+                                    <div class="mb-2 mb-md-0">
+                                        <strong>{{ dca.componente.nombre }}</strong> — {{ dca.accion.nombre }}
+                                        {% if dca.cantidad > 1 %}
+                                            <small class="text-muted">(x{{ dca.cantidad }})</small>
+                                        {% endif %}
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                                        <div class="text-end me-2">
+                                            <div>
+                                                <small class="text-muted">Unit: ${{ dca.precio_mano_obra|default:0|floatformat:0|intcomma }}</small>
+                                            </div>
+                                            <div>
+                                                <strong class="badge bg-primary">Total: ${{ dca.subtotal|default:0|floatformat:0|intcomma }}</strong>
+                                            </div>
+                                        </div>
+                                        <!-- Formulario para editar cantidad -->
+                                        <form method="post" style="display: inline-flex; gap: 0.25rem; align-items: center;" onsubmit="return confirm('¿Actualizar cantidad de esta acción?')">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="dca_id" value="{{ dca.id }}">
+                                            <input type="number" 
+                                                   name="cantidad_accion" 
+                                                   value="{{ dca.cantidad }}" 
+                                                   min="1" 
+                                                   step="1"
+                                                   style="width: 60px; padding: 0.25rem; text-align: center; border: 1px solid #dee2e6; border-radius: 0.25rem;"
+                                                   title="Cantidad">
+                                            <button type="submit" name="editar_cantidad_accion" class="btn btn-sm btn-outline-primary" title="Actualizar cantidad">
+                                                ✏️
+                                            </button>
+                                        </form>
+                                        <form method="post" style="display: inline;">
+                                            {% csrf_token %}
+                                            <button type="submit" name="quitar_accion" value="{{ dca.id }}" 
+                                                    class="btn btn-sm btn-outline-danger"
+                                                    onclick="return confirm('¿Quitar esta acción del diagnóstico?')">
+                                                🗑️ Quitar
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
                         {% endfor %}
@@ -673,11 +698,10 @@
                 <h5>📦 Insumos del Diagnóstico</h5>
                 
                 <!-- Información del filtro amplio -->
-                <div class="alert alert-warning mb-3">
+                <div class="alert alert-info mb-3">
                     <small>
-                        <strong>🔍 Filtro Amplio:</strong> 
-                        Aquí puedes agregar cualquier insumo del inventario sin restricciones de compatibilidad.
-                        Filtro inicial: SKU que contenga 'xxxx' o 'zzzzzz'
+                        <strong>🔍 Búsqueda Amplia:</strong> 
+                        Aquí puedes buscar y agregar cualquier insumo del inventario completo sin restricciones de compatibilidad.
                     </small>
                 </div>
                 

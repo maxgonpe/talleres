@@ -1,4 +1,4 @@
-from decimal import Decimal,InvalidOperation
+from decimal import Decimal, InvalidOperation
 from datetime import date, timedelta
 from django.conf import settings
 from django.http import Http404
@@ -218,6 +218,7 @@ def ingreso_view(request):
                             continue
 
                         precio_mano_obra = (it.get("precio_mano_obra") or "").strip()
+                        cantidad = int(it.get("cantidad", 1)) if it.get("cantidad") else 1
 
                         if not diagnostico.componentes.filter(id=comp_id).exists():
                             continue  # ignora acciones de componentes no seleccionados
@@ -226,6 +227,7 @@ def ingreso_view(request):
                             diagnostico=diagnostico,
                             componente_id=comp_id,
                             accion_id=acc_id,
+                            cantidad=cantidad
                         )
                         if precio_mano_obra and precio_mano_obra not in ("0", "0.00"):
                             dca.precio_mano_obra = precio_mano_obra
@@ -545,7 +547,20 @@ def lista_diagnosticos(request):
     # Obtener configuración del taller
     config = AdministracionTaller.get_configuracion_activa()
     
-    diagnosticos = Diagnostico.objects.all().select_related(
+    # 🔹 Manejar ocultar diagnóstico
+    if request.method == "POST" and "ocultar_diagnostico" in request.POST:
+        diagnostico_id = request.POST.get("diagnostico_id")
+        try:
+            diagnostico = Diagnostico.objects.get(id=diagnostico_id)
+            diagnostico.visible = False
+            diagnostico.save()
+            messages.success(request, f"Diagnóstico #{diagnostico.id} ocultado del listado.")
+        except Diagnostico.DoesNotExist:
+            messages.error(request, "Diagnóstico no encontrado.")
+        return redirect('lista_diagnosticos')
+    
+    # 🔹 Filtrar solo diagnósticos visibles (visible=True)
+    diagnosticos = Diagnostico.objects.filter(visible=True).select_related(
         'vehiculo__cliente'
     ).prefetch_related(
         'componentes',
@@ -887,6 +902,22 @@ def editar_diagnostico(request, pk):
             return redirect_with_tab("repuestos")
         
         # 🔹 Quitar acción del diagnóstico
+        # 🔹 Editar cantidad de acción
+        elif "editar_cantidad_accion" in request.POST:
+            dca_id = request.POST.get("dca_id")
+            cantidad = request.POST.get("cantidad_accion", 1)
+            try:
+                from .models import DiagnosticoComponenteAccion
+                dca = DiagnosticoComponenteAccion.objects.get(id=dca_id, diagnostico=diagnostico)
+                cantidad_int = int(cantidad) if cantidad and int(cantidad) > 0 else 1
+                dca.cantidad = cantidad_int
+                dca.save()
+                messages.success(request, f"Cantidad de '{dca.accion.nombre}' actualizada a {cantidad_int}.")
+            except (DiagnosticoComponenteAccion.DoesNotExist, ValueError):
+                messages.error(request, "Error al actualizar la cantidad.")
+            
+            return redirect_with_tab("acciones")
+        
         elif "quitar_accion" in request.POST:
             accion_id = request.POST.get("quitar_accion")
             try:
@@ -2036,6 +2067,7 @@ def trabajo_detalle(request, pk):
             componente_id = request.POST.get("componente")
             accion_id = request.POST.get("accion")
             precio_mano_obra = request.POST.get("precio_mano_obra", 0)
+            cantidad = request.POST.get("cantidad", 1)
             
             if componente_id and accion_id:
                 try:
@@ -2046,7 +2078,8 @@ def trabajo_detalle(request, pk):
                         trabajo=trabajo,
                         componente=componente,
                         accion=accion,
-                        precio_mano_obra=precio_mano_obra or 0
+                        precio_mano_obra=precio_mano_obra or 0,
+                        cantidad=int(cantidad) if cantidad else 1
                     )
                     messages.success(request, "Acción agregada al trabajo.")
                 except (Componente.DoesNotExist, Accion.DoesNotExist):
@@ -2068,11 +2101,10 @@ def trabajo_detalle(request, pk):
                     
                     for accion_data in acciones_data:
                         try:
-                            from decimal import Decimal
-                            
                             componente_id = int(accion_data.get("componente_id"))
                             accion_id = int(accion_data.get("accion_id"))
                             precio_recibido = accion_data.get("precio", 0)
+                            cantidad = int(accion_data.get("cantidad", 1))
                             
                             # Convertir a Decimal de forma segura
                             try:
@@ -2080,7 +2112,7 @@ def trabajo_detalle(request, pk):
                             except:
                                 precio_mano_obra = Decimal('0')
                             
-                            print(f"DEBUG: Procesando - componente_id: {componente_id}, accion_id: {accion_id}, precio_recibido: {precio_recibido}, precio_decimal: {precio_mano_obra}")
+                            print(f"DEBUG: Procesando - componente_id: {componente_id}, accion_id: {accion_id}, precio_recibido: {precio_recibido}, precio_decimal: {precio_mano_obra}, cantidad: {cantidad}")
                             
                             componente = Componente.objects.get(id=componente_id)
                             accion = Accion.objects.get(id=accion_id)
@@ -2108,7 +2140,8 @@ def trabajo_detalle(request, pk):
                                     trabajo=trabajo,
                                     componente=componente,
                                     accion=accion,
-                                    precio_mano_obra=precio_mano_obra
+                                    precio_mano_obra=precio_mano_obra,
+                                    cantidad=cantidad
                                 )
                                 acciones_creadas += 1
                                 print(f"DEBUG: ✅ Acción creada exitosamente con precio: {precio_mano_obra}")
@@ -2146,6 +2179,37 @@ def trabajo_detalle(request, pk):
                 messages.success(request, f"Acción marcada como {'completada' if accion.completado else 'pendiente'}.")
             except TrabajoAccion.DoesNotExist:
                 messages.error(request, "Acción no encontrada.")
+            return redirect_with_tab("acciones")
+
+        # 🔹 Editar cantidad de acción
+        elif "editar_cantidad_accion" in request.POST:
+            accion_id = request.POST.get("accion_id")
+            cantidad = request.POST.get("cantidad_accion", 1)
+            try:
+                accion = TrabajoAccion.objects.get(id=accion_id, trabajo=trabajo)
+                cantidad_int = int(cantidad) if cantidad and int(cantidad) > 0 else 1
+                accion.cantidad = cantidad_int
+                accion.save()
+                messages.success(request, f"Cantidad actualizada a {cantidad_int}.")
+            except (TrabajoAccion.DoesNotExist, ValueError):
+                messages.error(request, "Error al actualizar la cantidad.")
+            return redirect_with_tab("acciones")
+
+        # 🔹 Editar precio de acción
+        elif "editar_precio_accion" in request.POST:
+            from decimal import Decimal as DecimalClass
+            accion_id = request.POST.get("accion_id")
+            precio_str = request.POST.get("precio_accion", "0")
+            try:
+                accion = TrabajoAccion.objects.get(id=accion_id, trabajo=trabajo)
+                precio_decimal = DecimalClass(precio_str) if precio_str else DecimalClass('0')
+                if precio_decimal < 0:
+                    precio_decimal = DecimalClass('0')
+                accion.precio_mano_obra = precio_decimal
+                accion.save()
+                messages.success(request, f"Precio actualizado a ${precio_decimal:,.0f}.")
+            except (TrabajoAccion.DoesNotExist, InvalidOperation, ValueError) as e:
+                messages.error(request, f"Error al actualizar el precio: {str(e)}")
             return redirect_with_tab("acciones")
 
         # 🔹 Eliminar acción
@@ -2667,6 +2731,55 @@ def trabajo_detalle(request, pk):
             
             return redirect_with_tab("abonos")
 
+        # ========================
+        # 💰 GESTIÓN DE ADICIONALES
+        # ========================
+        elif "agregar_adicional" in request.POST:
+            from .models import TrabajoAdicional
+            from decimal import Decimal
+            
+            concepto = request.POST.get("concepto_adicional", "").strip()
+            monto = request.POST.get("monto_adicional")
+            
+            try:
+                if not concepto:
+                    messages.error(request, "❌ El concepto no puede estar vacío.")
+                else:
+                    monto_decimal = Decimal(monto)
+                    if monto_decimal <= 0:
+                        messages.error(request, "❌ El monto del concepto adicional debe ser mayor a cero.")
+                    else:
+                        adicional = TrabajoAdicional.objects.create(
+                            trabajo=trabajo,
+                            concepto=concepto,
+                            monto=monto_decimal,
+                            usuario=request.user
+                        )
+                        
+                        messages.success(request, f"✅ Concepto adicional de ${monto_decimal:,.0f} registrado exitosamente.")
+            except (ValueError, TypeError):
+                messages.error(request, "❌ El monto ingresado no es válido.")
+            except Exception as e:
+                messages.error(request, f"❌ Error al registrar el concepto adicional: {str(e)}")
+            
+            return redirect_with_tab("adicionales")
+        
+        elif "eliminar_adicional" in request.POST:
+            from .models import TrabajoAdicional
+            
+            adicional_id = request.POST.get("adicional_id")
+            try:
+                adicional = TrabajoAdicional.objects.get(id=adicional_id, trabajo=trabajo)
+                monto = adicional.monto
+                adicional.delete()
+                messages.success(request, f"✅ Concepto adicional de ${monto:,.0f} eliminado exitosamente.")
+            except TrabajoAdicional.DoesNotExist:
+                messages.error(request, "❌ Concepto adicional no encontrado.")
+            except Exception as e:
+                messages.error(request, f"❌ Error al eliminar el concepto adicional: {str(e)}")
+            
+            return redirect_with_tab("adicionales")
+
     # 🔹 Detectar pestaña activa desde parámetros URL
     active_tab = request.GET.get('tab', 'info')
     
@@ -2698,7 +2811,7 @@ def trabajo_detalle(request, pk):
 
 @login_required
 def trabajo_pdf(request, pk):
-    """Generar PDF del estado del trabajo"""
+    """Generar PDF de la orden de trabajo"""
     import logging
     logger = logging.getLogger(__name__)
     
@@ -2822,7 +2935,7 @@ def trabajo_pdf(request, pk):
         logger.info(f"✅ PDF generado exitosamente - Tamaño: {len(pdf_file)} bytes")
         
         response = HttpResponse(pdf_file, content_type='application/pdf')
-        response['Content-Disposition'] = f'inline; filename="trabajo_{trabajo.id}_estado.pdf"'
+        response['Content-Disposition'] = f'inline; filename="orden_trabajo_{trabajo.id}.pdf"'
         response['Content-Length'] = str(len(pdf_file))
         response['X-Content-Type-Options'] = 'nosniff'
         response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
@@ -2836,10 +2949,10 @@ def trabajo_pdf(request, pk):
         # Si weasyprint no está disponible, usar una alternativa simple
         from django.http import HttpResponse
         response = HttpResponse(content_type='text/plain')
-        response['Content-Disposition'] = f'attachment; filename="trabajo_{trabajo.id}_estado.txt"'
-        
+        response['Content-Disposition'] = f'attachment; filename="orden_trabajo_{trabajo.id}.txt"'
+            
         content = f"""
-ESTADO DEL TRABAJO #{trabajo.id}
+ORDEN DE TRABAJO #{trabajo.id}
 ===============================
 
 Cliente: {trabajo.vehiculo.cliente.nombre}
@@ -2917,6 +3030,18 @@ def panel_principal(request):
     # Obtener configuración del taller
     config = AdministracionTaller.get_configuracion_activa()
     
+    # 🔹 Manejar ocultar trabajo
+    if request.method == "POST" and "ocultar_trabajo" in request.POST:
+        trabajo_id = request.POST.get("trabajo_id")
+        try:
+            trabajo = Trabajo.objects.get(id=trabajo_id)
+            trabajo.visible = False
+            trabajo.save()
+            messages.success(request, f"Trabajo #{trabajo.id} ocultado del listado.")
+        except Trabajo.DoesNotExist:
+            messages.error(request, "Trabajo no encontrado.")
+        return redirect('panel_principal')
+    
     # Estadísticas para el dashboard
     # Usar la fecha local de Santiago, no UTC
     ahora_santiago = timezone.localtime(timezone.now())
@@ -2933,8 +3058,8 @@ def panel_principal(request):
     diagnosticos_pendientes = Diagnostico.objects.filter(estado='pendiente').count()
     
     
-    # Estadísticas de trabajos
-    trabajos = Trabajo.objects.select_related("vehiculo", "vehiculo__cliente")
+    # Estadísticas de trabajos (solo visibles)
+    trabajos = Trabajo.objects.filter(visible=True).select_related("vehiculo", "vehiculo__cliente")
     trabajos_activos = trabajos.filter(estado__in=['iniciado', 'trabajando']).count()
     trabajos_completados_hoy = trabajos.filter(
         fecha_fin__gte=inicio_dia, 

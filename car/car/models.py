@@ -289,18 +289,19 @@ class Diagnostico(models.Model):
     subcomponentes_sugeridos = models.JSONField(blank=True, null=True)
     aceptado_por = models.CharField(max_length=100, blank=True, null=True)
     fecha_aceptacion = models.DateTimeField(null=True, blank=True)
-    estado = models.CharField(max_length=20, choices=ESTADOS, default="pendiente") 
+    estado = models.CharField(max_length=20, choices=ESTADOS, default="pendiente")
+    visible = models.BooleanField(default=True, verbose_name="Visible", help_text="Indica si el diagnóstico debe mostrarse en las listas")
 
     def __str__(self):
         return self.vehiculo.marca
     
     @property
     def total_mano_obra(self):
-        """Calcular el total de mano de obra sumando todas las acciones"""
+        """Calcular el total de mano de obra sumando todas las acciones (considerando cantidad)"""
         from decimal import Decimal
         total = Decimal('0')
         for dca in self.acciones_componentes.all():
-            total += dca.precio_mano_obra or Decimal('0')
+            total += dca.subtotal or Decimal('0')
         return total
     
     @property
@@ -341,6 +342,7 @@ class Diagnostico(models.Model):
                     componente=dca.componente,
                     accion=dca.accion,
                     precio_mano_obra=dca.precio_mano_obra,
+                    cantidad=dca.cantidad,  # Clonar cantidad también
                     completado=False  # arranca pendiente
                 )
 
@@ -393,9 +395,17 @@ class DiagnosticoComponenteAccion(models.Model):
     diagnostico = models.ForeignKey("Diagnostico", on_delete=models.CASCADE, related_name="acciones_componentes")
     componente = models.ForeignKey("Componente", on_delete=models.CASCADE)
     accion = models.ForeignKey("Accion", on_delete=models.CASCADE)
-    precio_mano_obra = models.DecimalField(max_digits=10, decimal_places=2,default=0)
+    precio_mano_obra = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Precio Unitario")
+    cantidad = models.IntegerField(default=1, verbose_name="Cantidad", help_text="Número de veces que se realizará esta acción (ej: cambiar 4 bujías)")
+
+    @property
+    def subtotal(self):
+        """Calcula el subtotal: precio unitario * cantidad"""
+        return self.precio_mano_obra * self.cantidad
 
     def __str__(self):
+        if self.cantidad > 1:
+            return f"{self.diagnostico.vehiculo} - {self.accion.nombre} {self.componente.nombre} (x{self.cantidad})"
         return f"{self.diagnostico.vehiculo} - {self.accion.nombre} {self.componente.nombre}"
 
 
@@ -767,6 +777,7 @@ class Trabajo(models.Model):
     observaciones = models.TextField(blank=True, null=True)
     lectura_kilometraje_actual = models.IntegerField(null=True, blank=True, verbose_name="Kilometraje Actual", help_text="Lectura del kilometraje al ingresar el vehículo")
     mecanicos = models.ManyToManyField("Mecanico", related_name="trabajos", blank=True)
+    visible = models.BooleanField(default=True, verbose_name="Visible", help_text="Indica si el trabajo debe mostrarse en las listas")
 
     # 🔹 Nuevo: relacionar con componentes (igual que Diagnostico)
     componentes = models.ManyToManyField("Componente", related_name="trabajos", blank=True)
@@ -779,8 +790,8 @@ class Trabajo(models.Model):
     # ========================
     @property
     def total_mano_obra(self):
-        """Total de mano de obra presupuestada (TODAS las acciones)"""
-        return sum(a.precio_mano_obra for a in self.acciones.all())
+        """Total de mano de obra presupuestada (TODAS las acciones, considerando cantidad)"""
+        return sum(a.subtotal for a in self.acciones.all())
 
     @property
     def total_repuestos(self):
@@ -788,9 +799,14 @@ class Trabajo(models.Model):
         return sum(r.subtotal or 0 for r in self.repuestos.all())
 
     @property
+    def total_adicionales(self):
+        """Total de conceptos adicionales agregados al trabajo"""
+        return sum(ad.monto for ad in self.adicionales.all())
+
+    @property
     def total_general(self):
         """Total presupuestado completo (TODO el trabajo)"""
-        return self.total_mano_obra + self.total_repuestos
+        return self.total_mano_obra + self.total_repuestos + self.total_adicionales
     
     # Alias para mayor claridad
     @property
@@ -803,9 +819,9 @@ class Trabajo(models.Model):
     # ========================
     @property
     def total_realizado_mano_obra(self):
-        """Total de mano de obra REALIZADA (solo acciones completadas)"""
+        """Total de mano de obra REALIZADA (solo acciones completadas, considerando cantidad)"""
         return sum(
-            a.precio_mano_obra 
+            a.subtotal 
             for a in self.acciones.filter(completado=True)
         )
     
@@ -818,9 +834,14 @@ class Trabajo(models.Model):
         )
     
     @property
+    def total_realizado_adicionales(self):
+        """Total de conceptos adicionales (siempre se consideran realizados)"""
+        return sum(ad.monto for ad in self.adicionales.all())
+    
+    @property
     def total_realizado(self):
         """Total de trabajo REALIZADO hasta el momento"""
-        return self.total_realizado_mano_obra + self.total_realizado_repuestos
+        return self.total_realizado_mano_obra + self.total_realizado_repuestos + self.total_realizado_adicionales
 
     # ========================
     # ABONOS Y SALDOS
@@ -937,9 +958,15 @@ class TrabajoAccion(models.Model):
     trabajo = models.ForeignKey(Trabajo, on_delete=models.CASCADE, related_name="acciones")
     componente = models.ForeignKey("Componente", on_delete=models.CASCADE)
     accion = models.ForeignKey("Accion", on_delete=models.CASCADE)
-    precio_mano_obra = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    precio_mano_obra = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name="Precio Unitario")
+    cantidad = models.IntegerField(default=1, verbose_name="Cantidad", help_text="Número de veces que se realizará esta acción (ej: cambiar 4 bujías)")
     completado = models.BooleanField(default=False)
     fecha = models.DateTimeField(null=True, blank=True)
+
+    @property
+    def subtotal(self):
+        """Calcula el subtotal: precio unitario * cantidad"""
+        return self.precio_mano_obra * self.cantidad
 
     #def __str__(self):
     #    return f"{self.trabajo} - {self.accion.nombre} {self.componente.nombre}"
@@ -948,6 +975,8 @@ class TrabajoAccion(models.Model):
         return self.accion.costo if self.completado else 0
 
     def __str__(self):
+        if self.cantidad > 1:
+            return f"{self.accion} (x{self.cantidad}) ({'✔️' if self.completado else 'pendiente'})"
         return f"{self.accion} ({'✔️' if self.completado else 'pendiente'})"
 
 
@@ -1002,6 +1031,33 @@ class TrabajoAbono(models.Model):
     
     def __str__(self):
         return f"Abono ${self.monto} - {self.get_metodo_pago_display()} - {self.fecha.strftime('%d/%m/%Y')}"
+
+
+class TrabajoAdicional(models.Model):
+    """
+    Modelo para registrar conceptos adicionales al trabajo
+    (servicios extra, materiales adicionales, etc.)
+    que se suman al total del trabajo
+    """
+    trabajo = models.ForeignKey(Trabajo, on_delete=models.CASCADE, related_name="adicionales")
+    concepto = models.TextField(verbose_name="Concepto", help_text="Descripción del concepto adicional")
+    monto = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Monto")
+    fecha = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de registro")
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL, 
+        on_delete=models.SET_NULL, 
+        null=True,
+        verbose_name="Usuario",
+        help_text="Usuario que registró el concepto adicional"
+    )
+    
+    class Meta:
+        ordering = ['-fecha']
+        verbose_name = "Concepto Adicional"
+        verbose_name_plural = "Conceptos Adicionales"
+    
+    def __str__(self):
+        return f"Adicional: {self.concepto[:50]} - ${self.monto} - {self.fecha.strftime('%d/%m/%Y')}"
 
 
 # ventas/models.py  (puedes ponerlo en la app extintores o crear app nueva "ventas")

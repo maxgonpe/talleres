@@ -435,13 +435,18 @@ document.addEventListener('DOMContentLoaded', function () {
         .map(([key, v]) => ({
           componente_id: parseInt(v.componente_id),
           accion_id: v.accion_id ? parseInt(v.accion_id) : null,
-          precio_mano_obra: (v.precio ?? '').toString()
+          precio_mano_obra: (v.precio ?? '').toString(),
+          cantidad: parseInt(v.cantidad) || 1
         }))
         .filter(x => x.accion_id);
       
       HIDDEN_ACC.value = JSON.stringify(payload);
       
-      const sum = payload.reduce((acc, it) => acc + (parseFloat(it.precio_mano_obra || 0) || 0), 0);
+      const sum = payload.reduce((acc, it) => {
+        const precio = parseFloat(it.precio_mano_obra || 0) || 0;
+        const cantidad = parseInt(it.cantidad) || 1;
+        return acc + (precio * cantidad);
+      }, 0);
       if (TOTAL_MO) TOTAL_MO.textContent = CLP.format(sum);
     }
 
@@ -508,7 +513,8 @@ document.addEventListener('DOMContentLoaded', function () {
           nombre, 
           accion_id: accion.accion_id, 
           accion_nombre: accion.accion_nombre,
-          precio: accion.precio_base || '' 
+          precio: accion.precio_base || '',
+          cantidad: 1
         };
 
         const li = document.createElement('li');
@@ -532,17 +538,24 @@ document.addEventListener('DOMContentLoaded', function () {
               <div class="text-primary small">${accion.accion_nombre}</div>
               <div class="text-muted small">ID: ${compId} • Acción: ${accion.accion_id}</div>
             </div>
-            <div class="col-8 col-md-4">
-              <label class="form-label mb-0 small">Precio personalizado</label>
+            <div class="col-6 col-md-3">
+              <label class="form-label mb-0 small">Precio Unit.</label>
               <input type="number" step="0.01" class="form-control form-control-sm accion-precio" 
                      placeholder="${precioBase > 0 ? precioBase : '0.00'}" 
                      value="${ACC[accionKey].precio || ''}"
                      data-accion-key="${accionKey}">
               <small class="text-muted ${precioBase > 0 ? '' : 'precio-sin-base'}">Base: ${precioFormateado}</small>
             </div>
-            <div class="col-4 col-md-2 text-end">
+            <div class="col-3 col-md-2">
+              <label class="form-label mb-0 small">Cantidad</label>
+              <input type="number" min="1" step="1" class="form-control form-control-sm accion-cantidad" 
+                     value="${ACC[accionKey].cantidad || 1}"
+                     data-accion-key="${accionKey}">
+            </div>
+            <div class="col-3 col-md-2 text-end">
+              <label class="form-label mb-0 small">Subtotal</label>
               <div class="fw-bold text-success" data-precio-display="${accionKey}">
-                ${ACC[accionKey].seleccionado ? (ACC[accionKey].precio ? CLP.format(parseFloat(ACC[accionKey].precio)) : precioFormateado) : '$0'}
+                ${ACC[accionKey].seleccionado ? (ACC[accionKey].precio ? CLP.format(parseFloat(ACC[accionKey].precio) * (ACC[accionKey].cantidad || 1)) : '$0') : '$0'}
               </div>
             </div>
           </div>
@@ -553,6 +566,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Event listeners
         const checkbox = li.querySelector('.accion-checkbox');
         const precioInput = li.querySelector('.accion-precio');
+        const cantidadInput = li.querySelector('.accion-cantidad');
         const precioDisplay = li.querySelector('[data-precio-display]');
 
         checkbox.addEventListener('change', () => {
@@ -572,6 +586,18 @@ document.addEventListener('DOMContentLoaded', function () {
           updateHiddenAndTotal();
         });
 
+        cantidadInput.addEventListener('input', () => {
+          const cantidad = parseInt(cantidadInput.value) || 1;
+          if (cantidad < 1) {
+            cantidadInput.value = 1;
+            ACC[accionKey].cantidad = 1;
+          } else {
+            ACC[accionKey].cantidad = cantidad;
+          }
+          updatePrecioDisplay(accionKey, precioDisplay);
+          updateHiddenAndTotal();
+        });
+
         // Inicializar display del precio y estilos
         updatePrecioDisplay(accionKey, precioDisplay);
         updateItemStyles(li, checkbox.checked);
@@ -587,7 +613,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
       const precio = ACC[accionKey].precio || ACC[accionKey].precio_base || '0';
       const precioNum = parseFloat(precio) || 0;
-      precioDisplay.textContent = CLP.format(precioNum);
+      const cantidad = parseInt(ACC[accionKey].cantidad) || 1;
+      const subtotal = precioNum * cantidad;
+      precioDisplay.textContent = CLP.format(subtotal);
       precioDisplay.className = 'fw-bold text-success';
     }
 

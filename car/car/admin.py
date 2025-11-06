@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import (
     Cliente, Cliente_Taller, Vehiculo, Mecanico,
     Diagnostico, DiagnosticoComponenteAccion, DiagnosticoRepuesto,
-    Trabajo, TrabajoAccion, TrabajoRepuesto, TrabajoFoto, TrabajoAbono,
+    Trabajo, TrabajoAccion, TrabajoRepuesto, TrabajoFoto, TrabajoAbono, TrabajoAdicional,
     Componente, Accion, ComponenteAccion,
     Repuesto, RepuestoEnStock, StockMovimiento, RepuestoExterno,
     VehiculoVersion, ComponenteRepuesto, RepuestoAplicacion,
@@ -96,6 +96,7 @@ class DiagnosticoComponenteAccionInline(admin.TabularInline):
     model = DiagnosticoComponenteAccion
     extra = 1
     autocomplete_fields = ['componente', 'accion']
+    fields = ['componente', 'accion', 'precio_mano_obra', 'cantidad']
 
 
 class DiagnosticoRepuestoInline(admin.TabularInline):
@@ -119,6 +120,7 @@ class TrabajoAccionInline(admin.TabularInline):
     model = TrabajoAccion
     extra = 1
     autocomplete_fields = ['componente', 'accion']
+    fields = ['componente', 'accion', 'precio_mano_obra', 'cantidad', 'completado']
 
 
 class TrabajoRepuestoInline(admin.TabularInline):
@@ -134,12 +136,19 @@ class TrabajoAbonoInline(admin.TabularInline):
     fields = ['fecha', 'monto', 'metodo_pago', 'descripcion', 'usuario']
 
 
+class TrabajoAdicionalInline(admin.TabularInline):
+    model = TrabajoAdicional
+    extra = 0
+    readonly_fields = ['fecha', 'usuario']
+    fields = ['fecha', 'concepto', 'monto', 'usuario']
+
+
 @admin.register(Trabajo)
 class TrabajoAdmin(admin.ModelAdmin):
     list_display = ('id', 'vehiculo', 'estado', 'fecha_inicio', 'fecha_fin')
     list_filter = ('estado', 'fecha_inicio', 'fecha_fin')
     search_fields = ('vehiculo__placa', 'vehiculo__marca')
-    inlines = [TrabajoAccionInline, TrabajoRepuestoInline, TrabajoAbonoInline]
+    inlines = [TrabajoAccionInline, TrabajoRepuestoInline, TrabajoAbonoInline, TrabajoAdicionalInline]
 
 
 @admin.register(TrabajoAbono)
@@ -148,6 +157,15 @@ class TrabajoAbonoAdmin(admin.ModelAdmin):
     list_filter = ('metodo_pago', 'fecha')
     search_fields = ('trabajo__id', 'descripcion')
     readonly_fields = ['fecha']
+
+
+@admin.register(TrabajoAdicional)
+class TrabajoAdicionalAdmin(admin.ModelAdmin):
+    list_display = ('id', 'trabajo', 'fecha', 'concepto', 'monto', 'usuario')
+    list_filter = ('fecha',)
+    search_fields = ('trabajo__id', 'concepto')
+    readonly_fields = ['fecha']
+    fields = ['trabajo', 'concepto', 'monto', 'fecha', 'usuario']
 
 
 # ======================
@@ -222,7 +240,16 @@ class ComponenteRepuestoAdmin(admin.ModelAdmin):
 
 @admin.register(TrabajoAccion)
 class TrabajoAccionAdmin(admin.ModelAdmin):
-    list_display = ('id', 'trabajo','componente', 'accion', 'precio_mano_obra')
+    list_display = ('id', 'trabajo', 'componente', 'accion', 'precio_mano_obra', 'cantidad', 'subtotal_display', 'completado')
+    list_filter = ('completado', 'componente', 'accion')
+    search_fields = ('trabajo__id', 'componente__nombre', 'accion__nombre')
+    readonly_fields = ['subtotal_display']
+    
+    def subtotal_display(self, obj):
+        """Muestra el subtotal calculado"""
+        return f"${obj.subtotal:,.2f}"
+    subtotal_display.short_description = "Subtotal"
+    subtotal_display.admin_order_field = 'precio_mano_obra'
 
 
 @admin.register(RepuestoAplicacion)

@@ -199,7 +199,9 @@
                         <tr>
                             <th>Componente</th>
                             <th>Acción</th>
-                            <th class="text-right">Precio Mano Obra</th>
+                            <th>Cantidad</th>
+                            <th>Precio Unit.</th>
+                            <th class="text-right">Subtotal</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -207,11 +209,13 @@
                             <tr>
                                 <td>{{ dca.componente.nombre|capfirst }}</td>
                                 <td>{{ dca.accion.nombre|capfirst }}</td>
+                                <td style="text-align: center;">{{ dca.cantidad }}</td>
                                 <td class="text-right">${{ dca.precio_mano_obra|default:0|floatformat:0|intcomma }}</td>
+                                <td class="text-right"><strong>${{ dca.subtotal|default:0|floatformat:0|intcomma }}</strong></td>
                             </tr>
                         {% endfor %}
                         <tr class="total-row-destacado">
-                            <td colspan="2" class="text-right"><strong>⚙️ Total Mano de Obra:</strong></td>
+                            <td colspan="4" class="text-right"><strong>⚙️ Total Mano de Obra:</strong></td>
                             <td class="text-right" style="color: #0d6efd;"><strong>${{ diagnostico.total_mano_obra|floatformat:0|intcomma }}</strong></td>
                         </tr>
                     </tbody>

@@ -479,6 +479,7 @@
                <button class="nav-btn" onclick="scrollToSection('acciones')">🛠️ Acciones</button>
                <button class="nav-btn" onclick="scrollToSection('repuestos')">🔧 Repuestos</button>
                <button class="nav-btn" onclick="scrollToSection('insumos')">📦 Insumos</button>
+               <button class="nav-btn" onclick="scrollToSection('adicionales')">➕ Adicionales</button>
                <button class="nav-btn" onclick="scrollToSection('fotos')">📷 Fotos</button>
                <button class="nav-btn" onclick="scrollToSection('abonos')">💵 Abonos</button>
                <button class="nav-btn" onclick="scrollToSection('estado')">⚡ Estado</button>
@@ -521,6 +522,20 @@
             <!-- Resumen Financiero -->
             <h5 style="font-weight: 600; margin-bottom: 0.75rem;">💰 Resumen Financiero</h5>
             <div class="info-row-movil">
+                <div class="info-label-movil" style="font-size: 0.9rem; color: #6c757d;">Mano de Obra:</div>
+                <div class="info-value-movil">${{ trabajo.total_mano_obra|default:0|floatformat:0|intcomma }}</div>
+            </div>
+            <div class="info-row-movil">
+                <div class="info-label-movil" style="font-size: 0.9rem; color: #6c757d;">Repuestos:</div>
+                <div class="info-value-movil">${{ trabajo.total_repuestos|default:0|floatformat:0|intcomma }}</div>
+            </div>
+            {% if trabajo.total_adicionales > 0 %}
+            <div class="info-row-movil">
+                <div class="info-label-movil" style="font-size: 0.9rem; color: #6c757d;">Adicionales:</div>
+                <div class="info-value-movil">${{ trabajo.total_adicionales|default:0|floatformat:0|intcomma }}</div>
+            </div>
+            {% endif %}
+            <div class="info-row-movil" style="border-top: 2px solid #dee2e6; padding-top: 0.5rem; margin-top: 0.5rem;">
                 <div class="info-label-movil">Total Presupuesto:</div>
                 <div class="info-value-movil" style="color: #0d6efd; font-weight: 700;">${{ trabajo.total_presupuesto|default:0|floatformat:0|intcomma }}</div>
             </div>
@@ -617,15 +632,60 @@
                     <div class="item-header-movil">
                         <div class="item-title-movil">
                             <strong>{{ accion.componente.nombre }}</strong>
-                            <div class="item-details-movil">{{ accion.accion.nombre }}</div>
+                            <div class="item-details-movil">
+                                {{ accion.accion.nombre }}
+                                {% if accion.cantidad > 1 %}
+                                    <span class="badge bg-info" style="margin-left: 0.5rem;">Cant: {{ accion.cantidad }}</span>
+                                {% endif %}
+                            </div>
                         </div>
                         <span class="item-status-movil {% if accion.completado %}completado{% else %}pendiente{% endif %}">
                             {% if accion.completado %}✅{% else %}⏳{% endif %}
                         </span>
                     </div>
-                    <div class="item-price-movil">
-                        💰 ${{ accion.precio_mano_obra|default:0|floatformat:0|intcomma }}
+                    {% if accion.cantidad > 1 %}
+                    <div style="font-size: 0.85rem; color: var(--muted); margin-top: 0.25rem;">
+                        Unitario: ${{ accion.precio_mano_obra|default:0|floatformat:0|intcomma }} × {{ accion.cantidad }} =
                     </div>
+                    {% endif %}
+                    <div class="item-price-movil">
+                        💰 ${{ accion.subtotal|default:0|floatformat:0|intcomma }}
+                        {% if accion.cantidad == 1 %}
+                            <small style="color: var(--muted); font-size: 0.8rem;">(unitario)</small>
+                        {% endif %}
+                    </div>
+                    <!-- Formulario para editar cantidad -->
+                    <form method="post" style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.5rem; margin-bottom: 0.5rem;" onsubmit="return confirm('¿Actualizar cantidad?')">
+                        {% csrf_token %}
+                        <input type="hidden" name="accion_id" value="{{ accion.id }}">
+                        <label style="font-size: 0.85rem; color: var(--muted); white-space: nowrap;">Cantidad:</label>
+                        <input type="number" 
+                               name="cantidad_accion" 
+                               value="{{ accion.cantidad }}" 
+                               min="1" 
+                               step="1"
+                               style="flex: 1; max-width: 80px; padding: 0.5rem; text-align: center; border: 1px solid var(--border-color); border-radius: 0.5rem;"
+                               required>
+                        <button type="submit" name="editar_cantidad_accion" class="btn btn-sm btn-outline-primary" style="padding: 0.5rem 1rem;">
+                            ✏️
+                        </button>
+                    </form>
+                    <!-- Formulario para editar precio -->
+                    <form method="post" style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.5rem; margin-bottom: 0.5rem;" onsubmit="return confirm('¿Actualizar precio? Este cambio solo afectará a este trabajo.')">
+                        {% csrf_token %}
+                        <input type="hidden" name="accion_id" value="{{ accion.id }}">
+                        <label style="font-size: 0.85rem; color: var(--muted); white-space: nowrap;">Precio:</label>
+                        <input type="number" 
+                               name="precio_accion" 
+                               value="{{ accion.precio_mano_obra|default:0|floatformat:0 }}" 
+                               min="0" 
+                               step="0.01"
+                               style="flex: 1; max-width: 100px; padding: 0.5rem; text-align: center; border: 1px solid var(--border-color); border-radius: 0.5rem;"
+                               required>
+                        <button type="submit" name="editar_precio_accion" class="btn btn-sm btn-outline-success" style="padding: 0.5rem 1rem;">
+                            💰
+                        </button>
+                    </form>
                     <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
                         <form method="post" style="flex: 1;">
                             {% csrf_token %}
@@ -797,6 +857,86 @@
                 <small style="color: var(--muted);">
                     <strong>ℹ️ Nota:</strong> Los insumos agregados aparecerán automáticamente en la sección "Repuestos" del trabajo.
                 </small>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ==================== SECCIÓN: ADICIONALES ==================== -->
+    <div class="section-card" id="section-adicionales" data-section="adicionales">
+        <div class="section-header" onclick="toggleSection('adicionales')">
+            <span><span class="section-icon">➕</span> Adicionales</span>
+            <span class="section-toggle">▼</span>
+        </div>
+        <div class="section-content">
+            <!-- Formulario para Agregar Adicional -->
+            <div style="margin-bottom: 1.5rem;">
+                <h6 style="font-weight: 600; margin-bottom: 0.75rem;">➕ Registrar Concepto Adicional</h6>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-group-movil">
+                        <label class="form-label-movil">Concepto / Descripción *</label>
+                        <textarea class="form-control-movil" 
+                                  name="concepto_adicional" 
+                                  rows="3"
+                                  placeholder="Ej: Servicio de grúa, Material adicional, Servicio extra..."
+                                  required></textarea>
+                    </div>
+                    <div class="form-group-movil">
+                        <label class="form-label-movil">Monto *</label>
+                        <input type="number" 
+                               class="form-control-movil" 
+                               name="monto_adicional" 
+                               step="0.01" 
+                               min="0.01"
+                               placeholder="0.00"
+                               required>
+                    </div>
+                    <button type="submit" name="agregar_adicional" class="btn-action-movil btn btn-success">
+                        💰 Agregar Concepto Adicional
+                    </button>
+                </form>
+            </div>
+
+            <!-- Lista de Adicionales -->
+            <div>
+                <h6 style="font-weight: 600; margin-bottom: 0.75rem;">📋 Conceptos Adicionales Registrados</h6>
+                
+                {% if trabajo.adicionales.all %}
+                    {% for adicional in trabajo.adicionales.all %}
+                        <div class="item-card-movil" style="margin-bottom: 0.75rem;">
+                            <div class="item-header-movil">
+                                <div class="item-title-movil">
+                                    <strong>{{ adicional.concepto }}</strong>
+                                </div>
+                                <form method="post" class="d-inline" onsubmit="return confirm('¿Eliminar este concepto adicional?')">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="adicional_id" value="{{ adicional.id }}">
+                                    <button type="submit" name="eliminar_adicional" class="btn btn-outline-danger btn-sm" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                                        🗑️
+                                    </button>
+                                </form>
+                            </div>
+                            <div style="margin-top: 0.5rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <small style="color: var(--muted);">Fecha: {{ adicional.fecha|date:"d/m/Y H:i" }}</small>
+                                    <strong style="color: #198754; font-size: 1.1rem;">${{ adicional.monto|floatformat:0|intcomma }}</strong>
+                                </div>
+                                <small style="color: var(--muted);">Registrado por: {{ adicional.usuario.username|default:"Sistema" }}</small>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    
+                    <div class="info-row-movil" style="background: var(--success-100); padding: 0.75rem; border-radius: 0.5rem; margin-top: 1rem;">
+                        <div class="info-label-movil" style="font-weight: 700;">TOTAL ADICIONALES:</div>
+                        <div class="info-value-movil" style="font-size: 1.2rem; font-weight: 700; color: #198754;">
+                            ${{ trabajo.total_adicionales|floatformat:0|intcomma }}
+                        </div>
+                    </div>
+                {% else %}
+                    <div style="padding: 2rem; text-align: center; color: var(--muted);">
+                        <p>No hay conceptos adicionales registrados para este trabajo</p>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -984,6 +1124,33 @@
                     ⚫ Entregado
                 </button>
             </form>
+            
+            <!-- Botones de Acción Adicionales -->
+            <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
+                <h6 style="font-weight: 600; margin-bottom: 1rem;">📄 Acciones Adicionales</h6>
+                
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <a href="{% url 'trabajo_pdf' trabajo.pk %}" 
+                       class="btn-action-movil btn btn-info" 
+                       style="width: 100%; text-align: center;"
+                       title="Se abrirá en el navegador"
+                       onclick="verificarPDF(this.href); return false;">
+                        📄 Generar Orden de Trabajo
+                    </a>
+                    
+                    <a href="{% url 'panel_principal' %}" 
+                       class="btn-action-movil btn btn-secondary" 
+                       style="width: 100%; text-align: center;">
+                        🏠 Volver a la Pizarra
+                    </a>
+                    
+                    <a href="javascript:history.back()" 
+                       class="btn-action-movil btn btn-outline-secondary" 
+                       style="width: 100%; text-align: center;">
+                        ← Regresar
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -1023,6 +1190,37 @@ window.addEventListener('scroll', function() {
         scrollBtn.classList.remove('show');
     }
 });
+
+// Función para verificar y abrir PDF
+function verificarPDF(url) {
+    console.log('🔍 Verificando PDF:', url);
+    
+    // Crear un iframe oculto para verificar el tipo de contenido
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.src = url;
+    
+    iframe.onload = function() {
+        console.log('✅ PDF cargado en iframe');
+        // Si se carga en iframe, abrir en nueva ventana
+        window.open(url, '_blank');
+    };
+    
+    iframe.onerror = function() {
+        console.log('❌ Error cargando PDF en iframe');
+        // Si hay error, intentar abrir directamente
+        window.open(url, '_blank');
+    };
+    
+    document.body.appendChild(iframe);
+    
+    // Limpiar el iframe después de 3 segundos
+    setTimeout(() => {
+        if (iframe.parentNode) {
+            iframe.parentNode.removeChild(iframe);
+        }
+    }, 3000);
+}
 
 // Expandir sección activa desde URL
 document.addEventListener('DOMContentLoaded', function() {

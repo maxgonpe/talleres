@@ -576,7 +576,10 @@ html.theme-piedra .total-presupuesto-card .total-valor-principal {
                 <strong>{{ dca.componente.nombre }}</strong> — {{ dca.accion.nombre }}
               </span>
               <span class="badge bg-primary rounded-pill">
-                ${{ dca.precio_mano_obra|default:0|floatformat:0|intcomma }}
+                ${{ dca.subtotal|default:0|floatformat:0|intcomma }}
+                {% if dca.cantidad > 1 %}
+                    <small class="text-muted">({{ dca.cantidad }} × ${{ dca.precio_mano_obra|default:0|floatformat:0|intcomma }})</small>
+                {% endif %}
               </span>
             </li>
           {% endfor %}
@@ -638,7 +641,16 @@ html.theme-piedra .total-presupuesto-card .total-valor-principal {
         ✅ Aceptar Presupuesto
       </a>
     {% elif diagnostico.estado == "aprobado" %}
-      <span class="badge badge-aprobado-grande mt-3">✅ Presupuesto Aprobado</span>
+      <div class="d-flex justify-content-between align-items-center mt-3">
+        <span class="badge badge-aprobado-grande">✅ Presupuesto Aprobado</span>
+        <form method="post" style="display: inline;" onsubmit="return confirm('¿Quitar este diagnóstico del listado? Se ocultará pero no se eliminará.');">
+          {% csrf_token %}
+          <input type="hidden" name="diagnostico_id" value="{{ diagnostico.id }}">
+          <button type="submit" name="ocultar_diagnostico" class="btn btn-sm btn-outline-secondary">
+            🗑️ Ocultar
+          </button>
+        </form>
+      </div>
     {% endif %}
 
   </div>

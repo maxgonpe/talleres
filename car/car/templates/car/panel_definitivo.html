@@ -249,8 +249,8 @@
     
     .vehiculo-placa {
         display: inline-block;
-        padding: 0.2rem 0.6rem;
-        border: 2px solid var(--fg);
+        padding: 0.3rem 0.7rem;
+        border: 3px solid var(--primary-600);
         border-radius: var(--border-radius-sm);
         background-color: var(--card-bg);
         color: var(--fg);
@@ -260,6 +260,7 @@
         font-size: 0.9rem;
         transition: var(--transition-fast) ease;
         cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     
     .vehiculo-placa-link:hover .vehiculo-placa {
@@ -651,6 +652,15 @@
                                 <div class="progress-bar bg-primary" style="width: {{ trabajo.porcentaje_avance|default:100 }}%">
                                     {{ trabajo.porcentaje_avance|default:100 }}%
                                 </div>
+                            </div>
+                            <div class="mt-2 text-end">
+                                <form method="post" style="display: inline;" onsubmit="return confirm('¿Quitar este trabajo del listado? Se ocultará pero no se eliminará.');">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="trabajo_id" value="{{ trabajo.id }}">
+                                    <button type="submit" name="ocultar_trabajo" class="btn btn-sm btn-outline-secondary">
+                                        🗑️ Ocultar
+                                    </button>
+                                </form>
                             </div>
                         </div>
                         {% empty %}

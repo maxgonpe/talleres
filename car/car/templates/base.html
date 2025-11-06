@@ -214,15 +214,79 @@
           .then(function(registration) {
             console.log('✅ Service Worker registrado exitosamente:', registration.scope);
             
-            // Verificar actualizaciones cada hora
+            // Detectar actualizaciones del service worker
+            registration.addEventListener('updatefound', function() {
+              console.log('🔄 Nueva versión del Service Worker disponible');
+              const newWorker = registration.installing;
+              
+              newWorker.addEventListener('statechange', function() {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // Hay una nueva versión disponible
+                  showUpdateNotification();
+                }
+              });
+            });
+            
+            // Verificar actualizaciones cada 5 minutos
             setInterval(function() {
               registration.update();
-            }, 3600000); // 1 hora
+            }, 300000); // 5 minutos
+            
+            // Verificar actualizaciones al obtener foco
+            document.addEventListener('visibilitychange', function() {
+              if (!document.hidden) {
+                registration.update();
+              }
+            });
           })
           .catch(function(error) {
             console.log('❌ Error al registrar Service Worker:', error);
           });
       });
+    }
+    
+    // Función para mostrar notificación de actualización
+    function showUpdateNotification() {
+      // Crear o mostrar banner de actualización
+      let updateBanner = document.getElementById('pwa-update-banner');
+      if (!updateBanner) {
+        updateBanner = document.createElement('div');
+        updateBanner.id = 'pwa-update-banner';
+        updateBanner.style.cssText = 'position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #0d6efd; color: white; padding: 1rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10000; display: flex; align-items: center; gap: 1rem; max-width: 90%;';
+        updateBanner.innerHTML = `
+          <span>🔄 Nueva versión disponible</span>
+          <button onclick="refreshPWA()" style="background: white; color: #0d6efd; border: none; padding: 0.5rem 1rem; border-radius: 0.25rem; font-weight: 600; cursor: pointer;">Actualizar</button>
+          <button onclick="this.closest(\'#pwa-update-banner\').remove()" style="background: transparent; color: white; border: 1px solid white; padding: 0.5rem; border-radius: 0.25rem; cursor: pointer;">✕</button>
+        `;
+        document.body.appendChild(updateBanner);
+      } else {
+        updateBanner.style.display = 'flex';
+      }
+    }
+    
+    // Función para refrescar la PWA
+    function refreshPWA() {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          registrations.forEach(function(registration) {
+            registration.unregister().then(function() {
+              // Limpiar todos los caches
+              caches.keys().then(function(cacheNames) {
+                return Promise.all(
+                  cacheNames.map(function(cacheName) {
+                    return caches.delete(cacheName);
+                  })
+                );
+              }).then(function() {
+                // Recargar la página
+                window.location.reload(true);
+              });
+            });
+          });
+        });
+      } else {
+        window.location.reload(true);
+      }
     }
   </script>
 

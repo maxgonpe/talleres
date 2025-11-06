@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estado del Trabajo #{{ trabajo.id }}</title>
+    <title>Orden de Trabajo #{{ trabajo.id }}</title>
     <style>
         @page {
             size: A4;
@@ -367,8 +367,10 @@
                     <tr>
                         <th>Componente</th>
                         <th>Acción</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unit.</th>
                         <th>Estado</th>
-                        <th>Precio M.O.</th>
+                        <th>Subtotal</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -376,6 +378,14 @@
                         <tr>
                             <td>{{ accion.componente.nombre|capfirst }}</td>
                             <td>{{ accion.accion.nombre }}</td>
+                            <td style="text-align: center;">{{ accion.cantidad }}</td>
+                            <td style="text-align: right;">
+                                {% if accion.precio_mano_obra %}
+                                    ${{ accion.precio_mano_obra|floatformat:0|intcomma }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
                             <td>
                                 {% if accion.completado %}
                                     <span class="status-completado">✅ Completado</span>
@@ -383,9 +393,9 @@
                                     <span class="status-pendiente">⏳ Pendiente</span>
                                 {% endif %}
                             </td>
-                            <td>
-                                {% if accion.precio_mano_obra %}
-                                    ${{ accion.precio_mano_obra|floatformat:0|intcomma }}
+                            <td style="text-align: right;">
+                                {% if accion.subtotal %}
+                                    <strong>${{ accion.subtotal|floatformat:0|intcomma }}</strong>
                                 {% else %}
                                     -
                                 {% endif %}
@@ -473,6 +483,40 @@
     </div>
     {% endif %}
 
+    <!-- Conceptos Adicionales -->
+    {% if trabajo.adicionales.all %}
+    <div class="section">
+        <h3>➕ Conceptos Adicionales</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Concepto</th>
+                    <th>Monto</th>
+                    <th>Registrado por</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for adicional in trabajo.adicionales.all %}
+                    <tr>
+                        <td>{{ adicional.fecha|date:"d/m/Y H:i" }}</td>
+                        <td>{{ adicional.concepto }}</td>
+                        <td>${{ adicional.monto|floatformat:0|intcomma }}</td>
+                        <td>{{ adicional.usuario.username|default:"Sistema" }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr style="background: #e7f9ef;">
+                    <td colspan="2"><strong>TOTAL ADICIONALES:</strong></td>
+                    <td><strong>${{ trabajo.total_adicionales|floatformat:0|intcomma }}</strong></td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    {% endif %}
+
     <!-- Abonos -->
     {% if trabajo.abonos.all %}
     <div class="section">
@@ -519,7 +563,7 @@
             </thead>
             <tbody>
                 <tr>
-                    <td colspan="2"><strong>Total Presupuestado (Mano de Obra + Repuestos)</strong></td>
+                    <td colspan="2"><strong>Total Presupuestado (Mano de Obra + Repuestos + Adicionales)</strong></td>
                     <td style="text-align: right;"><strong>${{ trabajo.total_presupuesto|floatformat:0|intcomma }}</strong></td>
                 </tr>
                 <tr>
@@ -532,6 +576,13 @@
                     <td></td>
                     <td style="text-align: right;">${{ trabajo.total_repuestos|floatformat:0|intcomma }}</td>
                 </tr>
+                {% if trabajo.total_adicionales > 0 %}
+                <tr>
+                    <td style="padding-left: 20px;">Conceptos Adicionales</td>
+                    <td></td>
+                    <td style="text-align: right;">${{ trabajo.total_adicionales|floatformat:0|intcomma }}</td>
+                </tr>
+                {% endif %}
                 <tr style="background: #e7f9ef;">
                     <td colspan="2"><strong>Total Realizado (Solo completados)</strong></td>
                     <td style="text-align: right;"><strong>${{ trabajo.total_realizado|floatformat:0|intcomma }}</strong></td>
@@ -546,6 +597,13 @@
                     <td></td>
                     <td style="text-align: right;">${{ trabajo.total_realizado_repuestos|floatformat:0|intcomma }}</td>
                 </tr>
+                {% if trabajo.total_realizado_adicionales > 0 %}
+                <tr>
+                    <td style="padding-left: 20px;">Conceptos Adicionales</td>
+                    <td></td>
+                    <td style="text-align: right;">${{ trabajo.total_realizado_adicionales|floatformat:0|intcomma }}</td>
+                </tr>
+                {% endif %}
                 <tr style="background: #fff3cd;">
                     <td colspan="2"><strong>(-) Total Abonos</strong></td>
                     <td style="text-align: right;"><strong>-${{ trabajo.total_abonos|floatformat:0|intcomma }}</strong></td>

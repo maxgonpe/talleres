@@ -503,31 +503,37 @@
 {% block extra_js %}
 <script>
 // Datos de repuestos para el modal de ficha
-const repuestosData = {
-    {% for repuesto in repuestos %}
-    {{ repuesto.id }}: {
-        id: {{ repuesto.id }},
-        sku: "{{ repuesto.sku|default:'-' }}",
-        oem: "{{ repuesto.oem|default:'-' }}",
-        referencia: "{{ repuesto.referencia|default:'-' }}",
-        nombre: "{{ repuesto.nombre }}",
-        marca: "{{ repuesto.marca|default:'-' }}",
-        descripcion: "{{ repuesto.descripcion|default:'-' }}",
-        medida: "{{ repuesto.medida|default:'-' }}",
-        posicion: "{{ repuesto.posicion|default:'-' }}",
-        unidad: "{{ repuesto.unidad|default:'-' }}",
-        precio_costo: "{{ repuesto.precio_costo|default:'0'|floatformat:0|intcomma }}",
-        precio_venta: "{{ repuesto.precio_venta|default:'0'|floatformat:0|intcomma }}",
-        codigo_barra: "{{ repuesto.codigo_barra|default:'-' }}",
-        origen_repuesto: "{{ repuesto.origen_repuesto|default:'-' }}",
-        cod_prov: "{{ repuesto.cod_prov|default:'-' }}",
-        marca_veh: "{{ repuesto.marca_veh|default:'-' }}",
-        tipo_de_motor: "{{ repuesto.tipo_de_motor|default:'-' }}",
-        stock_total: {{ repuesto.stock_total }},
-        created: "{{ repuesto.created|date:'d/m/Y H:i' }}"
-    }{% if not forloop.last %},{% endif %}
-    {% endfor %}
-};
+let repuestosData = {};
+try {
+    repuestosData = {
+        {% for repuesto in repuestos %}
+        {{ repuesto.id }}: {
+            id: {{ repuesto.id }},
+            sku: "{{ repuesto.sku|default:'-'|escapejs }}",
+            oem: "{{ repuesto.oem|default:'-'|escapejs }}",
+            referencia: "{{ repuesto.referencia|default:'-'|escapejs }}",
+            nombre: "{{ repuesto.nombre|escapejs }}",
+            marca: "{{ repuesto.marca|default:'-'|escapejs }}",
+            descripcion: "{{ repuesto.descripcion|default:'-'|escapejs }}",
+            medida: "{{ repuesto.medida|default:'-'|escapejs }}",
+            posicion: "{{ repuesto.posicion|default:'-'|escapejs }}",
+            unidad: "{{ repuesto.unidad|default:'-'|escapejs }}",
+            precio_costo: "{{ repuesto.precio_costo|default:'0'|floatformat:0|intcomma|escapejs }}",
+            precio_venta: "{{ repuesto.precio_venta|default:'0'|floatformat:0|intcomma|escapejs }}",
+            codigo_barra: "{{ repuesto.codigo_barra|default:'-'|escapejs }}",
+            origen_repuesto: "{{ repuesto.origen_repuesto|default:'-'|escapejs }}",
+            cod_prov: "{{ repuesto.cod_prov|default:'-'|escapejs }}",
+            marca_veh: "{{ repuesto.marca_veh|default:'-'|escapejs }}",
+            tipo_de_motor: "{{ repuesto.tipo_de_motor|default:'-'|escapejs }}",
+            stock_total: {{ repuesto.stock_total|default:0 }},
+            created: "{{ repuesto.created|date:'d/m/Y H:i'|escapejs }}"
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    };
+} catch (e) {
+    console.error('❌ Error cargando datos de repuestos para el modal:', e);
+    repuestosData = {};
+}
 
 // Función para detectar el tema actual
 function detectarTema() {
@@ -563,29 +569,36 @@ function detectarTema() {
 
 // Función para mostrar ficha del repuesto
 function mostrarFicha(repuestoId) {
-    console.log('Mostrando ficha para repuesto ID:', repuestoId);
-    const repuesto = repuestosData[repuestoId];
-    if (!repuesto) {
-        console.error('No se encontró el repuesto con ID:', repuestoId);
-        return;
-    }
-    
-    const modal = document.getElementById('ficha-modal');
-    const contentBody = document.getElementById('ficha-content-body');
-    
-    // Detectar y aplicar tema
-    const tema = detectarTema();
-    modal.setAttribute('data-theme', tema);
-    if (tema === 'dark') {
-        modal.classList.add('dark-theme');
-        modal.classList.remove('light-theme');
-    } else {
-        modal.classList.add('light-theme');
-        modal.classList.remove('dark-theme');
-    }
-    
-    // Crear contenido de la ficha
-    contentBody.innerHTML = `
+    try {
+        console.log('Mostrando ficha para repuesto ID:', repuestoId);
+        const repuesto = repuestosData[repuestoId];
+        if (!repuesto) {
+            console.error('No se encontró el repuesto con ID:', repuestoId);
+            alert('No se pudo cargar la información del repuesto');
+            return;
+        }
+        
+        const modal = document.getElementById('ficha-modal');
+        const contentBody = document.getElementById('ficha-content-body');
+        
+        if (!modal || !contentBody) {
+            console.error('No se encontraron los elementos del modal');
+            return;
+        }
+        
+        // Detectar y aplicar tema
+        const tema = detectarTema();
+        modal.setAttribute('data-theme', tema);
+        if (tema === 'dark') {
+            modal.classList.add('dark-theme');
+            modal.classList.remove('light-theme');
+        } else {
+            modal.classList.add('light-theme');
+            modal.classList.remove('dark-theme');
+        }
+        
+        // Crear contenido de la ficha
+        contentBody.innerHTML = `
         <div class="ficha-grid">
             <div class="ficha-field">
                 <div class="ficha-label">ID</div>
@@ -670,7 +683,11 @@ function mostrarFicha(repuestoId) {
         </div>
     `;
     
-    modal.style.display = 'block';
+        modal.style.display = 'block';
+    } catch (error) {
+        console.error('❌ Error mostrando ficha del repuesto:', error);
+        alert('Error al mostrar la información del repuesto');
+    }
 }
 
 // Función para cerrar ficha
@@ -688,111 +705,118 @@ window.onclick = function(event) {
 
 // Función de búsqueda en tiempo real
 document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('search-repuestos');
-    const repuestosRows = document.querySelectorAll('.repuesto-row');
-    const tbody = document.getElementById('repuestos-tbody');
-    
-    // Función para filtrar repuestos
-    function filtrarRepuestos(termino) {
-        console.log('🔍 Buscando:', termino);
-        console.log('🔍 Término original:', `"${termino}"`);
-        const terminoLower = termino.toLowerCase();
-        console.log('🔍 Término procesado:', `"${terminoLower}"`);
-        let repuestosVisibles = 0;
-        
-        // Log de todos los SKUs disponibles si el término contiene guiones
-        if (terminoLower.includes('-')) {
-            console.log('🔍 Buscando SKUs con guiones. SKUs disponibles:');
-            repuestosRows.forEach((row, index) => {
-                const sku = row.dataset.sku;
-                if (sku && sku !== '-') {
-                    console.log(`  ${index + 1}. "${sku}"`);
-                }
-            });
+    try {
+        const searchInput = document.getElementById('search-repuestos');
+        if (!searchInput) {
+            console.error('❌ No se encontró el input de búsqueda');
+            return;
         }
         
-        repuestosRows.forEach(row => {
-            const id = row.dataset.id;
-            const sku = row.dataset.sku;
-            const nombre = row.dataset.nombre;
-            const marca = row.dataset.marca;
-            const oem = row.dataset.oem;
-            const codigoBarra = row.dataset.codigoBarra;
-            const origen = row.dataset.origen;
-            const codigoProveedor = row.dataset.codigoProveedor;
-            const marcaVehiculo = row.dataset.marcaVehiculo;
-            const tipoMotor = row.dataset.tipoMotor;
-            const carroceria = row.dataset.carroceria;
-            
-            // Búsqueda simple y directa (case-insensitive)
-            const coincide = (id && id.toLowerCase().includes(terminoLower)) || 
-                           (sku && sku.toLowerCase().includes(terminoLower)) || 
-                           (nombre && nombre.toLowerCase().includes(terminoLower)) || 
-                           (marca && marca.toLowerCase().includes(terminoLower)) ||
-                           (oem && oem.toLowerCase().includes(terminoLower)) ||
-                           (codigoBarra && codigoBarra.toLowerCase().includes(terminoLower)) ||
-                           (origen && origen.toLowerCase().includes(terminoLower)) ||
-                           (codigoProveedor && codigoProveedor.toLowerCase().includes(terminoLower)) ||
-                           (marcaVehiculo && marcaVehiculo.toLowerCase().includes(terminoLower)) ||
-                           (tipoMotor && tipoMotor.toLowerCase().includes(terminoLower)) ||
-                           (carroceria && carroceria.toLowerCase().includes(terminoLower));
-            
-            // Log específico para SKUs con guiones
-            if (terminoLower.includes('-') && sku && sku.toLowerCase().includes(terminoLower)) {
-                console.log(`✅ SKU encontrado: "${sku}" para término "${terminoLower}"`);
+        const repuestosRows = document.querySelectorAll('.repuesto-row');
+        const tbody = document.getElementById('repuestos-tbody');
+        
+        if (!tbody) {
+            console.error('❌ No se encontró el tbody de la tabla');
+            return;
+        }
+        
+        console.log('✅ Búsqueda inicializada. Repuestos encontrados:', repuestosRows.length);
+        
+        // Función para filtrar repuestos
+        function filtrarRepuestos(termino) {
+            try {
+                console.log('🔍 Buscando:', termino);
+                const terminoLower = termino.toLowerCase();
+                let repuestosVisibles = 0;
+                
+                repuestosRows.forEach(row => {
+                    try {
+                        const id = row.dataset.id || '';
+                        const sku = row.dataset.sku || '';
+                        const nombre = row.dataset.nombre || '';
+                        const marca = row.dataset.marca || '';
+                        const oem = row.dataset.oem || '';
+                        const codigoBarra = row.dataset.codigoBarra || '';
+                        const origen = row.dataset.origen || '';
+                        const codigoProveedor = row.dataset.codigoProveedor || '';
+                        const marcaVehiculo = row.dataset.marcaVehiculo || '';
+                        const tipoMotor = row.dataset.tipoMotor || '';
+                        const carroceria = row.dataset.carroceria || '';
+                        
+                        // Búsqueda simple y directa (case-insensitive)
+                        const coincide = (id && id.toLowerCase().includes(terminoLower)) || 
+                                       (sku && sku.toLowerCase().includes(terminoLower)) || 
+                                       (nombre && nombre.toLowerCase().includes(terminoLower)) || 
+                                       (marca && marca.toLowerCase().includes(terminoLower)) ||
+                                       (oem && oem.toLowerCase().includes(terminoLower)) ||
+                                       (codigoBarra && codigoBarra.toLowerCase().includes(terminoLower)) ||
+                                       (origen && origen.toLowerCase().includes(terminoLower)) ||
+                                       (codigoProveedor && codigoProveedor.toLowerCase().includes(terminoLower)) ||
+                                       (marcaVehiculo && marcaVehiculo.toLowerCase().includes(terminoLower)) ||
+                                       (tipoMotor && tipoMotor.toLowerCase().includes(terminoLower)) ||
+                                       (carroceria && carroceria.toLowerCase().includes(terminoLower));
+                        
+                        if (coincide) {
+                            row.style.display = '';
+                            repuestosVisibles++;
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    } catch (rowError) {
+                        console.error('Error procesando fila:', rowError);
+                        row.style.display = 'none';
+                    }
+                });
+                
+                console.log('📊 Repuestos visibles:', repuestosVisibles);
+                
+                // Mostrar mensaje si no hay resultados
+                if (repuestosVisibles === 0 && termino.length > 0) {
+                    if (!document.getElementById('no-results-message')) {
+                        const noResultsRow = document.createElement('tr');
+                        noResultsRow.id = 'no-results-message';
+                        noResultsRow.innerHTML = `
+                            <td colspan="8" class="text-center text-secondary">
+                                🔍 No se encontraron repuestos que coincidan con "${termino.replace(/"/g, '&quot;')}"
+                            </td>
+                        `;
+                        tbody.appendChild(noResultsRow);
+                    }
+                } else {
+                    const noResultsMessage = document.getElementById('no-results-message');
+                    if (noResultsMessage) {
+                        noResultsMessage.remove();
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Error en filtrarRepuestos:', error);
             }
-            
-            if (coincide) {
-                row.style.display = '';
-                repuestosVisibles++;
-            } else {
-                row.style.display = 'none';
+        }
+        
+        // Event listener para la búsqueda con debounce
+        let searchTimeout;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                const termino = this.value.trim();
+                filtrarRepuestos(termino);
+            }, 150); // Debounce de 150ms
+        });
+        
+        // Limpiar búsqueda con Escape
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                this.value = '';
+                filtrarRepuestos('');
+                this.blur();
             }
         });
         
-        console.log('📊 Repuestos visibles:', repuestosVisibles);
-        
-        // Mostrar mensaje si no hay resultados
-        if (repuestosVisibles === 0 && termino.length > 0) {
-            if (!document.getElementById('no-results-message')) {
-                const noResultsRow = document.createElement('tr');
-                noResultsRow.id = 'no-results-message';
-                noResultsRow.innerHTML = `
-                    <td colspan="8" class="text-center text-secondary">
-                        🔍 No se encontraron repuestos que coincidan con "${termino}"
-                    </td>
-                `;
-                tbody.appendChild(noResultsRow);
-            }
-        } else {
-            const noResultsMessage = document.getElementById('no-results-message');
-            if (noResultsMessage) {
-                noResultsMessage.remove();
-            }
-        }
+        // Auto-focus en la búsqueda
+        searchInput.focus();
+    } catch (error) {
+        console.error('❌ Error inicializando búsqueda:', error);
     }
-    
-    // Event listener para la búsqueda con debounce
-    let searchTimeout;
-    searchInput.addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-            const termino = this.value.trim();
-            filtrarRepuestos(termino);
-        }, 150); // Debounce de 150ms
-    });
-    
-    // Limpiar búsqueda con Escape
-    searchInput.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            this.value = '';
-            filtrarRepuestos('');
-            this.blur();
-        }
-    });
-    
-    // Auto-focus en la búsqueda
-    searchInput.focus();
 });
 
 </script>
