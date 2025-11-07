@@ -47,15 +47,21 @@ document.addEventListener('DOMContentLoaded', function () {
   async function cargarVehiculos(clienteId, selectedVehiculoId = null) {
     if (!vehiculoSelect) return;
     vehiculoSelect.innerHTML = '<option value="">-- Nuevo vehículo --</option>';
-    if (!clienteId) { toggleVehiculoCampos(); return; }
+    const cleanedId = (clienteId || '').trim();
+    if (!cleanedId) { toggleVehiculoCampos(); return; }
     try {
-      const res = await fetch(`/api/vehiculos/${clienteId}/`);
+      const encodedId = encodeURIComponent(cleanedId);
+      const res = await fetch(`/api/vehiculos/${encodedId}/`);
       if (!res.ok) return;
       const data = await res.json();
       data.forEach(v => {
         const opt = document.createElement('option');
         opt.value = v.id;
-        opt.textContent = `${v.placa} • ${v.marca} ${v.modelo} (${v.anio})`;
+        const placa = (v.placa || '').trim() || '(sin patente)';
+        const marca = (v.marca || '').trim();
+        const modelo = (v.modelo || '').trim();
+        const anio = v.anio ? String(v.anio) : '';
+        opt.textContent = `${placa} • ${[marca, modelo].filter(Boolean).join(' ')}` + (anio ? ` (${anio})` : '');
         if (selectedVehiculoId && String(v.id) === String(selectedVehiculoId)) {
           opt.selected = true;
         }
@@ -70,7 +76,9 @@ document.addEventListener('DOMContentLoaded', function () {
   if (vehiculoSelect) {
     vehiculoSelect.addEventListener('change', toggleVehiculoCampos);
     if (clienteSelect && clienteSelect.value) {
-      cargarVehiculos(clienteSelect.value, vehiculoSelect.dataset.selected);
+      const selectedAttr = vehiculoSelect.dataset.selected;
+      const selectedVehiculoId = selectedAttr && selectedAttr !== 'None' ? selectedAttr : null;
+      cargarVehiculos(clienteSelect.value, selectedVehiculoId);
     } else {
       toggleVehiculoCampos();
     }

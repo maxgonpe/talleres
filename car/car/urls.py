@@ -36,6 +36,7 @@ urlpatterns = [
     path('diagnosticos/', views.lista_diagnosticos, name='lista_diagnosticos'),
     path('diagnosticos/<int:pk>/editar/', views.editar_diagnostico, name='editar_diagnostico'),
     path('ingreso/eliminar/<int:pk>/', views.eliminar_diagnostico, name='eliminar_diagnostico'),
+    path('selector-test/', views.selector_test_view, name='selector_test'),
 
     # === Plano interactivo ===
     path('plano/', views.mostrar_plano, name='plano_interactivo'),
@@ -47,6 +48,7 @@ urlpatterns = [
     path('acciones/<int:pk>/eliminar/', views.accion_delete, name='accion_delete'),
     path('acciones-lookup/<int:componente_id>/', views.acciones_por_componente, name='acciones_por_componente'),
     path("vehiculo_lookup/", vehiculo_lookup, name="vehiculo_lookup"),
+    path('api/vehiculos/<str:cliente_rut>/', views.vehiculos_por_cliente, name='vehiculos_por_cliente'),
 
     # === Componente + Acción (precios) ===
     path('componente-acciones/', views.comp_accion_list, name='comp_accion_list'),

@@ -1,7 +1,7 @@
 // Service Worker para PWA - Taller Mecánico
-const CACHE_NAME = 'taller-mecanico-v2';
-const STATIC_CACHE_NAME = 'taller-static-v2';
-const DYNAMIC_CACHE_NAME = 'taller-dynamic-v2';
+const CACHE_NAME = 'taller-mecanico-v1';
+const STATIC_CACHE_NAME = 'taller-static-v1';
+const DYNAMIC_CACHE_NAME = 'taller-dynamic-v1';
 
 // Archivos esenciales que se cachean inmediatamente
 const STATIC_FILES = [

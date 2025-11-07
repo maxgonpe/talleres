@@ -651,16 +651,22 @@
                 
                 <div class="info-row" style="border-bottom: 1px solid #dee2e6;">
                     <span class="info-label" style="color: #6c757d;">Mano de Obra:</span>
-                    <span class="info-value">${{ trabajo.total_mano_obra|default:0|floatformat:0|intcomma }}</span>
+                    <span class="info-value" style="color: #001f3f !important; font-weight: 600;">${{ trabajo.total_mano_obra|default:0|floatformat:0|intcomma }}</span>
                 </div>
                 <div class="info-row" style="border-bottom: 1px solid #dee2e6;">
                     <span class="info-label" style="color: #6c757d;">Repuestos:</span>
-                    <span class="info-value">${{ trabajo.total_repuestos|default:0|floatformat:0|intcomma }}</span>
+                    <span class="info-value" style="color: #001f3f !important; font-weight: 600;">${{ trabajo.total_repuestos|default:0|floatformat:0|intcomma }}</span>
                 </div>
                 {% if trabajo.total_adicionales > 0 %}
                 <div class="info-row" style="border-bottom: 1px solid #dee2e6;">
                     <span class="info-label" style="color: #6c757d;">Adicionales:</span>
-                    <span class="info-value">${{ trabajo.total_adicionales|default:0|floatformat:0|intcomma }}</span>
+                    <span class="info-value" style="color: #001f3f !important; font-weight: 600;">${{ trabajo.total_adicionales|default:0|floatformat:0|intcomma }}</span>
+                </div>
+                {% endif %}
+                {% if trabajo.total_descuentos > 0 %}
+                <div class="info-row" style="border-bottom: 1px solid #dee2e6;">
+                    <span class="info-label" style="color: #dc3545;">Descuentos:</span>
+                    <span class="info-value" style="color: #dc3545;">-${{ trabajo.total_descuentos|default:0|floatformat:0|intcomma }}</span>
                 </div>
                 {% endif %}
                 <div class="info-row" style="border-bottom: 2px solid #dee2e6;">
@@ -1101,61 +1107,127 @@
                                    placeholder="0.00"
                                    required>
                         </div>
+                        <div class="col-md-6">
+                            <div class="form-check mt-4">
+                                <input class="form-check-input" 
+                                       type="checkbox" 
+                                       name="es_descuento" 
+                                       id="es_descuento">
+                                <label class="form-check-label" for="es_descuento">
+                                    🏷️ Es Descuento (restará del total en lugar de sumar)
+                                </label>
+                            </div>
+                        </div>
                     </div>
                     <div class="mt-3">
                         <button type="submit" name="agregar_adicional" class="btn btn-success btn-action">
-                            💰 Agregar Concepto Adicional
+                            💰 Agregar Concepto
                         </button>
                     </div>
                 </form>
             </div>
 
-            <!-- Lista de Adicionales -->
+            <!-- Lista de Adicionales y Descuentos -->
             <div class="info-card">
-                <h5>📋 Conceptos Adicionales Registrados</h5>
+                <h5>📋 Conceptos Adicionales y Descuentos</h5>
                 
                 {% if trabajo.adicionales.all %}
-                    <div class="table-responsive">
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Fecha</th>
-                                    <th>Concepto</th>
-                                    <th>Monto</th>
-                                    <th>Registrado por</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for adicional in trabajo.adicionales.all %}
-                                <tr>
-                                    <td>{{ adicional.fecha|date:"d/m/Y H:i" }}</td>
-                                    <td>{{ adicional.concepto }}</td>
-                                    <td>
-                                        <strong class="text-success">${{ adicional.monto|floatformat:0|intcomma }}</strong>
-                                    </td>
-                                    <td>{{ adicional.usuario.username|default:"Sistema" }}</td>
-                                    <td>
-                                        <form method="post" class="d-inline" onsubmit="return confirm('¿Eliminar este concepto adicional?')">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="adicional_id" value="{{ adicional.id }}">
-                                            <button type="submit" name="eliminar_adicional" class="btn btn-outline-danger btn-sm">
-                                                🗑️ Eliminar
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                            <tfoot>
-                                <tr class="table-success">
-                                    <td colspan="2"><strong>TOTAL ADICIONALES:</strong></td>
-                                    <td><strong>${{ trabajo.total_adicionales|floatformat:0|intcomma }}</strong></td>
-                                    <td colspan="2"></td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
+                    <!-- Adicionales -->
+                    {% regroup trabajo.adicionales.all by descuento as adicionales_grouped %}
+                    {% for group in adicionales_grouped %}
+                        {% if not group.grouper %}
+                        <h6 class="mt-3 mb-2">➕ Conceptos Adicionales</h6>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Concepto</th>
+                                        <th>Monto</th>
+                                        <th>Registrado por</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for adicional in group.list %}
+                                    <tr>
+                                        <td>{{ adicional.fecha|date:"d/m/Y H:i" }}</td>
+                                        <td>{{ adicional.concepto }}</td>
+                                        <td>
+                                            <strong class="text-success">${{ adicional.monto|floatformat:0|intcomma }}</strong>
+                                        </td>
+                                        <td>{{ adicional.usuario.username|default:"Sistema" }}</td>
+                                        <td>
+                                            <form method="post" class="d-inline" onsubmit="return confirm('¿Eliminar este concepto adicional?')">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="adicional_id" value="{{ adicional.id }}">
+                                                <button type="submit" name="eliminar_adicional" class="btn btn-outline-danger btn-sm">
+                                                    🗑️ Eliminar
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                    <tr class="table-success">
+                                        <td colspan="2"><strong>TOTAL ADICIONALES:</strong></td>
+                                        <td><strong>${{ trabajo.total_adicionales|floatformat:0|intcomma }}</strong></td>
+                                        <td colspan="2"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    <!-- Descuentos -->
+                    {% for group in adicionales_grouped %}
+                        {% if group.grouper %}
+                        <h6 class="mt-4 mb-2">🏷️ Descuentos Aplicados</h6>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Concepto</th>
+                                        <th>Monto</th>
+                                        <th>Registrado por</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for adicional in group.list %}
+                                    <tr>
+                                        <td>{{ adicional.fecha|date:"d/m/Y H:i" }}</td>
+                                        <td>{{ adicional.concepto }}</td>
+                                        <td>
+                                            <strong class="text-danger">-${{ adicional.monto|floatformat:0|intcomma }}</strong>
+                                        </td>
+                                        <td>{{ adicional.usuario.username|default:"Sistema" }}</td>
+                                        <td>
+                                            <form method="post" class="d-inline" onsubmit="return confirm('¿Eliminar este descuento?')">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="adicional_id" value="{{ adicional.id }}">
+                                                <button type="submit" name="eliminar_adicional" class="btn btn-outline-danger btn-sm">
+                                                    🗑️ Eliminar
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                    <tr class="table-danger">
+                                        <td colspan="2"><strong>TOTAL DESCUENTOS:</strong></td>
+                                        <td><strong>-${{ trabajo.total_descuentos|floatformat:0|intcomma }}</strong></td>
+                                        <td colspan="2"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
                 {% else %}
                     <div class="alert alert-info text-center">
                         <i class="fas fa-info-circle"></i>
@@ -1238,6 +1310,12 @@
                                     <strong>${{ trabajo.total_adicionales|floatformat:0|intcomma }}</strong>
                                 </div>
                                 {% endif %}
+                                {% if trabajo.total_descuentos > 0 %}
+                                <div class="d-flex justify-content-between">
+                                    <small style="color: #dc3545;">Descuentos:</small>
+                                    <strong style="color: #dc3545;">-${{ trabajo.total_descuentos|floatformat:0|intcomma }}</strong>
+                                </div>
+                                {% endif %}
                                 <hr class="my-2">
                                 <div class="d-flex justify-content-between">
                                     <strong>TOTAL:</strong>
@@ -1263,6 +1341,12 @@
                                 <div class="d-flex justify-content-between">
                                     <small>Adicionales:</small>
                                     <strong>${{ trabajo.total_realizado_adicionales|floatformat:0|intcomma }}</strong>
+                                </div>
+                                {% endif %}
+                                {% if trabajo.total_realizado_descuentos > 0 %}
+                                <div class="d-flex justify-content-between">
+                                    <small style="color: #dc3545;">Descuentos:</small>
+                                    <strong style="color: #dc3545;">-${{ trabajo.total_realizado_descuentos|floatformat:0|intcomma }}</strong>
                                 </div>
                                 {% endif %}
                                 <hr class="my-2">
@@ -1584,22 +1668,11 @@ function generarPDF() {
     alert('Función de PDF en desarrollo...');
 }
 
-// Auto-guardar observaciones
+// Auto-guardar observaciones desactivado - el usuario debe usar el botón manual
+// Esto evita que se salga de la edición mientras está escribiendo
 document.addEventListener('DOMContentLoaded', function() {
-    const observacionesTextarea = document.querySelector('textarea[name="observaciones"]');
-    if (observacionesTextarea) {
-        let timeout;
-        observacionesTextarea.addEventListener('input', function() {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => {
-                // Auto-guardar después de 2 segundos de inactividad
-                const form = document.getElementById('observaciones-form');
-                if (form) {
-                    form.submit();
-                }
-            }, 2000);
-        });
-    }
+    // El auto-guardado se ha desactivado para evitar interrupciones
+    // El usuario debe hacer clic en el botón "Guardar Observaciones" para guardar
     
     // 🔹 FILTRO INTELIGENTE: Mostrar información de compatibilidad al seleccionar repuesto
     const repuestoSelect = document.querySelector('select[name="repuesto"]');

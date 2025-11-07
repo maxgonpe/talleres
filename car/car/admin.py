@@ -140,7 +140,7 @@ class TrabajoAdicionalInline(admin.TabularInline):
     model = TrabajoAdicional
     extra = 0
     readonly_fields = ['fecha', 'usuario']
-    fields = ['fecha', 'concepto', 'monto', 'usuario']
+    fields = ['fecha', 'concepto', 'monto', 'descuento', 'usuario']
 
 
 @admin.register(Trabajo)
@@ -161,11 +161,11 @@ class TrabajoAbonoAdmin(admin.ModelAdmin):
 
 @admin.register(TrabajoAdicional)
 class TrabajoAdicionalAdmin(admin.ModelAdmin):
-    list_display = ('id', 'trabajo', 'fecha', 'concepto', 'monto', 'usuario')
-    list_filter = ('fecha',)
+    list_display = ('id', 'trabajo', 'fecha', 'concepto', 'monto', 'descuento', 'usuario')
+    list_filter = ('fecha', 'descuento')
     search_fields = ('trabajo__id', 'concepto')
     readonly_fields = ['fecha']
-    fields = ['trabajo', 'concepto', 'monto', 'fecha', 'usuario']
+    fields = ['trabajo', 'concepto', 'monto', 'descuento', 'fecha', 'usuario']
 
 
 # ======================

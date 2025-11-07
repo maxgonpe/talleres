@@ -6,6 +6,7 @@ from .models import Componente, Cliente, Cliente_Taller, Vehiculo,\
                     CarritoItem, VentaPOS, VentaPOSItem, ConfiguracionPOS,\
                     Cotizacion, CotizacionItem, AdministracionTaller,\
                     Compra, CompraItem, VehiculoVersion
+from .models import normalizar_rut
 
 class MecanicoForm(forms.ModelForm):
     class Meta:
@@ -23,7 +24,7 @@ class ClienteTallerForm(forms.ModelForm):
     """Formulario para el nuevo modelo Cliente_Taller con validación de RUT"""
     class Meta:
         model = Cliente_Taller
-        fields = ['rut', 'nombre', 'telefono', 'email', 'direccion']
+        fields = ['rut', 'nombre', 'telefono', 'email', 'direccion', 'activo']
         widgets = {
             'rut': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -45,7 +46,7 @@ class ClienteTallerForm(forms.ModelForm):
             rut = rut.strip().upper()
             if not self._validar_rut(rut):
                 raise forms.ValidationError("RUT inválido. Formato: 12345678-9")
-        return rut
+        return normalizar_rut(rut)
 
     def _validar_rut(self, rut):
         """Valida RUT chileno"""
@@ -89,6 +90,13 @@ class ClienteTallerRapidoForm(forms.ModelForm):
     class Meta:
         model = Cliente_Taller
         fields = ['rut', 'nombre', 'telefono']
+    def clean_rut(self):
+        rut = self.cleaned_data.get('rut')
+        if rut:
+            rut = rut.strip().upper()
+            if not ClienteTallerForm()._validar_rut(rut):
+                raise forms.ValidationError("RUT inválido. Formato: 12345678-9")
+        return normalizar_rut(rut)
         widgets = {
             'rut': forms.TextInput(attrs={
                 'class': 'form-control',

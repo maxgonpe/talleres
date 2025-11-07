@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Prueba Selectores{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h1 class="mb-4">Prueba de Selectores Cliente ↔ Vehículo</h1>
+
+  <div class="card mb-3">
+    <div class="card-body">
+      <div class="mb-3">
+        <label for="test-cliente" class="form-label">Cliente:</label>
+        <select id="test-cliente" class="form-select">
+          <option value="">-- Selecciona cliente --</option>
+          {% for cliente in clientes %}
+            <option value="{{ cliente.rut }}">{{ cliente.nombre }} ({{ cliente.rut }})</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label for="test-vehiculo" class="form-label">Vehículos del cliente:</label>
+        <select id="test-vehiculo" class="form-select">
+          <option value="">-- Selecciona un cliente primero --</option>
+        </select>
+      </div>
+
+      <div id="test-info" class="alert alert-info" style="display: none;"></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const clienteSelect = document.getElementById('test-cliente');
+  const vehiculoSelect = document.getElementById('test-vehiculo');
+  const infoBox = document.getElementById('test-info');
+
+  function resetVehiculos(message) {
+    vehiculoSelect.innerHTML = '';
+    const option = document.createElement('option');
+    option.value = '';
+    option.textContent = message;
+    vehiculoSelect.appendChild(option);
+  }
+
+  clienteSelect.addEventListener('change', () => {
+    const rut = clienteSelect.value.trim();
+    if (!rut) {
+      resetVehiculos('-- Selecciona un cliente primero --');
+      infoBox.style.display = 'none';
+      return;
+    }
+
+    resetVehiculos('Cargando vehículos...');
+    infoBox.style.display = 'none';
+
+    const encodedRut = encodeURIComponent(rut);
+    fetch(`/car/api/vehiculos/${encodedRut}/`)
+      .then(resp => {
+        if (!resp.ok) {
+          throw new Error(`HTTP ${resp.status}`);
+        }
+        return resp.json();
+      })
+      .then(data => {
+        if (!Array.isArray(data) || data.length === 0) {
+          resetVehiculos('Sin vehículos para este cliente');
+          infoBox.textContent = 'Sin vehículos asociados.';
+          infoBox.className = 'alert alert-warning';
+          infoBox.style.display = 'block';
+          return;
+        }
+
+        vehiculoSelect.innerHTML = '';
+        const defaultOpt = document.createElement('option');
+        defaultOpt.value = '';
+        defaultOpt.textContent = '-- Selecciona un vehículo --';
+        vehiculoSelect.appendChild(defaultOpt);
+
+        data.forEach(v => {
+          const opt = document.createElement('option');
+          opt.value = v.id;
+          const placa = (v.placa || '').trim() || '(sin patente)';
+          const modelo = [v.marca, v.modelo].filter(Boolean).join(' ');
+          const anio = v.anio ? ` (${v.anio})` : '';
+          opt.textContent = `${placa} • ${modelo}${anio}`;
+          vehiculoSelect.appendChild(opt);
+        });
+
+        infoBox.textContent = `Total vehículos encontrados: ${data.length}`;
+        infoBox.className = 'alert alert-success';
+        infoBox.style.display = 'block';
+      })
+      .catch(error => {
+        resetVehiculos('Error al cargar vehículos');
+        infoBox.textContent = `Error: ${error.message}`;
+        infoBox.className = 'alert alert-danger';
+        infoBox.style.display = 'block';
+      });
+  });
+});
+</script>
+{% endblock %}
+
+

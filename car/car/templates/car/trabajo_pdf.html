@@ -485,36 +485,79 @@
 
     <!-- Conceptos Adicionales -->
     {% if trabajo.adicionales.all %}
-    <div class="section">
-        <h3>➕ Conceptos Adicionales</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>Fecha</th>
-                    <th>Concepto</th>
-                    <th>Monto</th>
-                    <th>Registrado por</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for adicional in trabajo.adicionales.all %}
-                    <tr>
-                        <td>{{ adicional.fecha|date:"d/m/Y H:i" }}</td>
-                        <td>{{ adicional.concepto }}</td>
-                        <td>${{ adicional.monto|floatformat:0|intcomma }}</td>
-                        <td>{{ adicional.usuario.username|default:"Sistema" }}</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-            <tfoot>
-                <tr style="background: #e7f9ef;">
-                    <td colspan="2"><strong>TOTAL ADICIONALES:</strong></td>
-                    <td><strong>${{ trabajo.total_adicionales|floatformat:0|intcomma }}</strong></td>
-                    <td></td>
-                </tr>
-            </tfoot>
-        </table>
-    </div>
+        {% regroup trabajo.adicionales.all by descuento as adicionales_grouped %}
+        
+        <!-- Adicionales -->
+        {% for group in adicionales_grouped %}
+            {% if not group.grouper %}
+            <div class="section">
+                <h3>➕ Conceptos Adicionales</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Concepto</th>
+                            <th>Monto</th>
+                            <th>Registrado por</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for adicional in group.list %}
+                            <tr>
+                                <td>{{ adicional.fecha|date:"d/m/Y H:i" }}</td>
+                                <td>{{ adicional.concepto }}</td>
+                                <td>${{ adicional.monto|floatformat:0|intcomma }}</td>
+                                <td>{{ adicional.usuario.username|default:"Sistema" }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr style="background: #e7f9ef;">
+                            <td colspan="2"><strong>TOTAL ADICIONALES:</strong></td>
+                            <td><strong>${{ trabajo.total_adicionales|floatformat:0|intcomma }}</strong></td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            {% endif %}
+        {% endfor %}
+        
+        <!-- Descuentos -->
+        {% for group in adicionales_grouped %}
+            {% if group.grouper %}
+            <div class="section">
+                <h3>🏷️ Descuentos Aplicados</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Concepto</th>
+                            <th>Monto</th>
+                            <th>Registrado por</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for adicional in group.list %}
+                            <tr>
+                                <td>{{ adicional.fecha|date:"d/m/Y H:i" }}</td>
+                                <td>{{ adicional.concepto }}</td>
+                                <td style="color: #dc3545;">-${{ adicional.monto|floatformat:0|intcomma }}</td>
+                                <td>{{ adicional.usuario.username|default:"Sistema" }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr style="background: #f8d7da;">
+                            <td colspan="2"><strong>TOTAL DESCUENTOS:</strong></td>
+                            <td style="color: #dc3545;"><strong>-${{ trabajo.total_descuentos|floatformat:0|intcomma }}</strong></td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            {% endif %}
+        {% endfor %}
     {% endif %}
 
     <!-- Abonos -->

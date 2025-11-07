@@ -62,6 +62,40 @@
         box-shadow: 0 0 0 0.2rem var(--primary-200);
     }
     
+    /* Estilos para las opciones del select (dropdown) */
+    .form-select option {
+        background: #ffffff !important;
+        color: #001f3f !important;
+        padding: 0.5rem;
+        font-weight: 500;
+    }
+    
+    /* Para navegadores que soportan estilos de opciones */
+    .form-select option:hover,
+    .form-select option:checked,
+    .form-select option:focus {
+        background: #e7f3ff !important;
+        color: #001f3f !important;
+    }
+    
+    /* Asegurar que el texto del select también sea visible */
+    .form-select {
+        color: var(--fg) !important;
+    }
+    
+    /* Estilos adicionales para modo oscuro */
+    .theme-oscuro .form-select option {
+        background: #ffffff !important;
+        color: #001f3f !important;
+    }
+    
+    .theme-oscuro .form-select option:hover,
+    .theme-oscuro .form-select option:checked,
+    .theme-oscuro .form-select option:focus {
+        background: #e7f3ff !important;
+        color: #001f3f !important;
+    }
+    
     .btn-group-custom {
         display: flex;
         gap: 0.5rem;

@@ -75,6 +75,7 @@ import openpyxl
 import re
 import pathlib
 import os
+from urllib.parse import unquote
 
 
 def login_view(request):
@@ -2011,7 +2012,8 @@ def trabajo_detalle(request, pk):
             trabajo.observaciones = request.POST.get("observaciones", "")
             trabajo.save()
             messages.success(request, "Observaciones guardadas.")
-            return redirect("trabajo_detalle", pk=trabajo.pk)
+            # Mantener la pestaña activa después de guardar
+            return redirect_with_tab("info")
 
         # 🔹 Guardar kilometraje
         elif "guardar_kilometraje" in request.POST:
@@ -2736,16 +2738,17 @@ def trabajo_detalle(request, pk):
         # ========================
         elif "agregar_adicional" in request.POST:
             from .models import TrabajoAdicional
-            from decimal import Decimal
+            from decimal import Decimal as DecimalClass
             
             concepto = request.POST.get("concepto_adicional", "").strip()
             monto = request.POST.get("monto_adicional")
+            descuento = request.POST.get("es_descuento") == "on"  # Checkbox retorna "on" si está marcado
             
             try:
                 if not concepto:
                     messages.error(request, "❌ El concepto no puede estar vacío.")
                 else:
-                    monto_decimal = Decimal(monto)
+                    monto_decimal = DecimalClass(monto)
                     if monto_decimal <= 0:
                         messages.error(request, "❌ El monto del concepto adicional debe ser mayor a cero.")
                     else:
@@ -2753,10 +2756,12 @@ def trabajo_detalle(request, pk):
                             trabajo=trabajo,
                             concepto=concepto,
                             monto=monto_decimal,
+                            descuento=descuento,
                             usuario=request.user
                         )
                         
-                        messages.success(request, f"✅ Concepto adicional de ${monto_decimal:,.0f} registrado exitosamente.")
+                        tipo = "descuento" if descuento else "concepto adicional"
+                        messages.success(request, f"✅ {tipo.capitalize()} de ${monto_decimal:,.0f} registrado exitosamente.")
             except (ValueError, TypeError):
                 messages.error(request, "❌ El monto ingresado no es válido.")
             except Exception as e:
@@ -3727,6 +3732,48 @@ def cliente_taller_lookup(request):
         })
     
     return JsonResponse({'results': results})
+
+
+@login_required
+def vehiculos_por_cliente(request, cliente_rut):
+    """Devuelve los vehículos asociados a un cliente del taller."""
+    raw_rut = unquote(cliente_rut).strip()
+
+    if not raw_rut:
+        return JsonResponse({'error': 'Parámetro cliente_rut vacío'}, status=400)
+
+    clientes_qs = Cliente_Taller.objects.all()
+
+    try:
+        cliente = clientes_qs.get(rut=raw_rut)
+    except Cliente_Taller.DoesNotExist:
+        return JsonResponse({'error': 'Cliente no encontrado'}, status=404)
+
+    vehiculos = (
+        Vehiculo.objects
+        .filter(cliente=cliente)
+        .order_by('placa')
+    )
+
+    data = [
+        {
+            'id': vehiculo.pk,
+            'placa': (vehiculo.placa or '').strip(),
+            'marca': (vehiculo.marca or '').strip(),
+            'modelo': (vehiculo.modelo or '').strip(),
+            'anio': vehiculo.anio or '',
+            'descripcion_motor': (vehiculo.descripcion_motor or '').strip(),
+        }
+        for vehiculo in vehiculos
+    ]
+
+    return JsonResponse(data, safe=False)
+
+
+@login_required
+def selector_test_view(request):
+    clientes = Cliente_Taller.objects.filter(activo=True).order_by('nombre')
+    return render(request, 'car/selector_test.html', {'clientes': clientes})
 
 
 # ========================

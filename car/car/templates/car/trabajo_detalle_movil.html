@@ -891,47 +891,101 @@
                                placeholder="0.00"
                                required>
                     </div>
+                    <div class="form-group-movil">
+                        <div class="form-check">
+                            <input class="form-check-input" 
+                                   type="checkbox" 
+                                   name="es_descuento" 
+                                   id="es_descuento_movil">
+                            <label class="form-check-label" for="es_descuento_movil" style="font-size: 0.9rem;">
+                                🏷️ Es Descuento (restará del total)
+                            </label>
+                        </div>
+                    </div>
                     <button type="submit" name="agregar_adicional" class="btn-action-movil btn btn-success">
-                        💰 Agregar Concepto Adicional
+                        💰 Agregar Concepto
                     </button>
                 </form>
             </div>
 
-            <!-- Lista de Adicionales -->
+            <!-- Lista de Adicionales y Descuentos -->
             <div>
-                <h6 style="font-weight: 600; margin-bottom: 0.75rem;">📋 Conceptos Adicionales Registrados</h6>
+                <h6 style="font-weight: 600; margin-bottom: 0.75rem;">📋 Conceptos Adicionales y Descuentos</h6>
                 
                 {% if trabajo.adicionales.all %}
-                    {% for adicional in trabajo.adicionales.all %}
-                        <div class="item-card-movil" style="margin-bottom: 0.75rem;">
-                            <div class="item-header-movil">
-                                <div class="item-title-movil">
-                                    <strong>{{ adicional.concepto }}</strong>
+                    {% regroup trabajo.adicionales.all by descuento as adicionales_grouped %}
+                    
+                    <!-- Adicionales -->
+                    {% for group in adicionales_grouped %}
+                        {% if not group.grouper %}
+                        <h6 style="font-weight: 600; margin-top: 1rem; margin-bottom: 0.5rem; color: #198754;">➕ Conceptos Adicionales</h6>
+                        {% for adicional in group.list %}
+                            <div class="item-card-movil" style="margin-bottom: 0.75rem;">
+                                <div class="item-header-movil">
+                                    <div class="item-title-movil">
+                                        <strong>{{ adicional.concepto }}</strong>
+                                    </div>
+                                    <form method="post" class="d-inline" onsubmit="return confirm('¿Eliminar este concepto adicional?')">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="adicional_id" value="{{ adicional.id }}">
+                                        <button type="submit" name="eliminar_adicional" class="btn btn-outline-danger btn-sm" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                                            🗑️
+                                        </button>
+                                    </form>
                                 </div>
-                                <form method="post" class="d-inline" onsubmit="return confirm('¿Eliminar este concepto adicional?')">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="adicional_id" value="{{ adicional.id }}">
-                                    <button type="submit" name="eliminar_adicional" class="btn btn-outline-danger btn-sm" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
-                                        🗑️
-                                    </button>
-                                </form>
+                                <div style="margin-top: 0.5rem;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <small style="color: var(--muted);">Fecha: {{ adicional.fecha|date:"d/m/Y H:i" }}</small>
+                                        <strong style="color: #198754; font-size: 1.1rem;">${{ adicional.monto|floatformat:0|intcomma }}</strong>
+                                    </div>
+                                    <small style="color: var(--muted);">Registrado por: {{ adicional.usuario.username|default:"Sistema" }}</small>
+                                </div>
                             </div>
-                            <div style="margin-top: 0.5rem;">
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <small style="color: var(--muted);">Fecha: {{ adicional.fecha|date:"d/m/Y H:i" }}</small>
-                                    <strong style="color: #198754; font-size: 1.1rem;">${{ adicional.monto|floatformat:0|intcomma }}</strong>
-                                </div>
-                                <small style="color: var(--muted);">Registrado por: {{ adicional.usuario.username|default:"Sistema" }}</small>
+                        {% endfor %}
+                        <div class="info-row-movil" style="background: #d1e7dd; padding: 0.75rem; border-radius: 0.5rem; margin-top: 0.5rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <strong>TOTAL ADICIONALES:</strong>
+                                <strong style="color: #198754; font-size: 1.1rem;">${{ trabajo.total_adicionales|floatformat:0|intcomma }}</strong>
                             </div>
                         </div>
+                        {% endif %}
                     {% endfor %}
                     
-                    <div class="info-row-movil" style="background: var(--success-100); padding: 0.75rem; border-radius: 0.5rem; margin-top: 1rem;">
-                        <div class="info-label-movil" style="font-weight: 700;">TOTAL ADICIONALES:</div>
-                        <div class="info-value-movil" style="font-size: 1.2rem; font-weight: 700; color: #198754;">
-                            ${{ trabajo.total_adicionales|floatformat:0|intcomma }}
+                    <!-- Descuentos -->
+                    {% for group in adicionales_grouped %}
+                        {% if group.grouper %}
+                        <h6 style="font-weight: 600; margin-top: 1rem; margin-bottom: 0.5rem; color: #dc3545;">🏷️ Descuentos Aplicados</h6>
+                        {% for adicional in group.list %}
+                            <div class="item-card-movil" style="margin-bottom: 0.75rem;">
+                                <div class="item-header-movil">
+                                    <div class="item-title-movil">
+                                        <strong>{{ adicional.concepto }}</strong>
+                                    </div>
+                                    <form method="post" class="d-inline" onsubmit="return confirm('¿Eliminar este descuento?')">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="adicional_id" value="{{ adicional.id }}">
+                                        <button type="submit" name="eliminar_adicional" class="btn btn-outline-danger btn-sm" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                                            🗑️
+                                        </button>
+                                    </form>
+                                </div>
+                                <div style="margin-top: 0.5rem;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <small style="color: var(--muted);">Fecha: {{ adicional.fecha|date:"d/m/Y H:i" }}</small>
+                                        <strong style="color: #dc3545; font-size: 1.1rem;">-${{ adicional.monto|floatformat:0|intcomma }}</strong>
+                                    </div>
+                                    <small style="color: var(--muted);">Registrado por: {{ adicional.usuario.username|default:"Sistema" }}</small>
+                                </div>
+                            </div>
+                        {% endfor %}
+                        <div class="info-row-movil" style="background: #f8d7da; padding: 0.75rem; border-radius: 0.5rem; margin-top: 0.5rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <strong>TOTAL DESCUENTOS:</strong>
+                                <strong style="color: #dc3545; font-size: 1.1rem;">-${{ trabajo.total_descuentos|floatformat:0|intcomma }}</strong>
+                            </div>
                         </div>
-                    </div>
+                        {% endif %}
+                    {% endfor %}
                 {% else %}
                     <div style="padding: 2rem; text-align: center; color: var(--muted);">
                         <p>No hay conceptos adicionales registrados para este trabajo</p>

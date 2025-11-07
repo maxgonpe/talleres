@@ -89,6 +89,17 @@ class Cliente(models.Model):
         return self.nombre
 
 
+def normalizar_rut(rut: str) -> str:
+    if not rut:
+        return ""
+    return (
+        rut.replace(".", "")
+           .replace("-", "")
+           .replace(" ", "")
+           .upper()
+    )
+
+
 class Cliente_Taller(models.Model):
     """Nuevo modelo de cliente con RUT como clave primaria para evitar duplicados"""
     rut = models.CharField(max_length=12, primary_key=True, verbose_name="RUT")
@@ -107,6 +118,10 @@ class Cliente_Taller(models.Model):
     def __str__(self):
         return f"{self.nombre} ({self.rut})"
 
+    def save(self, *args, **kwargs):
+        self.rut = normalizar_rut(self.rut)
+        super().save(*args, **kwargs)
+
 
 class Vehiculo(models.Model):
     cliente = models.ForeignKey(Cliente_Taller, on_delete=models.CASCADE)
@@ -114,7 +129,7 @@ class Vehiculo(models.Model):
     modelo = models.CharField(max_length=50)
     anio = models.PositiveIntegerField()
     vin = models.CharField(max_length=50, blank=True, null=True)
-    placa = models.CharField(max_length=10)
+    placa = models.CharField(max_length=10, unique=True)
 
     # Motor predefinido (opcional pero útil para IA)
     descripcion_motor = models.CharField(max_length=100, blank=True, null=True)
@@ -130,6 +145,14 @@ class Vehiculo(models.Model):
     
     def __str__(self):
         return f"{self.placa} • {self.marca} {self.modelo} ({self.anio})"
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['cliente', 'placa'],
+                name='unique_vehiculo_cliente_placa'
+            ),
+        ]
 
 
 class Componente(models.Model):
@@ -800,13 +823,18 @@ class Trabajo(models.Model):
 
     @property
     def total_adicionales(self):
-        """Total de conceptos adicionales agregados al trabajo"""
-        return sum(ad.monto for ad in self.adicionales.all())
+        """Total de conceptos adicionales agregados al trabajo (solo los que NO son descuentos)"""
+        return sum(ad.monto for ad in self.adicionales.filter(descuento=False))
+
+    @property
+    def total_descuentos(self):
+        """Total de descuentos aplicados al trabajo"""
+        return sum(ad.monto for ad in self.adicionales.filter(descuento=True))
 
     @property
     def total_general(self):
-        """Total presupuestado completo (TODO el trabajo)"""
-        return self.total_mano_obra + self.total_repuestos + self.total_adicionales
+        """Total presupuestado completo (TODO el trabajo) - descuentos"""
+        return self.total_mano_obra + self.total_repuestos + self.total_adicionales - self.total_descuentos
     
     # Alias para mayor claridad
     @property
@@ -835,13 +863,18 @@ class Trabajo(models.Model):
     
     @property
     def total_realizado_adicionales(self):
-        """Total de conceptos adicionales (siempre se consideran realizados)"""
-        return sum(ad.monto for ad in self.adicionales.all())
+        """Total de conceptos adicionales realizados (solo los que NO son descuentos)"""
+        return sum(ad.monto for ad in self.adicionales.filter(descuento=False))
+    
+    @property
+    def total_realizado_descuentos(self):
+        """Total de descuentos aplicados (siempre se consideran realizados)"""
+        return sum(ad.monto for ad in self.adicionales.filter(descuento=True))
     
     @property
     def total_realizado(self):
-        """Total de trabajo REALIZADO hasta el momento"""
-        return self.total_realizado_mano_obra + self.total_realizado_repuestos + self.total_realizado_adicionales
+        """Total de trabajo REALIZADO hasta el momento - descuentos"""
+        return self.total_realizado_mano_obra + self.total_realizado_repuestos + self.total_realizado_adicionales - self.total_realizado_descuentos
 
     # ========================
     # ABONOS Y SALDOS
@@ -1037,11 +1070,13 @@ class TrabajoAdicional(models.Model):
     """
     Modelo para registrar conceptos adicionales al trabajo
     (servicios extra, materiales adicionales, etc.)
-    que se suman al total del trabajo
+    que se suman al total del trabajo.
+    Si descuento=True, el monto se resta en lugar de sumar.
     """
     trabajo = models.ForeignKey(Trabajo, on_delete=models.CASCADE, related_name="adicionales")
     concepto = models.TextField(verbose_name="Concepto", help_text="Descripción del concepto adicional")
     monto = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="Monto")
+    descuento = models.BooleanField(default=False, verbose_name="Es Descuento", help_text="Si está marcado, este monto se restará del total en lugar de sumarlo")
     fecha = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de registro")
     usuario = models.ForeignKey(
         settings.AUTH_USER_MODEL, 
@@ -1057,7 +1092,8 @@ class TrabajoAdicional(models.Model):
         verbose_name_plural = "Conceptos Adicionales"
     
     def __str__(self):
-        return f"Adicional: {self.concepto[:50]} - ${self.monto} - {self.fecha.strftime('%d/%m/%Y')}"
+        tipo = "Descuento" if self.descuento else "Adicional"
+        return f"{tipo}: {self.concepto[:50]} - ${self.monto} - {self.fecha.strftime('%d/%m/%Y')}"
 
 
 # ventas/models.py  (puedes ponerlo en la app extintores o crear app nueva "ventas")
