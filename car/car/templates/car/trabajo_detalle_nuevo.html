@@ -2152,20 +2152,36 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const response = await fetch(window.location.href, {
                 method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
                 body: formData
             });
-            
+
             console.log('📡 Respuesta del servidor:', response);
-            
-            if (response.ok || response.status === 302) {
-                console.log('✅ Acciones guardadas exitosamente');
-                alert('✅ Acciones guardadas exitosamente');
-                
-                // Recargar la página manteniendo la pestaña de acciones activa
-                window.location.href = window.location.pathname + '?tab=acciones';
-            } else {
+
+            if (!response.ok) {
                 console.error('❌ Error al guardar acciones:', response.status);
                 alert('❌ Error al guardar las acciones');
+                return;
+            }
+
+            let data = {};
+            try {
+                data = await response.json();
+                console.log('📄 JSON recibido:', data);
+            } catch (err) {
+                console.warn('⚠️ No se pudo parsear JSON, recargando página por fallback.', err);
+                window.location.href = window.location.pathname + '?tab=acciones';
+                return;
+            }
+
+            if (data.ok) {
+                alert(`✅ Acciones guardadas (${data.acciones_creadas} nuevas${data.detalle || ''})`);
+                window.location.href = window.location.pathname + '?tab=acciones';
+            } else {
+                console.error('❌ Error al guardar acciones (JSON):', data);
+                alert(data.error || '❌ Error al guardar las acciones');
             }
             
         } catch (error) {

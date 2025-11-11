@@ -354,8 +354,19 @@ def ingreso_view(request):
     except FileNotFoundError:
         pass
 
-    # Determinar template según dispositivo (móvil o PC)
-    template_name = 'car/ingreso-movil.html' if is_mobile_device(request) else 'car/ingreso-pc.html'
+    # Determinar template según dispositivo y ruta solicitada
+    is_mobile = is_mobile_device(request)
+    resolver_name = getattr(getattr(request, "resolver_match", None), "url_name", None)
+    force_fusionado = (
+        is_mobile or
+        request.GET.get('layout') == 'fusionado' or
+        resolver_name == 'ingreso_rapido'
+    )
+
+    if force_fusionado:
+        template_name = 'car/ingreso_fusionado.html'
+    else:
+        template_name = 'car/ingreso-pc.html'
 
     return render(request, template_name, {
         'cliente_form': cliente_form,
@@ -2091,6 +2102,7 @@ def trabajo_detalle(request, pk):
         # 🔹 Agregar múltiples acciones (nuevo método)
         elif "agregar_acciones_multiples" in request.POST:
             import json
+            is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
             acciones_json = request.POST.get("acciones_json", "")
             
             print(f"DEBUG: acciones_json recibido: {acciones_json}")
@@ -2100,6 +2112,7 @@ def trabajo_detalle(request, pk):
                     acciones_data = json.loads(acciones_json)
                     print(f"DEBUG: acciones_data parseado: {acciones_data}")
                     acciones_creadas = 0
+                    detalles = []
                     
                     for accion_data in acciones_data:
                         try:
@@ -2132,44 +2145,67 @@ def trabajo_detalle(request, pk):
                                 except ComponenteAccion.DoesNotExist:
                                     print(f"DEBUG: ⚠️ No se encontró ComponenteAccion para obtener precio")
                             
-                            # Verificar si ya existe esta combinación
-                            if not TrabajoAccion.objects.filter(
+                            TrabajoAccion.objects.create(
                                 trabajo=trabajo,
                                 componente=componente,
-                                accion=accion
-                            ).exists():
-                                TrabajoAccion.objects.create(
-                                    trabajo=trabajo,
-                                    componente=componente,
-                                    accion=accion,
-                                    precio_mano_obra=precio_mano_obra,
-                                    cantidad=cantidad
-                                )
-                                acciones_creadas += 1
-                                print(f"DEBUG: ✅ Acción creada exitosamente con precio: {precio_mano_obra}")
-                            else:
-                                print(f"DEBUG: ⚠️ Acción ya existe, saltando")
+                                accion=accion,
+                                precio_mano_obra=precio_mano_obra,
+                                cantidad=cantidad
+                            )
+                            acciones_creadas += 1
+                            detalles.append(f"{componente.nombre} → {accion.nombre} (x{cantidad})")
+                            print(f"DEBUG: ✅ Acción creada exitosamente con precio: {precio_mano_obra}")
                                 
                         except (ValueError, Componente.DoesNotExist, Accion.DoesNotExist) as e:
                             print(f"DEBUG: Error en acción individual: {str(e)}")
                             continue
                     
                     if acciones_creadas > 0:
-                        messages.success(request, f"{acciones_creadas} acción(es) agregada(s) al trabajo.")
+                        if not is_ajax:
+                            messages.success(request, f"{acciones_creadas} acción(es) agregada(s) al trabajo.")
                     else:
-                        messages.info(request, "No se agregaron acciones nuevas (posiblemente ya existían).")
+                        if not is_ajax:
+                            messages.warning(request, "No se agregaron acciones. Verifica la selección.")
                         
                 except json.JSONDecodeError as e:
                     print(f"DEBUG: Error JSON: {str(e)}")
+                    if is_ajax:
+                        return JsonResponse({
+                            "ok": False,
+                            "error": f"Error al procesar las acciones: {str(e)}"
+                        }, status=400)
                     messages.error(request, f"Error al procesar las acciones: {str(e)}")
                 except Exception as e:
                     print(f"DEBUG: Error general: {str(e)}")
+                    if is_ajax:
+                        return JsonResponse({
+                            "ok": False,
+                            "error": f"Error al agregar las acciones: {str(e)}"
+                        }, status=500)
                     messages.error(request, f"Error al agregar las acciones: {str(e)}")
+                else:
+                    if is_ajax:
+                        detalle = ""
+                        if detalles:
+                            detalle = " · " + " / ".join(detalles)
+                        return JsonResponse({
+                            "ok": True,
+                            "acciones_creadas": acciones_creadas,
+                            "detalle": detalle
+                        })
             else:
                 print("DEBUG: No se recibió acciones_json")
+                if is_ajax:
+                    return JsonResponse({
+                        "ok": False,
+                        "error": "No se recibieron acciones para agregar."
+                    }, status=400)
                 messages.error(request, "No se recibieron acciones para agregar.")
             
-            return redirect_with_tab("acciones")
+            if not is_ajax:
+                return redirect_with_tab("acciones")
+            # Si es AJAX ya se devolvió una respuesta arriba
+            return JsonResponse({"ok": False, "error": "Respuesta inválida"}, status=400)
 
         # 🔹 Toggle acción completada / pendiente
         elif "toggle_accion" in request.POST:
@@ -2199,14 +2235,13 @@ def trabajo_detalle(request, pk):
 
         # 🔹 Editar precio de acción
         elif "editar_precio_accion" in request.POST:
-            from decimal import Decimal as DecimalClass
             accion_id = request.POST.get("accion_id")
             precio_str = request.POST.get("precio_accion", "0")
             try:
                 accion = TrabajoAccion.objects.get(id=accion_id, trabajo=trabajo)
-                precio_decimal = DecimalClass(precio_str) if precio_str else DecimalClass('0')
+                precio_decimal = Decimal(precio_str) if precio_str else Decimal('0')
                 if precio_decimal < 0:
-                    precio_decimal = DecimalClass('0')
+                    precio_decimal = Decimal('0')
                 accion.precio_mano_obra = precio_decimal
                 accion.save()
                 messages.success(request, f"Precio actualizado a ${precio_decimal:,.0f}.")
@@ -2687,7 +2722,6 @@ def trabajo_detalle(request, pk):
         # ========================
         elif "agregar_abono" in request.POST:
             from .models import TrabajoAbono
-            from decimal import Decimal
             
             monto = request.POST.get("monto_abono")
             metodo_pago = request.POST.get("metodo_pago", "efectivo")
@@ -2738,7 +2772,6 @@ def trabajo_detalle(request, pk):
         # ========================
         elif "agregar_adicional" in request.POST:
             from .models import TrabajoAdicional
-            from decimal import Decimal as DecimalClass
             
             concepto = request.POST.get("concepto_adicional", "").strip()
             monto = request.POST.get("monto_adicional")
@@ -2748,7 +2781,7 @@ def trabajo_detalle(request, pk):
                 if not concepto:
                     messages.error(request, "❌ El concepto no puede estar vacío.")
                 else:
-                    monto_decimal = DecimalClass(monto)
+                    monto_decimal = Decimal(monto)
                     if monto_decimal <= 0:
                         messages.error(request, "❌ El monto del concepto adicional debe ser mayor a cero.")
                     else:
