@@ -513,6 +513,18 @@
           💰 Total: ${{ trabajo.total_general|default:0|floatformat:0|intcomma }}
         </div>
 
+        <!-- Saldo Pendiente -->
+        <div class="mt-2 p-2 rounded" style="background: {% if trabajo.saldo_pendiente > 0 %}#fff3cd{% else %}#d1e7dd{% endif %}; border: 2px solid {% if trabajo.saldo_pendiente > 0 %}#ffc107{% else %}#198754{% endif %};">
+          <div class="text-center">
+            <small class="d-block" style="color: {% if trabajo.saldo_pendiente > 0 %}#856404{% else %}#0f5132{% endif %}; font-weight: 600;">
+              💵 Saldo Pendiente
+            </small>
+            <strong class="d-block" style="color: {% if trabajo.saldo_pendiente > 0 %}#dc3545{% else %}#198754{% endif %}; font-size: 1.2rem;">
+              ${{ trabajo.saldo_pendiente|default:0|floatformat:0|intcomma }}
+            </strong>
+          </div>
+        </div>
+
         <!-- Botones -->
         <div class="mt-3">
           <a href="{% url 'trabajo_detalle' trabajo.pk %}" class="btn btn-secondary btn-sm">Editar</a>

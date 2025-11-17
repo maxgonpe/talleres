@@ -13,8 +13,10 @@ function escapeHtml(str) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  const root = document.getElementById("ingreso-fusionado-root");
-  if (!root) return; // Solo ejecutar en el nuevo template
+  // Buscar el root en cualquiera de los dos templates (fusionado o voz)
+  const root = document.getElementById("ingreso-fusionado-root") || 
+                document.getElementById("ingreso-voz-root");
+  if (!root) return; // Solo ejecutar en los templates fusionados
 
   console.log("🚀 Flujo de ingreso fusionado cargado");
 
@@ -490,7 +492,14 @@ document.addEventListener("DOMContentLoaded", () => {
       placeholder.style.display = "none";
     }
 
-    acciones.forEach(accion => {
+    // Ordenar acciones por nombre ascendente (A-Z)
+    const accionesOrdenadas = [...acciones].sort((a, b) => {
+      const nombreA = (a.accion_nombre || "").toLowerCase();
+      const nombreB = (b.accion_nombre || "").toLowerCase();
+      return nombreA.localeCompare(nombreB, 'es', { sensitivity: 'base' });
+    });
+
+    accionesOrdenadas.forEach(accion => {
       const key = `${componenteId}-${accion.accion_id}`;
       const state = ensureAccionState({
         key,

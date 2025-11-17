@@ -32,6 +32,7 @@ urlpatterns = [
     # === Ingreso / Diagnóstico ===
     path('ingreso/', views.ingreso_view, name='ingreso'),
     path('ingreso/rapido/', views.ingreso_view, name='ingreso_rapido'),
+    path('ingreso/voz/', views.ingreso_view, name='ingreso_voz'),
     path('ingreso/exito/', views.ingreso_exitoso_view, name='ingreso_exitoso'),
     path('ingreso/editar/<int:pk>/', views.editar_diagnostico, name='editar_diagnostico'),
     path('diagnosticos/', views.lista_diagnosticos, name='lista_diagnosticos'),
@@ -100,6 +101,7 @@ urlpatterns = [
     path("vehiculos/<int:pk>/eliminar/", VehiculoDeleteView.as_view(), name="vehiculo_delete"),
     # Trabajos
     path("trabajos/", views.lista_trabajos, name="lista_trabajos"),
+    path("trabajos/historial/", views.historial_trabajos, name="historial_trabajos"),
     path("trabajos/<int:pk>/", views.trabajo_detalle, name="trabajo_detalle"),
     path("trabajos/<int:pk>/pdf/", views.trabajo_pdf, name="trabajo_pdf"),
     path("trabajos/<int:pk>/eliminar/", views.TrabajoDeleteView.as_view(), name="trabajo_delete"),

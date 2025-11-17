@@ -87,6 +87,7 @@
               <li><a class="dropdown-item" href="{% url 'pos_principal' %}">🛒 Punto de Venta</a></li>
               <li><a class="dropdown-item" href="{% url 'compra_dashboard' %}">📥 Compras</a></li>
               <li><a class="dropdown-item" href="{% url 'estadisticas_trabajos' %}">📊 Estadísticas</a></li>
+              <li><a class="dropdown-item" href="{% url 'historial_trabajos' %}">📜 Historial de Trabajos</a></li>
               <li><hr class="dropdown-divider"></li>
               <li><a class="dropdown-item" href="{% url 'repuesto_list' %}">📦 Repuestos</a></li>
               <li><a class="dropdown-item" href="{% url 'cliente_taller_list' %}">👤 Clientes del Taller</a></li>
@@ -178,7 +179,7 @@
       // Aplicar nuevo tema
       document.body.classList.add(`theme-${theme}`);
       document.documentElement.classList.add(`theme-${theme}`);
-      
+
       // Guardar en localStorage
       localStorage.setItem("theme", theme);
       

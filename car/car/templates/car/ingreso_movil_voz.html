@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static crispy_forms_tags humanize %}
 
-{% block title %}Ingreso de Diagnóstico (Flujo Fusionado){% endblock %}
+{% block title %}Ingreso de Diagnóstico por Voz{% endblock %}
 
 {% block extra_css %}
   <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
@@ -18,65 +18,20 @@
     .wizard-pane { display: none; }
     .wizard-pane.active { display: block; }
 
-    /* Estilos para el acordeón de componentes - Bordes blancos en tema oscuro */
-    body.theme-piedra .accordion-item,
-    body.theme-dark .accordion-item,
-    body.theme-forest .accordion-item { border: 2px solid #ffffff; border-radius: 12px; }
-    body.theme-piedra .accordion-button,
-    body.theme-dark .accordion-button,
-    body.theme-forest .accordion-button { border-bottom: 2px solid #ffffff !important; }
-    body.theme-piedra .accordion-button:not(.collapsed),
-    body.theme-dark .accordion-button:not(.collapsed),
-    body.theme-forest .accordion-button:not(.collapsed) { border-bottom: 2px solid #ffffff !important; }
-
     .componente-item { border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1rem; background: var(--bg-card); transition: border .3s, box-shadow .3s; }
     .componente-item.active { border-color: var(--primary-500); box-shadow: 0 8px 24px rgba(13, 110, 253, .12); }
-    body.theme-piedra .componente-item,
-    body.theme-dark .componente-item,
-    body.theme-forest .componente-item { border: 2px solid #ffffff; }
-    /* Primer nivel: Card activa - Azul marino */
-    body.theme-piedra .componente-item.active,
-    body.theme-dark .componente-item.active,
-    body.theme-forest .componente-item.active { 
-      border: 2px solid #ffffff; 
-      background: #001f3f !important; /* Azul marino */
-    }
-    /* Segundo nivel: Elementos dentro de la card activa - Azul eléctrico */
-    body.theme-piedra .componente-item.active .componente-header,
-    body.theme-piedra .componente-item.active .acciones-panel,
-    body.theme-dark .componente-item.active .componente-header,
-    body.theme-dark .componente-item.active .acciones-panel,
-    body.theme-forest .componente-item.active .componente-header,
-    body.theme-forest .componente-item.active .acciones-panel { 
-      background: #0066ff !important; /* Azul eléctrico */
-    }
     .componente-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; cursor: pointer; }
     .componente-header strong { font-size: 1.05rem; color: var(--text-primary); }
     .acciones-panel { margin-top: 1rem; border-top: 1px dashed var(--border-color); padding-top: 1rem; display: none; }
     .acciones-panel.show { display: block; }
     .accion-item { border: 1px solid var(--border-color); border-radius: 10px; padding: .85rem; margin-bottom: .75rem; background: var(--bg-secondary); }
     .accion-item.seleccionada { border-color: var(--primary-500); background: rgba(13, 110, 253, 0.08); }
-    body.theme-piedra .accion-item,
-    body.theme-dark .accion-item,
-    body.theme-forest .accion-item { border: 2px solid #ffffff; }
-    body.theme-piedra .accion-item.seleccionada,
-    body.theme-dark .accion-item.seleccionada,
-    body.theme-forest .accion-item.seleccionada { border: 2px solid #ffffff; }
     .accion-item .accion-head { display: flex; justify-content: space-between; align-items: center; gap: .75rem; }
     .accion-item .accion-head .badge { font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; }
     .accion-item .accion-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: .75rem; margin-top: .75rem; }
     .accion-item .accion-subtotal { text-align: right; font-weight: 700; color: var(--success-600); }
-    /* Precio en rojo para modo oscuro */
-    body.theme-piedra .accion-item .accion-subtotal,
-    body.theme-dark .accion-item .accion-subtotal,
-    body.theme-forest .accion-item .accion-subtotal { color: #ff0000 !important; }
-    /* Capitalizar primera letra de componentes y acciones */
-    .accordion-button,
-    .componente-header strong,
-    .accion-item .form-check-label { text-transform: capitalize; }
 
     .resumen-card { border: 1px solid var(--border-color); border-radius: 12px; padding: 1.25rem; background: var(--bg-card); box-shadow: var(--shadow-sm); }
-    body.theme-oscuro .resumen-card { border: 2px solid var(--border-color); }
     .resumen-card h5 { font-size: 1.05rem; font-weight: 700; color: var(--text-secondary); margin-bottom: .75rem; }
     .resumen-card ul { list-style: none; padding: 0; margin: 0; }
     .resumen-card ul li { padding: .35rem 0; border-bottom: 1px dashed var(--border-color); font-size: .95rem; }
@@ -85,23 +40,188 @@
     .total-mano-obra { font-size: 1.4rem; font-weight: 800; color: var(--primary-700); }
     .wizard-navigation { position: sticky; bottom: 0; background: var(--bg-card); padding: 1rem 0; margin-top: 1.5rem; border-top: 1px solid var(--border-color); box-shadow: 0 -4px 24px rgba(0,0,0,.05); z-index: 50; }
 
+    /* ============================================
+       ESTILOS PARA CONTROL POR VOZ
+       ============================================ */
+    .voice-control-container {
+      position: fixed;
+      bottom: 80px;
+      right: 20px;
+      z-index: 1000;
+    }
+
+    .voice-btn {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      border: none;
+      background: var(--primary-600);
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .voice-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+    }
+
+    .voice-btn.listening {
+      background: #dc3545;
+      animation: pulse 1.5s infinite;
+    }
+
+    .voice-btn.processing {
+      background: #ffc107;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .voice-status-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      font-weight: 600;
+      z-index: 999;
+      transform: translateY(-100%);
+      transition: transform 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .voice-status-banner.show {
+      transform: translateY(0);
+    }
+
+    .voice-status-banner.listening {
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    }
+
+    .voice-status-banner.processing {
+      background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+    }
+
+    .voice-feedback-toast {
+      position: fixed;
+      bottom: 160px;
+      right: 20px;
+      background: var(--bg-card);
+      border: 2px solid var(--primary-500);
+      border-radius: 12px;
+      padding: 1rem 1.5rem;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      z-index: 1001;
+      max-width: 300px;
+      transform: translateX(400px);
+      transition: transform 0.3s ease;
+    }
+
+    .voice-feedback-toast.show {
+      transform: translateX(0);
+    }
+
+    .voice-feedback-toast.success {
+      border-color: var(--success-500);
+      background: rgba(40, 167, 69, 0.1);
+    }
+
+    .voice-feedback-toast.error {
+      border-color: var(--danger-500);
+      background: rgba(220, 53, 69, 0.1);
+    }
+
+    .voice-help-card {
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+      border: 2px solid var(--primary-500);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .voice-help-card h6 {
+      color: var(--primary-600);
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+
+    .voice-help-card ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .voice-help-card li {
+      padding: 0.5rem 0;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    .voice-help-card li:before {
+      content: "🎤 ";
+      margin-right: 0.5rem;
+    }
+
     @media (max-width: 992px) {
       .wizard-steps { flex-direction: column; gap: 1rem; }
       .componente-header { flex-direction: column; align-items: flex-start; }
       .wizard-navigation { position: static; box-shadow: none; border-top: none; }
+      .voice-control-container {
+        bottom: 100px;
+        right: 15px;
+      }
+      .voice-btn {
+        width: 56px;
+        height: 56px;
+        font-size: 20px;
+      }
     }
   </style>
 {% endblock %}
 
 {% block content %}
-<div class="container py-4" id="ingreso-fusionado-root"
+<div class="container py-4" id="ingreso-voz-root"
      data-acciones-template="{% url 'acciones_por_componente' 0 %}">
 
-  <h1 class="mb-4">🚗 Ingreso de Diagnóstico – Flujo Fusionado</h1>
+  <div class="voice-help-card">
+    <h6>🎤 Control por Voz Activado</h6>
+    <p class="mb-2 small text-muted">Presiona el botón de micrófono una vez y sigue hablando. El micrófono permanecerá activo hasta que lo desactives.</p>
+    <p class="mb-2 small text-muted fw-bold">Comandos principales:</p>
+    <ul>
+      <li><strong>Control:</strong> "Desactivar micrófono", "Apagar micrófono", "Stop"</li>
+      <li><strong>Navegación:</strong> "Siguiente paso", "Paso anterior", "Ir a paso uno/dos/tres"</li>
+      <li><strong>Datos del cliente:</strong> "RUT [número]", "Nombre [nombre]", "Teléfono [número]", "Email [correo]", "Dirección [dirección]"</li>
+      <li><strong>Vehículo:</strong> "Placa [patente]" (busca automáticamente) o "Buscar" / "Buscar en API"</li>
+      <li><strong>Descripción:</strong> "Descripción [texto del problema]" o "Problema [texto]"</li>
+      <li><strong>Componentes:</strong> "Seleccionar motor", "Activar bujías", "Marcar frenos"</li>
+      <li><strong>Acciones:</strong> "Acción limpiar para bujías", "Para motor acción revisar"</li>
+      <li><strong>Finalizar:</strong> "Guardar diagnóstico", "Omitir repuestos", "Cancelar"</li>
+      <li><strong>Ayuda:</strong> Di "Mostrar comandos" o "Ayuda" para ver todos los comandos disponibles</li>
+    </ul>
+    <p class="mb-0 small text-warning fw-bold">💡 Tip: Di "Mostrar comandos" para ver la lista completa de comandos disponibles</p>
+  </div>
+
+  <h1 class="mb-4">🎤 Ingreso de Diagnóstico por Voz</h1>
   <p class="text-muted mb-4">
-    Este diseño integra la selección de componentes y las acciones sugeridas en un mismo paso, reduciendo
-    el cambio de contexto y permitiendo que el técnico confirme todo en un mismo lugar. Úsalo con el
-    parámetro <code>?layout=fusionado</code> para evaluarlo sin afectar el flujo actual.
+    Flujo optimizado para móvil con control por voz. Di tus comandos usando el botón de micrófono.
   </p>
 
   <div class="wizard-progress">
@@ -119,6 +239,23 @@
         <div class="wizard-step-label">Repuestos y Resumen</div>
       </div>
     </div>
+  </div>
+
+  <!-- Banner de estado de voz -->
+  <div class="voice-status-banner" id="voice-status-banner">
+    <span id="voice-status-text">🎤 Di tu comando...</span>
+  </div>
+
+  <!-- Toast de feedback -->
+  <div class="voice-feedback-toast" id="voice-feedback-toast">
+    <div id="voice-feedback-text"></div>
+  </div>
+
+  <!-- Botón flotante de micrófono -->
+  <div class="voice-control-container">
+    <button class="voice-btn" id="voice-btn" aria-label="Activar micrófono">
+      🎤
+    </button>
   </div>
 
   <form id="form-ingreso" method="post" novalidate>
@@ -223,8 +360,8 @@
                   <div id="collapse-{{ padre.id }}" class="accordion-collapse collapse"
                        aria-labelledby="heading-{{ padre.id }}" data-bs-parent="#componentesAccordion">
                     <div class="accordion-body">
-                      {% for hijo in padre.hijos.all|dictsort:"nombre" %}
-                        <div class="componente-item" data-componente-id="{{ hijo.id }}">
+                      {% for hijo in padre.hijos.all %}
+                        <div class="componente-item" data-componente-id="{{ hijo.id }}" data-componente-nombre="{{ hijo.nombre|lower }}">
                           <div class="componente-header">
                             <div>
                               <div class="form-check form-switch mb-1">
@@ -438,5 +575,6 @@
 
 {% block extra_js %}
   <script src="{% static 'js/ingreso_fusionado.js' %}"></script>
+  <script src="{% static 'js/ingreso_movil_voz.js' %}"></script>
 {% endblock %}
 

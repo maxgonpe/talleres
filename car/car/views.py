@@ -357,13 +357,15 @@ def ingreso_view(request):
     # Determinar template según dispositivo y ruta solicitada
     is_mobile = is_mobile_device(request)
     resolver_name = getattr(getattr(request, "resolver_match", None), "url_name", None)
-    force_fusionado = (
+    
+    # Template de voz tiene prioridad
+    if resolver_name == 'ingreso_voz':
+        template_name = 'car/ingreso_movil_voz.html'
+    elif (
         is_mobile or
         request.GET.get('layout') == 'fusionado' or
         resolver_name == 'ingreso_rapido'
-    )
-
-    if force_fusionado:
+    ):
         template_name = 'car/ingreso_fusionado.html'
     else:
         template_name = 'car/ingreso-pc.html'
@@ -377,7 +379,7 @@ def ingreso_view(request):
         'vehiculos_existentes': vehiculos_existentes,
         'selected_cliente': selected_cliente,
         'selected_vehiculo': selected_vehiculo,
-        'componentes': Componente.objects.filter(padre__isnull=True, activo=True),
+        'componentes': Componente.objects.filter(padre__isnull=True, activo=True).order_by('nombre'),
         'selected_componentes_ids': selected_componentes_ids,
         'svg': svg_content,
     })
@@ -1948,7 +1950,8 @@ def lista_trabajos(request):
     # Obtener configuración del taller
     config = AdministracionTaller.get_configuracion_activa()
     
-    trabajos = Trabajo.objects.all().select_related(
+    # Filtrar solo trabajos visibles
+    trabajos = Trabajo.objects.filter(visible=True).select_related(
         'vehiculo__cliente'
     ).prefetch_related(
         'acciones__accion',
@@ -1960,6 +1963,28 @@ def lista_trabajos(request):
     # No necesitamos asignarlos manualmente
 
     return render(request, 'car/trabajo_lista.html', {
+        'trabajos': trabajos,
+        'config': config
+    })
+
+
+@login_required
+@requiere_permiso('trabajos')
+def historial_trabajos(request):
+    """Lista de trabajos no visibles (historial)"""
+    # Obtener configuración del taller
+    config = AdministracionTaller.get_configuracion_activa()
+    
+    # Filtrar solo trabajos no visibles
+    trabajos = Trabajo.objects.filter(visible=False).select_related(
+        'vehiculo__cliente'
+    ).prefetch_related(
+        'acciones__accion',
+        'acciones__componente',
+        'repuestos__repuesto'
+    ).order_by('-fecha_inicio')
+
+    return render(request, 'car/trabajo_historial.html', {
         'trabajos': trabajos,
         'config': config
     })
