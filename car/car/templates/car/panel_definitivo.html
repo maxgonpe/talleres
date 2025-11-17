@@ -666,7 +666,7 @@
                                 </div>
                             </div>
                             <div class="mt-2 text-end">
-                                <form method="post" style="display: inline;" onsubmit="return confirm('¿Quitar este trabajo del listado? Se ocultará pero no se eliminará.');">
+                                <form method="post" style="display: inline;">
                                     {% csrf_token %}
                                     <input type="hidden" name="trabajo_id" value="{{ trabajo.id }}">
                                     <button type="submit" name="ocultar_trabajo" class="btn btn-sm btn-outline-secondary">
