@@ -2701,8 +2701,24 @@ def trabajo_detalle(request, pk):
                 # Si es entrega, registrar también como entrega
                 if nuevo_estado == "entregado":
                     registrar_entrega(trabajo, request=request)
-                
-                messages.success(request, f"Trabajo actualizado a {trabajo.get_estado_display()}.")
+                    # Generar bonos automáticamente para los mecánicos
+                    try:
+                        from .views_bonos import generar_bonos_trabajo_entregado
+                        bonos_generados = generar_bonos_trabajo_entregado(trabajo)
+                        if bonos_generados:
+                            total_bonos = sum(b.monto for b in bonos_generados)
+                            messages.success(
+                                request, 
+                                f"Trabajo actualizado a {trabajo.get_estado_display()}. "
+                                f"Bonos generados: ${total_bonos} para {len(bonos_generados)} mecánico(s)."
+                            )
+                        else:
+                            messages.success(request, f"Trabajo actualizado a {trabajo.get_estado_display()}.")
+                    except Exception as e:
+                        # Si hay error generando bonos, no fallar el cambio de estado
+                        messages.warning(request, f"Trabajo actualizado, pero hubo un error al generar bonos: {str(e)}")
+                else:
+                    messages.success(request, f"Trabajo actualizado a {trabajo.get_estado_display()}.")
             return redirect_with_tab("estado")
 
         # 🔹 Toggle acción completada / pendiente (método anterior)

@@ -543,6 +543,40 @@
                 {% endif %}
             </div>
 
+            <!-- Sección de Administración -->
+            <div class="pizarra-section" style="margin-top: 2rem;">
+                <div class="pizarra-header">
+                    <span class="action-icon">⚙️</span>
+                    <h2 class="pizarra-title">Administración</h2>
+                </div>
+                
+                <div class="actions-grid">
+                    {% if request.permisos.trabajos %}
+                    <a href="{% url 'configuracion_bonos' %}" class="action-card">
+                        <span class="action-icon">💰</span>
+                        <div class="action-title">Bonos de Mecánicos</div>
+                        <div class="action-description">Configurar y gestionar bonos e incentivos</div>
+                    </a>
+                    {% endif %}
+                    
+                    {% if request.permisos.administracion %}
+                    <a href="{% url 'administracion_taller' %}" class="action-card">
+                        <span class="action-icon">🏢</span>
+                        <div class="action-title">Configurar Taller</div>
+                        <div class="action-description">Ajustes generales del taller</div>
+                    </a>
+                    {% endif %}
+                    
+                    {% if request.permisos.trabajos %}
+                    <a href="{% url 'estadisticas_trabajos' %}" class="action-card">
+                        <span class="action-icon">📊</span>
+                        <div class="action-title">Estadísticas</div>
+                        <div class="action-description">Ver estadísticas de trabajos</div>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
             <!-- Pizarra de trabajos -->
             <div class="pizarra-section">
                 <div class="pizarra-header">

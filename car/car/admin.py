@@ -16,7 +16,9 @@ from .models import (
     # Modelos Compras
     Compra, CompraItem,
     # Modelos Auditoría
-    RegistroEvento, ResumenTrabajo
+    RegistroEvento, ResumenTrabajo,
+    # Modelos Bonos
+    ConfiguracionBonoMecanico, BonoGenerado, PagoMecanico, ExcepcionBonoTrabajo
 )
 
 @admin.register(Mecanico)
@@ -625,6 +627,107 @@ class ResumenTrabajoAdmin(admin.ModelAdmin):
         }),
         ('Metadatos', {
             'fields': ('ultima_actualizacion',),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+# ======================
+# BONOS E INCENTIVOS PARA MECÁNICOS
+# ======================
+
+@admin.register(ConfiguracionBonoMecanico)
+class ConfiguracionBonoMecanicoAdmin(admin.ModelAdmin):
+    list_display = ('mecanico', 'activo', 'tipo_bono', 'porcentaje_mano_obra', 'cantidad_fija', 'fecha_actualizacion')
+    list_filter = ('activo', 'tipo_bono', 'fecha_creacion')
+    search_fields = ('mecanico__user__first_name', 'mecanico__user__last_name', 'mecanico__user__username')
+    readonly_fields = ('fecha_creacion', 'fecha_actualizacion')
+    
+    fieldsets = (
+        ('Mecánico', {
+            'fields': ('mecanico', 'activo')
+        }),
+        ('Configuración de Bono', {
+            'fields': ('tipo_bono', 'porcentaje_mano_obra', 'cantidad_fija')
+        }),
+        ('Notas', {
+            'fields': ('notas',),
+            'classes': ('collapse',)
+        }),
+        ('Metadatos', {
+            'fields': ('fecha_creacion', 'fecha_actualizacion'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(BonoGenerado)
+class BonoGeneradoAdmin(admin.ModelAdmin):
+    list_display = ('mecanico', 'trabajo', 'monto', 'tipo_bono', 'pagado', 'fecha_generacion', 'fecha_pago')
+    list_filter = ('pagado', 'tipo_bono', 'fecha_generacion')
+    search_fields = ('mecanico__user__first_name', 'mecanico__user__last_name', 'trabajo__id')
+    readonly_fields = ('fecha_generacion',)
+    date_hierarchy = 'fecha_generacion'
+    
+    fieldsets = (
+        ('Información Básica', {
+            'fields': ('mecanico', 'trabajo', 'monto', 'pagado')
+        }),
+        ('Detalles del Bono', {
+            'fields': ('tipo_bono', 'porcentaje_aplicado', 'total_mano_obra')
+        }),
+        ('Fechas', {
+            'fields': ('fecha_generacion', 'fecha_pago')
+        }),
+        ('Notas', {
+            'fields': ('notas',),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(PagoMecanico)
+class PagoMecanicoAdmin(admin.ModelAdmin):
+    list_display = ('mecanico', 'monto', 'metodo_pago', 'fecha_pago', 'registrado_por')
+    list_filter = ('metodo_pago', 'fecha_pago')
+    search_fields = ('mecanico__user__first_name', 'mecanico__user__last_name')
+    date_hierarchy = 'fecha_pago'
+    filter_horizontal = ('bonos_aplicados',)
+    
+    fieldsets = (
+        ('Información del Pago', {
+            'fields': ('mecanico', 'monto', 'metodo_pago', 'fecha_pago')
+        }),
+        ('Bonos Aplicados', {
+            'fields': ('bonos_aplicados',)
+        }),
+        ('Notas', {
+            'fields': ('notas',)
+        }),
+        ('Registro', {
+            'fields': ('registrado_por',),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(ExcepcionBonoTrabajo)
+class ExcepcionBonoTrabajoAdmin(admin.ModelAdmin):
+    list_display = ('trabajo', 'motivo', 'fecha_creacion', 'creado_por')
+    list_filter = ('fecha_creacion',)
+    search_fields = ('trabajo__id', 'motivo')
+    readonly_fields = ('fecha_creacion',)
+    date_hierarchy = 'fecha_creacion'
+    
+    fieldsets = (
+        ('Trabajo', {
+            'fields': ('trabajo',)
+        }),
+        ('Excepción', {
+            'fields': ('motivo',)
+        }),
+        ('Registro', {
+            'fields': ('fecha_creacion', 'creado_por'),
             'classes': ('collapse',)
         }),
     )

@@ -278,10 +278,18 @@ def estadisticas_trabajos(request):
     periodo_dias = int(request.GET.get('periodo', 30))
     fecha_inicio_periodo = ahora - timedelta(days=periodo_dias)
     
-    # Acciones completadas en el período
+    # Obtener trabajos iniciados o finalizados en el período
+    # Esto captura todos los trabajos activos en el período
+    trabajos_periodo = Trabajo.objects.filter(
+        Q(fecha_inicio__gte=fecha_inicio_periodo) |
+        Q(fecha_fin__gte=fecha_inicio_periodo)
+    )
+    
+    # Acciones completadas de esos trabajos (sin filtrar por fecha de la acción)
+    # Esto captura todas las acciones completadas de trabajos en el período
     acciones_completadas = TrabajoAccion.objects.filter(
         completado=True,
-        fecha__gte=fecha_inicio_periodo
+        trabajo__in=trabajos_periodo
     ).select_related('accion', 'componente', 'trabajo')
     
     # Obtener todas las acciones con sus datos para calcular subtotales
@@ -428,10 +436,10 @@ def estadisticas_trabajos(request):
     # ========================
     # 11. REPUESTOS MÁS USADOS Y RECURRENTES (NUEVO)
     # ========================
-    # Repuestos completados en el período
+    # Repuestos completados de trabajos en el período
     repuestos_completados = TrabajoRepuesto.objects.filter(
         completado=True,
-        fecha__gte=fecha_inicio_periodo
+        trabajo__in=trabajos_periodo
     ).select_related('repuesto', 'repuesto_externo', 'componente', 'trabajo')
     
     # Agrupar por repuesto (tanto internos como externos)

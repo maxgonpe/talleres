@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Editar Configuración de Bono{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+<style>
+    .edit-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: var(--spacing-md);
+    }
+    
+    .edit-card {
+        background: var(--card-bg);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-lg);
+        box-shadow: var(--card-shadow);
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+    }
+    
+    .btn-primary {
+        background: var(--accent);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="edit-container">
+    <div class="edit-card">
+        <h1>✏️ Editar Configuración de Bono</h1>
+        <p><strong>Mecánico:</strong> {{ config.mecanico }}</p>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" name="activo" {% if config.activo %}checked{% endif %}>
+                    Bonos activos para este mecánico
+                </label>
+            </div>
+            
+            <div class="form-group">
+                <label for="tipo_bono">Tipo de Bono:</label>
+                <select name="tipo_bono" id="tipo_bono" class="form-control" onchange="toggleTipoBono()">
+                    <option value="porcentaje" {% if config.tipo_bono == 'porcentaje' %}selected{% endif %}>
+                        Porcentaje de Mano de Obra
+                    </option>
+                    <option value="fijo" {% if config.tipo_bono == 'fijo' %}selected{% endif %}>
+                        Cantidad Fija
+                    </option>
+                </select>
+            </div>
+            
+            <div class="form-group" id="grupo_porcentaje" style="display: {% if config.tipo_bono == 'porcentaje' %}block{% else %}none{% endif %};">
+                <label for="porcentaje">Porcentaje (%):</label>
+                <input type="number" name="porcentaje" id="porcentaje" class="form-control" 
+                       step="0.01" min="0" max="100" 
+                       value="{{ config.porcentaje_mano_obra|default:'' }}">
+            </div>
+            
+            <div class="form-group" id="grupo_fijo" style="display: {% if config.tipo_bono == 'fijo' %}block{% else %}none{% endif %};">
+                <label for="cantidad_fija">Cantidad Fija:</label>
+                <input type="number" name="cantidad_fija" id="cantidad_fija" class="form-control" 
+                       step="0.01" min="0" 
+                       value="{{ config.cantidad_fija|default:'' }}">
+            </div>
+            
+            <div class="form-group">
+                <label for="notas">Notas:</label>
+                <textarea name="notas" id="notas" class="form-control" rows="3">{{ config.notas|default:'' }}</textarea>
+            </div>
+            
+            <button type="submit" class="btn-primary">💾 Guardar Cambios</button>
+            <a href="{% url 'configuracion_bonos' %}" style="margin-left: 1rem; color: var(--muted);">Cancelar</a>
+        </form>
+    </div>
+</div>
+
+<script>
+function toggleTipoBono() {
+    const tipo = document.getElementById('tipo_bono').value;
+    const grupoPorcentaje = document.getElementById('grupo_porcentaje');
+    const grupoFijo = document.getElementById('grupo_fijo');
+    
+    if (tipo === 'porcentaje') {
+        grupoPorcentaje.style.display = 'block';
+        grupoFijo.style.display = 'none';
+    } else {
+        grupoPorcentaje.style.display = 'none';
+        grupoFijo.style.display = 'block';
+    }
+}
+</script>
+{% endblock %}
+

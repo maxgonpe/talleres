@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Configuración de Bonos para Mecánicos - NetGoGo{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+<style>
+    .config-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: var(--spacing-md);
+    }
+    
+    .config-header {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: var(--spacing-xl);
+        border-radius: var(--border-radius-lg);
+        margin-bottom: 2rem;
+        text-align: center;
+        box-shadow: var(--card-shadow);
+    }
+    
+    .config-card {
+        background: var(--card-bg);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-lg);
+        box-shadow: var(--card-shadow);
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: var(--fg);
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        background: var(--bg);
+        color: var(--fg);
+        font-size: 1rem;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(23, 162, 184, 0.1);
+    }
+    
+    .btn-primary {
+        background: var(--accent);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        font-weight: 600;
+        transition: background 0.3s;
+    }
+    
+    .btn-primary:hover {
+        background: #138496;
+    }
+    
+    .table-config {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+    }
+    
+    .table-config th,
+    .table-config td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .table-config th {
+        background: var(--bg-secondary);
+        font-weight: 600;
+        color: var(--fg);
+    }
+    
+    .table-config tbody tr:hover {
+        background: var(--hover-bg);
+    }
+    
+    .badge-activo {
+        background: #28a745;
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: var(--border-radius-xl);
+        font-size: 0.85rem;
+    }
+    
+    .badge-inactivo {
+        background: #dc3545;
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: var(--border-radius-xl);
+        font-size: 0.85rem;
+    }
+    
+    .tipo-bono {
+        font-weight: 600;
+        color: var(--accent);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="config-container">
+    <div class="config-header">
+        <h1>💰 Configuración de Bonos para Mecánicos</h1>
+        <p>Gestiona los bonos e incentivos para los mecánicos del taller</p>
+    </div>
+    
+    <!-- Formulario para nueva configuración -->
+    <div class="config-card">
+        <h2>➕ Agregar/Editar Configuración de Bono</h2>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="mecanico_id">Mecánico:</label>
+                <select name="mecanico_id" id="mecanico_id" class="form-control" required>
+                    <option value="">Seleccionar mecánico...</option>
+                    {% for mecanico in mecanicos_sin_config %}
+                    <option value="{{ mecanico.id }}">{{ mecanico }}</option>
+                    {% endfor %}
+                    {% for config in configuraciones %}
+                    <option value="{{ config.mecanico.id }}">{{ config.mecanico }} (Editar)</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" name="activo" checked> Bonos activos para este mecánico
+                </label>
+            </div>
+            
+            <div class="form-group">
+                <label for="tipo_bono">Tipo de Bono:</label>
+                <select name="tipo_bono" id="tipo_bono" class="form-control" required onchange="toggleTipoBono()">
+                    <option value="porcentaje">Porcentaje de Mano de Obra</option>
+                    <option value="fijo">Cantidad Fija</option>
+                </select>
+            </div>
+            
+            <div class="form-group" id="grupo_porcentaje">
+                <label for="porcentaje">Porcentaje (%):</label>
+                <input type="number" name="porcentaje" id="porcentaje" class="form-control" 
+                       step="0.01" min="0" max="100" placeholder="Ej: 10.00 para 10%">
+            </div>
+            
+            <div class="form-group" id="grupo_fijo" style="display: none;">
+                <label for="cantidad_fija">Cantidad Fija:</label>
+                <input type="number" name="cantidad_fija" id="cantidad_fija" class="form-control" 
+                       step="0.01" min="0" placeholder="Ej: 5000.00">
+            </div>
+            
+            <div class="form-group">
+                <label for="notas">Notas (opcional):</label>
+                <textarea name="notas" id="notas" class="form-control" rows="3" 
+                          placeholder="Notas adicionales sobre esta configuración"></textarea>
+            </div>
+            
+            <button type="submit" class="btn-primary">💾 Guardar Configuración</button>
+        </form>
+    </div>
+    
+    <!-- Lista de configuraciones existentes -->
+    <div class="config-card">
+        <h2>📋 Configuraciones Existentes</h2>
+        {% if configuraciones %}
+        <table class="table-config">
+            <thead>
+                <tr>
+                    <th>Mecánico</th>
+                    <th>Estado</th>
+                    <th>Tipo</th>
+                    <th>Valor</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for config in configuraciones %}
+                <tr>
+                    <td><strong>{{ config.mecanico }}</strong></td>
+                    <td>
+                        {% if config.activo %}
+                        <span class="badge-activo">Activo</span>
+                        {% else %}
+                        <span class="badge-inactivo">Inactivo</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="tipo-bono">
+                            {% if config.tipo_bono == 'porcentaje' %}
+                            Porcentaje
+                            {% else %}
+                            Fijo
+                            {% endif %}
+                        </span>
+                    </td>
+                    <td>
+                        {% if config.tipo_bono == 'porcentaje' %}
+                        {{ config.porcentaje_mano_obra }}%
+                        {% else %}
+                        ${{ config.cantidad_fija|floatformat:0|intcomma }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'editar_configuracion_bono' config.pk %}" class="btn-primary" style="padding: 0.5rem 1rem; text-decoration: none; display: inline-block;">
+                            ✏️ Editar
+                        </a>
+                        <a href="{% url 'cuenta_mecanico' config.mecanico.id %}" class="btn-primary" style="padding: 0.5rem 1rem; text-decoration: none; display: inline-block; background: #17a2b8;">
+                            💰 Ver Cuenta
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="text-align: center; padding: 2rem; color: var(--muted);">
+            No hay configuraciones de bonos registradas aún.
+        </p>
+        {% endif %}
+    </div>
+    
+    <div style="margin-top: 2rem; text-align: center;">
+        <a href="{% url 'lista_mecanicos_bonos' %}" class="btn-primary" style="text-decoration: none; display: inline-block;">
+            📊 Ver Resumen de Bonos de Todos los Mecánicos
+        </a>
+    </div>
+</div>
+
+<script>
+function toggleTipoBono() {
+    const tipo = document.getElementById('tipo_bono').value;
+    const grupoPorcentaje = document.getElementById('grupo_porcentaje');
+    const grupoFijo = document.getElementById('grupo_fijo');
+    
+    if (tipo === 'porcentaje') {
+        grupoPorcentaje.style.display = 'block';
+        grupoFijo.style.display = 'none';
+        document.getElementById('cantidad_fija').value = '';
+    } else {
+        grupoPorcentaje.style.display = 'none';
+        grupoFijo.style.display = 'block';
+        document.getElementById('porcentaje').value = '';
+    }
+}
+</script>
+{% endblock %}
+

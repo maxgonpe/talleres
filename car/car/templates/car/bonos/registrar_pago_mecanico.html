@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Registrar Pago - {{ mecanico }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+<style>
+    .pago-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: var(--spacing-md);
+    }
+    
+    .pago-header {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: var(--spacing-xl);
+        border-radius: var(--border-radius-lg);
+        margin-bottom: 2rem;
+        text-align: center;
+        box-shadow: var(--card-shadow);
+    }
+    
+    .pago-card {
+        background: var(--card-bg);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-lg);
+        box-shadow: var(--card-shadow);
+        margin-bottom: 1.5rem;
+    }
+    
+    .saldo-info {
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 1rem;
+        border-radius: var(--border-radius);
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: var(--fg);
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        background: var(--bg);
+        color: var(--fg);
+        font-size: 1rem;
+    }
+    
+    .checkbox-group {
+        margin: 1rem 0;
+        padding: 1rem;
+        background: var(--bg-secondary);
+        border-radius: var(--border-radius);
+    }
+    
+    .checkbox-group label {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        margin-bottom: 0.5rem;
+    }
+    
+    .checkbox-group input[type="checkbox"] {
+        margin-right: 0.5rem;
+        width: auto;
+    }
+    
+    .btn-primary {
+        background: var(--accent);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        font-weight: 600;
+        margin-right: 1rem;
+    }
+    
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pago-container">
+    <div class="pago-header">
+        <h1>💵 Registrar Pago a Mecánico</h1>
+        <p>{{ mecanico }}</p>
+    </div>
+    
+    <div class="saldo-info">
+        <h3>💰 Saldo Pendiente: ${{ saldo_pendiente|floatformat:0|intcomma }}</h3>
+        <p style="margin: 0; color: #856404;">Total de bonos pendientes de pago</p>
+    </div>
+    
+    <div class="pago-card">
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="monto">Monto a Pagar:</label>
+                <input type="number" name="monto" id="monto" class="form-control" 
+                       step="0.01" min="0.01" max="{{ saldo_pendiente }}" 
+                       value="{{ saldo_pendiente }}" required>
+                <small style="color: var(--muted);">Máximo disponible: ${{ saldo_pendiente|floatformat:0|intcomma }}</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="metodo_pago">Método de Pago:</label>
+                <select name="metodo_pago" id="metodo_pago" class="form-control" required>
+                    <option value="efectivo">Efectivo</option>
+                    <option value="transferencia">Transferencia</option>
+                    <option value="cheque">Cheque</option>
+                    <option value="otro">Otro</option>
+                </select>
+            </div>
+            
+            {% if bonos_pendientes %}
+            <div class="form-group">
+                <label>Bonos a Aplicar (opcional):</label>
+                <div class="checkbox-group">
+                    <p style="margin-bottom: 0.5rem; font-weight: 600;">Selecciona los bonos que se están pagando con este pago:</p>
+                    {% for bono in bonos_pendientes %}
+                    <label>
+                        <input type="checkbox" name="bonos_seleccionados" value="{{ bono.id }}">
+                        <span>
+                            Trabajo #{{ bono.trabajo.id }} - 
+                            ${{ bono.monto|floatformat:0|intcomma }} - 
+                            {{ bono.fecha_generacion|date:"d/m/Y" }}
+                        </span>
+                    </label>
+                    {% endfor %}
+                </div>
+                <small style="color: var(--muted);">
+                    Si no seleccionas bonos específicos, el pago se aplicará automáticamente a los bonos más antiguos.
+                </small>
+            </div>
+            {% endif %}
+            
+            <div class="form-group">
+                <label for="notas">Notas (opcional):</label>
+                <textarea name="notas" id="notas" class="form-control" rows="3" 
+                          placeholder="Notas adicionales sobre este pago"></textarea>
+            </div>
+            
+            <div style="margin-top: 2rem;">
+                <button type="submit" class="btn-primary">💾 Registrar Pago</button>
+                <a href="{% url 'cuenta_mecanico' mecanico.id %}" class="btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

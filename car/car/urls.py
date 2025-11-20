@@ -16,7 +16,8 @@ from . import views_pos
 from . import views_compras
 from . import views_algoritmo
 from . import views_vehiculos
-from . import views_estadisticas 
+from . import views_estadisticas
+from . import views_bonos 
 
 urlpatterns = [
     path("login/", views.login_view, name="login"),
@@ -107,6 +108,15 @@ urlpatterns = [
     path("trabajos/<int:pk>/eliminar/", views.TrabajoDeleteView.as_view(), name="trabajo_delete"),
     # === ESTADÍSTICAS ===
     path("estadisticas/", views_estadisticas.estadisticas_trabajos, name="estadisticas_trabajos"),
+    
+    # === BONOS E INCENTIVOS PARA MECÁNICOS ===
+    path("bonos/configuracion/", views_bonos.configuracion_bonos, name="configuracion_bonos"),
+    path("bonos/configuracion/<int:pk>/editar/", views_bonos.editar_configuracion_bono, name="editar_configuracion_bono"),
+    path("bonos/mecanicos/", views_bonos.lista_mecanicos_bonos, name="lista_mecanicos_bonos"),
+    path("bonos/mecanico/<int:mecanico_id>/", views_bonos.cuenta_mecanico, name="cuenta_mecanico"),
+    path("bonos/mecanico/<int:mecanico_id>/pago/", views_bonos.registrar_pago_mecanico, name="registrar_pago_mecanico"),
+    path("bonos/trabajo/<int:trabajo_id>/excepcion/", views_bonos.excepcion_bono_trabajo, name="excepcion_bono_trabajo"),
+    path("bonos/trabajo/<int:trabajo_id>/excepcion/eliminar/", views_bonos.eliminar_excepcion_bono, name="eliminar_excepcion_bono"),
     # Pizarra
     path("pizarra/", views.pizarra_view, name="pizarra"),
     # Ventas
