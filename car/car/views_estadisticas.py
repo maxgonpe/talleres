@@ -5,7 +5,7 @@ from django.db.models import Count, Avg, Sum, Q
 from datetime import timedelta, datetime
 from decimal import Decimal
 
-from .models import Trabajo, Diagnostico, AdministracionTaller, ResumenTrabajo, RegistroEvento
+from .models import Trabajo, Diagnostico, AdministracionTaller, ResumenTrabajo, RegistroEvento, TrabajoAccion, TrabajoRepuesto, Componente, Accion, Repuesto
 from .decorators import requiere_permiso
 
 
@@ -271,6 +271,203 @@ def estadisticas_trabajos(request):
     # Trabajos completados esta semana vs promedio
     completados_vs_promedio = trabajos_completados_semana - (promedio_semanal * 0.7)  # Asumiendo 70% se completan
     
+    # ========================
+    # 8. ACCIONES RESUELTAS EN EL PERÍODO (NUEVO)
+    # ========================
+    # Obtener período desde request (por defecto: último mes)
+    periodo_dias = int(request.GET.get('periodo', 30))
+    fecha_inicio_periodo = ahora - timedelta(days=periodo_dias)
+    
+    # Acciones completadas en el período
+    acciones_completadas = TrabajoAccion.objects.filter(
+        completado=True,
+        fecha__gte=fecha_inicio_periodo
+    ).select_related('accion', 'componente', 'trabajo')
+    
+    # Obtener todas las acciones con sus datos para calcular subtotales
+    acciones_detalle = list(acciones_completadas.values(
+        'accion__nombre', 
+        'componente__nombre',
+        'accion_id',
+        'componente_id',
+        'precio_mano_obra',
+        'cantidad'
+    ))
+    
+    # Agrupar y calcular en Python
+    acciones_agrupadas = {}
+    for acc in acciones_detalle:
+        clave = (acc['accion_id'], acc['componente_id'])
+        if clave not in acciones_agrupadas:
+            acciones_agrupadas[clave] = {
+                'accion_nombre': acc['accion__nombre'],
+                'componente_nombre': acc['componente__nombre'],
+                'accion_id': acc['accion_id'],
+                'componente_id': acc['componente_id'],
+                'recurrencias': 0,
+                'cantidad_total': 0,
+                'total_ingresos': Decimal('0')
+            }
+        
+        subtotal = Decimal(str(acc['precio_mano_obra'])) * Decimal(str(acc['cantidad']))
+        acciones_agrupadas[clave]['recurrencias'] += 1
+        acciones_agrupadas[clave]['cantidad_total'] += acc['cantidad']
+        acciones_agrupadas[clave]['total_ingresos'] += subtotal
+    
+    # Convertir a lista y ordenar
+    acciones_resueltas_lista = sorted(
+        acciones_agrupadas.values(),
+        key=lambda x: x['recurrencias'],
+        reverse=True
+    )
+    
+    # ========================
+    # 9. INGRESOS POR ACCIÓN (MÁS RENTABLE A MENOS RENTABLE) (NUEVO)
+    # ========================
+    # Obtener datos de acciones con trabajos para calcular ingresos
+    acciones_con_trabajos = list(acciones_completadas.values(
+        'accion__nombre',
+        'accion_id',
+        'trabajo_id',
+        'precio_mano_obra',
+        'cantidad'
+    ))
+    
+    # Agrupar por acción y calcular en Python
+    ingresos_agrupados = {}
+    trabajos_por_accion = {}
+    
+    for acc in acciones_con_trabajos:
+        accion_id = acc['accion_id']
+        trabajo_id = acc['trabajo_id']
+        
+        if accion_id not in ingresos_agrupados:
+            ingresos_agrupados[accion_id] = {
+                'accion_nombre': acc['accion__nombre'],
+                'total_ingresos': Decimal('0'),
+                'cantidad_veces': 0,
+                'cantidad_total': 0
+            }
+            trabajos_por_accion[accion_id] = set()
+        
+        subtotal = Decimal(str(acc['precio_mano_obra'])) * Decimal(str(acc['cantidad']))
+        ingresos_agrupados[accion_id]['total_ingresos'] += subtotal
+        ingresos_agrupados[accion_id]['cantidad_veces'] += 1
+        ingresos_agrupados[accion_id]['cantidad_total'] += acc['cantidad']
+        trabajos_por_accion[accion_id].add(trabajo_id)
+    
+    # Formatear para el template
+    ingresos_por_accion_lista = []
+    for accion_id, datos in ingresos_agrupados.items():
+        cantidad_trabajos = len(trabajos_por_accion[accion_id])
+        ingresos_por_accion_lista.append({
+            'accion_nombre': datos['accion_nombre'],
+            'total_ingresos': datos['total_ingresos'],
+            'cantidad_trabajos': cantidad_trabajos,
+            'cantidad_veces': datos['cantidad_veces'],
+            'cantidad_total': datos['cantidad_total'],
+            'promedio_por_trabajo': (datos['total_ingresos'] / cantidad_trabajos) if cantidad_trabajos > 0 else Decimal('0')
+        })
+    
+    # Ordenar por total_ingresos descendente
+    ingresos_por_accion_lista.sort(key=lambda x: x['total_ingresos'], reverse=True)
+    
+    # ========================
+    # 10. CONCENTRACIÓN DE REPARACIONES POR COMPONENTE (NUEVO)
+    # ========================
+    # Obtener datos de componentes con trabajos
+    componentes_con_trabajos = list(acciones_completadas.values(
+        'componente__nombre',
+        'componente_id',
+        'trabajo_id',
+        'precio_mano_obra',
+        'cantidad'
+    ))
+    
+    # Agrupar por componente y calcular en Python
+    componentes_agrupados = {}
+    trabajos_por_componente = {}
+    
+    for comp in componentes_con_trabajos:
+        componente_id = comp['componente_id']
+        trabajo_id = comp['trabajo_id']
+        
+        if componente_id not in componentes_agrupados:
+            componentes_agrupados[componente_id] = {
+                'componente_nombre': comp['componente__nombre'],
+                'cantidad_acciones': 0,
+                'total_ingresos': Decimal('0')
+            }
+            trabajos_por_componente[componente_id] = set()
+        
+        subtotal = Decimal(str(comp['precio_mano_obra'])) * Decimal(str(comp['cantidad']))
+        componentes_agrupados[componente_id]['cantidad_acciones'] += 1
+        componentes_agrupados[componente_id]['total_ingresos'] += subtotal
+        trabajos_por_componente[componente_id].add(trabajo_id)
+    
+    # Calcular total de trabajos únicos en el período
+    total_trabajos_periodo = len(set(comp['trabajo_id'] for comp in componentes_con_trabajos))
+    
+    # Formatear para el template
+    reparaciones_por_componente_lista = []
+    for componente_id, datos in componentes_agrupados.items():
+        cantidad_trabajos = len(trabajos_por_componente[componente_id])
+        porcentaje = (cantidad_trabajos / total_trabajos_periodo * 100) if total_trabajos_periodo > 0 else 0
+        reparaciones_por_componente_lista.append({
+            'componente_nombre': datos['componente_nombre'],
+            'cantidad_trabajos': cantidad_trabajos,
+            'cantidad_acciones': datos['cantidad_acciones'],
+            'total_ingresos': datos['total_ingresos'],
+            'porcentaje': round(porcentaje, 1),
+            'componente_id': componente_id
+        })
+    
+    # Ordenar por cantidad_trabajos descendente
+    reparaciones_por_componente_lista.sort(key=lambda x: x['cantidad_trabajos'], reverse=True)
+    
+    # ========================
+    # 11. REPUESTOS MÁS USADOS Y RECURRENTES (NUEVO)
+    # ========================
+    # Repuestos completados en el período
+    repuestos_completados = TrabajoRepuesto.objects.filter(
+        completado=True,
+        fecha__gte=fecha_inicio_periodo
+    ).select_related('repuesto', 'repuesto_externo', 'componente', 'trabajo')
+    
+    # Agrupar por repuesto (tanto internos como externos)
+    repuestos_usados = repuestos_completados.values(
+        'repuesto__nombre',
+        'repuesto__sku',
+        'repuesto_id',
+        'repuesto_externo__nombre',
+        'repuesto_externo_id'
+    ).annotate(
+        cantidad_veces=Count('id'),
+        cantidad_total=Sum('cantidad'),
+        total_ingresos=Sum('subtotal'),
+        cantidad_trabajos=Count('trabajo_id', distinct=True)
+    ).order_by('-cantidad_veces')
+    
+    repuestos_usados_lista = []
+    for rep in repuestos_usados:
+        nombre = rep['repuesto__nombre'] if rep['repuesto__nombre'] else rep['repuesto_externo__nombre'] or 'Repuesto Externo'
+        sku = rep['repuesto__sku'] or 'N/A'
+        repuesto_id = rep['repuesto_id'] or rep['repuesto_externo_id']
+        
+        repuestos_usados_lista.append({
+            'nombre': nombre,
+            'sku': sku,
+            'cantidad_veces': rep['cantidad_veces'],
+            'cantidad_total': rep['cantidad_total'],
+            'total_ingresos': rep['total_ingresos'] or Decimal('0'),
+            'cantidad_trabajos': rep['cantidad_trabajos'],
+            'promedio_por_trabajo': (rep['total_ingresos'] / rep['cantidad_trabajos']) if rep['cantidad_trabajos'] > 0 else Decimal('0'),
+            'repuesto_id': repuesto_id
+        })
+    
+    # Ordenar por recurrencia (cantidad_veces) y luego por ingresos
+    repuestos_usados_lista.sort(key=lambda x: (x['cantidad_veces'], x['total_ingresos']), reverse=True)
+    
     context = {
         'config': config,
         
@@ -318,6 +515,15 @@ def estadisticas_trabajos(request):
         'tasa_completacion': round(tasa_completacion, 1),
         'tasa_entrega': round(tasa_entrega, 1),
         'completados_vs_promedio': round(completados_vs_promedio, 1),
+        
+        # Nuevas estadísticas detalladas
+        'periodo_dias': periodo_dias,
+        'fecha_inicio_periodo': fecha_inicio_periodo,
+        'acciones_resueltas': acciones_resueltas_lista,
+        'ingresos_por_accion': ingresos_por_accion_lista,
+        'reparaciones_por_componente': reparaciones_por_componente_lista,
+        'repuestos_usados': repuestos_usados_lista,
+        'total_trabajos_periodo': total_trabajos_periodo,
     }
     
     return render(request, 'car/estadisticas_trabajos.html', context)
