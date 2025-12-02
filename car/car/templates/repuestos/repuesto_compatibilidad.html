@@ -388,6 +388,10 @@
                     {% if aplicacion.posicion %} • Posición: {{ aplicacion.posicion }}{% endif %}
                     {% if aplicacion.motor %} • Motor: {{ aplicacion.motor }}{% endif %}
                     {% if aplicacion.carroceria %} • Carrocería: {{ aplicacion.carroceria }}{% endif %}
+                    {% if aplicacion.cilindrada %} • Cilindrada: {{ aplicacion.cilindrada }}{% endif %}
+                    {% if aplicacion.nro_valvulas %} • Válvulas: {{ aplicacion.nro_valvulas }}{% endif %}
+                    {% if aplicacion.combustible %} • Combustible: {{ aplicacion.combustible }}{% endif %}
+                    {% if aplicacion.otro_especial %} • Especial: {{ aplicacion.otro_especial }}{% endif %}
                 </div>
             </div>
         </div>
@@ -493,6 +497,50 @@
                                                {% endfor %}
                                                {% if not aplicaciones_existentes or not aplicaciones_existentes|length %}
                                                    value="{{ version.carroceria|default:'' }}"
+                                               {% endif %}>
+                                        
+                                        <input type="text" 
+                                               name="cilindrada_{{ version.id }}" 
+                                               class="posicion-input" 
+                                               placeholder="Cilindrada (opcional)"
+                                               {% for aplicacion in aplicaciones_existentes %}
+                                                   {% if aplicacion.version.id == version.id %}value="{{ aplicacion.cilindrada }}"{% endif %}
+                                               {% endfor %}
+                                               {% if not aplicaciones_existentes or not aplicaciones_existentes|length %}
+                                                   value="{{ version.cilindrada|default:'' }}"
+                                               {% endif %}>
+                                        
+                                        <input type="number" 
+                                               name="nro_valvulas_{{ version.id }}" 
+                                               class="posicion-input" 
+                                               placeholder="Número de Válvulas (opcional)"
+                                               {% for aplicacion in aplicaciones_existentes %}
+                                                   {% if aplicacion.version.id == version.id %}value="{{ aplicacion.nro_valvulas }}"{% endif %}
+                                               {% endfor %}
+                                               {% if not aplicaciones_existentes or not aplicaciones_existentes|length %}
+                                                   value="{{ version.nro_valvulas|default:'' }}"
+                                               {% endif %}>
+                                        
+                                        <input type="text" 
+                                               name="combustible_{{ version.id }}" 
+                                               class="posicion-input" 
+                                               placeholder="Combustible (opcional)"
+                                               {% for aplicacion in aplicaciones_existentes %}
+                                                   {% if aplicacion.version.id == version.id %}value="{{ aplicacion.combustible }}"{% endif %}
+                                               {% endfor %}
+                                               {% if not aplicaciones_existentes or not aplicaciones_existentes|length %}
+                                                   value="{{ version.combustible|default:'' }}"
+                                               {% endif %}>
+                                        
+                                        <input type="text" 
+                                               name="otro_especial_{{ version.id }}" 
+                                               class="posicion-input" 
+                                               placeholder="Otro Especial (opcional)"
+                                               {% for aplicacion in aplicaciones_existentes %}
+                                                   {% if aplicacion.version.id == version.id %}value="{{ aplicacion.otro_especial }}"{% endif %}
+                                               {% endfor %}
+                                               {% if not aplicaciones_existentes or not aplicaciones_existentes|length %}
+                                                   value="{{ version.otro_especial|default:'' }}"
                                                {% endif %}>
                                     </div>
                                 </div>

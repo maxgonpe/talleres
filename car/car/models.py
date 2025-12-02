@@ -542,6 +542,10 @@ class Repuesto(models.Model):
     marca_veh = models.CharField(max_length=100, blank=True, null=True, default='xxx', verbose_name="Marca Vehículo")
     tipo_de_motor = models.TextField(blank=True, null=True, default='zzzzzz', verbose_name="Tipo de Motor")
     carroceria = models.CharField(max_length=100, blank=True, null=True, default='yyyyyy', verbose_name="Carrocería")
+    cilindrada = models.CharField(max_length=50, blank=True, null=True, verbose_name="Cilindrada")
+    nro_valvulas = models.IntegerField(blank=True, null=True, verbose_name="Número de Válvulas")
+    combustible = models.CharField(max_length=50, blank=True, null=True, verbose_name="Combustible")
+    otro_especial = models.CharField(max_length=200, blank=True, null=True, verbose_name="Otro Especial")
 
     
     def save(self, *args, **kwargs):
@@ -751,6 +755,10 @@ class VehiculoVersion(models.Model):
     anio_hasta = models.IntegerField()
     motor = models.CharField(max_length=100, blank=True, null=True, verbose_name="Motor")
     carroceria = models.CharField(max_length=100, blank=True, null=True, verbose_name="Carrocería")
+    cilindrada = models.CharField(max_length=50, blank=True, null=True, verbose_name="Cilindrada")
+    nro_valvulas = models.IntegerField(blank=True, null=True, verbose_name="Número de Válvulas")
+    combustible = models.CharField(max_length=50, blank=True, null=True, verbose_name="Combustible")
+    otro_especial = models.CharField(max_length=200, blank=True, null=True, verbose_name="Otro Especial")
     # opcionales: engine_code, trim, etc.
 
     class Meta:
@@ -773,6 +781,10 @@ class RepuestoAplicacion(models.Model):
     posicion = models.CharField(max_length=80, blank=True)  # opcional, sinon usar repuesto.posicion
     motor = models.CharField(max_length=100, blank=True, null=True, verbose_name="Motor")
     carroceria = models.CharField(max_length=100, blank=True, null=True, verbose_name="Carrocería")
+    cilindrada = models.CharField(max_length=50, blank=True, null=True, verbose_name="Cilindrada")
+    nro_valvulas = models.IntegerField(blank=True, null=True, verbose_name="Número de Válvulas")
+    combustible = models.CharField(max_length=50, blank=True, null=True, verbose_name="Combustible")
+    otro_especial = models.CharField(max_length=200, blank=True, null=True, verbose_name="Otro Especial")
 
     class Meta:
         unique_together = ("repuesto", "version")

@@ -1,0 +1,3070 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block mobile_components %}
+  {% include 'car/mobile_bottom_nav.html' %}
+  {% include 'car/mobile_fab.html' %}
+{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+{% endblock %}
+
+{% block title %}Trabajo #{{ trabajo.id }} - {{ trabajo.vehiculo }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    .trabajo-container {
+        max-width: 100%;
+        margin: 0;
+        padding: var(--spacing-sm);
+    }
+    
+    .trabajo-header {
+        background: linear-gradient(135deg, var(--accent) 0%, var(--primary-600) 100%);
+        color: var(--text-inverse);
+        padding: var(--spacing-md);
+        border-radius: var(--border-radius-lg);
+        margin-bottom: var(--spacing-md);
+        text-align: center;
+    }
+    
+    .estado-badge {
+        font-size: 1.1rem;
+        padding: var(--spacing-sm) var(--spacing-md);
+        border-radius: var(--border-radius-full);
+        font-weight: 600;
+        margin: var(--spacing-sm);
+        display: inline-block;
+        min-width: 120px;
+    }
+    
+    .estado-iniciado { 
+        background-color: var(--warning-500); 
+        color: var(--warning-50); 
+    }
+    .estado-trabajando { 
+        background-color: var(--primary-600); 
+        color: var(--text-inverse); 
+    }
+    .estado-completado { 
+        background-color: var(--success-600); 
+        color: var(--text-inverse); 
+    }
+    .estado-entregado { 
+        background-color: var(--neutral-600); 
+        color: var(--text-inverse); 
+    }
+    
+    .tab-container {
+        background-color: var(--bg-card);
+        border-radius: var(--border-radius-lg);
+        margin-bottom: var(--spacing-md);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-color);
+    }
+    
+    .tab-nav {
+        display: flex;
+        background-color: var(--bg-secondary);
+        border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+        overflow-x: auto;
+    }
+    
+    .tab-btn {
+        flex: 1;
+        padding: var(--spacing-sm);
+        border: none;
+        background: transparent;
+        color: var(--text-primary);
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        white-space: nowrap;
+        min-width: 80px;
+    }
+    
+    .tab-btn.active {
+        background-color: var(--accent);
+        color: var(--text-inverse);
+    }
+    
+    .tab-content {
+        padding: var(--spacing-md);
+        display: none;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+    
+    .info-card {
+        background-color: var(--bg-card);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-md);
+        margin-bottom: var(--spacing-md);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-color);
+    }
+    
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--spacing-sm) 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .info-row:last-child {
+        border-bottom: none;
+    }
+    
+    .info-label {
+        font-weight: 600;
+        color: var(--accent);
+    }
+    
+    .info-value {
+        color: var(--text-primary);
+        text-align: right;
+    }
+    
+    .btn-action {
+        border-radius: var(--border-radius-full);
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-weight: 600;
+        margin: var(--spacing-xs);
+        min-width: 100px;
+        font-size: 0.9rem;
+    }
+    
+    .btn-mobile {
+        width: 100%;
+        padding: var(--spacing-md);
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    
+    .form-control {
+        background: var(--card-bg);
+        border: 2px solid var(--muted);
+        color: var(--fg);
+        border-radius: var(--border-radius-md);
+        padding: 0.75rem;
+    }
+    
+    .form-control:focus {
+        border-color: var(--btn-bg);
+        box-shadow: 0 0 0 0.2rem rgba(var(--btn-bg), 0.25);
+    }
+    
+    /* Esquemas claros - Selector de mecánicos con color de botón */
+    .theme-cyan input[type="checkbox"]:checked,
+    .theme-cyan input[type="checkbox"]:checked + label,
+    .theme-cyan ul li input[type="checkbox"]:checked,
+    .theme-cyan ul li input[type="checkbox"]:checked + label {
+        background-color: #004d40 !important; /* Color de botón cyan */
+        border-color: #004d40 !important;
+        color: var(--text-inverse) !important;
+    }
+    
+    .theme-sand input[type="checkbox"]:checked,
+    .theme-sand input[type="checkbox"]:checked + label,
+    .theme-sand ul li input[type="checkbox"]:checked,
+    .theme-sand ul li input[type="checkbox"]:checked + label {
+        background-color: #3e2723 !important; /* Color de botón sand */
+        border-color: #3e2723 !important;
+        color: var(--text-inverse) !important;
+    }
+    
+    .theme-sage input[type="checkbox"]:checked,
+    .theme-sage input[type="checkbox"]:checked + label,
+    .theme-sage ul li input[type="checkbox"]:checked,
+    .theme-sage ul li input[type="checkbox"]:checked + label {
+        background-color: #1b5e20 !important; /* Color de botón sage */
+        border-color: #1b5e20 !important;
+        color: var(--text-inverse) !important;
+    }
+    
+    .theme-sky input[type="checkbox"]:checked,
+    .theme-sky input[type="checkbox"]:checked + label,
+    .theme-sky ul li input[type="checkbox"]:checked,
+    .theme-sky ul li input[type="checkbox"]:checked + label {
+        background-color: #0d47a1 !important; /* Color de botón sky */
+        border-color: #0d47a1 !important;
+        color: var(--text-inverse) !important;
+    }
+    
+    .item-list {
+        background: var(--card-bg);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-md);
+        margin-bottom: 1rem;
+    }
+    
+    .item-card {
+        background: var(--muted);
+        border-radius: var(--border-radius-md);
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: #2c3e50 !important; /* Texto oscuro para mejor contraste */
+    }
+    
+    .item-card strong {
+        color: #1a252f !important; /* Texto más oscuro para títulos */
+    }
+    
+    .item-card small {
+        color: #34495e !important; /* Texto oscuro para subtítulos */
+    }
+    
+    /* Esquemas claros - Item-cards con tonos más oscuros para mejor contraste */
+    .theme-cyan .item-card {
+        background-color: #b2dfdb !important; /* Tono más oscuro del cyan */
+        color: #004d40 !important; /* Texto verde oscuro para cyan */
+    }
+    
+    .theme-cyan .item-card strong {
+        color: #00251a !important; /* Título más oscuro para cyan */
+    }
+    
+    .theme-cyan .item-card small {
+        color: #00695c !important; /* Subtítulo oscuro para cyan */
+    }
+    
+    .theme-sand .item-card {
+        background-color: #d7ccc8 !important; /* Tono más oscuro del sand */
+        color: #3e2723 !important; /* Texto marrón oscuro para sand */
+    }
+    
+    .theme-sand .item-card strong {
+        color: #1c0e0a !important; /* Título más oscuro para sand */
+    }
+    
+    .theme-sand .item-card small {
+        color: #5d4037 !important; /* Subtítulo oscuro para sand */
+    }
+    
+    .theme-sage .item-card {
+        background-color: #c8e6c9 !important; /* Tono más oscuro del sage */
+        color: #1b5e20 !important; /* Texto verde oscuro para sage */
+    }
+    
+    .theme-sage .item-card strong {
+        color: #0d3a0f !important; /* Título más oscuro para sage */
+    }
+    
+    .theme-sage .item-card small {
+        color: #2e7d32 !important; /* Subtítulo oscuro para sage */
+    }
+    
+    .theme-sky .item-card {
+        background-color: #bbdefb !important; /* Tono más oscuro del sky */
+        color: #0d47a1 !important; /* Texto azul oscuro para sky */
+    }
+    
+    .theme-sky .item-card strong {
+        color: #051f4a !important; /* Título más oscuro para sky */
+    }
+    
+    .theme-sky .item-card small {
+        color: #1565c0 !important; /* Subtítulo oscuro para sky */
+    }
+    
+    .item-card.completado {
+        background: #d4edda;
+        border-left: 4px solid #198754;
+        color: #155724 !important; /* Texto verde oscuro para completado */
+    }
+    
+    .item-card.completado strong {
+        color: #0d4a1a !important; /* Título más oscuro para completado */
+    }
+    
+    .item-card.completado small {
+        color: #1e7e34 !important; /* Subtítulo oscuro para completado */
+    }
+    
+    .item-card.pendiente {
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+        color: #856404 !important; /* Texto amarillo oscuro para pendiente */
+    }
+    
+    .item-card.pendiente strong {
+        color: #533f03 !important; /* Título más oscuro para pendiente */
+    }
+    
+    .item-card.pendiente small {
+        color: #6c5a04 !important; /* Subtítulo oscuro para pendiente */
+    }
+    
+    /* Estilos específicos para completado y pendiente en cada tema */
+    .theme-cyan .item-card.completado {
+        background: #a5d6a7 !important; /* Verde más oscuro para cyan */
+        color: #1b5e20 !important;
+    }
+    
+    .theme-cyan .item-card.pendiente {
+        background: #fff9c4 !important; /* Amarillo más oscuro para cyan */
+        color: #f57f17 !important;
+    }
+    
+    .theme-sand .item-card.completado {
+        background: #a5d6a7 !important; /* Verde más oscuro para sand */
+        color: #1b5e20 !important;
+    }
+    
+    .theme-sand .item-card.pendiente {
+        background: #fff9c4 !important; /* Amarillo más oscuro para sand */
+        color: #f57f17 !important;
+    }
+    
+    .theme-sage .item-card.completado {
+        background: #a5d6a7 !important; /* Verde más oscuro para sage */
+        color: #1b5e20 !important;
+    }
+    
+    .theme-sage .item-card.pendiente {
+        background: #fff9c4 !important; /* Amarillo más oscuro para sage */
+        color: #f57f17 !important;
+    }
+    
+    .theme-sky .item-card.completado {
+        background: #a5d6a7 !important; /* Verde más oscuro para sky */
+        color: #1b5e20 !important;
+    }
+    
+    .theme-sky .item-card.pendiente {
+        background: #fff9c4 !important; /* Amarillo más oscuro para sky */
+        color: #f57f17 !important;
+    }
+    
+    .toggle-btn {
+        border: none;
+        border-radius: var(--border-radius-xl);
+        padding: var(--spacing-xs) 0.75rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+    }
+    
+    .toggle-btn.completado {
+        background: #198754;
+        color: var(--text-inverse);
+    }
+    
+    .toggle-btn.pendiente {
+        background: #ffc107;
+        color: #000;
+    }
+    
+    .progress-container {
+        background: var(--card-bg);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-md);
+        margin-bottom: 1rem;
+    }
+    
+    .progress-bar-custom {
+        height: 25px;
+        background: var(--muted);
+        border-radius: var(--border-radius-xl);
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #ffc107 0%, #198754 100%);
+        border-radius: var(--border-radius-xl);
+        transition: width 0.5s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-inverse);
+        font-weight: 600;
+    }
+    
+    .foto-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+    
+    .foto-item {
+        border-radius: var(--border-radius-md);
+        overflow: hidden;
+        position: relative;
+        background: var(--card-bg);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .foto-item img {
+        width: 100%;
+        aspect-ratio: 1;
+        object-fit: cover;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    
+    .foto-item img:hover {
+        transform: scale(1.05);
+    }
+    
+    .foto-item .delete-btn {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        background: rgba(220, 53, 69, 0.9);
+        color: var(--text-inverse);
+        border: none;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        z-index: 10;
+    }
+    
+    .foto-descripcion {
+        padding: 0.5rem;
+        font-size: 0.85rem;
+        color: var(--fg);
+        background: var(--bg-secondary);
+        border-top: 1px solid var(--border-color);
+        min-height: 2rem;
+    }
+    
+    /* Modal para fotos expandidas */
+    .foto-modal {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.9);
+        overflow: auto;
+    }
+    
+    .foto-modal.active {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .foto-modal-content {
+        position: relative;
+        max-width: 90%;
+        max-height: 90%;
+        margin: auto;
+    }
+    
+    .foto-modal-content img {
+        width: 100%;
+        height: auto;
+        max-height: 90vh;
+        object-fit: contain;
+        border-radius: 0.5rem;
+    }
+    
+    .foto-modal-close {
+        position: absolute;
+        top: -40px;
+        right: 0;
+        color: #fff;
+        font-size: 2rem;
+        font-weight: bold;
+        cursor: pointer;
+        background: rgba(0,0,0,0.5);
+        border: none;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .foto-modal-close:hover {
+        background: rgba(0,0,0,0.8);
+    }
+    
+    .foto-modal-descripcion {
+        color: #fff;
+        text-align: center;
+        padding: 1rem;
+        font-size: 1rem;
+        background: rgba(0,0,0,0.5);
+        border-radius: 0.5rem;
+        margin-top: 1rem;
+    }
+    
+    .add-form {
+        background: var(--muted);
+        border-radius: var(--border-radius-md);
+        padding: var(--spacing-md);
+        margin-bottom: 1rem;
+        display: none;
+    }
+    
+    .add-form.active {
+        display: block;
+    }
+    
+    .btn-toggle-form {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+    
+    @media (max-width: 768px) {
+        .trabajo-container {
+            padding: var(--spacing-xs);
+        }
+        
+        .tab-nav {
+            flex-direction: column;
+        }
+        
+        .tab-btn {
+            border-bottom: 1px solid var(--muted);
+        }
+        
+        .tab-btn:last-child {
+            border-bottom: none;
+        }
+        
+        .info-row {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .info-value {
+            text-align: left;
+            margin-top: 0.25rem;
+        }
+        
+        .btn-action {
+            width: 100%;
+            margin: var(--spacing-xs) 0;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="trabajo-container">
+    <!-- Header del Trabajo -->
+    <div class="trabajo-header">
+        <h2>🔧 Trabajo #{{ trabajo.id }}</h2>
+        <h4>{{ trabajo.vehiculo }}</h4>
+        <p class="mb-0">{{ trabajo.vehiculo.cliente.nombre }} - {{ trabajo.vehiculo.cliente.telefono }}</p>
+    </div>
+
+    <!-- Estado Actual -->
+    <div class="info-card text-center">
+        <h5>Estado Actual</h5>
+        <div class="estado-badge estado-{{ trabajo.estado }}">
+            {% if trabajo.estado == 'iniciado' %}🟡 Iniciado
+            {% elif trabajo.estado == 'trabajando' %}🔵 Trabajando
+            {% elif trabajo.estado == 'completado' %}🟢 Completado
+            {% elif trabajo.estado == 'entregado' %}⚫ Entregado
+            {% endif %}
+        </div>
+        
+        <!-- Barra de Progreso -->
+        <div class="progress-container">
+            <div class="progress-bar-custom">
+                <div class="progress-fill" style="width: {{ trabajo.porcentaje_avance }}%;">
+                    {{ trabajo.porcentaje_avance }}%
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navegación por Pestañas -->
+    <div class="tab-container">
+        <div class="tab-nav">
+            <button class="tab-btn {% if active_tab == 'info' %}active{% endif %}" onclick="showTab('info')">📋 Info</button>
+            <button class="tab-btn {% if active_tab == 'acciones' %}active{% endif %}" onclick="showTab('acciones')">🛠️ Acciones</button>
+            <button class="tab-btn {% if active_tab == 'repuestos' %}active{% endif %}" onclick="showTab('repuestos')">🔧 Repuestos</button>
+            <button class="tab-btn {% if active_tab == 'insumos' %}active{% endif %}" onclick="showTab('insumos')">📦 Insumos</button>
+            <button class="tab-btn {% if active_tab == 'adicionales' %}active{% endif %}" onclick="showTab('adicionales')">➕ Adicionales</button>
+            <button class="tab-btn {% if active_tab == 'fotos' %}active{% endif %}" onclick="showTab('fotos')">📷 Fotos</button>
+            <button class="tab-btn {% if active_tab == 'abonos' %}active{% endif %}" onclick="showTab('abonos')">💵 Abonos</button>
+            <button class="tab-btn {% if active_tab == 'estado' %}active{% endif %}" onclick="showTab('estado')">⚡ Estado</button>
+        </div>
+
+        <!-- Pestaña: Información -->
+        <div id="tab-info" class="tab-content {% if active_tab == 'info' %}active{% endif %}">
+            <div class="info-card">
+                <h5>📋 Información del Trabajo</h5>
+                
+                <div class="info-row">
+                    <span class="info-label">Cliente:</span>
+                    <span class="info-value">{{ trabajo.vehiculo.cliente.nombre }}</span>
+                </div>
+                
+                <div class="info-row">
+                    <span class="info-label">Teléfono:</span>
+                    <span class="info-value">{{ trabajo.vehiculo.cliente.telefono }}</span>
+                </div>
+                
+                <div class="info-row">
+                    <span class="info-label">Vehículo:</span>
+                    <span class="info-value">{{ trabajo.vehiculo.marca }} {{ trabajo.vehiculo.modelo }} {{ trabajo.vehiculo.anio }}</span>
+                </div>
+                
+                <div class="info-row">
+                    <span class="info-label">Placa:</span>
+                    <span class="info-value">{{ trabajo.vehiculo.placa }}</span>
+                </div>
+                
+                <div class="info-row">
+                    <span class="info-label">Fecha Inicio:</span>
+                    <span class="info-value">{{ trabajo.fecha_inicio|date:"d/m/Y H:i"|default:"No iniciado" }}</span>
+                </div>
+                
+                <div class="info-row">
+                    <span class="info-label">Fecha Fin:</span>
+                    <span class="info-value">{{ trabajo.fecha_fin|date:"d/m/Y H:i"|default:"En progreso" }}</span>
+                </div>
+            </div>
+            
+            <!-- Resumen Financiero Rápido -->
+            <div class="info-card" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
+                <h5>💰 Resumen Financiero</h5>
+                
+                <div class="info-row" style="border-bottom: 1px solid #dee2e6;">
+                    <span class="info-label" style="color: #6c757d;">Mano de Obra:</span>
+                    <span class="info-value" style="color: #001f3f !important; font-weight: 600;">${{ trabajo.total_mano_obra|default:0|floatformat:0|intcomma }}</span>
+                </div>
+                <div class="info-row" style="border-bottom: 1px solid #dee2e6;">
+                    <span class="info-label" style="color: #6c757d;">Repuestos:</span>
+                    <span class="info-value" style="color: #001f3f !important; font-weight: 600;">${{ trabajo.total_repuestos|default:0|floatformat:0|intcomma }}</span>
+                </div>
+                {% if trabajo.total_adicionales > 0 %}
+                <div class="info-row" style="border-bottom: 1px solid #dee2e6;">
+                    <span class="info-label" style="color: #6c757d;">Adicionales:</span>
+                    <span class="info-value" style="color: #001f3f !important; font-weight: 600;">${{ trabajo.total_adicionales|default:0|floatformat:0|intcomma }}</span>
+                </div>
+                {% endif %}
+                {% if trabajo.total_descuentos > 0 %}
+                <div class="info-row" style="border-bottom: 1px solid #dee2e6;">
+                    <span class="info-label" style="color: #dc3545;">Descuentos:</span>
+                    <span class="info-value" style="color: #dc3545;">-${{ trabajo.total_descuentos|default:0|floatformat:0|intcomma }}</span>
+                </div>
+                {% endif %}
+                <div class="info-row" style="border-bottom: 2px solid #dee2e6;">
+                    <span class="info-label" style="color: #0d6efd;">📊 Total Presupuesto:</span>
+                    <span class="info-value"><strong style="color: #0d6efd; font-size: 1.1rem;">${{ trabajo.total_presupuesto|default:0|floatformat:0|intcomma }}</strong></span>
+                </div>
+                
+                <div class="info-row" style="border-bottom: 2px solid #dee2e6;">
+                    <span class="info-label" style="color: #198754;">✅ Total Ejecutado:</span>
+                    <span class="info-value"><strong style="color: #198754; font-size: 1.1rem;">${{ trabajo.total_realizado|default:0|floatformat:0|intcomma }}</strong></span>
+                </div>
+                
+                <div class="info-row" style="border-bottom: 2px solid #dee2e6;">
+                    <span class="info-label" style="color: #ffc107;">💳 Total Abonos:</span>
+                    <span class="info-value"><strong style="color: #ffc107; font-size: 1.1rem;">${{ trabajo.total_abonos|default:0|floatformat:0|intcomma }}</strong></span>
+                </div>
+                
+                <div class="info-row" style="background: {% if trabajo.saldo_pendiente > 0 %}#fff3cd{% else %}#d1e7dd{% endif %}; padding: 0.75rem; margin-top: 0.5rem; border-radius: 0.5rem;">
+                    <span class="info-label" style="font-size: 1.1rem; color: {% if trabajo.saldo_pendiente > 0 %}#dc3545{% else %}#198754{% endif %};">💵 Saldo Pendiente:</span>
+                    <span class="info-value"><strong style="color: {% if trabajo.saldo_pendiente > 0 %}#dc3545{% else %}#198754{% endif %}; font-size: 1.3rem;">${{ trabajo.saldo_pendiente|default:0|floatformat:0|intcomma }}</strong></span>
+                </div>
+            </div>
+
+            <!-- Campo Observaciones -->
+            <div class="info-card">
+                <h5>📝 Observaciones</h5>
+                <form method="post" id="observaciones-form">
+                    {% csrf_token %}
+                    <textarea name="observaciones" class="form-control" rows="4" 
+                              placeholder="Agregar observaciones sobre el trabajo...">{{ trabajo.observaciones|default:"" }}</textarea>
+                    <button type="submit" name="guardar_observaciones" class="btn btn-primary btn-action mt-2">
+                        💾 Guardar Observaciones
+                    </button>
+                </form>
+            </div>
+
+            <!-- Campo Kilometraje -->
+            <div class="info-card">
+                <h5>🚗 Kilometraje del Vehículo</h5>
+                <form method="post" id="kilometraje-form">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="lectura_kilometraje" class="form-label">Lectura del Odómetro (km) - Opcional</label>
+                        <input type="number" 
+                               name="lectura_kilometraje_actual" 
+                               id="lectura_kilometraje" 
+                               class="form-control" 
+                               value="{{ trabajo.lectura_kilometraje_actual|default:'' }}"
+                               placeholder="Ej: 45000"
+                               min="0"
+                               step="1">
+                        <small class="form-text text-muted">Registra el kilometraje actual del vehículo al momento del ingreso</small>
+                    </div>
+                    <button type="submit" name="guardar_kilometraje" class="btn btn-primary btn-action">
+                        💾 Guardar Kilometraje
+                    </button>
+                </form>
+            </div>
+
+            <!-- Mecánicos Asignados -->
+            <div class="info-card">
+                <h5>👷 Mecánicos Asignados</h5>
+                {% if trabajo.mecanicos.exists %}
+                    {% for mec in trabajo.mecanicos.all %}
+                        <div class="item-card">
+                            <div>
+                                <strong>{{ mec.user.get_full_name|default:mec.user.first_name }}</strong>
+                                {% if mec.especialidad %}
+                                    <br><small>{{ mec.especialidad }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-secondary">No hay mecánicos asignados</p>
+                {% endif %}
+                
+                <form method="post">
+                    {% csrf_token %}
+                    {{ asignar_form.as_p }}
+                    <button type="submit" name="asignar_mecanicos" class="btn btn-primary btn-action">
+                        👷 Asignar Mecánicos
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Pestaña: Acciones -->
+        <div id="tab-acciones" class="tab-content {% if active_tab == 'acciones' %}active{% endif %}">
+            <div class="info-card">
+                <h5>🛠️ Acciones del Trabajo</h5>
+                
+                <!-- Acordeón de Componentes (como en ingreso.html) -->
+                <h6 class="mt-3 mb-2">📋 Seleccionar Componentes</h6>
+                <div class="accordion" id="componentesAccordion" style="--bs-accordion-bg: var(--bg-card);">
+                    {% for padre in componentes %}
+                        <div class="accordion-item" style="background-color: var(--bg-card) !important;">
+                            <h2 class="accordion-header" id="heading-{{ padre.id }}">
+                                <button class="accordion-button collapsed" type="button"
+                                        data-bs-toggle="collapse" data-bs-target="#collapse-{{ padre.id }}"
+                                        aria-expanded="false" aria-controls="collapse-{{ padre.id }}"
+                                        style="background-color: var(--bg-card) !important;">
+                                    {{ padre.nombre }}
+                                </button>
+                            </h2>
+                            <div id="collapse-{{ padre.id }}" class="accordion-collapse collapse"
+                                 aria-labelledby="heading-{{ padre.id }}" data-bs-parent="#componentesAccordion">
+                                <div class="accordion-body" style="background-color: var(--bg-card) !important;">
+                                    {% for hijo in padre.hijos.all %}
+                                        <div class="form-check">
+                                            <input class="form-check-input componente-checkbox"
+                                                   type="checkbox"
+                                                   name="componentes_seleccionados"
+                                                   value="{{ hijo.id }}"
+                                                   id="comp-{{ hijo.id }}"
+                                                   data-componente-id="{{ hijo.id }}"
+                                                   data-componente-nombre="{{ hijo.nombre }}"
+                                                   onclick="console.log('🎯 CLICK EN CHECKBOX:', this.id, this.dataset.componenteId, this.dataset.componenteNombre, 'Checked:', this.checked); if(this.checked) { agregarComponenteSeleccionado(this.dataset.componenteId, this.dataset.componenteNombre); } else { removerComponenteSeleccionado(this.dataset.componenteId); }">
+                                            <label class="form-check-label" for="comp-{{ hijo.id }}" style="color: var(--text-primary) !important; font-weight: bold;">
+                                                {{ hijo.nombre }}
+                                            </label>
+                                        </div>
+                                    {% empty %}
+                                        <p class="text-secondary small">No hay subcomponentes registrados.</p>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="alert alert-warning">
+                            <strong>⚠️ Sin componentes disponibles</strong><br>
+                            No hay componentes activos en el sistema.
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- 🔽 Lista de componentes elegidos (como en ingreso.html) -->
+                <div id="componentes-seleccionados" class="mt-3">
+                    <h6>📋 Componentes seleccionados:</h6>
+                    <ul id="lista-seleccionados" class="list-group small"></ul>
+                    
+                    <!-- ====== BLOQUE ACCIONES ====== -->
+                    <div class="card mt-2">
+                        <div class="card-body p-2">
+                            <h3 class="h6">🛠️ Acciones para componentes seleccionados</h3>
+                            <ul id="acciones-para-componentes" class="list-group list-group-flush small"></ul>
+                            <input type="hidden" id="acciones_componentes_json" name="acciones_componentes_json" value="[]">
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <div>
+                                    <button type="button" class="btn btn-success btn-sm" id="guardar-acciones-btn" onclick="guardarAccionesSeleccionadas()">
+                                        💾 Guardar Acciones Seleccionadas
+                                    </button>
+                                    <button type="button" class="btn btn-secondary btn-sm ms-2" onclick="limpiarSeleccion()">
+                                        🗑️ Limpiar Selección
+                                    </button>
+                                </div>
+                                <div class="text-end">
+                                    <div class="small text-secondary">Total mano de obra</div>
+                                    <div class="fw-bold" id="total_mano_obra">$0</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- ====== FIN BLOQUE ACCIONES ====== -->
+                </div>
+                
+                <hr class="my-4">
+                
+                <!-- Lista de acciones existentes -->
+                <h6>🛠️ Acciones Registradas</h6>
+                {% for accion in trabajo.acciones.all %}
+                    <div class="item-card {% if accion.completado %}completado{% else %}pendiente{% endif %}">
+                        <div style="flex: 1;">
+                            <div>
+                                <strong>{{ accion.componente.nombre }}</strong>
+                                <span class="badge {% if accion.completado %}bg-success{% else %}bg-warning{% endif %} ms-2">
+                                    {% if accion.completado %}✅ Completado{% else %}⏳ Pendiente{% endif %}
+                                </span>
+                            </div>
+                            <div class="mt-1">
+                                <small class="text-secondary">{{ accion.accion.nombre }}</small>
+                                {% if accion.cantidad > 1 %}
+                                    <span class="badge bg-info ms-2">Cantidad: {{ accion.cantidad }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="mt-2">
+                                {% if accion.cantidad > 1 %}
+                                    <div style="font-size: 0.9rem; color: #6c757d;">
+                                        <span>Precio unitario: ${{ accion.precio_mano_obra|default:0|floatformat:0|intcomma }}</span>
+                                        <span class="mx-1">×</span>
+                                        <span>{{ accion.cantidad }}</span>
+                                        <span class="mx-1">=</span>
+                                    </div>
+                                {% endif %}
+                                <strong class="text-success" style="font-size: 1.1rem;">
+                                    💰 ${{ accion.subtotal|default:0|floatformat:0|intcomma }}
+                                </strong>
+                                {% if accion.cantidad == 1 %}
+                                    <small class="text-muted ms-2">(unitario)</small>
+                                {% endif %}
+                                {% if not accion.precio_mano_obra or accion.precio_mano_obra == 0 %}
+                                    <span class="badge bg-danger ms-2">Sin precio</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; align-items: center; flex-direction: column;">
+                            <!-- Formulario para editar cantidad -->
+                            <form method="post" style="display: inline-flex; gap: 0.25rem; align-items: center;" onsubmit="return confirm('¿Actualizar cantidad de esta acción?')">
+                                {% csrf_token %}
+                                <input type="hidden" name="accion_id" value="{{ accion.id }}">
+                                <input type="number" 
+                                       name="cantidad_accion" 
+                                       value="{{ accion.cantidad }}" 
+                                       min="1" 
+                                       step="1"
+                                       style="width: 60px; padding: 0.25rem; text-align: center; border: 1px solid #dee2e6; border-radius: 0.25rem;"
+                                       title="Cantidad">
+                                <button type="submit" name="editar_cantidad_accion" class="btn btn-sm btn-outline-primary" title="Actualizar cantidad">
+                                    ✏️
+                                </button>
+                            </form>
+                            <!-- Formulario para editar precio -->
+                            <form method="post" style="display: inline-flex; gap: 0.25rem; align-items: center;" onsubmit="return confirm('¿Actualizar precio de esta acción? Este cambio solo afectará a este trabajo.')">
+                                {% csrf_token %}
+                                <input type="hidden" name="accion_id" value="{{ accion.id }}">
+                                <div style="display: flex; flex-direction: column; gap: 0.1rem; align-items: center;">
+                                    <label style="font-size: 0.7rem; color: #6c757d; white-space: nowrap;">Precio:</label>
+                                    <input type="number" 
+                                           name="precio_accion" 
+                                           value="{{ accion.precio_mano_obra|default:0|floatformat:0 }}" 
+                                           min="0" 
+                                           step="0.01"
+                                           style="width: 90px; padding: 0.25rem; text-align: center; border: 1px solid #dee2e6; border-radius: 0.25rem;"
+                                           title="Precio unitario">
+                                </div>
+                                <button type="submit" name="editar_precio_accion" class="btn btn-sm btn-outline-success" title="Actualizar precio">
+                                    💰
+                                </button>
+                            </form>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <form method="post" style="display: inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="accion_id" value="{{ accion.id }}">
+                                    <button type="submit" name="toggle_accion" 
+                                            class="toggle-btn {% if accion.completado %}completado{% else %}pendiente{% endif %}"
+                                            title="Cambiar estado">
+                                        {% if accion.completado %}✅{% else %}⏳{% endif %}
+                                    </button>
+                                </form>
+                                <form method="post" style="display: inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="accion_id" value="{{ accion.id }}">
+                                    <button type="submit" name="eliminar_accion" class="btn btn-danger btn-sm" 
+                                            onclick="return confirm('¿Eliminar esta acción?')"
+                                            title="Eliminar acción">
+                                        🗑️
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="text-secondary">No hay acciones registradas</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Pestaña: Repuestos -->
+        <div id="tab-repuestos" class="tab-content {% if active_tab == 'repuestos' %}active{% endif %}">
+            <div class="info-card">
+                <h5>🔧 Repuestos del Trabajo</h5>
+                
+                <!-- Información del filtro inteligente -->
+                <div class="alert alert-info mb-3">
+                    <small>
+                        <strong>🧠 Filtro Inteligente Activo:</strong> 
+                        Los repuestos sugeridos están filtrados automáticamente por las características del vehículo 
+                        (marca: <strong>{{ trabajo.vehiculo.marca|default:"No especificada" }}</strong>, 
+                        motor: <strong>{{ trabajo.vehiculo.descripcion_motor|default:"No especificado" }}</strong>)
+                        y los componentes ya seleccionados en el trabajo.
+                    </small>
+                </div>
+                
+                <!-- 🔧 Repuestos -->
+                <h6 class="mt-3 mb-2">🔧 Repuestos</h6>
+                <div class="btn-group mb-3 w-100" role="group">
+                    <button type="button" class="btn btn-outline-primary" onclick="cargarRepuestosTrabajo()">
+                        📦 Inventario Propio
+                    </button>
+                    <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#modalRepuestosExternosTrabajo">
+                        🌐 Proveedores Externos
+                    </button>
+                </div>
+
+                <!-- Contenedor para repuestos sugeridos -->
+                <div id="repuestos-list-trabajo"
+                     data-preview-url="{% url 'sugerir_repuestos_preview' %}"
+                     data-with-id-template="{% url 'sugerir_repuestos' 0 %}">
+                    <p class="text-secondary">Busca en inventario propio o proveedores externos.</p>
+                </div>
+
+                <hr>
+                
+                <!-- 🧾 Repuestos agregados al trabajo -->
+                <h6>🧾 Repuestos agregados al trabajo</h6>
+                <div id="tabla-contenido-trabajo">
+                    {% for repuesto in trabajo.repuestos.all %}
+                        <div class="item-card {% if repuesto.completado %}completado{% else %}pendiente{% endif %}">
+                            <div>
+                                <strong>
+                                    {% if repuesto.repuesto_externo %}
+                                        🌐 {{ repuesto.repuesto_externo.nombre }}
+                                    {% elif repuesto.repuesto %}
+                                        {{ repuesto.repuesto.nombre }}
+                                    {% else %}
+                                        Repuesto sin nombre
+                                    {% endif %}
+                                </strong><br>
+                                <small>Cantidad: {{ repuesto.cantidad }}</small>
+                                {% if repuesto.precio_unitario %}
+                                    <br><small class="text-success">${{ repuesto.precio_unitario|floatformat:0|intcomma }} c/u</small>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <form method="post" style="display: inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="repuesto_id" value="{{ repuesto.id }}">
+                                    <button type="submit" name="toggle_repuesto" 
+                                            class="toggle-btn {% if repuesto.completado %}completado{% else %}pendiente{% endif %}">
+                                        {% if repuesto.completado %}✅ Completado{% else %}⏳ Pendiente{% endif %}
+                                    </button>
+                                </form>
+                                <form method="post" style="display: inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="repuesto_id" value="{{ repuesto.id }}">
+                                    <button type="submit" name="eliminar_repuesto" class="btn btn-danger btn-sm" 
+                                            onclick="return confirm('¿Eliminar este repuesto?')">
+                                        🗑️
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <p class="text-secondary">No hay repuestos registrados</p>
+                    {% endfor %}
+                </div>
+                
+                <!-- Hidden input para enviar repuestos seleccionados -->
+                <input type="hidden" name="repuestos_json" id="repuestos-json-trabajo">
+            </div>
+        </div>
+
+        <!-- Pestaña: Insumos -->
+        <div id="tab-insumos" class="tab-content {% if active_tab == 'insumos' %}active{% endif %}">
+            <div class="info-card">
+                <h5>📦 Insumos del Trabajo</h5>
+                
+                <!-- Información del filtro amplio -->
+                <div class="alert alert-info mb-3">
+                    <small>
+                        <strong>🔍 Búsqueda Amplia:</strong> 
+                        Aquí puedes buscar y agregar cualquier insumo del inventario completo sin restricciones de compatibilidad.
+                    </small>
+                </div>
+                
+                <!-- Búsqueda de insumos -->
+                <div class="mb-3">
+                    <label for="buscar-insumo" class="form-label">🔍 Buscar Insumo:</label>
+                    <div class="input-group">
+                        <input type="text" id="buscar-insumo" class="form-control" placeholder="Buscar por nombre, SKU, código... (escribe para filtrar)">
+                        <button class="btn btn-outline-primary" type="button" onclick="buscarInsumos()">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    <small class="text-muted">La búsqueda se realiza automáticamente mientras escribes (mínimo 2 caracteres)</small>
+                    <div class="mt-2">
+                        <button class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('buscar-insumo').value='aceite'; buscarInsumos();">Probar: aceite</button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('buscar-insumo').value='xxxx'; buscarInsumos();">Probar: xxxx</button>
+                    </div>
+                </div>
+                
+                <!-- Lista de insumos disponibles -->
+                <div id="insumos-disponibles" class="mb-3">
+                    <h6>📋 Insumos Disponibles:</h6>
+                    <div class="list-group" id="lista-insumos-disponibles">
+                        <!-- Los insumos se cargarán aquí dinámicamente -->
+                    </div>
+                </div>
+                
+                <!-- Insumos agregados al trabajo - Lista espejo -->
+                <div class="mb-3">
+                    <h6>✅ Insumos Agregados al Trabajo:</h6>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> 
+                        <strong>Lista Espejo:</strong> Los insumos agregados aparecerán automáticamente en la pestaña "Repuestos" del trabajo.
+                        <br><small>Esta pestaña es para buscar y agregar nuevos insumos.</small>
+                    </div>
+                </div>
+                
+                <!-- Botón para agregar insumos -->
+                <div class="d-grid">
+                    <button class="btn btn-success" onclick="agregarInsumos()">
+                        <i class="fas fa-plus"></i> Agregar Insumos al Trabajo
+                    </button>
+                </div>
+                
+                <!-- Formulario oculto para enviar datos -->
+                <form method="post" id="form-insumos" style="display: none;">
+                    {% csrf_token %}
+                    <input type="hidden" name="insumos_json" id="insumos-json-trabajo">
+                </form>
+            </div>
+        </div>
+
+        <!-- Pestaña: Adicionales -->
+        <div id="tab-adicionales" class="tab-content {% if active_tab == 'adicionales' %}active{% endif %}">
+            <!-- Formulario para Agregar Adicional -->
+            <div class="info-card">
+                <h5>➕ Registrar Concepto Adicional</h5>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label class="form-label">Concepto / Descripción *</label>
+                            <textarea class="form-control" 
+                                      name="concepto_adicional" 
+                                      rows="3"
+                                      placeholder="Ej: Servicio de grúa, Material adicional, Servicio extra..."
+                                      required></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Monto *</label>
+                            <input type="number" 
+                                   class="form-control" 
+                                   name="monto_adicional" 
+                                   step="0.01" 
+                                   min="0.01"
+                                   placeholder="0.00"
+                                   required>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check mt-4">
+                                <input class="form-check-input" 
+                                       type="checkbox" 
+                                       name="es_descuento" 
+                                       id="es_descuento">
+                                <label class="form-check-label" for="es_descuento">
+                                    🏷️ Es Descuento (restará del total en lugar de sumar)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button type="submit" name="agregar_adicional" class="btn btn-success btn-action">
+                            💰 Agregar Concepto
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Lista de Adicionales y Descuentos -->
+            <div class="info-card">
+                <h5>📋 Conceptos Adicionales y Descuentos</h5>
+                
+                {% if trabajo.adicionales.all %}
+                    <!-- Adicionales -->
+                    {% regroup trabajo.adicionales.all by descuento as adicionales_grouped %}
+                    {% for group in adicionales_grouped %}
+                        {% if not group.grouper %}
+                        <h6 class="mt-3 mb-2">➕ Conceptos Adicionales</h6>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Concepto</th>
+                                        <th>Monto</th>
+                                        <th>Registrado por</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for adicional in group.list %}
+                                    <tr>
+                                        <td>{{ adicional.fecha|date:"d/m/Y H:i" }}</td>
+                                        <td>{{ adicional.concepto }}</td>
+                                        <td>
+                                            <strong class="text-success">${{ adicional.monto|floatformat:0|intcomma }}</strong>
+                                        </td>
+                                        <td>{{ adicional.usuario.username|default:"Sistema" }}</td>
+                                        <td>
+                                            <form method="post" class="d-inline" onsubmit="return confirm('¿Eliminar este concepto adicional?')">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="adicional_id" value="{{ adicional.id }}">
+                                                <button type="submit" name="eliminar_adicional" class="btn btn-outline-danger btn-sm">
+                                                    🗑️ Eliminar
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                    <tr class="table-success">
+                                        <td colspan="2"><strong>TOTAL ADICIONALES:</strong></td>
+                                        <td><strong>${{ trabajo.total_adicionales|floatformat:0|intcomma }}</strong></td>
+                                        <td colspan="2"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    <!-- Descuentos -->
+                    {% for group in adicionales_grouped %}
+                        {% if group.grouper %}
+                        <h6 class="mt-4 mb-2">🏷️ Descuentos Aplicados</h6>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Concepto</th>
+                                        <th>Monto</th>
+                                        <th>Registrado por</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for adicional in group.list %}
+                                    <tr>
+                                        <td>{{ adicional.fecha|date:"d/m/Y H:i" }}</td>
+                                        <td>{{ adicional.concepto }}</td>
+                                        <td>
+                                            <strong class="text-danger">-${{ adicional.monto|floatformat:0|intcomma }}</strong>
+                                        </td>
+                                        <td>{{ adicional.usuario.username|default:"Sistema" }}</td>
+                                        <td>
+                                            <form method="post" class="d-inline" onsubmit="return confirm('¿Eliminar este descuento?')">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="adicional_id" value="{{ adicional.id }}">
+                                                <button type="submit" name="eliminar_adicional" class="btn btn-outline-danger btn-sm">
+                                                    🗑️ Eliminar
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                    <tr class="table-danger">
+                                        <td colspan="2"><strong>TOTAL DESCUENTOS:</strong></td>
+                                        <td><strong>-${{ trabajo.total_descuentos|floatformat:0|intcomma }}</strong></td>
+                                        <td colspan="2"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <div class="alert alert-info text-center">
+                        <i class="fas fa-info-circle"></i>
+                        No hay conceptos adicionales registrados para este trabajo
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Pestaña: Fotos -->
+        <div id="tab-fotos" class="tab-content {% if active_tab == 'fotos' %}active{% endif %}">
+            <div class="info-card">
+                <h5>📷 Fotos del Progreso</h5>
+                
+                <!-- Formulario para subir foto -->
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <input type="file" name="imagen" class="form-control" accept="image/*" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" name="descripcion" class="form-control" placeholder="Descripción de la foto (opcional)">
+                    </div>
+                    <button type="submit" name="subir_foto" class="btn btn-primary btn-action">
+                        📷 Subir Foto
+                    </button>
+                </form>
+                
+                <!-- Grid de fotos -->
+                <div class="foto-grid">
+                    {% for foto in trabajo.fotos.all %}
+                        <div class="foto-item">
+                            <img src="{{ foto.imagen.url }}" alt="{{ foto.descripcion|default:'Foto del trabajo' }}" 
+                                 onclick="abrirFotoModal('{{ foto.imagen.url }}', '{{ foto.descripcion|default:""|escapejs }}')">
+                            <button class="delete-btn" onclick="eliminarFoto({{ foto.id }})" title="Eliminar foto">×</button>
+                            {% if foto.descripcion %}
+                                <div class="foto-descripcion">
+                                    {{ foto.descripcion }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% empty %}
+                        <p class="text-secondary">No hay fotos subidas</p>
+                    {% endfor %}
+                </div>
+                
+                <!-- Modal para fotos expandidas -->
+                <div id="fotoModal" class="foto-modal" onclick="cerrarFotoModal()">
+                    <div class="foto-modal-content" onclick="event.stopPropagation()">
+                        <button class="foto-modal-close" onclick="cerrarFotoModal()">&times;</button>
+                        <img id="fotoModalImg" src="" alt="Foto expandida">
+                        <div id="fotoModalDescripcion" class="foto-modal-descripcion"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pestaña: Abonos -->
+        <div id="tab-abonos" class="tab-content {% if active_tab == 'abonos' %}active{% endif %}">
+            <!-- Resumen Financiero -->
+            <div class="info-card" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border: 2px solid #dee2e6;">
+                <h5 class="text-center mb-3">💰 Resumen Financiero</h5>
+                
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <div class="card" style="background: #e7f3ff; border-left: 4px solid #0d6efd;">
+                            <div class="card-body">
+                                <h6 class="card-title text-primary">📊 Total Presupuestado</h6>
+                                <div class="d-flex justify-content-between">
+                                    <small>Mano de Obra:</small>
+                                    <strong>${{ trabajo.total_mano_obra|floatformat:0|intcomma }}</strong>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <small>Repuestos:</small>
+                                    <strong>${{ trabajo.total_repuestos|floatformat:0|intcomma }}</strong>
+                                </div>
+                                {% if trabajo.total_adicionales > 0 %}
+                                <div class="d-flex justify-content-between">
+                                    <small>Adicionales:</small>
+                                    <strong>${{ trabajo.total_adicionales|floatformat:0|intcomma }}</strong>
+                                </div>
+                                {% endif %}
+                                {% if trabajo.total_descuentos > 0 %}
+                                <div class="d-flex justify-content-between">
+                                    <small style="color: #dc3545;">Descuentos:</small>
+                                    <strong style="color: #dc3545;">-${{ trabajo.total_descuentos|floatformat:0|intcomma }}</strong>
+                                </div>
+                                {% endif %}
+                                <hr class="my-2">
+                                <div class="d-flex justify-content-between">
+                                    <strong>TOTAL:</strong>
+                                    <strong class="text-primary">${{ trabajo.total_presupuesto|floatformat:0|intcomma }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card" style="background: #e7f9ef; border-left: 4px solid #198754;">
+                            <div class="card-body">
+                                <h6 class="card-title text-success">✅ Total Realizado</h6>
+                                <div class="d-flex justify-content-between">
+                                    <small>Mano de Obra:</small>
+                                    <strong>${{ trabajo.total_realizado_mano_obra|floatformat:0|intcomma }}</strong>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <small>Repuestos:</small>
+                                    <strong>${{ trabajo.total_realizado_repuestos|floatformat:0|intcomma }}</strong>
+                                </div>
+                                {% if trabajo.total_realizado_adicionales > 0 %}
+                                <div class="d-flex justify-content-between">
+                                    <small>Adicionales:</small>
+                                    <strong>${{ trabajo.total_realizado_adicionales|floatformat:0|intcomma }}</strong>
+                                </div>
+                                {% endif %}
+                                {% if trabajo.total_realizado_descuentos > 0 %}
+                                <div class="d-flex justify-content-between">
+                                    <small style="color: #dc3545;">Descuentos:</small>
+                                    <strong style="color: #dc3545;">-${{ trabajo.total_realizado_descuentos|floatformat:0|intcomma }}</strong>
+                                </div>
+                                {% endif %}
+                                <hr class="my-2">
+                                <div class="d-flex justify-content-between">
+                                    <strong>TOTAL:</strong>
+                                    <strong class="text-success">${{ trabajo.total_realizado|floatformat:0|intcomma }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="card" style="background: #fff3cd; border-left: 4px solid #ffc107;">
+                            <div class="card-body text-center">
+                                <small class="text-muted">💳 Total Abonos</small>
+                                <h4 class="mb-0 text-warning">${{ trabajo.total_abonos|floatformat:0|intcomma }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card" style="background: {% if trabajo.saldo_pendiente > 0 %}#f8d7da{% else %}#d1e7dd{% endif %}; border-left: 4px solid {% if trabajo.saldo_pendiente > 0 %}#dc3545{% else %}#198754{% endif %};">
+                            <div class="card-body text-center">
+                                <small class="text-muted">💵 Saldo Pendiente</small>
+                                <h4 class="mb-0" style="color: {% if trabajo.saldo_pendiente > 0 %}#dc3545{% else %}#198754{% endif %};">
+                                    ${{ trabajo.saldo_pendiente|floatformat:0|intcomma }}
+                                </h4>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card" style="background: #e2e3e5; border-left: 4px solid #6c757d;">
+                            <div class="card-body text-center">
+                                <small class="text-muted">📊 % Cobrado</small>
+                                <h4 class="mb-0 text-dark">{{ trabajo.porcentaje_cobrado }}%</h4>
+                                <div class="progress mt-2" style="height: 8px;">
+                                    <div class="progress-bar bg-success" style="width: {{ trabajo.porcentaje_cobrado }}%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulario para Agregar Abono -->
+            <div class="info-card">
+                <h5>➕ Registrar Nuevo Abono</h5>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Monto del Abono *</label>
+                            <input type="number" 
+                                   class="form-control" 
+                                   name="monto_abono" 
+                                   step="0.01" 
+                                   min="0.01"
+                                   placeholder="0.00"
+                                   required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Método de Pago *</label>
+                            <select class="form-select" name="metodo_pago" required>
+                                <option value="efectivo">💵 Efectivo</option>
+                                <option value="tarjeta">💳 Tarjeta</option>
+                                <option value="transferencia">🏦 Transferencia</option>
+                                <option value="cheque">📝 Cheque</option>
+                                <option value="otro">📄 Otro</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Descripción (opcional)</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   name="descripcion_abono" 
+                                   placeholder="Ej: Anticipo inicial">
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button type="submit" name="agregar_abono" class="btn btn-success btn-action">
+                            💵 Registrar Abono
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Lista de Abonos -->
+            <div class="info-card">
+                <h5>📋 Historial de Abonos</h5>
+                
+                {% if trabajo.abonos.all %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Monto</th>
+                                    <th>Método</th>
+                                    <th>Descripción</th>
+                                    <th>Registrado por</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for abono in trabajo.abonos.all %}
+                                <tr>
+                                    <td>{{ abono.fecha|date:"d/m/Y H:i" }}</td>
+                                    <td>
+                                        <strong class="text-success">${{ abono.monto|floatformat:0|intcomma }}</strong>
+                                    </td>
+                                    <td>
+                                        {% if abono.metodo_pago == 'efectivo' %}💵 Efectivo
+                                        {% elif abono.metodo_pago == 'tarjeta' %}💳 Tarjeta
+                                        {% elif abono.metodo_pago == 'transferencia' %}🏦 Transferencia
+                                        {% elif abono.metodo_pago == 'cheque' %}📝 Cheque
+                                        {% else %}📄 Otro
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ abono.descripcion|default:"-" }}</td>
+                                    <td>{{ abono.usuario.username|default:"Sistema" }}</td>
+                                    <td>
+                                        <form method="post" class="d-inline" onsubmit="return confirm('¿Eliminar este abono?')">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="abono_id" value="{{ abono.id }}">
+                                            <button type="submit" name="eliminar_abono" class="btn btn-outline-danger btn-sm">
+                                                🗑️ Eliminar
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr class="table-success">
+                                    <td colspan="1"><strong>TOTAL ABONOS:</strong></td>
+                                    <td><strong>${{ trabajo.total_abonos|floatformat:0|intcomma }}</strong></td>
+                                    <td colspan="4"></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info text-center">
+                        <i class="fas fa-info-circle"></i>
+                        No hay abonos registrados para este trabajo
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Pestaña: Estado -->
+        <div id="tab-estado" class="tab-content {% if active_tab == 'estado' %}active{% endif %}">
+            <div class="info-card">
+                <h5>⚡ Cambiar Estado del Trabajo</h5>
+                <p class="text-secondary">Selecciona el nuevo estado para este trabajo:</p>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <button type="submit" name="cambiar_estado" value="iniciado" 
+                                    class="btn btn-mobile {% if trabajo.estado == 'iniciado' %}btn-warning{% else %}btn-outline-warning{% endif %}">
+                                🟡 Iniciado
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button type="submit" name="cambiar_estado" value="trabajando" 
+                                    class="btn btn-mobile {% if trabajo.estado == 'trabajando' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                                🔵 Trabajando
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button type="submit" name="cambiar_estado" value="completado" 
+                                    class="btn btn-mobile {% if trabajo.estado == 'completado' %}btn-success{% else %}btn-outline-success{% endif %}">
+                                🟢 Completado
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button type="submit" name="cambiar_estado" value="entregado" 
+                                    class="btn btn-mobile {% if trabajo.estado == 'entregado' %}btn-dark{% else %}btn-outline-dark{% endif %}">
+                                ⚫ Entregado
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Botones de Acción -->
+            <div class="info-card">
+                <h5>📄 Acciones Adicionales</h5>
+                
+                <a href="{% url 'trabajo_pdf' trabajo.pk %}" class="btn btn-info btn-mobile" title="Se abrirá en el navegador" onclick="verificarPDF(this.href); return false;">
+                    📄 Generar Orden de Trabajo
+                </a>
+                
+                <a href="{% url 'panel_principal' %}" class="btn btn-secondary btn-mobile">
+                    🏠 Volver a la Pizarra
+                </a>
+                
+                <a href="javascript:history.back()" class="btn btn-outline-secondary btn-mobile">
+                    ← Regresar
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+console.log('🚀 CARGANDO SCRIPT ACTUALIZADO - Versión con debug de showTab');
+
+// Funciones para las pestañas
+function showTab(tabName) {
+    console.log('🔧 showTab llamado con:', tabName);
+    console.log('🔧 event:', event);
+    
+    // Ocultar todas las pestañas
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Remover clase active de todos los botones
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Mostrar la pestaña seleccionada
+    const tabElement = document.getElementById('tab-' + tabName);
+    if (tabElement) {
+        tabElement.classList.add('active');
+    } else {
+        console.error('❌ No se encontró el elemento tab-' + tabName);
+    }
+    
+    // Activar el botón correspondiente
+    if (event && event.target && event.target.classList) {
+        console.log('🔧 Activando botón desde event.target');
+        event.target.classList.add('active');
+    } else {
+        // Si no hay event (llamada programática), buscar el botón correcto
+        console.log('🔧 Buscando botón programáticamente');
+        const button = document.querySelector(`[onclick="showTab('${tabName}')"]`);
+        if (button) {
+            console.log('🔧 Botón encontrado, activando');
+            button.classList.add('active');
+        } else {
+            console.error('❌ No se encontró el botón para la pestaña:', tabName);
+        }
+    }
+}
+
+// 🔹 Inicializar pestaña activa al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const activeTab = urlParams.get('tab');
+    if (activeTab) {
+        showTab(activeTab);
+    }
+});
+
+// Funciones para formularios de agregar
+function toggleAddForm(type) {
+    const form = document.getElementById('add-' + type + '-form');
+    form.classList.toggle('active');
+}
+
+// Función para eliminar foto
+function eliminarFoto(fotoId) {
+    if (confirm('¿Eliminar esta foto?')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.innerHTML = `
+            <input type="hidden" name="csrfmiddlewaretoken" value="${document.querySelector('[name=csrfmiddlewaretoken]').value}">
+            <input type="hidden" name="eliminar_foto" value="${fotoId}">
+        `;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Funciones para modal de fotos expandidas
+function abrirFotoModal(url, descripcion) {
+    const modal = document.getElementById('fotoModal');
+    const img = document.getElementById('fotoModalImg');
+    const desc = document.getElementById('fotoModalDescripcion');
+    
+    img.src = url;
+    if (descripcion) {
+        desc.textContent = descripcion;
+        desc.style.display = 'block';
+    } else {
+        desc.style.display = 'none';
+    }
+    
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden'; // Prevenir scroll del body
+}
+
+function cerrarFotoModal() {
+    const modal = document.getElementById('fotoModal');
+    modal.classList.remove('active');
+    document.body.style.overflow = 'auto'; // Restaurar scroll del body
+}
+
+// Cerrar modal con tecla Escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        cerrarFotoModal();
+    }
+});
+
+// Función para generar PDF
+function generarPDF() {
+    // Aquí implementaremos la generación de PDF
+    alert('Función de PDF en desarrollo...');
+}
+
+// Auto-guardar observaciones desactivado - el usuario debe usar el botón manual
+// Esto evita que se salga de la edición mientras está escribiendo
+document.addEventListener('DOMContentLoaded', function() {
+    // El auto-guardado se ha desactivado para evitar interrupciones
+    // El usuario debe hacer clic en el botón "Guardar Observaciones" para guardar
+    
+    // 🔹 FILTRO INTELIGENTE: Mostrar información de compatibilidad al seleccionar repuesto
+    const repuestoSelect = document.querySelector('select[name="repuesto"]');
+    if (repuestoSelect) {
+        // Crear elemento para mostrar información de compatibilidad
+        const infoDiv = document.createElement('div');
+        infoDiv.id = 'repuesto-compatibilidad-info';
+        infoDiv.className = 'mt-2 p-2 bg-light rounded';
+        infoDiv.style.display = 'none';
+        repuestoSelect.parentNode.appendChild(infoDiv);
+        
+        repuestoSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            if (selectedOption.value) {
+                const marca = selectedOption.dataset.marca;
+                const motor = selectedOption.dataset.motor;
+                const stock = selectedOption.dataset.stock;
+                
+                // 🔹 Llenar automáticamente el precio unitario
+                const precioInput = document.getElementById('precio-unitario');
+                if (precioInput) {
+                    // Extraer precio del texto de la opción (formato: "Nombre - $precio")
+                    const optionText = selectedOption.textContent;
+                    const precioMatch = optionText.match(/\$([0-9,]+)/);
+                    if (precioMatch) {
+                        const precio = precioMatch[1].replace(/,/g, '');
+                        precioInput.value = precio;
+                    }
+                }
+                
+                let compatibilidadText = '';
+                let compatibilidadClass = 'bg-secondary';
+                
+                // Calcular compatibilidad básica
+                if (marca && marca !== 'General') {
+                    compatibilidadText += `✅ Marca específica: ${marca}<br>`;
+                    compatibilidadClass = 'bg-success';
+                } else {
+                    compatibilidadText += `⚠️ Marca general<br>`;
+                }
+                
+                if (motor && motor !== 'General') {
+                    compatibilidadText += `✅ Motor específico: ${motor}<br>`;
+                    if (compatibilidadClass === 'bg-secondary') compatibilidadClass = 'bg-warning';
+                } else {
+                    compatibilidadText += `⚠️ Motor general<br>`;
+                }
+                
+                if (parseInt(stock) > 0) {
+                    compatibilidadText += `✅ Stock disponible: ${stock} unidades`;
+                } else {
+                    compatibilidadText += `❌ Sin stock disponible`;
+                    compatibilidadClass = 'bg-danger';
+                }
+                
+                infoDiv.innerHTML = `
+                    <small class="text-secondary">
+                        <strong>Compatibilidad:</strong><br>
+                        ${compatibilidadText}
+                    </small>
+                `;
+                infoDiv.className = `mt-2 p-2 rounded ${compatibilidadClass} text-white`;
+                infoDiv.style.display = 'block';
+            } else {
+                infoDiv.style.display = 'none';
+            }
+        });
+    }
+    
+    // 🔹 Calcular subtotal automáticamente
+    const cantidadInput = document.querySelector('input[name="cantidad"]');
+    const precioInput = document.getElementById('precio-unitario');
+    
+    function calcularSubtotal() {
+        if (cantidadInput && precioInput) {
+            const cantidad = parseInt(cantidadInput.value) || 0;
+            const precio = parseFloat(precioInput.value) || 0;
+            const subtotal = cantidad * precio;
+            
+            // Mostrar subtotal en algún lugar (opcional)
+            let subtotalDiv = document.getElementById('subtotal-preview');
+            if (!subtotalDiv) {
+                subtotalDiv = document.createElement('div');
+                subtotalDiv.id = 'subtotal-preview';
+                subtotalDiv.className = 'mt-2 p-2 bg-info text-white rounded';
+                precioInput.parentNode.appendChild(subtotalDiv);
+            }
+            
+            if (subtotal > 0) {
+                subtotalDiv.innerHTML = `<small><strong>Subtotal: $${subtotal.toLocaleString()}</strong></small>`;
+                subtotalDiv.style.display = 'block';
+            } else {
+                subtotalDiv.style.display = 'none';
+            }
+        }
+    }
+    
+    if (cantidadInput) {
+        cantidadInput.addEventListener('input', calcularSubtotal);
+    }
+    if (precioInput) {
+        precioInput.addEventListener('input', calcularSubtotal);
+    }
+    
+    
+    // 🔹 FUNCIONALIDAD PARA COMPONENTES SELECCIONADOS (como en ingreso.html)
+    console.log('🚀 SCRIPT INICIADO - Variables globales definidas');
+    let componentesSeleccionados = new Set();
+    const ACC = {}; // Objeto para almacenar acciones
+    const CLP = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
+    console.log('✅ Variables globales inicializadas:', { componentesSeleccionados, ACC, CLP });
+    
+    // Función para cargar acciones de un componente
+    async function cargarAccionesComponente(componenteId, componenteNombre) {
+        console.log(`🔄 cargarAccionesComponente llamado: ${componenteId} - ${componenteNombre}`);
+        
+        try {
+            const url = `/car/acciones-lookup/${componenteId}/`;
+            console.log(`📡 Haciendo fetch a: ${url}`);
+            
+            const response = await fetch(url);
+            console.log(`📡 Respuesta recibida:`, response);
+            console.log(`📡 Status: ${response.status}`);
+            
+            const data = await response.json();
+            console.log(`📡 Datos recibidos:`, data);
+            
+            if (!data.ok || !data.acciones || data.acciones.length === 0) {
+                console.log(`⚠️ No hay acciones disponibles para componente ${componenteId}`);
+                console.log(`   - data.ok: ${data.ok}`);
+                console.log(`   - data.acciones:`, data.acciones);
+                
+                // Mostrar mensaje al usuario
+                if (data.mensaje) {
+                    alert(`⚠️ ${data.mensaje}`);
+                } else {
+                    alert(`⚠️ El componente "${componenteNombre}" no tiene acciones asociadas.`);
+                }
+                
+                // Remover el componente de la lista de seleccionados
+                removerComponenteSeleccionado(componenteId);
+                return;
+            }
+            
+            console.log(`✅ Se encontraron ${data.acciones.length} acciones para el componente ${componenteId}`);
+            
+            const ulAcciones = document.getElementById('acciones-para-componentes');
+            console.log(`🔍 Buscando elemento 'acciones-para-componentes':`, ulAcciones);
+            
+            if (!ulAcciones) {
+                console.error(`❌ No se encontró el elemento 'acciones-para-componentes'`);
+                return;
+            }
+            
+            console.log(`✅ Elemento 'acciones-para-componentes' encontrado, agregando acciones...`);
+            
+            // Crear un elemento por cada acción disponible
+            data.acciones.forEach(accion => {
+                const accionKey = `${componenteId}-${accion.accion_id}`;
+                const precioBase = parseFloat(accion.precio_base || 0);
+                
+                // Inicializar con precio_base si existe
+                ACC[accionKey] = ACC[accionKey] || { 
+                    componente_id: componenteId,
+                    nombre: componenteNombre, 
+                    accion_id: accion.accion_id, 
+                    accion_nombre: accion.accion_nombre,
+                    precio_base: precioBase,  // Guardar referencia del precio base
+                    precio: precioBase > 0 ? precioBase.toString() : '',  // Inicializar con precio_base si existe
+                    cantidad: 1,  // Cantidad por defecto
+                    seleccionado: false
+                };
+                
+                console.log(`📋 Acción inicializada: ${accionKey}`, ACC[accionKey]);
+                
+                const li = document.createElement('li');
+                li.className = 'list-group-item';
+                li.setAttribute('data-componente-id', componenteId);
+                li.setAttribute('data-accion-id', accion.accion_id);
+                li.setAttribute('data-accion-key', accionKey);
+                
+                const precioFormateado = precioBase > 0 ? CLP.format(precioBase) : 'Sin precio base';
+                const valorInput = ACC[accionKey].precio || (precioBase > 0 ? precioBase : '');
+                
+                li.innerHTML = `
+                    <div class="row g-2 align-items-center">
+                        <div class="col-1">
+                            <input type="checkbox" class="form-check-input accion-checkbox" 
+                                   data-accion-key="${accionKey}" 
+                                   ${ACC[accionKey].seleccionado ? 'checked' : ''}>
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <div class="fw-semibold">${componenteNombre}</div>
+                            <div class="text-primary small">${accion.accion_nombre}</div>
+                            <div class="text-secondary small">ID: ${componenteId} • Acción: ${accion.accion_id}</div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <label class="form-label mb-0 small">Precio Unit.</label>
+                            <input type="number" step="0.01" class="form-control form-control-sm accion-precio" 
+                                   placeholder="${precioBase > 0 ? precioBase : '0.00'}" 
+                                   value="${valorInput}"
+                                   data-accion-key="${accionKey}">
+                            <small class="text-secondary">Base: ${precioFormateado}</small>
+                        </div>
+                        <div class="col-3 col-md-2">
+                            <label class="form-label mb-0 small">Cantidad</label>
+                            <input type="number" min="1" step="1" class="form-control form-control-sm accion-cantidad" 
+                                   value="${ACC[accionKey].cantidad || 1}"
+                                   data-accion-key="${accionKey}">
+                        </div>
+                        <div class="col-3 col-md-2 text-end">
+                            <label class="form-label mb-0 small">Subtotal</label>
+                            <div class="fw-bold text-success" data-precio-display="${accionKey}">
+                                ${ACC[accionKey].seleccionado ? (ACC[accionKey].precio ? CLP.format(parseFloat(ACC[accionKey].precio) * (ACC[accionKey].cantidad || 1)) : '$0') : '$0'}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                ulAcciones.appendChild(li);
+                
+                // Event listeners
+                const checkbox = li.querySelector('.accion-checkbox');
+                const precioInput = li.querySelector('.accion-precio');
+                const cantidadInput = li.querySelector('.accion-cantidad');
+                const precioDisplay = li.querySelector('[data-precio-display]');
+                
+                checkbox.addEventListener('change', () => {
+                    console.log(`✅ Checkbox cambiado para ${accionKey}:`, checkbox.checked);
+                    ACC[accionKey].seleccionado = checkbox.checked;
+                    
+                    // Si se marca el checkbox y no hay precio, usar precio_base
+                    if (checkbox.checked) {
+                        if (!ACC[accionKey].precio && precioBase > 0) {
+                            ACC[accionKey].precio = precioBase.toString();
+                            precioInput.value = precioBase;
+                            console.log(`✅ Precio establecido automáticamente: ${precioBase}`);
+                        } else if (precioInput.value) {
+                            // Si hay un valor en el input, usarlo
+                            ACC[accionKey].precio = precioInput.value;
+                            console.log(`✅ Precio tomado del input: ${precioInput.value}`);
+                        } else if (precioBase > 0) {
+                            // Si no hay nada pero hay precio_base, usarlo
+                            ACC[accionKey].precio = precioBase.toString();
+                            precioInput.value = precioBase;
+                            console.log(`✅ Precio base aplicado: ${precioBase}`);
+                        }
+                    }
+                    
+                    console.log(`📊 Estado de ACC[${accionKey}]:`, ACC[accionKey]);
+                    actualizarPrecioDisplay(accionKey, precioDisplay, checkbox.checked);
+                    actualizarTotalManoObra();
+                });
+                
+                precioInput.addEventListener('input', () => {
+                    const valorInput = precioInput.value;
+                    ACC[accionKey].precio = valorInput || precioBase.toString();
+                    console.log(`✅ Precio actualizado desde input para ${accionKey}:`, ACC[accionKey].precio);
+                    actualizarPrecioDisplay(accionKey, precioDisplay, ACC[accionKey].seleccionado);
+                    actualizarTotalManoObra();
+                });
+                
+                cantidadInput.addEventListener('input', () => {
+                    const cantidad = parseInt(cantidadInput.value) || 1;
+                    if (cantidad < 1) {
+                        cantidadInput.value = 1;
+                        ACC[accionKey].cantidad = 1;
+                    } else {
+                        ACC[accionKey].cantidad = cantidad;
+                    }
+                    console.log(`✅ Cantidad actualizada para ${accionKey}:`, ACC[accionKey].cantidad);
+                    actualizarPrecioDisplay(accionKey, precioDisplay, ACC[accionKey].seleccionado);
+                    actualizarTotalManoObra();
+                });
+                
+                // Inicializar display de precio
+                actualizarPrecioDisplay(accionKey, precioDisplay, checkbox.checked);
+            });
+            
+            console.log(`✅ Se agregaron ${data.acciones.length} acciones al DOM`);
+            
+        } catch (error) {
+            console.error('❌ Error cargando acciones:', error);
+            console.error('❌ Stack trace:', error.stack);
+        }
+    }
+    
+    // Función para actualizar el display del precio (subtotal)
+    function actualizarPrecioDisplay(accionKey, precioDisplay, isSelected) {
+        if (!precioDisplay) return;
+        
+        if (!isSelected) {
+            precioDisplay.textContent = '$0';
+            precioDisplay.className = 'fw-bold text-muted';
+            return;
+        }
+        
+        const accion = ACC[accionKey];
+        if (accion) {
+            const precio = parseFloat(accion.precio) || parseFloat(accion.precio_base) || 0;
+            const cantidad = parseInt(accion.cantidad) || 1;
+            const subtotal = precio * cantidad;
+            precioDisplay.textContent = CLP.format(subtotal);
+            precioDisplay.className = 'fw-bold text-success';
+        }
+    }
+    
+    // Función para actualizar el total de mano de obra (considerando cantidad)
+    function actualizarTotalManoObra() {
+        const totalDiv = document.getElementById('total_mano_obra');
+        if (!totalDiv) return;
+        
+        // Sumar todas las acciones seleccionadas (incluir las que tienen precio 0)
+        // Multiplicar precio por cantidad para obtener subtotal
+        const total = Object.values(ACC)
+            .filter(a => a.seleccionado)
+            .reduce((sum, a) => {
+                const precio = parseFloat(a.precio) || parseFloat(a.precio_base) || 0;
+                const cantidad = parseInt(a.cantidad) || 1;
+                const subtotal = precio * cantidad;
+                return sum + subtotal;
+            }, 0);
+        
+        console.log('💰 Total mano de obra calculado (con cantidad):', total);
+        totalDiv.textContent = CLP.format(total);
+    }
+    
+    // Función para agregar componente a la lista de seleccionados
+    window.agregarComponenteSeleccionado = async function(componenteId, componenteNombre) {
+        console.log(`🔧 agregarComponenteSeleccionado llamado: ${componenteId} - ${componenteNombre}`);
+        
+        if (componentesSeleccionados.has(componenteId)) {
+            console.log(`⚠️ Componente ${componenteId} ya está seleccionado`);
+            return; // Ya está seleccionado
+        }
+        
+        componentesSeleccionados.add(componenteId);
+        console.log(`✅ Componente ${componenteId} agregado a componentesSeleccionados`);
+        
+        // Agregar a la lista visual
+        const lista = document.getElementById('lista-seleccionados');
+        console.log(`🔍 Buscando elemento 'lista-seleccionados':`, lista);
+        
+        if (lista) {
+            console.log(`✅ Elemento encontrado, agregando componente...`);
+            const li = document.createElement('li');
+            li.className = 'list-group-item d-flex justify-content-between align-items-center';
+            li.id = `comp-seleccionado-${componenteId}`;
+            li.innerHTML = `
+                <span>${componenteNombre}</span>
+                <button type="button" class="btn btn-sm btn-danger" onclick="removerComponenteSeleccionado(${componenteId})">
+                    ❌
+                </button>
+            `;
+            lista.appendChild(li);
+            console.log(`✅ Componente ${componenteId} agregado visualmente a la lista`);
+        } else {
+            console.error(`❌ No se encontró el elemento 'lista-seleccionados'`);
+        }
+        
+        // Cargar acciones para este componente
+        console.log(`🔄 Llamando a cargarAccionesComponente para ${componenteId}...`);
+        await cargarAccionesComponente(componenteId, componenteNombre);
+    }
+    
+    // Función para remover componente de la lista de seleccionados
+    window.removerComponenteSeleccionado = function(componenteId) {
+        console.log(`🗑️ removerComponenteSeleccionado llamado: ${componenteId}`);
+        componentesSeleccionados.delete(componenteId);
+        
+        // Remover de la lista visual
+        const li = document.getElementById(`comp-seleccionado-${componenteId}`);
+        if (li) {
+            li.remove();
+        }
+        
+        // Remover todas las acciones de este componente
+        const ulAcciones = document.getElementById('acciones-para-componentes');
+        if (ulAcciones) {
+            const accionesDelComponente = ulAcciones.querySelectorAll(`li[data-componente-id="${componenteId}"]`);
+            accionesDelComponente.forEach(accionLi => accionLi.remove());
+        }
+        
+        // Limpiar del objeto ACC
+        Object.keys(ACC).forEach(key => {
+            if (key.startsWith(`${componenteId}-`)) {
+                delete ACC[key];
+            }
+        });
+        
+        // Actualizar total
+        actualizarTotalManoObra();
+        
+        // Desmarcar checkbox
+        const checkbox = document.getElementById(`comp-${componenteId}`);
+        if (checkbox) {
+            checkbox.checked = false;
+        }
+    };
+    
+    // 🔹 INICIALIZAR EVENTOS DE CHECKBOXES
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🔍 DOMContentLoaded ejecutado - Inicializando eventos de checkboxes...');
+        
+        // Agregar event listeners a todos los checkboxes de componentes
+        const checkboxes = document.querySelectorAll('.componente-checkbox');
+        console.log(`🔍 Encontrados ${checkboxes.length} checkboxes de componentes`);
+        
+        checkboxes.forEach((checkbox, index) => {
+            console.log(`🔧 Configurando checkbox ${index + 1}:`, checkbox);
+            console.log(`   - ID: ${checkbox.id}`);
+            console.log(`   - Value: ${checkbox.value}`);
+            console.log(`   - data-componente-id: ${checkbox.dataset.componenteId}`);
+            console.log(`   - data-componente-nombre: ${checkbox.dataset.componenteNombre}`);
+            
+            checkbox.addEventListener('change', function() {
+                console.log('🎯 CHECKBOX CAMBIADO:', this);
+                console.log('   - Checked:', this.checked);
+                console.log('   - Componente ID:', this.dataset.componenteId);
+                console.log('   - Componente Nombre:', this.dataset.componenteNombre);
+                
+                const componenteId = this.dataset.componenteId;
+                const componenteNombre = this.dataset.componenteNombre;
+                
+                if (this.checked) {
+                    console.log(`✅ Agregando componente: ${componenteId} - ${componenteNombre}`);
+                    agregarComponenteSeleccionado(componenteId, componenteNombre);
+                } else {
+                    console.log(`❌ Removiendo componente: ${componenteId}`);
+                    removerComponenteSeleccionado(componenteId);
+                }
+            });
+            
+            console.log(`✅ Event listener agregado al checkbox ${checkbox.id}`);
+        });
+        
+        console.log('🎉 Inicialización de checkboxes completada');
+    });
+    
+    // 🔹 FUNCIÓN PARA GUARDAR ACCIONES SELECCIONADAS
+    window.guardarAccionesSeleccionadas = async function() {
+        console.log('💾 guardarAccionesSeleccionadas llamado');
+        console.log('📊 Estado actual de ACC:', ACC);
+        
+        // Obtener todas las acciones seleccionadas (solo filtrar por seleccionado)
+        const accionesSeleccionadas = Object.values(ACC).filter(a => a.seleccionado);
+        console.log('📋 Acciones seleccionadas (filtradas solo por seleccionado):', accionesSeleccionadas);
+        
+        if (accionesSeleccionadas.length === 0) {
+            alert('⚠️ No hay acciones seleccionadas para guardar');
+            return;
+        }
+        
+        // Preparar datos para enviar
+        const datosAcciones = accionesSeleccionadas.map(accion => {
+            // Usar el precio ingresado, o el precio_base, o 0
+            const precio = parseFloat(accion.precio) || parseFloat(accion.precio_base) || 0;
+            const cantidad = parseInt(accion.cantidad) || 1;
+            console.log(`📤 Preparando acción ${accion.componente_id}-${accion.accion_id}: precio=${precio}, cantidad=${cantidad}`);
+            
+            return {
+                componente_id: parseInt(accion.componente_id),
+                accion_id: parseInt(accion.accion_id),
+                precio: precio,
+                cantidad: cantidad
+            };
+        });
+        
+        console.log('📤 Datos a enviar:', datosAcciones);
+        
+        try {
+            // Crear formulario para enviar datos
+            const formData = new FormData();
+            formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+            formData.append('acciones_json', JSON.stringify(datosAcciones));
+            formData.append('agregar_acciones_multiples', 'true');
+            
+            const response = await fetch(window.location.href, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            });
+
+            console.log('📡 Respuesta del servidor:', response);
+
+            if (!response.ok) {
+                console.error('❌ Error al guardar acciones:', response.status);
+                alert('❌ Error al guardar las acciones');
+                return;
+            }
+
+            let data = {};
+            try {
+                data = await response.json();
+                console.log('📄 JSON recibido:', data);
+            } catch (err) {
+                console.warn('⚠️ No se pudo parsear JSON, recargando página por fallback.', err);
+                window.location.href = window.location.pathname + '?tab=acciones';
+                return;
+            }
+
+            if (data.ok) {
+                alert(`✅ Acciones guardadas (${data.acciones_creadas} nuevas${data.detalle || ''})`);
+                window.location.href = window.location.pathname + '?tab=acciones';
+            } else {
+                console.error('❌ Error al guardar acciones (JSON):', data);
+                alert(data.error || '❌ Error al guardar las acciones');
+            }
+            
+        } catch (error) {
+            console.error('❌ Error en la petición:', error);
+            alert('❌ Error al guardar las acciones');
+        }
+    };
+    
+    // 🔹 FUNCIÓN PARA LIMPIAR SELECCIÓN
+    window.limpiarSeleccion = function() {
+        console.log('🗑️ limpiarSeleccion llamado');
+        
+        // Limpiar todas las acciones del DOM
+        const ulAcciones = document.getElementById('acciones-para-componentes');
+        if (ulAcciones) {
+            ulAcciones.innerHTML = '';
+        }
+        
+        // Limpiar lista de componentes seleccionados
+        const listaSeleccionados = document.getElementById('lista-seleccionados');
+        if (listaSeleccionados) {
+            listaSeleccionados.innerHTML = '';
+        }
+        
+        // Limpiar objetos JavaScript
+        componentesSeleccionados.clear();
+        Object.keys(ACC).forEach(key => delete ACC[key]);
+        
+        // Desmarcar todos los checkboxes
+        const checkboxes = document.querySelectorAll('.componente-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        
+        // Actualizar total
+        actualizarTotalManoObra();
+        
+        console.log('✅ Selección limpiada completamente');
+    };
+    
+    // 🔹 FUNCIONALIDAD PARA REPUESTOS SUGERIDOS (adaptado de ingreso.js)
+    window.cargarRepuestosTrabajo = function () {
+        console.log('🔧 cargarRepuestosTrabajo llamado');
+        
+        const cont = document.getElementById("repuestos-list-trabajo");
+        if (!cont) {
+            console.error('❌ No se encontró el contenedor repuestos-list-trabajo');
+            return;
+        }
+
+        // Obtener componentes ya seleccionados en el trabajo
+        const componentesTrabajo = JSON.parse('{{ componentes_trabajo|default:"[]"|escapejs }}');
+        console.log('📋 Componentes del trabajo:', componentesTrabajo);
+        
+        if (!componentesTrabajo || componentesTrabajo.length === 0) {
+            cont.innerHTML = "<div class='alert alert-warning'>⚠️ No hay componentes seleccionados en el trabajo. Primero selecciona componentes en la pestaña 'Acciones'.</div>";
+            return;
+        }
+
+        // Obtener datos del vehículo del trabajo
+        const vehMarca = "{{ trabajo.vehiculo.marca|default:''|escapejs }}";
+        const vehModelo = "{{ trabajo.vehiculo.modelo|default:''|escapejs }}";
+        const vehAnio = "{{ trabajo.vehiculo.anio|default:''|escapejs }}";
+        const vehMotor = "{{ trabajo.vehiculo.descripcion_motor|default:''|escapejs }}";
+        
+        console.log('🚗 Datos del vehículo:', { vehMarca, vehModelo, vehAnio, vehMotor });
+
+        // Construir URL para repuestos sugeridos
+        const params = new URLSearchParams();
+        componentesTrabajo.forEach(c => params.append("componentes_ids", c));
+        if (vehMarca) params.append("marca", vehMarca);
+        if (vehModelo) params.append("modelo", vehModelo);
+        if (vehAnio) params.append("anio", vehAnio);
+        if (vehMotor) params.append("motor", vehMotor);
+
+        const url = cont.dataset.previewUrl + "?" + params.toString();
+        console.log('📡 URL de repuestos sugeridos:', url);
+
+        // Mostrar indicador de carga
+        cont.innerHTML = "<div class='text-center'><div class='spinner-border text-primary' role='status'><span class='visually-hidden'>Cargando...</span></div><br><small>Cargando repuestos sugeridos...</small></div>";
+
+        // Fetch y render
+        fetch(url)
+            .then(r => {
+                if (!r.ok) throw new Error("HTTP " + r.status);
+                return r.json();
+            })
+            .then(data => {
+                console.log('📡 Datos de repuestos recibidos:', data);
+                cont.innerHTML = "";
+                
+                if (!data.repuestos || data.repuestos.length === 0) {
+                    cont.innerHTML = "<div class='alert alert-info'>ℹ️ No hay repuestos sugeridos para los componentes seleccionados.</div>";
+                    return;
+                }
+                
+                data.repuestos.forEach(r => {
+                    const div = document.createElement("div");
+                    div.classList.add("card", "mb-2", "p-2");
+                    
+                    // Clase CSS basada en compatibilidad
+                    let compatibilidadClass = "border-secondary";
+                    if (r.compatibilidad >= 80) compatibilidadClass = "border-success";
+                    else if (r.compatibilidad >= 60) compatibilidadClass = "border-warning";
+                    else if (r.compatibilidad >= 40) compatibilidadClass = "border-info";
+                    else if (r.compatibilidad >= 20) compatibilidadClass = "border-danger";
+                    
+                    div.classList.add(compatibilidadClass);
+                    
+                    div.innerHTML = `
+                        <label class="form-check">
+                            <input type="checkbox"
+                                   class="form-check-input repuesto-check"
+                                   data-id="${r.id}"
+                                   data-stock-id="${r.repuesto_stock_id || ''}"
+                                   data-precio="${r.precio_venta || 0}"
+                                   data-nombre="${escapeHtml(r.nombre)}"
+                                   data-oem="${escapeHtml(r.oem || '')}">
+                            <b>${escapeHtml(r.nombre)}</b> (${escapeHtml(r.oem || "sin OEM")})<br>
+                            <small>${escapeHtml(r.sku || "")} • ${escapeHtml(r.posicion || "")}</small><br>
+                            Stock: ${r.disponible} – 💰 $${(r.precio_venta || 0).toFixed(0)}<br>
+                            ${r.compatibilidad_texto ? `<small class="text-secondary">${r.compatibilidad_texto} (${r.compatibilidad}%)</small>` : ''}
+                        </label>
+                        <div class="mt-1 d-flex justify-content-between align-items-center">
+                            <div>
+                                <label class="form-label small mb-0">Cantidad</label>
+                                <input type="number"
+                                       class="form-control form-control-sm repuesto-cantidad"
+                                       data-id="${r.id}"
+                                       min="1"
+                                       value="1"
+                                       style="max-width: 80px;">
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="descartarRepuestoTrabajo(this)">
+                                ✕
+                            </button>
+                        </div>
+                    `;
+                    cont.appendChild(div);
+                });
+                
+                // Agregar botón para guardar repuestos seleccionados
+                const guardarDiv = document.createElement("div");
+                guardarDiv.className = "mt-3 text-center";
+                guardarDiv.innerHTML = `
+                    <button type="button" class="btn btn-success" onclick="guardarRepuestosTrabajo()">
+                        💾 Guardar Repuestos Seleccionados
+                    </button>
+                `;
+                cont.appendChild(guardarDiv);
+                
+            })
+            .catch(err => {
+                console.error('❌ Error cargando repuestos:', err);
+                cont.innerHTML = `<div class="alert alert-danger">❌ Error cargando repuestos: ${escapeHtml(err.message)}</div>`;
+            });
+    };
+
+    // Función para descartar repuesto
+    window.descartarRepuestoTrabajo = function(boton) {
+        boton.closest('.card').remove();
+    };
+
+    // Función para guardar repuestos seleccionados
+    window.guardarRepuestosTrabajo = async function() {
+        console.log('💾 guardarRepuestosTrabajo llamado');
+        
+        const repuestos = [];
+        document.querySelectorAll("#repuestos-list-trabajo input.repuesto-check:checked").forEach(chk => {
+            const cantidadInput = document.querySelector(
+                `#repuestos-list-trabajo input.repuesto-cantidad[data-id="${chk.dataset.id}"]`
+            );
+            const cantidad = cantidadInput ? parseInt(cantidadInput.value) || 1 : 1;
+            repuestos.push({
+                id: chk.dataset.id,
+                repuesto_stock_id: chk.dataset.stockId || null,
+                cantidad: cantidad,
+                precio_unitario: parseFloat(chk.dataset.precio) || 0
+            });
+        });
+        
+        console.log('📋 Repuestos seleccionados:', repuestos);
+        
+        if (repuestos.length === 0) {
+            alert('⚠️ No hay repuestos seleccionados para guardar');
+            return;
+        }
+        
+        try {
+            // Crear formulario para enviar datos
+            const formData = new FormData();
+            formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+            formData.append('repuestos_json', JSON.stringify(repuestos));
+            formData.append('agregar_repuestos_multiples', 'true');
+            
+            const response = await fetch(window.location.href, {
+                method: 'POST',
+                body: formData
+            });
+            
+            console.log('📡 Respuesta del servidor:', response);
+            
+            if (response.ok || response.status === 302) {
+                console.log('✅ Repuestos guardados exitosamente');
+                alert('✅ Repuestos guardados exitosamente');
+                
+                // Recargar la página manteniendo la pestaña de repuestos activa
+                window.location.href = window.location.pathname + '?tab=repuestos';
+            } else {
+                console.error('❌ Error al guardar repuestos:', response.status);
+                alert('❌ Error al guardar los repuestos');
+            }
+            
+        } catch (error) {
+            console.error('❌ Error en la petición:', error);
+            alert('❌ Error al guardar los repuestos');
+        }
+    };
+
+    // ========================================
+    // FUNCIONES PARA INSUMOS
+    // ========================================
+    
+    // Función para buscar insumos (con debounce para búsqueda en tiempo real)
+    let buscarInsumosTimeout;
+    window.buscarInsumos = async function() {
+        console.log('🔍 buscarInsumos llamado');
+        
+        const buscarInput = document.getElementById('buscar-insumo');
+        const cont = document.getElementById('lista-insumos-disponibles');
+        
+        if (!buscarInput) {
+            console.error('❌ Input de búsqueda no encontrado');
+            return;
+        }
+        
+        if (!cont) {
+            console.error('❌ Contenedor de resultados no encontrado');
+            return;
+        }
+        
+        const busqueda = buscarInput.value.trim();
+        console.log('🔍 Término de búsqueda:', busqueda);
+        
+        if (busqueda.length < 2) {
+            cont.innerHTML = '<div class="alert alert-info">Escribe al menos 2 caracteres para buscar</div>';
+            return;
+        }
+        
+        console.log('🔍 Buscando insumos con término:', busqueda);
+        
+        // Mostrar indicador de carga
+        cont.innerHTML = '<div class="alert alert-info"><i class="fas fa-spinner fa-spin"></i> Buscando insumos...</div>';
+        
+        try {
+            const url = `/car/repuestos/buscar-insumos/?q=${encodeURIComponent(busqueda)}`;
+            console.log('🌐 URL de búsqueda:', url);
+            
+            const response = await fetch(url);
+            console.log('📡 Respuesta del servidor:', response.status);
+            
+            const data = await response.json();
+            console.log('📦 Datos recibidos:', data);
+            
+            if (data.insumos && data.insumos.length > 0) {
+                console.log(`✅ Encontrados ${data.insumos.length} insumos`);
+                cont.innerHTML = '';
+                data.insumos.forEach((insumo, index) => {
+                    console.log(`📦 Procesando insumo ${index + 1}:`, insumo.nombre);
+                    const item = document.createElement('div');
+                    item.className = 'list-group-item d-flex justify-content-between align-items-center';
+                    item.innerHTML = `
+                        <div class="form-check">
+                            <input class="form-check-input insumo-check" type="checkbox" 
+                                   data-id="${insumo.id}" 
+                                   data-nombre="${escapeHtml(insumo.nombre)}"
+                                   data-precio="${insumo.precio || 0}"
+                                   data-stock="${insumo.stock || 0}">
+                            <label class="form-check-label">
+                                <strong>${escapeHtml(insumo.nombre)}</strong><br>
+                                <small class="text-muted">
+                                    SKU: ${escapeHtml(insumo.sku || 'N/A')} | 
+                                    ${insumo.marca ? 'Marca: ' + escapeHtml(insumo.marca) + ' | ' : ''}
+                                    ${insumo.oem ? 'OEM: ' + escapeHtml(insumo.oem) + ' | ' : ''}
+                                    Precio: $${(insumo.precio || 0).toLocaleString()} | 
+                                    Stock: ${insumo.stock || 0}
+                                    ${insumo.deposito ? ' | Depósito: ' + escapeHtml(insumo.deposito) : ''}
+                                </small>
+                            </label>
+                        </div>
+                        <div class="input-group" style="width: 120px;">
+                            <input type="number" class="form-control insumo-cantidad" 
+                                   data-id="${insumo.id}" value="1" min="1" max="${insumo.stock || 999}">
+                        </div>
+                    `;
+                    cont.appendChild(item);
+                });
+            } else {
+                console.log('ℹ️ No se encontraron insumos');
+                cont.innerHTML = '<div class="alert alert-info">No se encontraron insumos con ese término de búsqueda</div>';
+            }
+            
+        } catch (error) {
+            console.error('❌ Error buscando insumos:', error);
+            cont.innerHTML = '<div class="alert alert-danger">❌ Error buscando insumos: ' + error.message + '</div>';
+        }
+    };
+    
+    // Función con debounce para búsqueda en tiempo real
+    window.buscarInsumosDebounced = function() {
+        clearTimeout(buscarInsumosTimeout);
+        buscarInsumosTimeout = setTimeout(buscarInsumos, 300); // 300ms de delay
+    };
+    
+    
+    // Función para agregar insumos al trabajo
+    window.agregarInsumos = async function() {
+        console.log('📦 agregarInsumos llamado');
+        
+        const insumos = [];
+        document.querySelectorAll("#lista-insumos-disponibles input.insumo-check:checked").forEach(chk => {
+            const cantidadInput = document.querySelector(
+                `#lista-insumos-disponibles input.insumo-cantidad[data-id="${chk.dataset.id}"]`
+            );
+            const cantidad = cantidadInput ? parseInt(cantidadInput.value) || 1 : 1;
+            insumos.push({
+                id: chk.dataset.id,
+                nombre: chk.dataset.nombre,
+                cantidad: cantidad,
+                precio_unitario: parseFloat(chk.dataset.precio) || 0
+            });
+        });
+        
+        console.log('📦 Insumos seleccionados:', insumos);
+        
+        if (insumos.length === 0) {
+            alert('⚠️ No hay insumos seleccionados para agregar');
+            return;
+        }
+        
+        try {
+            // Crear formulario para enviar datos
+            const formData = new FormData();
+            formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+            formData.append('insumos_json', JSON.stringify(insumos));
+            formData.append('agregar_insumos_multiples', 'true');
+            
+            const response = await fetch(window.location.href, {
+                method: 'POST',
+                body: formData
+            });
+            
+            console.log('📡 Respuesta del servidor:', response);
+            
+            if (response.ok || response.status === 302) {
+                console.log('✅ Insumos agregados exitosamente');
+                alert('✅ Insumos agregados exitosamente');
+                
+                // Recargar la página manteniendo la pestaña de insumos activa
+                window.location.href = window.location.pathname + '?tab=insumos';
+                
+            } else {
+                console.error('❌ Error al agregar insumos:', response.status);
+                alert('❌ Error al agregar los insumos');
+            }
+            
+        } catch (error) {
+            console.error('❌ Error en la petición:', error);
+            alert('❌ Error al agregar los insumos');
+        }
+    };
+    
+    // Configurar búsqueda en tiempo real para insumos
+    function configurarBusquedaInsumos() {
+        console.log('🔧 Configurando búsqueda de insumos...');
+        const buscarInsumoInput = document.getElementById('buscar-insumo');
+        
+        if (buscarInsumoInput) {
+            console.log('✅ Input de búsqueda encontrado');
+            
+            // Remover event listeners existentes
+            buscarInsumoInput.removeEventListener('input', buscarInsumosDebounced);
+            
+            // Event listener para búsqueda en tiempo real
+            buscarInsumoInput.addEventListener('input', function(e) {
+                console.log('🔍 Input detectado:', e.target.value);
+                buscarInsumosDebounced();
+            });
+            
+            // Cargar insumos iniciales si estamos en la pestaña de insumos
+            if (window.location.search.includes('tab=insumos')) {
+                console.log('📦 Cargando insumos iniciales...');
+                buscarInsumoInput.value = 'xxxx zzzzzz';
+                buscarInsumos();
+            }
+        } else {
+            console.log('❌ Input de búsqueda no encontrado');
+        }
+    }
+    
+    // Cargar cuando el DOM esté listo
+    document.addEventListener('DOMContentLoaded', configurarBusquedaInsumos);
+    
+    // También configurar cuando se cambie de pestaña
+    window.addEventListener('load', function() {
+        setTimeout(configurarBusquedaInsumos, 100);
+    });
+    
+    // Función para mostrar pestaña (modificar la función existente)
+    function showTab(tabName) {
+        // Ocultar todas las pestañas
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        
+        // Remover clase active de todos los botones
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // Mostrar la pestaña seleccionada
+        const selectedTab = document.getElementById(`tab-${tabName}`);
+        if (selectedTab) {
+            selectedTab.classList.add('active');
+        }
+        
+        // Activar el botón correspondiente
+        const selectedBtn = document.querySelector(`.tab-btn[onclick="showTab('${tabName}')"]`);
+        if (selectedBtn) {
+            selectedBtn.classList.add('active');
+        }
+        
+        // Si es la pestaña de insumos, configurar búsqueda
+        if (tabName === 'insumos') {
+            console.log('📦 Cambiando a pestaña de insumos...');
+            setTimeout(() => {
+                configurarBusquedaInsumos();
+            }, 100);
+        }
+    }
+
+    // Función helper para escapar HTML
+    function escapeHtml(text) {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+    
+    // Función para verificar y abrir PDF
+    function verificarPDF(url) {
+        console.log('🔍 Verificando PDF:', url);
+        
+        // Crear un iframe oculto para verificar el tipo de contenido
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = url;
+        
+        iframe.onload = function() {
+            console.log('✅ PDF cargado en iframe');
+            // Si se carga en iframe, abrir en nueva ventana
+            window.open(url, '_blank');
+        };
+        
+        iframe.onerror = function() {
+            console.log('❌ Error cargando PDF en iframe');
+            // Si hay error, intentar abrir directamente
+            window.open(url, '_blank');
+        };
+        
+        document.body.appendChild(iframe);
+        
+        // Limpiar el iframe después de 3 segundos
+        setTimeout(() => {
+            if (iframe.parentNode) {
+                iframe.parentNode.removeChild(iframe);
+            }
+        }, 3000);
+    }
+});
+</script>
+
+<!-- Estilos para modal de repuestos externos -->
+<style>
+/* MODAL BASE */
+#modalRepuestosExternosTrabajo .modal-dialog {
+    max-width: 1200px !important;
+    width: 90% !important;
+}
+
+#modalRepuestosExternosTrabajo .modal-content {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border-radius: 0.5rem !important;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2) !important;
+}
+
+#modalRepuestosExternosTrabajo .modal-body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 2rem !important;
+    min-height: 600px !important;
+}
+
+/* TAB CONTENT */
+#modalRepuestosExternosTrabajo .tab-content {
+    background: #f8f9fa !important;
+    color: #000000 !important;
+    min-height: 500px !important;
+    padding: 1rem !important;
+    border-radius: 0.25rem !important;
+}
+
+#modalRepuestosExternosTrabajo .tab-pane {
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 2rem !important;
+    min-height: 450px !important;
+    border-radius: 0.25rem !important;
+}
+
+/* FORMULARIOS */
+#modalRepuestosExternosTrabajo .form-control,
+#modalRepuestosExternosTrabajo .form-select,
+#modalRepuestosExternosTrabajo input,
+#modalRepuestosExternosTrabajo textarea,
+#modalRepuestosExternosTrabajo select {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: 2px solid #0066cc !important;
+    min-height: 40px !important;
+    font-size: 16px !important;
+}
+
+#modalRepuestosExternosTrabajo .form-label {
+    color: #000000 !important;
+    font-weight: bold !important;
+    font-size: 16px !important;
+    margin-bottom: 0.5rem !important;
+}
+
+#modalRepuestosExternosTrabajo .btn {
+    min-height: 40px !important;
+    font-weight: bold !important;
+    font-size: 14px !important;
+}
+
+#modalRepuestosExternosTrabajo .text-muted,
+#modalRepuestosExternosTrabajo small {
+    color: #666666 !important;
+    font-size: 14px !important;
+}
+
+#modalRepuestosExternosTrabajo .alert {
+    background: #d1ecf1 !important;
+    color: #0c5460 !important;
+    border: 2px solid #bee5eb !important;
+    padding: 1rem !important;
+    font-size: 14px !important;
+}
+
+/* TABS */
+#modalRepuestosExternosTrabajo .nav-tabs {
+    background: #e9ecef !important;
+    padding: 0.5rem !important;
+    margin-bottom: 1rem !important;
+}
+
+#modalRepuestosExternosTrabajo .nav-link {
+    color: #000000 !important;
+    font-weight: bold !important;
+    font-size: 16px !important;
+}
+
+#modalRepuestosExternosTrabajo .nav-link.active {
+    background: #ffffff !important;
+    color: #198754 !important;
+    border-bottom: 4px solid #198754 !important;
+}
+
+/* FILAS Y COLUMNAS */
+#modalRepuestosExternosTrabajo .row {
+    margin-bottom: 1rem !important;
+}
+
+#modalRepuestosExternosTrabajo .col-md-8,
+#modalRepuestosExternosTrabajo .col-md-4,
+#modalRepuestosExternosTrabajo .col-md-6,
+#modalRepuestosExternosTrabajo .col-12 {
+    padding: 0.5rem !important;
+}
+</style>
+
+<!-- Modal de Repuestos Externos para Trabajo -->
+<div class="modal fade" id="modalRepuestosExternosTrabajo" tabindex="-1" aria-labelledby="modalRepuestosExternosTrabajoLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title" id="modalRepuestosExternosTrabajoLabel">
+          🌐 Buscar Repuestos en Proveedores Externos
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Búsqueda de Repuestos Externos -->
+            <div class="row mb-3">
+              <div class="col-md-8">
+                <input type="text" class="form-control" id="buscarRepuestoExternoTrabajo" placeholder="Buscar repuestos externos guardados...">
+              </div>
+              <div class="col-md-4">
+                <button class="btn btn-primary w-100" onclick="buscarRepuestosExternosTrabajo()">
+                  🔍 Buscar
+                </button>
+              </div>
+            </div>
+
+            <div id="resultadosExternosTrabajo" class="mb-3">
+              <p class="text-muted">Ingresa un término para buscar en las referencias guardadas.</p>
+            </div>
+
+            <div class="alert alert-info">
+              <strong>💡 Tip:</strong> Si no encuentras el repuesto guardado, búscalo en los proveedores con los botones de abajo. Usa el <strong>bookmarklet</strong> para guardar nuevas referencias rápidamente.
+            </div>
+
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-success flex-fill" onclick="buscarEnMundoRepuestosTrabajo()">
+                🛒 Buscar en Mundo Repuestos
+              </button>
+              <button type="button" class="btn btn-primary flex-fill" onclick="buscarEnAutoPlanetTrabajo()">
+                🚗 Buscar en AutoPlanet
+              </button>
+              <button type="button" class="btn btn-warning flex-fill" onclick="buscarEnAmbosProveedoresTrabajo()">
+                ⚡ Buscar en AMBOS
+              </button>
+            </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ========================================
+// REPUESTOS EXTERNOS PARA TRABAJO
+// ========================================
+
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🔧 Inicializando modal de repuestos externos para trabajo');
+  
+  // Buscar al presionar Enter
+  const buscarInput = document.getElementById('buscarRepuestoExternoTrabajo');
+  if (buscarInput) {
+    buscarInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        buscarRepuestosExternosTrabajo();
+      }
+    });
+  }
+  
+  // Guardar nueva referencia - form submit
+  const formGuardar = document.getElementById('formGuardarReferenciaTrabajo');
+  if (formGuardar) {
+    formGuardar.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const formData = new FormData();
+      formData.append('nombre', document.getElementById('refNombreTrabajo').value);
+      formData.append('proveedor', document.getElementById('refProveedorTrabajo').value);
+      formData.append('proveedor_nombre', document.getElementById('refProveedorNombreTrabajo').value);
+      formData.append('marca', document.getElementById('refMarcaTrabajo').value);
+      formData.append('codigo_proveedor', document.getElementById('refCodigoTrabajo').value);
+      formData.append('precio_referencial', document.getElementById('refPrecioTrabajo').value);
+      formData.append('url_producto', document.getElementById('refURLTrabajo').value);
+      formData.append('descripcion', document.getElementById('refDescripcionTrabajo').value);
+      formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+      
+      try {
+        const response = await fetch('/car/api/repuestos-externos/agregar/', {
+          method: 'POST',
+          body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          alert('✅ Referencia guardada exitosamente!');
+          limpiarFormularioReferenciaTrabajo();
+          document.getElementById('buscar-tab-trabajo').click();
+          document.getElementById('buscarRepuestoExternoTrabajo').value = data.repuesto.nombre;
+          buscarRepuestosExternosTrabajo();
+        } else {
+          alert('❌ Error: ' + data.error);
+        }
+      } catch (error) {
+        alert('❌ Error al guardar: ' + error.message);
+      }
+    });
+  }
+  
+  console.log('✅ Modal de repuestos externos inicializado correctamente');
+  
+  // Debug del modal cuando se abre
+  const modalElement = document.getElementById('modalRepuestosExternosTrabajo');
+  if (modalElement) {
+    modalElement.addEventListener('shown.bs.modal', function () {
+      console.log('📖 Modal abierto - verificando elementos:');
+      
+      const buscarInput = document.getElementById('buscarRepuestoExternoTrabajo');
+      const resultadosDiv = document.getElementById('resultadosExternosTrabajo');
+      const formulario = document.getElementById('formGuardarReferenciaTrabajo');
+      const tabContent = document.getElementById('repuestosExternosTabsContentTrabajo');
+      const tabPaneBuscar = document.getElementById('buscar-content-trabajo');
+      const tabPaneGuardar = document.getElementById('guardar-content-trabajo');
+      
+      console.log('  - Campo búsqueda:', buscarInput ? '✅' : '❌');
+      console.log('  - Contenedor resultados:', resultadosDiv ? '✅' : '❌');
+      console.log('  - Formulario:', formulario ? '✅' : '❌');
+      console.log('  - Tab content:', tabContent ? '✅' : '❌');
+      console.log('  - Tab pane buscar:', tabPaneBuscar ? '✅' : '❌');
+      console.log('  - Tab pane guardar:', tabPaneGuardar ? '✅' : '❌');
+      
+      // FORZAR VISIBILIDAD con JavaScript
+      if (tabContent) {
+        console.log('🔧 Forzando display del tab-content');
+        tabContent.style.display = 'block';
+        tabContent.style.visibility = 'visible';
+        tabContent.style.opacity = '1';
+        tabContent.style.height = 'auto';
+        tabContent.style.minHeight = '500px';
+      }
+      
+      // Hacer visibles TODOS los tab-panes (no solo el activo)
+      const todosLosPanes = [tabPaneBuscar, tabPaneGuardar];
+      todosLosPanes.forEach(pane => {
+        if (pane) {
+          pane.style.visibility = 'visible';
+          pane.style.opacity = '1';
+          pane.style.height = 'auto';
+          pane.style.minHeight = '450px';
+          // No forzar display aquí, dejar que Bootstrap lo maneje
+        }
+      });
+      
+      // Asegurar que el primer tab esté activo al abrir
+      if (tabPaneBuscar) {
+        tabPaneBuscar.classList.add('show', 'active');
+        tabPaneBuscar.style.display = 'block';
+      }
+      
+      if (buscarInput) {
+        console.log('🔧 Campo de búsqueda visible:', getComputedStyle(buscarInput).display);
+        buscarInput.focus();
+      }
+      
+      console.log('✅ Forzado de visibilidad completado');
+    });
+  }
+});
+
+// Buscar repuestos externos
+async function buscarRepuestosExternosTrabajo() {
+  const termino = document.getElementById('buscarRepuestoExternoTrabajo').value.trim();
+  const container = document.getElementById('resultadosExternosTrabajo');
+  
+  if (!termino || termino.length < 2) {
+    container.innerHTML = '<p class="text-warning">⚠️ Ingresa al menos 2 caracteres.</p>';
+    return;
+  }
+  
+  container.innerHTML = '<div class="text-center"><div class="spinner-border text-success" role="status"></div><p>Buscando...</p></div>';
+  
+  try {
+    const response = await fetch(`/car/api/repuestos-externos/buscar/?termino=${encodeURIComponent(termino)}`);
+    const data = await response.json();
+    
+    if (!data.repuestos || data.repuestos.length === 0) {
+      container.innerHTML = '<p class="text-muted">No se encontraron repuestos con ese término.</p>';
+      return;
+    }
+    
+    let html = '<div class="list-group">';
+    data.repuestos.forEach(rep => {
+      html += `
+        <div class="list-group-item">
+          <div class="d-flex justify-content-between align-items-start">
+            <div class="flex-grow-1">
+              <h6 class="mb-1">${rep.nombre}</h6>
+              <p class="mb-1 text-muted small">
+                ${rep.proveedor} ${rep.marca ? '• ' + rep.marca : ''} ${rep.codigo ? '• Cód: ' + rep.codigo : ''}
+              </p>
+              <p class="mb-0 fw-bold text-success">$${rep.precio.toLocaleString('es-CL')}</p>
+            </div>
+            <div class="d-flex flex-column gap-1">
+              <button class="btn btn-sm btn-outline-primary" onclick="window.open('${rep.url}', '_blank')">
+                🔗 Ver
+              </button>
+              <button class="btn btn-sm btn-success" onclick="agregarRepuestoExternoAlTrabajo(${rep.id}, '${rep.nombre.replace(/'/g, "\\'")}', ${rep.precio})">
+                ✅ Agregar
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    html += '</div>';
+    
+    container.innerHTML = html;
+  } catch (error) {
+    container.innerHTML = '<p class="text-danger">❌ Error al buscar: ' + error.message + '</p>';
+  }
+}
+
+// Agregar repuesto externo al trabajo via POST
+async function agregarRepuestoExternoAlTrabajo(repuestoExternoId, nombre, precio) {
+  if (!confirm(`¿Agregar "${nombre}" al trabajo?`)) {
+    return;
+  }
+  
+  const formData = new FormData();
+  formData.append('agregar_repuesto_externo', 'true');
+  formData.append('repuesto_externo_id', repuestoExternoId);
+  formData.append('cantidad', 1);
+  formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+  
+  try {
+    const response = await fetch(window.location.href, {
+      method: 'POST',
+      body: formData
+    });
+    
+    if (response.ok) {
+      // Cerrar modal
+      const modal = bootstrap.Modal.getInstance(document.getElementById('modalRepuestosExternosTrabajo'));
+      if (modal) modal.hide();
+      
+      // Recargar página
+      window.location.href = window.location.pathname + '?tab=repuestos';
+    } else {
+      alert('❌ Error al agregar el repuesto');
+    }
+  } catch (error) {
+    alert('❌ Error: ' + error.message);
+  }
+}
+
+// Buscar directamente en Mundo Repuestos
+function buscarEnMundoRepuestosTrabajo() {
+  const termino = document.getElementById('buscarRepuestoExternoTrabajo').value.trim();
+  
+  if (!termino) {
+    alert('❌ Por favor ingresa un término de búsqueda');
+    document.getElementById('buscarRepuestoExternoTrabajo').focus();
+    return;
+  }
+  
+  const terminoFormateado = termino.replace(/\s+/g, '--');
+  const url = `https://mundorepuestos.com/busqueda/${terminoFormateado}`;
+  window.open(url, '_blank');
+}
+
+// Buscar directamente en AutoPlanet
+function buscarEnAutoPlanetTrabajo() {
+  const termino = document.getElementById('buscarRepuestoExternoTrabajo').value.trim();
+  
+  if (!termino) {
+    alert('❌ Por favor ingresa un término de búsqueda');
+    document.getElementById('buscarRepuestoExternoTrabajo').focus();
+    return;
+  }
+  
+  const url = `https://www.autoplanet.cl/busqueda/${encodeURIComponent(termino)}`;
+  window.open(url, '_blank');
+}
+
+// Buscar en ambos proveedores
+function buscarEnAmbosProveedoresTrabajo() {
+  buscarEnMundoRepuestosTrabajo();
+  setTimeout(() => buscarEnAutoPlanetTrabajo(), 300);
+}
+</script>
+
+{% endblock %}

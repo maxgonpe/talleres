@@ -1,0 +1,376 @@
+/* ========================================
+   ESTILOS ESPECÍFICOS POR TEMPLATE
+   Cada sección corresponde a un template específico
+   ======================================== */
+
+/* ========================================
+   PANEL PRINCIPAL
+   ======================================== */
+.panel-principal .card {
+  background-color: var(--panel-card-bg);
+  color: var(--panel-card-text);
+  border: 1px solid var(--panel-card-border);
+  box-shadow: var(--panel-card-shadow);
+}
+
+.panel-principal .card-title {
+  color: var(--panel-title-color);
+}
+
+.panel-principal .card-subtitle {
+  color: var(--panel-subtitle-color);
+}
+
+/* ========================================
+   DIAGNÓSTICOS
+   ======================================== */
+.diagnostico-card,
+.diagnostico-list-item {
+  background-color: var(--diagnostico-card-bg);
+  color: var(--diagnostico-card-text);
+  border: 1px solid var(--diagnostico-card-border);
+}
+
+.diagnostico-card .diagnostico-title,
+.diagnostico-list-item .diagnostico-title {
+  color: var(--diagnostico-title-color);
+}
+
+.diagnostico-card .diagnostico-subtitle,
+.diagnostico-list-item .diagnostico-subtitle {
+  color: var(--diagnostico-subtitle-color);
+}
+
+.diagnostico-status-pendiente {
+  background-color: var(--diagnostico-status-pendiente);
+  color: white;
+}
+
+.diagnostico-status-aprobado {
+  background-color: var(--diagnostico-status-aprobado);
+  color: white;
+}
+
+.diagnostico-status-rechazado {
+  background-color: var(--diagnostico-status-rechazado);
+  color: white;
+}
+
+/* ========================================
+   TRABAJOS
+   ======================================== */
+.trabajo-card,
+.trabajo-list-item {
+  background-color: var(--trabajo-card-bg);
+  color: var(--trabajo-card-text);
+  border: 1px solid var(--trabajo-card-border);
+}
+
+.trabajo-card .trabajo-title,
+.trabajo-list-item .trabajo-title {
+  color: var(--trabajo-title-color);
+}
+
+.trabajo-card .trabajo-subtitle,
+.trabajo-list-item .trabajo-subtitle {
+  color: var(--trabajo-subtitle-color);
+}
+
+.trabajo-estado-iniciado {
+  background-color: var(--trabajo-estado-iniciado);
+  color: white;
+}
+
+.trabajo-estado-trabajando {
+  background-color: var(--trabajo-estado-trabajando);
+  color: white;
+}
+
+.trabajo-estado-completado {
+  background-color: var(--trabajo-estado-completado);
+  color: white;
+}
+
+.trabajo-estado-entregado {
+  background-color: var(--trabajo-estado-entregado);
+  color: white;
+}
+
+.trabajo-progress {
+  background-color: var(--trabajo-progress-bg);
+}
+
+.trabajo-progress-bar {
+  background-color: var(--trabajo-progress-fill);
+}
+
+/* ========================================
+   INVENTARIO
+   ======================================== */
+.inventario-card,
+.repuesto-card {
+  background-color: var(--inventario-card-bg);
+  color: var(--inventario-card-text);
+  border: 1px solid var(--inventario-card-border);
+}
+
+.inventario-card .repuesto-title,
+.repuesto-card .repuesto-title {
+  color: var(--inventario-title-color);
+}
+
+.inventario-card .repuesto-precio,
+.repuesto-card .repuesto-precio {
+  color: var(--inventario-price-color);
+  font-weight: var(--font-weight-bold);
+}
+
+.inventario-card .repuesto-sku,
+.repuesto-card .repuesto-sku {
+  color: var(--inventario-sku-color);
+  font-size: 0.875rem;
+}
+
+.inventario-stock-bajo {
+  color: var(--inventario-stock-bajo);
+  font-weight: var(--font-weight-bold);
+}
+
+.inventario-stock-medio {
+  color: var(--inventario-stock-medio);
+  font-weight: var(--font-weight-semibold);
+}
+
+.inventario-stock-alto {
+  color: var(--inventario-stock-alto);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* ========================================
+   PUNTO DE VENTA (POS)
+   ======================================== */
+.pos-container {
+  background-color: var(--pos-bg);
+}
+
+.pos-card {
+  background-color: var(--pos-card-bg);
+  color: var(--pos-card-text);
+  border: 1px solid var(--pos-card-border);
+}
+
+.pos-total {
+  background-color: var(--pos-total-bg);
+  color: var(--pos-total-text);
+  font-weight: var(--font-weight-bold);
+  padding: var(--spacing-md);
+  border-radius: var(--border-radius-md);
+}
+
+.pos-button-primary {
+  background-color: var(--pos-button-primary);
+  color: var(--pos-button-text);
+  border: none;
+  transition: var(--transition);
+}
+
+.pos-button-primary:hover {
+  background-color: var(--pos-button-primary-hover);
+}
+
+.pos-input {
+  background-color: var(--pos-input-bg);
+  color: var(--pos-input-text);
+  border: 1px solid var(--pos-input-border);
+}
+
+.pos-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 0.2rem rgba(74, 92, 122, 0.25);
+}
+
+/* ========================================
+   COMPRAS
+   ======================================== */
+.compra-card,
+.compra-list-item {
+  background-color: var(--compra-card-bg);
+  color: var(--compra-card-text);
+  border: 1px solid var(--compra-card-border);
+}
+
+.compra-card .compra-title,
+.compra-list-item .compra-title {
+  color: var(--compra-title-color);
+}
+
+.compra-card .compra-total,
+.compra-list-item .compra-total {
+  color: var(--compra-total-color);
+  font-weight: var(--font-weight-bold);
+}
+
+.compra-card .compra-proveedor,
+.compra-list-item .compra-proveedor {
+  color: var(--compra-proveedor-color);
+}
+
+.compra-estado-borrador {
+  background-color: var(--compra-estado-borrador);
+  color: white;
+}
+
+.compra-estado-confirmada {
+  background-color: var(--compra-estado-confirmada);
+  color: white;
+}
+
+.compra-estado-recibida {
+  background-color: var(--compra-estado-recibida);
+  color: white;
+}
+
+.compra-estado-cancelada {
+  background-color: var(--compra-estado-cancelada);
+  color: white;
+}
+
+/* ========================================
+   USUARIOS
+   ======================================== */
+.usuario-card,
+.mecanico-card {
+  background-color: var(--usuario-card-bg);
+  color: var(--usuario-card-text);
+  border: 1px solid var(--usuario-card-border);
+}
+
+.usuario-card .usuario-name,
+.mecanico-card .mecanico-name {
+  color: var(--usuario-name-color);
+}
+
+.usuario-card .usuario-email,
+.mecanico-card .mecanico-email {
+  color: var(--usuario-email-color);
+}
+
+.usuario-rol-mecanico {
+  background-color: var(--usuario-rol-mecanico);
+  color: white;
+}
+
+.usuario-rol-vendedor {
+  background-color: var(--usuario-rol-vendedor);
+  color: white;
+}
+
+.usuario-rol-admin {
+  background-color: var(--usuario-rol-admin);
+  color: white;
+}
+
+/* ========================================
+   BONOS
+   ======================================== */
+.bono-card,
+.bono-list-item {
+  background-color: var(--bono-card-bg);
+  color: var(--bono-card-text);
+  border: 1px solid var(--bono-card-border);
+}
+
+.bono-card .bono-title,
+.bono-list-item .bono-title {
+  color: var(--bono-title-color);
+}
+
+.bono-card .bono-subtitle,
+.bono-list-item .bono-subtitle {
+  color: var(--bono-subtitle-color);
+}
+
+.bono-card .bono-monto,
+.bono-list-item .bono-monto {
+  color: var(--bono-monto-color);
+  font-weight: var(--font-weight-bold);
+}
+
+.bono-pendiente {
+  background-color: var(--bono-pendiente);
+  color: white;
+}
+
+.bono-pagado {
+  background-color: var(--bono-pagado);
+  color: white;
+}
+
+/* ========================================
+   CONFIGURACIÓN
+   ======================================== */
+.config-card,
+.config-section {
+  background-color: var(--config-card-bg);
+  color: var(--config-card-text);
+  border: 1px solid var(--config-card-border);
+}
+
+.config-card .config-title,
+.config-section .config-title {
+  color: var(--config-title-color);
+}
+
+.config-card .config-label,
+.config-section .config-label {
+  color: var(--config-label-color);
+}
+
+.config-input {
+  background-color: var(--config-input-bg);
+  color: var(--config-input-text);
+  border: 1px solid var(--config-input-border);
+}
+
+.config-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 0.2rem rgba(74, 92, 122, 0.25);
+}
+
+/* ========================================
+   ESTADÍSTICAS
+   ======================================== */
+.estadistica-card,
+.estadistica-chart {
+  background-color: var(--estadistica-card-bg);
+  color: var(--estadistica-card-text);
+  border: 1px solid var(--estadistica-card-border);
+}
+
+.estadistica-card .estadistica-title,
+.estadistica-chart .estadistica-title {
+  color: var(--estadistica-title-color);
+}
+
+.estadistica-card .estadistica-value,
+.estadistica-chart .estadistica-value {
+  color: var(--estadistica-value-color);
+  font-weight: var(--font-weight-bold);
+  font-size: 2rem;
+}
+
+.estadistica-card .estadistica-label,
+.estadistica-chart .estadistica-label {
+  color: var(--estadistica-label-color);
+}
+
+.estadistica-chart-bg {
+  background-color: var(--estadistica-chart-bg);
+}
+
+.estadistica-chart-fill {
+  background-color: var(--estadistica-chart-fill);
+}
+
+
+

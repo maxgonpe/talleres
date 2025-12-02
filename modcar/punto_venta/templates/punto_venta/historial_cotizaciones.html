@@ -1,0 +1,404 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+{% endblock %}
+
+{% block title %}Historial de Cotizaciones - POS{% endblock %}
+
+{% block extra_head %}
+<style>
+    .historial-container {
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .historial-header {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: var(--text-inverse);
+        padding: var(--spacing-md);
+        text-align: center;
+    }
+    
+    .filtros-container {
+        background-color: var(--bg-card);
+        border-radius: var(--border-radius-lg);
+        margin: var(--spacing-md);
+        padding: var(--spacing-md);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .cotizacion-card {
+        background-color: var(--bg-card);
+        border-radius: var(--border-radius-lg);
+        margin: var(--spacing-sm) 1rem;
+        padding: var(--spacing-md);
+        box-shadow: var(--shadow-md);
+        border-left: 4px solid #17a2b8;
+    }
+    
+    .cotizacion-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    
+    .cotizacion-numero {
+        font-weight: bold;
+        color: var(--info-600);
+        font-size: 1.1rem;
+    }
+    
+    .cotizacion-fecha {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+    
+    .cotizacion-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    
+    .cotizacion-cliente {
+        font-weight: 500;
+    }
+    
+    .cotizacion-total {
+        font-weight: bold;
+        color: var(--info-600);
+        font-size: 1.2rem;
+    }
+    
+    .cotizacion-estado {
+        padding: var(--spacing-xs) 0.5rem;
+        border-radius: var(--border-radius-lg);
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .estado-activa {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .estado-vencida {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .estado-convertida {
+        background: #cce5ff;
+        color: #004085;
+    }
+    
+    .estado-cancelada {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .btn-ver {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        border: none;
+        border-radius: var(--border-radius-xl);
+        padding: var(--spacing-sm) 1rem;
+        color: var(--text-inverse);
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .btn-ver:hover {
+        color: var(--text-inverse);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    
+    .pagination-container {
+        background-color: var(--bg-card);
+        border-radius: var(--border-radius-lg);
+        margin: var(--spacing-md);
+        padding: var(--spacing-md);
+        box-shadow: var(--shadow-md);
+        text-align: center;
+    }
+    
+    .stats-container {
+        background-color: var(--bg-card);
+        border-radius: var(--border-radius-lg);
+        margin: var(--spacing-md);
+        padding: var(--spacing-md);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: var(--spacing-md);
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--info-600);
+    }
+    
+    .stat-label {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: var(--text-muted);
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    @media (max-width: 768px) {
+        .historial-container {
+            padding: 0;
+        }
+        
+        .filtros-container,
+        .cotizacion-card,
+        .pagination-container,
+        .stats-container {
+            margin: var(--spacing-sm);
+        }
+        
+        .cotizacion-header,
+        .cotizacion-info {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+        
+        .cotizacion-total {
+            font-size: 1.1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="historial-container">
+    <!-- Header -->
+    <div class="historial-header">
+        <h4 class="mb-0">📋 Historial de Cotizaciones</h4>
+        <small>Todas las cotizaciones generadas desde el POS</small>
+    </div>
+
+    <!-- Estadísticas rápidas -->
+    <div class="stats-container">
+        <div class="row">
+            <div class="col-3">
+                <div class="stat-item">
+                    <div class="stat-number">{{ page_obj.paginator.count }}</div>
+                    <div class="stat-label">Total</div>
+                </div>
+            </div>
+            <div class="col-3">
+                <div class="stat-item">
+                    <div class="stat-number">{{ page_obj|length }}</div>
+                    <div class="stat-label">Esta Página</div>
+                </div>
+            </div>
+            <div class="col-3">
+                <div class="stat-item">
+                    <div class="stat-number">{{ page_obj.number }}</div>
+                    <div class="stat-label">Página</div>
+                </div>
+            </div>
+            <div class="col-3">
+                <div class="stat-item">
+                    <div class="stat-number">
+                        {% for cotizacion in page_obj %}
+                            {% if cotizacion.estado == 'activa' %}{{ forloop.counter0|add:1 }}{% endif %}
+                        {% endfor %}
+                    </div>
+                    <div class="stat-label">Activas</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filtros-container">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Fecha Desde</label>
+                <input type="date" class="form-control" name="fecha_desde" value="{{ fecha_desde }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Fecha Hasta</label>
+                <input type="date" class="form-control" name="fecha_hasta" value="{{ fecha_hasta }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Estado</label>
+                <select class="form-select" name="estado">
+                    <option value="">Todos</option>
+                    <option value="activa" {% if estado == 'activa' %}selected{% endif %}>Activa</option>
+                    <option value="vencida" {% if estado == 'vencida' %}selected{% endif %}>Vencida</option>
+                    <option value="convertida" {% if estado == 'convertida' %}selected{% endif %}>Convertida</option>
+                    <option value="cancelada" {% if estado == 'cancelada' %}selected{% endif %}>Cancelada</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary me-2">🔍 Filtrar</button>
+                <a href="{% url 'pos_historial_cotizaciones' %}" class="btn btn-outline-secondary">Limpiar</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Lista de cotizaciones -->
+    {% if page_obj %}
+        {% for cotizacion in page_obj %}
+            <div class="cotizacion-card">
+                <div class="cotizacion-header">
+                    <div class="cotizacion-numero">#{{ cotizacion.id }}</div>
+                    <div class="cotizacion-fecha">{{ cotizacion.fecha|date:"d/m/Y H:i" }}</div>
+                </div>
+                
+                <div class="cotizacion-info">
+                    <div>
+                        <div class="cotizacion-cliente">
+                            {{ cotizacion.cliente.nombre|default:"Cliente General" }}
+                        </div>
+                        <div class="cotizacion-estado estado-{{ cotizacion.estado }}">
+                            {{ cotizacion.get_estado_display }}
+                        </div>
+                    </div>
+                    <div class="cotizacion-total">${{ cotizacion.total|floatformat:0|intcomma }}</div>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-secondary">
+                        Válida hasta: {{ cotizacion.valida_hasta|date:"d/m/Y" }}
+                        {% if cotizacion.descuento > 0 %}
+                            | Descuento: ${{ cotizacion.descuento|floatformat:0|intcomma }}
+                        {% endif %}
+                    </small>
+                    <a href="{% url 'pos_cotizacion_detalle' cotizacion.id %}" class="btn-ver">
+                        👁️ Ver Detalle
+                    </a>
+                </div>
+            </div>
+        {% endfor %}
+
+        <!-- Paginación -->
+        {% if page_obj.has_other_pages %}
+            <div class="pagination-container">
+                <nav aria-label="Paginación de cotizaciones">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if fecha_desde %}&fecha_desde={{ fecha_desde }}{% endif %}{% if fecha_hasta %}&fecha_hasta={{ fecha_hasta }}{% endif %}{% if estado %}&estado={{ estado }}{% endif %}">Primera</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if fecha_desde %}&fecha_desde={{ fecha_desde }}{% endif %}{% if fecha_hasta %}&fecha_hasta={{ fecha_hasta }}{% endif %}{% if estado %}&estado={{ estado }}{% endif %}">Anterior</a>
+                            </li>
+                        {% endif %}
+
+                        <li class="page-item active">
+                            <span class="page-link">
+                                Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                            </span>
+                        </li>
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if fecha_desde %}&fecha_desde={{ fecha_desde }}{% endif %}{% if fecha_hasta %}&fecha_hasta={{ fecha_hasta }}{% endif %}{% if estado %}&estado={{ estado }}{% endif %}">Siguiente</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if fecha_desde %}&fecha_desde={{ fecha_desde }}{% endif %}{% if fecha_hasta %}&fecha_hasta={{ fecha_hasta }}{% endif %}{% if estado %}&estado={{ estado }}{% endif %}">Última</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-file-invoice"></i>
+            <h5>No hay cotizaciones registradas</h5>
+            <p>Las cotizaciones generadas desde el POS aparecerán aquí</p>
+            <a href="{% url 'pos_principal' %}" class="btn btn-primary">
+                📋 Ir al POS
+            </a>
+        </div>
+    {% endif %}
+
+    <!-- Botones de navegación -->
+    <div class="d-grid gap-2 m-3">
+        <a href="{% url 'pos_principal' %}" class="btn btn-primary">
+            🛒 Volver al POS
+        </a>
+        <a href="{% url 'pos_dashboard' %}" class="btn btn-outline-secondary">
+            📊 Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-submit del formulario de filtros cuando cambian las fechas
+document.querySelectorAll('input[type="date"]').forEach(input => {
+    input.addEventListener('change', function() {
+        // Opcional: auto-submit cuando cambian las fechas
+        // this.form.submit();
+    });
+});
+
+// Resaltar cotizaciones vencidas
+document.addEventListener('DOMContentLoaded', function() {
+    const hoy = new Date().toISOString().split('T')[0];
+    const cotizacionCards = document.querySelectorAll('.cotizacion-card');
+    
+    cotizacionCards.forEach(card => {
+        const fechaVencimiento = card.querySelector('.text-muted').textContent;
+        const fechaMatch = fechaVencimiento.match(/(\d{2}\/\d{2}\/\d{4})/);
+        
+        if (fechaMatch) {
+            const [dia, mes, anio] = fechaMatch[1].split('/');
+            const fechaVenc = new Date(anio, mes - 1, dia);
+            const hoyDate = new Date();
+            
+            if (fechaVenc < hoyDate) {
+                card.style.borderLeftColor = '#dc3545';
+                card.style.backgroundColor = '#fff5f5';
+            }
+        }
+    });
+});
+
+// Animación para las tarjetas de cotización
+document.addEventListener('DOMContentLoaded', function() {
+    const cotizacionCards = document.querySelectorAll('.cotizacion-card');
+    
+    cotizacionCards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.3s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
+</script>
+{% endblock %}
+

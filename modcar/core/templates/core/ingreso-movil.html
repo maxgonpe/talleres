@@ -1,0 +1,4753 @@
+{% extends 'base.html' %}
+
+{% block mobile_components %}
+  {% include 'car/mobile_bottom_nav.html' %}
+  {% include 'car/mobile_fab.html' %}
+{% endblock %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+  <style>
+    .ingreso-container {
+      background: var(--bg-card);
+      border-radius: var(--border-radius-lg);
+      padding: var(--spacing-lg);
+      box-shadow: var(--shadow-md);
+      margin-bottom: var(--spacing-lg);
+    }
+    
+    .ingreso-header {
+      background: var(--gradient);
+      color: var(--text-inverse);
+      padding: var(--spacing-lg);
+      border-radius: var(--border-radius-lg);
+      margin-bottom: var(--spacing-lg);
+      text-align: center;
+    }
+    
+    .ingreso-header h2 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    
+    .form-section {
+      background: var(--bg-card);
+      border-radius: var(--border-radius-lg);
+      padding: var(--spacing-lg);
+      margin-bottom: var(--spacing-lg);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+    }
+    
+    .form-section h3 {
+      color: var(--primary-600);
+      font-weight: 600;
+      margin-bottom: var(--spacing-md);
+      padding-bottom: var(--spacing-sm);
+      border-bottom: 2px solid var(--border-color);
+    }
+    
+    .form-label {
+      color: var(--text-primary);
+      font-weight: 500;
+      margin-bottom: var(--spacing-sm);
+      font-size: 1.05rem; /* Aumentado para mejor legibilidad */
+    }
+    
+    .form-control, .form-select {
+      background: var(--bg);
+      border: 2px solid var(--border-color);
+      color: var(--text-primary);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-sm);
+      transition: var(--transition);
+      font-size: 1.05rem; /* Aumentado de 1rem a 1.05rem */
+    }
+    
+    .form-control:focus, .form-select:focus {
+      border-color: var(--primary-600);
+      box-shadow: 0 0 0 0.2rem rgba(var(--primary-600), 0.25);
+      outline: none;
+    }
+    
+    .form-control::placeholder {
+      color: var(--text-secondary);
+    }
+    
+    .btn {
+      border-radius: var(--border-radius);
+      font-weight: 500;
+      transition: var(--transition);
+      padding: var(--spacing-sm) var(--spacing-md);
+    }
+    
+    .btn-primary {
+      background: var(--primary-600);
+      border-color: var(--primary-600);
+    }
+    
+    .btn-primary:hover {
+      background: var(--primary-700);
+      border-color: var(--primary-700);
+    }
+    
+    .btn-outline-primary {
+      color: var(--primary-600);
+      border-color: var(--primary-600);
+    }
+    
+    .btn-outline-primary:hover {
+      background: var(--primary-600);
+      border-color: var(--primary-600);
+      color: var(--text-inverse);
+    }
+    
+    .btn-success {
+      background: var(--success-600);
+      border-color: var(--success-600);
+    }
+    
+    .btn-success:hover {
+      background: var(--success-700);
+      border-color: var(--success-700);
+    }
+    
+    .btn-warning {
+      background: var(--warning-600);
+      border-color: var(--warning-600);
+    }
+    
+    .btn-warning:hover {
+      background: var(--warning-700);
+      border-color: var(--warning-700);
+    }
+    
+    .btn-danger {
+      background: var(--danger-600);
+      border-color: var(--danger-600);
+    }
+    
+    .btn-danger:hover {
+      background: var(--danger-700);
+      border-color: var(--danger-700);
+    }
+    
+    .btn-secondary {
+      background: var(--neutral-600);
+      border-color: var(--neutral-600);
+    }
+    
+    .btn-secondary:hover {
+      background: var(--neutral-700);
+      border-color: var(--neutral-700);
+    }
+    
+    .input-group .btn {
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+    }
+    
+    .input-group .form-control {
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+    
+    .alert {
+      border-radius: var(--border-radius);
+      padding: var(--spacing-md);
+      margin-bottom: var(--spacing-md);
+      border: 1px solid transparent;
+    }
+    
+    .alert-success {
+      background: var(--success-100);
+      border-color: var(--success-200);
+      color: var(--success-800);
+    }
+    
+    .alert-warning {
+      background: var(--warning-100);
+      border-color: var(--warning-200);
+      color: var(--warning-800);
+    }
+    
+    .alert-danger {
+      background: var(--danger-100);
+      border-color: var(--danger-200);
+      color: var(--danger-800);
+    }
+    
+    .alert-info {
+      background: var(--info-100);
+      border-color: var(--info-200);
+      color: var(--info-800);
+    }
+    
+    .badge {
+      border-radius: var(--border-radius-sm);
+      font-weight: 500;
+      padding: var(--spacing-xs) var(--spacing-sm);
+    }
+    
+    .badge.bg-success {
+      background: var(--success-600) !important;
+      color: var(--text-inverse);
+    }
+    
+    .badge.bg-warning {
+      background: var(--warning-600) !important;
+      color: var(--text-inverse);
+    }
+    
+    .badge.bg-danger {
+      background: var(--danger-600) !important;
+      color: var(--text-inverse);
+    }
+    
+    .badge.bg-info {
+      background: var(--info-600) !important;
+      color: var(--text-inverse);
+    }
+    
+    .badge.bg-primary {
+      background: var(--primary-600) !important;
+      color: var(--text-inverse);
+    }
+    
+    .badge.bg-secondary {
+      background: var(--neutral-600) !important;
+      color: var(--text-inverse);
+    }
+    
+    .text-muted {
+      color: var(--text-secondary) !important;
+    }
+    
+    .text-success {
+      color: var(--success-600) !important;
+    }
+    
+    .text-warning {
+      color: var(--warning-600) !important;
+    }
+    
+    .text-danger {
+      color: var(--danger-600) !important;
+    }
+    
+    .text-info {
+      color: var(--info-600) !important;
+    }
+    
+    .text-primary {
+      color: var(--primary-600) !important;
+    }
+    
+    .mb-3 {
+      margin-bottom: var(--spacing-md) !important;
+    }
+    
+    .mb-4 {
+      margin-bottom: var(--spacing-lg) !important;
+    }
+    
+    .mt-3 {
+      margin-top: var(--spacing-md) !important;
+    }
+    
+    .py-4 {
+      padding-top: var(--spacing-lg) !important;
+      padding-bottom: var(--spacing-lg) !important;
+    }
+    
+    .px-3 {
+      padding-left: var(--spacing-md) !important;
+      padding-right: var(--spacing-md) !important;
+    }
+    
+    .py-3 {
+      padding-top: var(--spacing-md) !important;
+      padding-bottom: var(--spacing-md) !important;
+    }
+    
+    .shadow-sm {
+      box-shadow: var(--shadow-sm) !important;
+    }
+    
+    .shadow {
+      box-shadow: var(--shadow-md) !important;
+    }
+    
+    .shadow-lg {
+      box-shadow: var(--shadow-lg) !important;
+    }
+    
+    .border {
+      border: 1px solid var(--border-color) !important;
+    }
+    
+    .border-top {
+      border-top: 1px solid var(--border-color) !important;
+    }
+    
+    .border-bottom {
+      border-bottom: 1px solid var(--border-color) !important;
+    }
+    
+    .rounded {
+      border-radius: var(--border-radius) !important;
+    }
+    
+    .rounded-lg {
+      border-radius: var(--border-radius-lg) !important;
+    }
+    
+    .d-flex {
+      display: flex !important;
+    }
+    
+    .justify-content-between {
+      justify-content: space-between !important;
+    }
+    
+    .align-items-center {
+      align-items: center !important;
+    }
+    
+    .w-100 {
+      width: 100% !important;
+    }
+    
+    .flex-wrap {
+      flex-wrap: wrap !important;
+    }
+    
+    .gap-2 {
+      gap: var(--spacing-sm) !important;
+    }
+    
+    .gap-3 {
+      gap: var(--spacing-md) !important;
+    }
+    
+    .text-center {
+      text-align: center !important;
+    }
+    
+    .text-end {
+      text-align: end !important;
+    }
+    
+    .fw-bold {
+      font-weight: 600 !important;
+    }
+    
+    .fw-normal {
+      font-weight: 400 !important;
+    }
+    
+    .small {
+      font-size: 0.875rem !important;
+    }
+    
+    .fs-6 {
+      font-size: 1rem !important;
+    }
+    
+    .fs-5 {
+      font-size: 1.25rem !important;
+    }
+    
+    .fs-4 {
+      font-size: 1.5rem !important;
+    }
+    
+    .fs-3 {
+      font-size: 1.75rem !important;
+    }
+    
+    .fs-2 {
+      font-size: 2rem !important;
+    }
+    
+    .fs-1 {
+      font-size: 2.5rem !important;
+    }
+    
+    .container {
+      max-width: 100%;
+      margin: 0 auto;
+      padding: 0 var(--spacing-md);
+    }
+    
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      margin: 0 -0.5rem;
+    }
+    
+    .col-md-6 {
+      flex: 0 0 50%;
+      max-width: 50%;
+      padding: 0 0.5rem;
+    }
+    
+    .col-md-4 {
+      flex: 0 0 33.333333%;
+      max-width: 33.333333%;
+      padding: 0 0.5rem;
+    }
+    
+    .col-md-3 {
+      flex: 0 0 25%;
+      max-width: 25%;
+      padding: 0 0.5rem;
+    }
+    
+    .col-md-2 {
+      flex: 0 0 16.666667%;
+      max-width: 16.666667%;
+      padding: 0 0.5rem;
+    }
+    
+    .col-md-1 {
+      flex: 0 0 8.333333%;
+      max-width: 8.333333%;
+      padding: 0 0.5rem;
+    }
+    
+    .col-12 {
+      flex: 0 0 100%;
+      max-width: 100%;
+      padding: 0 0.5rem;
+    }
+    
+    @media (max-width: 768px) {
+      /* Aumentar tamaño de fuente base en móvil */
+      body {
+        font-size: 1.1rem !important; /* Aumentado de ~1rem a 1.1rem */
+      }
+      
+      .col-md-6, .col-md-4, .col-md-3, .col-md-2, .col-md-1 {
+        flex: 0 0 100%;
+        max-width: 100%;
+      }
+      
+      .ingreso-container {
+        padding: var(--spacing-sm);
+        font-size: 1.1rem; /* Base más grande */
+      }
+      
+      .ingreso-header {
+        padding: var(--spacing-md);
+      }
+      
+      .ingreso-header h2 {
+        font-size: 1.75rem !important; /* Aumentado de 1.5rem */
+      }
+      
+      .form-section {
+        padding: var(--spacing-md);
+        font-size: 1.05rem; /* Texto en secciones más grande */
+      }
+      
+      .form-section h3 {
+        font-size: 1.35rem !important; /* Títulos de sección más grandes */
+      }
+      
+      .form-section h4 {
+        font-size: 1.2rem !important;
+      }
+      
+      .form-section h5 {
+        font-size: 1.1rem !important;
+      }
+      
+      /* Formularios más grandes */
+      .form-label {
+        font-size: 1.1rem !important; /* Labels más grandes */
+        margin-bottom: var(--spacing-sm);
+      }
+      
+      .form-control, .form-select, .form-control-sm {
+        font-size: 1.15rem !important; /* Inputs más grandes */
+        padding: 0.75rem !important; /* Más padding para mejor toque */
+      }
+      
+      /* Botones más grandes */
+      .btn {
+        font-size: 1.1rem !important;
+        padding: 0.75rem 1.25rem !important;
+      }
+      
+      .btn-lg {
+        font-size: 1.2rem !important;
+        padding: 0.875rem 1.5rem !important;
+      }
+      
+      /* Textos generales */
+      p, span, div, li, td {
+        font-size: 1.05rem !important;
+      }
+      
+      /* Títulos del wizard */
+      .wizard-step-label {
+        font-size: 0.85rem !important; /* Ajustado para que quepa */
+      }
+      
+      .wizard-step-pane h3 {
+        font-size: 1.5rem !important;
+      }
+      
+      /* Tablas más legibles */
+      .table {
+        font-size: 1.05rem !important;
+      }
+      
+      .table th {
+        font-size: 1.1rem !important;
+      }
+      
+      .table td {
+        font-size: 1.05rem !important;
+      }
+      
+      /* Alertas más legibles */
+      .alert {
+        font-size: 1.05rem !important;
+        padding: 1rem !important;
+      }
+      
+      .alert strong {
+        font-size: 1.1rem !important;
+      }
+      
+      /* Cards y contenido */
+      .card-title {
+        font-size: 1.25rem !important;
+      }
+      
+      .card-text {
+        font-size: 1.05rem !important;
+      }
+      
+      /* Badges */
+      .badge {
+        font-size: 1rem !important;
+        padding: 0.5rem 0.75rem !important;
+      }
+      
+      /* Listas */
+      .list-group-item {
+        font-size: 1.05rem !important;
+        padding: 1rem !important;
+      }
+      
+      /* Inputs de cantidad y números */
+      input[type="number"],
+      input[type="text"],
+      input[type="email"],
+      input[type="tel"],
+      textarea {
+        font-size: 1.15rem !important;
+      }
+      
+      /* Selects */
+      select.form-select {
+        font-size: 1.15rem !important;
+      }
+      
+      /* Texto muted pero legible */
+      .text-muted, small {
+        font-size: 1rem !important;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+  <h2 class="mb-4">🔧 Ingreso de Diagnóstico</h2>
+
+  <form id="form-ingreso" method="post" novalidate>
+    {% csrf_token %}
+
+    <!-- ========================================
+         WIZARD - BARRA DE PROGRESO (4 PASOS)
+         ======================================== -->
+    <div class="wizard-progress mb-4">
+      <div class="wizard-progress-bar">
+        <div class="wizard-progress-fill" id="wizard-progress-fill" style="width: 25%;"></div>
+      </div>
+      <div class="wizard-steps">
+        <div class="wizard-step active" data-step="1">
+          <div class="wizard-step-circle">1</div>
+          <div class="wizard-step-label">Cliente y Vehículo</div>
+        </div>
+        <div class="wizard-step" data-step="2">
+          <div class="wizard-step-circle">2</div>
+          <div class="wizard-step-label">Problema y Componentes</div>
+        </div>
+        <div class="wizard-step" data-step="3">
+          <div class="wizard-step-circle">3</div>
+          <div class="wizard-step-label">Acciones</div>
+        </div>
+        <div class="wizard-step" data-step="4">
+          <div class="wizard-step-circle">4</div>
+          <div class="wizard-step-label">Repuestos y Finalizar</div>
+        </div>
+      </div>
+      <div class="wizard-progress-text text-center mt-2">
+        <small class="text-muted">Paso <span id="wizard-current-step">1</span> de 4</small>
+      </div>
+    </div>
+
+    <!-- ========================================
+         CONTENIDO DEL WIZARD (PASOS)
+         ======================================== -->
+    <div class="wizard-content" id="wizard-content" style="background: var(--bg-card); border-radius: var(--border-radius-lg); padding: var(--spacing-lg); box-shadow: var(--shadow-md); min-height: 400px; margin-bottom: 120px;">
+      
+      <!-- PASO 1: Cliente y Vehículo -->
+      <div class="wizard-step-pane active" id="wizard-step-1" data-step="1">
+        <h3 class="mb-4">👤 Paso 1: Cliente y Vehículo</h3>
+        
+        <div class="form-section">
+          <h4 class="mb-3">👤 Cliente</h4>
+          <div class="mb-3">
+            <label class="form-label">Elegir cliente existente:</label>
+            <select id="cliente_existente" name="cliente_existente" class="form-select">
+              <option value="">-- Nuevo cliente --</option>
+              {% for cliente in clientes_existentes %}
+                <option value="{{ cliente.rut }}"
+                  {% if selected_cliente and selected_cliente|stringformat:"s" == cliente.rut|stringformat:"s" %} selected {% endif %}>
+                  {{ cliente.nombre }} ({{ cliente.rut }}) - {{ cliente.telefono|default:"Sin teléfono" }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div id="nuevo_cliente_campos">
+            {{ cliente_form|crispy }}
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h4 class="mb-3">🚗 Vehículo</h4>
+          <div class="mb-3">
+            <label class="form-label">Seleccionar vehículo existente:</label>
+            <select id="vehiculo_select" name="vehiculo_existente" class="form-select" 
+                    data-selected="{{ selected_vehiculo|default:'' }}">
+              <option value="">-- Nuevo vehículo --</option>
+            </select>
+          </div>
+          <div id="vehiculo_fields">
+            <!-- Sección resaltada para búsqueda de placa en API -->
+            <div class="alert alert-info border border-primary border-3 rounded-3 p-4 mb-4 shadow-sm" style="background: linear-gradient(135deg, rgba(13, 110, 253, 0.15) 0%, rgba(13, 110, 253, 0.08) 100%);">
+              <div class="d-flex align-items-center mb-3">
+                <div class="bg-primary text-white rounded-circle p-3 me-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+                  <i class="fas fa-search fa-2x"></i>
+                </div>
+                <div>
+                  <h4 class="mb-1 fw-bold text-primary">🔍 Búsqueda de Vehículo por Placa</h4>
+                  <p class="mb-0 small text-muted">Ingresa la placa del vehículo y busca automáticamente en la API</p>
+                </div>
+              </div>
+              <div class="mb-0">
+                <label for="vehiculo-placa" class="form-label fw-bold fs-5 mb-2">Placa del Vehículo:</label>
+                <div class="input-group input-group-lg shadow-sm" style="width: 100%;">
+                  <input type="text" id="vehiculo-placa" name="vehiculo-placa" 
+                         class="form-control form-control-lg border-primary" 
+                         placeholder="Ej: JGCX79, ABC123"
+                         style="font-size: 1.4rem; font-weight: 700; border-width: 2px !important; min-width: 300px; flex: 1 1 auto; color: var(--text-primary) !important; letter-spacing: 0.1em;">
+                  <button type="button" class="btn btn-primary btn-lg px-5 fw-bold" id="btn-buscar-vehiculo" style="font-size: 1.1rem; flex-shrink: 0;">
+                    <i class="fas fa-search me-2"></i>🔍 Buscar en API
+                  </button>
+                </div>
+                <small class="text-muted mt-3 d-block">
+                  <i class="fas fa-info-circle text-primary"></i> <strong>Tip:</strong> Presiona Enter o haz clic en el botón para buscar. Los datos se llenarán automáticamente.
+                </small>
+              </div>
+            </div>
+            {{ vehiculo_form|crispy }}
+          </div>
+        </div>
+      </div>
+
+      <!-- PASO 2: Problema y Componentes -->
+      <div class="wizard-step-pane" id="wizard-step-2" data-step="2" style="display: none;">
+        <h3 class="mb-4">🔧 Paso 2: Problema y Componentes</h3>
+        
+        <!-- Descripción del Problema -->
+        <div class="form-section mb-4">
+          <h4 class="mb-3">📝 Descripción del Problema</h4>
+          <div class="mb-3">
+            <label class="form-label">Describe el problema o diagnóstico:</label>
+            {{ diagnostico_form|crispy }}
+          </div>
+        </div>
+
+        <!-- Componentes -->
+        <div class="form-section mb-4">
+          <h4 class="mb-3">🔧 Seleccionar Componentes</h4>
+          <div class="row">
+            <!-- Columna izquierda: acordeón -->
+            <div class="col-md-6 border-end mb-3 mb-md-0">
+              <h5 class="mb-3">📋 Seleccionar por lista</h5>
+              <div class="accordion" id="componentesAccordion">
+                {% for padre in componentes %}
+                  <div class="accordion-item">
+                    <h2 class="accordion-header" id="heading-{{ padre.id }}">
+                      <button class="accordion-button collapsed" type="button"
+                              data-bs-toggle="collapse" data-bs-target="#collapse-{{ padre.id }}"
+                              aria-expanded="false" aria-controls="collapse-{{ padre.id }}">
+                        {{ padre.nombre }}
+                      </button>
+                    </h2>
+                    <div id="collapse-{{ padre.id }}" class="accordion-collapse collapse"
+                         aria-labelledby="heading-{{ padre.id }}" data-bs-parent="#componentesAccordion">
+                      <div class="accordion-body">
+                        {% for hijo in padre.hijos.all %}
+                          <div class="form-check">
+                            <input class="form-check-input"
+                                   type="checkbox"
+                                   name="componentes_seleccionados"
+                                   value="{{ hijo.id }}"
+                                   id="comp-{{ hijo.id }}"
+                                   data-nombre="{{ hijo.nombre }}"
+                                   {% if hijo.id in selected_componentes_ids %}checked{% endif %}>
+                            <label class="form-check-label" for="comp-{{ hijo.id }}">
+                              <strong>{{ hijo.nombre }}</strong>
+                            </label>
+                          </div>
+                        {% empty %}
+                          <p class="text-secondary small">No hay subcomponentes registrados.</p>
+                        {% endfor %}
+                      </div>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Columna derecha: plano SVG -->
+            <div class="col-md-6">
+              <h5 class="mb-3">🗺️ Seleccionar en el plano</h5>
+              <button id="btn-reset-plano" type="button" class="btn btn-sm btn-outline-secondary mb-3">
+                ⬅️ Volver al plano inicial
+              </button>
+              <div id="plano-container"
+                   style="border:1px solid var(--border-color); max-height:600px; min-height:400px; height:auto; overflow:auto;"
+                   data-inicial-url="{% static 'images/vehiculo-desde-abajo.svg' %}">
+                <div style="transform:scale(1.024); transform-origin: top left;">
+                  {{ svg|safe }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Componentes Seleccionados -->
+        <div class="form-section">
+          <h4 class="mb-3">✅ Componentes Seleccionados</h4>
+          <div id="componentes-seleccionados">
+            <ul id="lista-seleccionados" class="list-group">
+              <li class="list-group-item text-secondary text-center">Selecciona componentes arriba para verlos aquí</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- PASO 3: Acciones -->
+      <div class="wizard-step-pane" id="wizard-step-3" data-step="3" style="display: none;">
+        <h3 class="mb-4">⚡ Paso 3: Acciones</h3>
+        
+        <div class="alert alert-info mb-4">
+          <i class="fas fa-info-circle"></i> 
+          <strong>Componentes Seleccionados:</strong> 
+          <span id="resumen-componentes-paso3">Selecciona componentes en el paso anterior</span>
+        </div>
+
+        <!-- Componentes Seleccionados (resumen) -->
+        <div class="form-section mb-4">
+          <h4 class="mb-3">✅ Componentes Seleccionados</h4>
+          <div id="componentes-seleccionados-paso3">
+            <ul id="lista-seleccionados-paso3" class="list-group">
+              <li class="list-group-item text-secondary text-center">Selecciona componentes en el paso anterior para ver las acciones disponibles</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Acciones -->
+        <div class="form-section">
+          <h4 class="mb-3">⚡ Acciones para Componentes Seleccionados</h4>
+          <div id="acciones-container">
+            <ul id="acciones-para-componentes" class="list-group list-group-flush"></ul>
+            <input type="hidden" id="acciones_componentes_json" name="acciones_componentes_json" value="[]">
+            <div class="d-flex justify-content-between align-items-center mt-3 p-3 bg-light rounded">
+              <div>
+                <div class="small text-secondary">Total mano de obra</div>
+                <div class="fw-bold fs-5" id="total_mano_obra">$0</div>
+              </div>
+            </div>
+            <p class="text-secondary small mt-3">
+              <i class="fas fa-info-circle"></i> 
+              Selecciona componentes primero en el paso anterior para ver las acciones disponibles.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- PASO 4: Repuestos, Insumos y Finalizar -->
+      <div class="wizard-step-pane" id="wizard-step-4" data-step="4" style="display: none;">
+        <div class="alert alert-warning mb-4">
+          <i class="fas fa-info-circle"></i> 
+          <strong>Paso Opcional:</strong> Este paso puede omitirse si el diagnóstico no requiere repuestos o insumos. 
+          Puedes guardar el diagnóstico directamente.
+        </div>
+        
+        <h3 class="mb-4">📦 Paso 4: Repuestos, Insumos y Finalizar <span class="badge bg-secondary">Opcional</span></h3>
+        
+        <!-- Repuestos -->
+        <div class="form-section mb-4">
+          <h4 class="mb-3">
+            <span class="badge bg-primary me-2">📦 REPUESTOS</span>
+            Repuestos del Diagnóstico
+          </h4>
+          
+          <!-- Diagnóstico meta -->
+          <div id="diagnostico-meta"
+               data-diagnostico-id="{{ diagnostico.id|default:'' }}"
+               data-csrf="{{ csrf_token }}">
+          </div>
+          
+          <!-- Botones de búsqueda -->
+          <div class="btn-group mb-3 w-100" role="group">
+            <button type="button" class="btn btn-outline-primary" onclick="cargarRepuestos()">
+              📦 Inventario Propio
+            </button>
+            <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" 
+                    data-bs-target="#modalRepuestosExternos">
+              🌐 Proveedores Externos
+            </button>
+          </div>
+
+          <!-- Contenedor de búsqueda de repuestos -->
+          <div id="repuestos-list"
+               data-preview-url="{% url 'sugerir_repuestos_preview' %}"
+               data-with-id-template="{% url 'sugerir_repuestos' 0 %}">
+            <p class="text-secondary">Busca en inventario propio o proveedores externos.</p>
+          </div>
+
+          <hr class="my-4">
+
+          <!-- Tabla de repuestos agregados (incluye insumos) -->
+          <h5 class="mb-3">
+            <span class="badge bg-primary me-2">📦</span>
+            <span class="badge bg-info me-2">🧰</span>
+            Repuestos e Insumos agregados al diagnóstico
+          </h5>
+          <div class="alert alert-info mb-3">
+            <strong>💡 Diferencias:</strong>
+            <ul class="mb-0 small">
+              <li><span class="badge bg-primary">📦 REPUESTOS</span> = Específicos del vehículo (con filtros de compatibilidad)</li>
+              <li><span class="badge bg-info">🧰 INSUMOS</span> = Cualquier repuesto del inventario (sin filtros)</li>
+            </ul>
+          </div>
+          <div id="tabla-contenido">
+            <p class="text-secondary">Los repuestos e insumos agregados aparecerán aquí.</p>
+          </div>
+        </div>
+
+        <!-- Insumos -->
+        <div class="form-section mb-4">
+          <h4 class="mb-3">
+            <span class="badge bg-info me-2">🧰 INSUMOS</span>
+            Insumos - Búsqueda Amplia
+          </h4>
+          
+          <div class="alert alert-info mb-3">
+            <strong>🔍 Búsqueda sin Filtros:</strong> 
+            Aquí puedes agregar cualquier repuesto del inventario sin restricciones de compatibilidad. 
+            Los insumos agregados aparecerán automáticamente en la lista de repuestos arriba.
+          </div>
+          
+          <!-- Búsqueda de insumos -->
+          <div class="mb-3">
+            <label for="buscar-insumo" class="form-label">🔍 Buscar Insumo:</label>
+            <div class="input-group">
+              <input type="text" id="buscar-insumo" class="form-control" 
+                     placeholder="Buscar por nombre, SKU, código... (escribe para filtrar)">
+              <button class="btn btn-outline-primary" type="button" onclick="buscarInsumos()">
+                <i class="fas fa-search"></i> Buscar
+              </button>
+            </div>
+            <small class="text-muted">La búsqueda se realiza automáticamente mientras escribes (mínimo 2 caracteres)</small>
+          </div>
+          
+          <!-- Lista de insumos disponibles -->
+          <div id="insumos-disponibles" class="mb-3">
+            <h6>📋 Insumos Disponibles:</h6>
+            <div class="list-group" id="lista-insumos-disponibles">
+              <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> 
+                Escribe en el campo de búsqueda para ver insumos disponibles.
+              </div>
+            </div>
+          </div>
+          
+          <!-- Botón para agregar insumos -->
+          <div class="d-grid gap-2">
+            <button class="btn btn-success" type="button" onclick="agregarInsumos()">
+              <i class="fas fa-plus"></i> Agregar Insumos Seleccionados al Diagnóstico
+            </button>
+          </div>
+          
+          <div class="alert alert-success mt-3" id="insumos-agregados-mensaje" style="display: none;">
+            <i class="fas fa-check-circle"></i> 
+            <strong>✅ Insumos agregados:</strong> 
+            Los insumos agregados aparecerán en la lista de repuestos arriba.
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ========================================
+         CAMPOS HIDDEN PARA ENVÍO
+         ======================================== -->
+    <input type="hidden" name="repuestos_json" id="repuestos-json">
+    <input type="hidden" name="repuestos_externos_json" id="repuestos-externos-json">
+    <input type="hidden" name="insumos_json" id="insumos-json">
+    
+  </form>
+  
+  <!-- ========================================
+       BOTONES DE NAVEGACIÓN DEL WIZARD (STICKY)
+       ======================================== -->
+  <div class="wizard-navigation" id="wizard-navigation">
+    <div class="container">
+      <div class="d-flex gap-2 justify-content-between align-items-center flex-wrap">
+        <button type="button" class="btn btn-outline-secondary btn-lg" id="wizard-btn-prev" onclick="wizardPreviousStep()" style="display: none;">
+          ← Anterior
+        </button>
+        <div class="flex-grow-1"></div>
+        <div class="d-flex gap-2 align-items-center">
+          <button type="button" class="btn btn-primary btn-lg" id="wizard-btn-next" onclick="wizardNextStep()">
+            Siguiente →
+          </button>
+          <button type="submit" form="form-ingreso" class="btn btn-success btn-lg" id="wizard-btn-submit" style="display: none;">
+            💾 Guardar Diagnóstico
+          </button>
+          <button type="button" class="btn btn-outline-warning btn-lg" id="wizard-btn-skip" onclick="skipRepuestosAndSubmit()" style="display: none;">
+            ⏭️ Omitir Repuestos y Guardar
+          </button>
+        </div>
+        <a href="javascript:history.back()" class="btn btn-secondary btn-lg">
+          ↩️ Cancelar
+        </a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Punto de referencia para build de endpoints (una sola vez) -->
+<div id="acciones-endpoints" data-acciones-url-template="{% url 'acciones_por_componente' 0 %}"></div>
+
+<div id="componentes-endpoints"
+     data-lookup-url="{% url 'componentes_lookup' %}">
+</div>
+
+<div id="repuestos-endpoints"
+     data-preview-url="{% url 'sugerir_repuestos_preview' %}"
+     data-with-id-template="{% url 'sugerir_repuestos' 0 %}">
+</div>
+
+
+
+<!-- ---------------- CSS PARA WIZARD ---------------- -->
+<style>
+/* ========================================
+   WIZARD - DISEÑO Y ESTILOS
+   ======================================== */
+
+.wizard-progress {
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: var(--bg-card);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.wizard-progress-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--border-color);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: var(--spacing-md);
+}
+
+.wizard-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary-600) 0%, var(--primary-700) 100%);
+  border-radius: 10px;
+  transition: width 0.4s ease;
+}
+
+.wizard-steps {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  margin-bottom: var(--spacing-sm);
+}
+
+.wizard-step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+.wizard-step-circle {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 3px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+  transition: all 0.3s ease;
+  margin-bottom: var(--spacing-xs);
+}
+
+.wizard-step.active .wizard-step-circle {
+  background: var(--primary-600);
+  border-color: var(--primary-600);
+  color: white;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.4);
+}
+
+.wizard-step.completed .wizard-step-circle {
+  background: var(--success, #28a745);
+  border-color: var(--success, #28a745);
+  color: white;
+}
+
+.wizard-step.completed .wizard-step-circle::after {
+  content: '✓';
+  font-size: 1.5rem;
+}
+
+.wizard-step-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  text-align: center;
+  font-weight: 500;
+  max-width: 120px;
+}
+
+.wizard-step.active .wizard-step-label {
+  color: var(--primary-600);
+  font-weight: 700;
+}
+
+.wizard-step-pane {
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+
+.wizard-step-pane.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.wizard-navigation {
+  position: fixed;
+  bottom: 80px;
+  left: 0;
+  right: 0;
+  background: var(--bg-card);
+  padding: var(--spacing-md);
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+  z-index: 900;
+  border-top: 2px solid var(--border-color);
+}
+
+.wizard-navigation .btn {
+  min-width: 120px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  white-space: nowrap;
+}
+
+/* Asegurar que los botones del paso 4 se vean */
+#wizard-btn-submit,
+#wizard-btn-skip {
+  flex-shrink: 0;
+}
+
+/* Responsive para móvil */
+@media (max-width: 768px) {
+  .wizard-step-label {
+    font-size: 0.7rem;
+    max-width: 70px;
+    line-height: 1.2;
+  }
+  
+  .wizard-step-circle {
+    width: 35px;
+    height: 35px;
+    font-size: 0.9rem;
+  }
+  
+  .wizard-navigation {
+    bottom: 60px;
+    padding: var(--spacing-sm);
+  }
+  
+  .wizard-navigation .btn {
+    min-width: auto;
+    font-size: 0.9rem;
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+  
+  .wizard-navigation .d-flex {
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+  }
+  
+  .wizard-navigation .btn-lg {
+    font-size: 1rem;
+    padding: var(--spacing-sm);
+    min-width: auto;
+  }
+  
+  /* En móvil, hacer que los botones del paso 4 se apilen si es necesario */
+  #wizard-btn-submit,
+  #wizard-btn-skip {
+    flex: 1 1 auto;
+    min-width: 120px;
+    max-width: 48%;
+  }
+}
+
+/* ========================================
+   DIFERENCIACIÓN VISUAL: REPUESTOS VS INSUMOS
+   ======================================== */
+
+.repuesto-row {
+  background-color: rgba(13, 110, 253, 0.05) !important;
+  border-left: 3px solid var(--primary-600) !important;
+  transition: all 0.2s ease;
+}
+
+.repuesto-row:hover {
+  background-color: rgba(13, 110, 253, 0.1) !important;
+  box-shadow: 0 2px 4px rgba(13, 110, 253, 0.2);
+}
+
+.insumo-row {
+  background-color: rgba(13, 202, 240, 0.05) !important;
+  border-left: 3px solid var(--info, #0dcaf0) !important;
+  transition: all 0.2s ease;
+}
+
+.insumo-row:hover {
+  background-color: rgba(13, 202, 240, 0.1) !important;
+  box-shadow: 0 2px 4px rgba(13, 202, 240, 0.2);
+}
+
+/* Badges para tipo de item */
+.repuesto-row .badge,
+.insumo-row .badge {
+  font-size: 1rem;
+  padding: 4px 8px;
+}
+
+/* Separador visual entre repuestos e insumos (si hay ambos) */
+.insumo-row:first-of-type {
+  border-top: 2px dashed var(--border-color);
+  margin-top: 8px;
+  padding-top: 8px;
+}
+
+/* Tabla footers diferenciados */
+.table-primary {
+  background-color: rgba(13, 110, 253, 0.1) !important;
+}
+
+.table-info {
+  background-color: rgba(13, 202, 240, 0.1) !important;
+}
+
+/* ========================================
+   PESTAÑAS CON DISEÑO MEJORADO Y PROMINENTE (MANTENER PARA COMPATIBILIDAD)
+   ======================================== */
+
+/* Contenedor de pestañas con fondo destacado */
+#ingresoTabs {
+  background: linear-gradient(135deg, var(--primary-50, #e7f1ff) 0%, var(--bg-card) 100%);
+  border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0 !important;
+  padding: var(--spacing-sm) var(--spacing-sm) 0 var(--spacing-sm) !important;
+  margin-bottom: 0 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-bottom: 4px solid var(--primary-600) !important;
+}
+
+/* Pestaña individual - diseño destacado */
+#ingresoTabs .nav-link {
+  background: var(--bg, #ffffff) !important;
+  color: var(--text-secondary, #6c757d) !important;
+  border: 2px solid var(--border-color, #dee2e6) !important;
+  border-bottom: none !important;
+  border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0 !important;
+  margin-right: var(--spacing-xs, 4px) !important;
+  padding: var(--spacing-md, 12px) var(--spacing-lg, 20px) !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+  transition: all 0.3s ease !important;
+  position: relative !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+  white-space: nowrap !important;
+  min-height: 48px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Efecto hover en pestañas inactivas */
+#ingresoTabs .nav-link:hover:not(.active) {
+  background: var(--primary-50, #e7f1ff) !important;
+  color: var(--primary-700, #0056b3) !important;
+  border-color: var(--primary-300, #9ec5fe) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+  z-index: 10 !important;
+}
+
+/* Pestaña activa - diseño muy destacado */
+#ingresoTabs .nav-link.active {
+  background: linear-gradient(135deg, var(--primary-600, #0d6efd) 0%, var(--primary-700, #0056b3) 100%) !important;
+  color: #ffffff !important;
+  border-color: var(--primary-600, #0d6efd) !important;
+  border-bottom: 3px solid var(--primary-600, #0d6efd) !important;
+  font-weight: 700 !important;
+  font-size: 1rem !important;
+  padding: var(--spacing-md, 14px) var(--spacing-lg, 24px) !important;
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.4) !important;
+  transform: translateY(-4px) scale(1.02) !important;
+  z-index: 20 !important;
+  position: relative !important;
+}
+
+/* Indicador adicional para pestaña activa */
+#ingresoTabs .nav-link.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 4px;
+  background: #ffffff;
+  border-radius: 0 0 4px 4px;
+  opacity: 0.8;
+}
+
+/* Iconos en pestañas con más espacio */
+#ingresoTabs .nav-link {
+  gap: 6px;
+}
+
+/* Contenedor de contenido de pestañas */
+#ingresoTabsContent {
+  border-top: none !important;
+  border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg) !important;
+  margin-top: -1px !important;
+}
+
+/* ========================================
+   DISEÑO RESPONSIVE - PESTAÑAS VERTICALES EN MÓVIL
+   ======================================== */
+
+@media (max-width: 768px) {
+  /* Cambiar a diseño vertical en móvil */
+  #ingresoTabs {
+    display: flex !important;
+    flex-direction: column !important;
+    background: var(--bg-card) !important;
+    border-radius: var(--border-radius-lg) !important;
+    padding: var(--spacing-xs) !important;
+    overflow: visible !important;
+    border-bottom: 2px solid var(--border-color) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  #ingresoTabs .nav-item {
+    width: 100% !important;
+    margin-bottom: var(--spacing-xs) !important;
+    margin-right: 0 !important;
+  }
+  
+  #ingresoTabs .nav-link {
+    width: 100% !important;
+    border-radius: var(--border-radius) !important;
+    border: 2px solid var(--border-color) !important;
+    border-bottom: 2px solid var(--border-color) !important;
+    margin-right: 0 !important;
+    padding: var(--spacing-md) var(--spacing-lg) !important;
+    text-align: left !important;
+    justify-content: flex-start !important;
+    font-size: 0.9rem !important;
+    min-height: 52px !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08) !important;
+  }
+  
+  /* Pestaña activa en móvil */
+  #ingresoTabs .nav-link.active {
+    transform: none !important;
+    border-left: 6px solid var(--primary-600) !important;
+    border-radius: var(--border-radius) !important;
+    padding-left: calc(var(--spacing-lg) - 4px) !important;
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3) !important;
+  }
+  
+  #ingresoTabs .nav-link.active::before {
+    display: none;
+  }
+  
+  /* Hover en móvil */
+  #ingresoTabs .nav-link:hover:not(.active) {
+    transform: translateX(4px) !important;
+    border-left: 4px solid var(--primary-300) !important;
+    padding-left: calc(var(--spacing-lg) - 2px) !important;
+  }
+  
+  /* Contenedor de contenido también más compacto */
+  #ingresoTabsContent {
+    margin-top: var(--spacing-md) !important;
+    border-radius: var(--border-radius-lg) !important;
+  }
+  
+  /* Botones sticky en móvil */
+  div[style*="position: fixed"] {
+    flex-direction: column !important;
+    bottom: 80px !important;
+  }
+  
+  div[style*="position: fixed"] .btn {
+    width: 100% !important;
+    margin-bottom: var(--spacing-sm) !important;
+  }
+}
+
+/* ========================================
+   MEJORAS ADICIONALES DE DISEÑO
+   ======================================== */
+
+/* Animación suave al cambiar de pestaña */
+.tab-pane {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Efecto de resaltado al pasar el mouse */
+#ingresoTabs .nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 3px;
+  background: var(--primary-600);
+  transition: width 0.3s ease;
+}
+
+#ingresoTabs .nav-link:hover::after {
+  width: 100%;
+}
+
+#ingresoTabs .nav-link.active::after {
+  width: 100%;
+  height: 3px;
+}
+
+/* Mejorar contraste y legibilidad */
+#ingresoTabs .nav-link {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+#ingresoTabs .nav-link.active {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* ========================================
+   CORRECCIONES DE VISIBILIDAD EN TEMA OSCURO
+   Usando selectores para TODOS los temas oscuros
+   ======================================== */
+
+/* Detectar temas oscuros por fondo oscuro */
+html[class*="theme-dark"],
+html[class*="theme-piedra"],
+body[class*="theme-dark"],
+body[class*="theme-piedra"],
+.theme-dark,
+.theme-piedra {
+  /* Variables fallback para cuando las variables CSS no funcionen */
+}
+
+/* Estilos universales para CUALQUIER tema oscuro */
+html.theme-dark *,
+html.theme-piedra *,
+body.theme-dark *,
+body.theme-piedra *,
+.theme-dark *,
+.theme-piedra * {
+  /* Reset de opacidad en elementos críticos */
+}
+
+/* ========================================
+   ESTILOS ESPECÍFICOS CON MÁXIMA PRIORIDAD
+   ======================================== */
+
+/* Inputs de cantidad en tabla de repuestos/insumos - tema oscuro */
+.theme-dark .cantidad-insumo,
+.theme-dark input.cantidad-insumo,
+.theme-dark .form-control-sm.cantidad-insumo,
+html.theme-dark .cantidad-insumo,
+html.theme-dark input.cantidad-insumo,
+.theme-dark td input[type="number"],
+html.theme-dark td input[type="number"] {
+  background-color: #ffffff !important;
+  color: #212529 !important;
+  border: 2px solid #ced4da !important;
+  font-weight: 700 !important;
+  font-size: 0.875rem !important;
+}
+
+.theme-dark .cantidad-insumo:focus,
+.theme-dark input.cantidad-insumo:focus,
+html.theme-dark .cantidad-insumo:focus {
+  background-color: #ffffff !important;
+  color: #212529 !important;
+  border-color: #0d6efd !important;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+}
+
+/* Lista de insumos disponibles - tema oscuro */
+.theme-dark #lista-insumos-disponibles .list-group-item,
+html.theme-dark #lista-insumos-disponibles .list-group-item {
+  background-color: var(--bg-card, #2a2a2a) !important;
+  border-color: var(--border-color, #555) !important;
+  color: #ffffff !important;
+}
+
+.theme-dark #lista-insumos-disponibles .form-check-label,
+html.theme-dark #lista-insumos-disponibles .form-check-label,
+.theme-dark #lista-insumos-disponibles label,
+html.theme-dark #lista-insumos-disponibles label {
+  color: #ffffff !important;
+  font-weight: 500 !important;
+}
+
+.theme-dark #lista-insumos-disponibles .form-check-label strong,
+html.theme-dark #lista-insumos-disponibles .form-check-label strong,
+.theme-dark #lista-insumos-disponibles label strong,
+html.theme-dark #lista-insumos-disponibles label strong {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  font-size: 1rem !important;
+}
+
+.theme-dark #lista-insumos-disponibles .text-muted,
+html.theme-dark #lista-insumos-disponibles .text-muted,
+.theme-dark #lista-insumos-disponibles small,
+html.theme-dark #lista-insumos-disponibles small,
+.theme-dark #lista-insumos-disponibles .text-muted *,
+html.theme-dark #lista-insumos-disponibles .text-muted * {
+  color: #c0c0c0 !important;
+  font-weight: 400 !important;
+  font-size: 0.875rem !important;
+  opacity: 1 !important;
+}
+
+/* Input de cantidad en lista de insumos disponibles - tema oscuro */
+.theme-dark #lista-insumos-disponibles .insumo-cantidad,
+html.theme-dark #lista-insumos-disponibles .insumo-cantidad,
+.theme-dark #lista-insumos-disponibles input.insumo-cantidad,
+html.theme-dark #lista-insumos-disponibles input.insumo-cantidad {
+  background-color: #ffffff !important;
+  color: #212529 !important;
+  border: 2px solid #ced4da !important;
+  font-weight: 700 !important;
+}
+
+.theme-dark #lista-insumos-disponibles .insumo-cantidad:focus,
+html.theme-dark #lista-insumos-disponibles .insumo-cantidad:focus {
+  background-color: #ffffff !important;
+  color: #212529 !important;
+  border-color: #0d6efd !important;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+}
+
+/* Checkbox de insumos - tema oscuro */
+.theme-dark #lista-insumos-disponibles .insumo-check,
+html.theme-dark #lista-insumos-disponibles .insumo-check,
+.theme-dark #lista-insumos-disponibles .form-check-input,
+html.theme-dark #lista-insumos-disponibles .form-check-input,
+.theme-dark #acciones-para-componentes .form-check-input,
+html.theme-dark #acciones-para-componentes .form-check-input {
+  background-color: #ffffff !important;
+  border: 3px solid #6c757d !important;
+  width: 1.2em !important;
+  height: 1.2em !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+}
+
+.theme-dark #lista-insumos-disponibles .insumo-check:checked,
+html.theme-dark #lista-insumos-disponibles .insumo-check:checked,
+.theme-dark #lista-insumos-disponibles .form-check-input:checked,
+html.theme-dark #lista-insumos-disponibles .form-check-input:checked,
+.theme-dark #acciones-para-componentes .form-check-input:checked,
+html.theme-dark #acciones-para-componentes .form-check-input:checked {
+  background-color: #0d6efd !important;
+  border: 3px solid #ffffff !important;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.8), inset 0 0 0 2px #ffffff, 0 0 12px rgba(13, 110, 253, 1) !important;
+  position: relative !important;
+  outline: 2px solid rgba(13, 110, 253, 0.5) !important;
+  outline-offset: 2px !important;
+}
+
+/* Agregar un pseudo-elemento para el checkmark más visible */
+.theme-dark #lista-insumos-disponibles .form-check-input:checked::after,
+html.theme-dark #lista-insumos-disponibles .form-check-input:checked::after,
+.theme-dark #acciones-para-componentes .form-check-input:checked::after,
+html.theme-dark #acciones-para-componentes .form-check-input:checked::after {
+  border-color: #ffffff !important;
+  border-width: 0 3px 3px 0 !important;
+  width: 5px !important;
+  height: 10px !important;
+  transform: rotate(45deg) !important;
+}
+
+/* Asegurar que los checkboxes tengan buen tamaño */
+.theme-dark #lista-insumos-disponibles .form-check-input,
+html.theme-dark #lista-insumos-disponibles .form-check-input,
+.theme-dark #acciones-para-componentes .form-check-input,
+html.theme-dark #acciones-para-componentes .form-check-input {
+  width: 1.3em !important;
+  height: 1.3em !important;
+  min-width: 1.3em !important;
+  min-height: 1.3em !important;
+}
+
+/* Tabla de repuestos/insumos - tema oscuro */
+.theme-dark #tabla-contenido table td,
+html.theme-dark #tabla-contenido table td,
+.theme-dark #tabla-contenido .insumo-row,
+html.theme-dark #tabla-contenido .insumo-row,
+.theme-dark #tabla-contenido table td *,
+html.theme-dark #tabla-contenido table td * {
+  color: #ffffff !important;
+  background-color: var(--bg-card, #2a2a2a) !important;
+}
+
+.theme-dark #tabla-contenido table th,
+html.theme-dark #tabla-contenido table th {
+  color: #ffffff !important;
+  background-color: var(--bg-secondary, #333) !important;
+  font-weight: 700 !important;
+}
+
+.theme-dark #tabla-contenido .fw-bold,
+html.theme-dark #tabla-contenido .fw-bold,
+.theme-dark #tabla-contenido .subtotal-insumo,
+html.theme-dark #tabla-contenido .subtotal-insumo,
+.theme-dark #tabla-contenido td.fw-bold,
+html.theme-dark #tabla-contenido td.fw-bold {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+/* Labels y textos secundarios en pestaña de insumos - tema oscuro */
+.theme-dark #tab-insumos .form-label,
+html.theme-dark #tab-insumos .form-label,
+.theme-dark #tab-insumos label,
+html.theme-dark #tab-insumos label {
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+.theme-dark #tab-insumos .text-muted,
+html.theme-dark #tab-insumos .text-muted,
+.theme-dark #tab-insumos small,
+html.theme-dark #tab-insumos small {
+  color: #c0c0c0 !important;
+  opacity: 1 !important;
+}
+
+.theme-dark #tab-insumos h4,
+html.theme-dark #tab-insumos h4,
+.theme-dark #tab-insumos h6,
+html.theme-dark #tab-insumos h6,
+.theme-dark #tab-insumos h3,
+html.theme-dark #tab-insumos h3 {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+/* Alertas en pestaña de insumos - tema oscuro */
+.theme-dark #tab-insumos .alert-info,
+html.theme-dark #tab-insumos .alert-info {
+  background-color: #0c5460 !important;
+  border-color: #bee5eb !important;
+  color: #d1ecf1 !important;
+}
+
+.theme-dark #tab-insumos .alert-success,
+html.theme-dark #tab-insumos .alert-success {
+  background-color: #155724 !important;
+  border-color: #c3e6cb !important;
+  color: #d4edda !important;
+}
+
+/* Input de búsqueda de insumos - tema oscuro */
+.theme-dark #buscar-insumo,
+html.theme-dark #buscar-insumo {
+  background-color: #ffffff !important;
+  color: #212529 !important;
+  border: 2px solid #ced4da !important;
+  font-weight: 500 !important;
+}
+
+.theme-dark #buscar-insumo:focus,
+html.theme-dark #buscar-insumo:focus {
+  background-color: #ffffff !important;
+  color: #212529 !important;
+  border-color: #0d6efd !important;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+}
+
+.theme-dark #buscar-insumo::placeholder,
+html.theme-dark #buscar-insumo::placeholder {
+  color: #6c757d !important;
+  opacity: 1 !important;
+}
+
+/* Tabla general - asegurar visibilidad de texto en tema oscuro */
+.theme-dark #tabla-contenido,
+html.theme-dark #tabla-contenido {
+  color: #ffffff !important;
+}
+
+.theme-dark #tabla-contenido p,
+html.theme-dark #tabla-contenido p,
+.theme-dark #tabla-contenido .text-secondary,
+html.theme-dark #tabla-contenido .text-secondary {
+  color: #c0c0c0 !important;
+  opacity: 1 !important;
+}
+
+/* ========================================
+   PESTAÑA ACCIONES - VISIBILIDAD EN TEMA OSCURO
+   ======================================== */
+
+/* Lista de acciones - tema oscuro */
+.theme-dark #acciones-para-componentes,
+html.theme-dark #acciones-para-componentes,
+.theme-dark #acciones-para-componentes *,
+html.theme-dark #acciones-para-componentes * {
+  color: #ffffff !important;
+}
+
+.theme-dark #acciones-para-componentes .list-group-item,
+html.theme-dark #acciones-para-componentes .list-group-item {
+  background-color: var(--bg-card, #2a2a2a) !important;
+  border-color: var(--border-color, #555) !important;
+  color: #ffffff !important;
+}
+
+.theme-dark #acciones-para-componentes .list-group-item *,
+html.theme-dark #acciones-para-componentes .list-group-item * {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+/* Texto en items de acciones */
+.theme-dark #acciones-para-componentes .fw-semibold,
+html.theme-dark #acciones-para-componentes .fw-semibold,
+.theme-dark #acciones-para-componentes strong,
+html.theme-dark #acciones-para-componentes strong,
+.theme-dark #acciones-para-componentes .fw-bold,
+html.theme-dark #acciones-para-componentes .fw-bold {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  opacity: 1 !important;
+}
+
+.theme-dark #acciones-para-componentes .small,
+html.theme-dark #acciones-para-componentes .small,
+.theme-dark #acciones-para-componentes small,
+html.theme-dark #acciones-para-componentes small {
+  color: #c0c0c0 !important;
+  font-weight: 500 !important;
+  opacity: 1 !important;
+}
+
+.theme-dark #acciones-para-componentes .text-muted,
+html.theme-dark #acciones-para-componentes .text-muted,
+.theme-dark #acciones-para-componentes .text-secondary,
+html.theme-dark #acciones-para-componentes .text-secondary {
+  color: #b0b0b0 !important;
+  opacity: 1 !important;
+}
+
+/* Checkboxes y labels de acciones */
+.theme-dark #acciones-para-componentes .form-check-input,
+html.theme-dark #acciones-para-componentes .form-check-input,
+.theme-dark #acciones-para-componentes input[type="checkbox"],
+html.theme-dark #acciones-para-componentes input[type="checkbox"] {
+  background-color: #ffffff !important;
+  border: 3px solid #6c757d !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+}
+
+.theme-dark #acciones-para-componentes .form-check-input:checked,
+html.theme-dark #acciones-para-componentes .form-check-input:checked {
+  background-color: #0d6efd !important;
+  border: 3px solid #ffffff !important;
+}
+
+.theme-dark #acciones-para-componentes .form-check-label,
+html.theme-dark #acciones-para-componentes .form-check-label,
+.theme-dark #acciones-para-componentes label,
+html.theme-dark #acciones-para-componentes label {
+  color: #ffffff !important;
+  font-weight: 500 !important;
+  opacity: 1 !important;
+}
+
+/* Precios de acciones */
+.theme-dark #acciones-para-componentes .text-success,
+html.theme-dark #acciones-para-componentes .text-success,
+.theme-dark #acciones-para-componentes .accion-precio,
+html.theme-dark #acciones-para-componentes .accion-precio {
+  color: #4ade80 !important;
+  font-weight: 700 !important;
+  opacity: 1 !important;
+}
+
+/* Items seleccionados/no seleccionados */
+.theme-dark #acciones-para-componentes .accion-item-selected,
+html.theme-dark #acciones-para-componentes .accion-item-selected {
+  background-color: rgba(13, 110, 253, 0.3) !important;
+  border-left: 4px solid #0d6efd !important;
+}
+
+.theme-dark #acciones-para-componentes .accion-item-unselected,
+html.theme-dark #acciones-para-componentes .accion-item-unselected {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border-left: 4px solid transparent !important;
+}
+
+/* Total mano de obra - tema oscuro */
+.theme-dark #total_mano_obra,
+html.theme-dark #total_mano_obra,
+.theme-dark #tab-acciones #total_mano_obra,
+html.theme-dark #tab-acciones #total_mano_obra {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  font-size: 1.5rem !important;
+  opacity: 1 !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+}
+
+.theme-dark #tab-acciones .bg-light,
+html.theme-dark #tab-acciones .bg-light,
+.theme-dark #tab-acciones .rounded,
+html.theme-dark #tab-acciones .rounded {
+  background-color: var(--bg-secondary, #333) !important;
+  border: 2px solid var(--border-color, #555) !important;
+}
+
+.theme-dark #tab-acciones .text-secondary,
+html.theme-dark #tab-acciones .text-secondary,
+.theme-dark #tab-acciones .small.text-secondary,
+html.theme-dark #tab-acciones .small.text-secondary {
+  color: #c0c0c0 !important;
+  font-weight: 600 !important;
+  opacity: 1 !important;
+}
+
+.theme-dark #tab-acciones p.text-secondary,
+html.theme-dark #tab-acciones p.text-secondary,
+.theme-dark #tab-acciones .text-secondary.small,
+html.theme-dark #tab-acciones .text-secondary.small {
+  color: #b0b0b0 !important;
+  opacity: 1 !important;
+}
+
+/* Título y encabezados de pestaña acciones */
+.theme-dark #tab-acciones h4,
+html.theme-dark #tab-acciones h4,
+.theme-dark #tab-acciones h3,
+html.theme-dark #tab-acciones h3 {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+/* Contenedor de acciones */
+.theme-dark #acciones-container,
+html.theme-dark #acciones-container {
+  color: #ffffff !important;
+}
+
+/* ========================================
+   MEJORAS ADICIONALES PARA REPUESTOS E INSUMOS
+   ======================================== */
+
+/* Asegurar que TODOS los inputs de cantidad sean visibles */
+.theme-dark input[type="number"].cantidad-insumo,
+html.theme-dark input[type="number"].cantidad-insumo,
+.theme-dark #tab-repuestos input[type="number"],
+html.theme-dark #tab-repuestos input[type="number"],
+.theme-dark #tabla-contenido input[type="number"],
+html.theme-dark #tabla-contenido input[type="number"] {
+  background-color: #ffffff !important;
+  color: #212529 !important;
+  border: 2px solid #ced4da !important;
+  font-weight: 700 !important;
+  font-size: 0.9rem !important;
+  min-width: 70px !important;
+}
+
+.theme-dark #tabla-contenido input[type="number"]:focus,
+html.theme-dark #tabla-contenido input[type="number"]:focus {
+  background-color: #ffffff !important;
+  color: #212529 !important;
+  border-color: #0d6efd !important;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.3) !important;
+}
+
+/* Mejorar visibilidad general de toda la pestaña de repuestos */
+.theme-dark #tab-repuestos,
+html.theme-dark #tab-repuestos {
+  color: #ffffff !important;
+}
+
+.theme-dark #tab-repuestos h4,
+html.theme-dark #tab-repuestos h4,
+.theme-dark #tab-repuestos h5,
+html.theme-dark #tab-repuestos h5 {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+/* ---------------- CSS PARA ACORDEÓN MEJORADO ---------------- */
+/* Acordeones más vistosos y modernos */
+#componentesAccordion {
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-color);
+}
+
+.accordion-item {
+    border: none !important;
+    border-bottom: 2px solid var(--border-color) !important;
+    background-color: var(--bg-card) !important;
+    transition: all 0.3s ease;
+}
+
+.accordion-item:last-child {
+    border-bottom: none !important;
+}
+
+.accordion-item:hover {
+    background-color: var(--bg-secondary) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Botones del acordeón más destacados */
+.accordion-button {
+    color: var(--text-primary) !important;
+    background-color: var(--bg-card) !important;
+    font-weight: var(--font-weight-semibold) !important;
+    font-size: 1.15rem !important;
+    padding: 1rem 1.25rem !important;
+    border: none !important;
+    border-bottom: 2px solid var(--border-color) !important;
+    transition: all 0.3s ease;
+}
+
+.accordion-button:not(.collapsed) {
+    color: var(--primary-700) !important;
+    background-color: var(--primary-50) !important;
+    font-weight: var(--font-weight-bold) !important;
+    box-shadow: inset 0 -2px 0 var(--primary-600);
+}
+
+.accordion-button:hover {
+    background-color: var(--bg-secondary) !important;
+    color: var(--primary-600) !important;
+}
+
+.accordion-button:not(.collapsed):hover {
+    background-color: var(--primary-100) !important;
+}
+
+.accordion-button:focus {
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+    border-color: var(--primary-600) !important;
+}
+
+/* Cuerpo del acordeón */
+.accordion-body {
+    color: var(--text-primary) !important;
+    background-color: var(--bg-card) !important;
+    padding: 1.25rem !important;
+    border-top: 1px solid var(--border-color) !important;
+}
+
+/* Checkboxes más grandes y visibles */
+.accordion-body .form-check {
+    padding: 0.75rem 0 !important;
+    margin-bottom: 0.5rem !important;
+    border-radius: var(--border-radius-md);
+    transition: background-color 0.2s ease;
+}
+
+.accordion-body .form-check:hover {
+    background-color: var(--hover-bg) !important;
+    padding-left: 0.5rem !important;
+    margin-left: -0.5rem !important;
+    border-radius: var(--border-radius-md);
+}
+
+.accordion-body .form-check-input {
+    width: 1.4em !important;
+    height: 1.4em !important;
+    margin-top: 0.25em !important;
+    margin-right: 0.75rem !important;
+    cursor: pointer;
+    border: 3px solid var(--primary-600) !important;
+    background-color: var(--bg-card) !important;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+}
+
+.accordion-body .form-check-input:checked {
+    background-color: var(--primary-600) !important;
+    border-color: var(--primary-600) !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e") !important;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25) !important;
+}
+
+.accordion-body .form-check-input:focus {
+    border-color: var(--primary-600) !important;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.35) !important;
+    outline: none !important;
+}
+
+/* Labels más grandes y destacados */
+.accordion-body .form-check-label {
+    color: var(--text-primary) !important;
+    font-weight: var(--font-weight-semibold) !important;
+    font-size: 1.1rem !important;
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    line-height: 1.5;
+    padding-left: 0.25rem;
+}
+
+/* Texto de opciones en strong */
+.accordion-body .form-check-label strong,
+.accordion-body .form-check-label {
+    font-weight: var(--font-weight-semibold) !important;
+}
+
+/* Checkbox marcado - estilo adicional */
+.accordion-body .form-check-input:checked + .form-check-label {
+    color: var(--primary-700) !important;
+    font-weight: var(--font-weight-bold) !important;
+}
+
+/* ---------------- MODOS OSCURO Y CLARO ---------------- */
+/* Tema oscuro - mejor visibilidad */
+[data-bs-theme="dark"] #componentesAccordion,
+body[data-bs-theme="dark"] #componentesAccordion {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-bs-theme="dark"] .accordion-item,
+body[data-bs-theme="dark"] .accordion-item {
+    background-color: var(--bg-card) !important;
+    border-bottom-color: var(--border-color) !important;
+}
+
+[data-bs-theme="dark"] .accordion-button,
+body[data-bs-theme="dark"] .accordion-button {
+    color: var(--text-primary) !important;
+    background-color: var(--bg-card) !important;
+    border-bottom-color: var(--border-color) !important;
+}
+
+[data-bs-theme="dark"] .accordion-button:not(.collapsed),
+body[data-bs-theme="dark"] .accordion-button:not(.collapsed) {
+    color: var(--text-inverse) !important;
+    background-color: var(--primary-600) !important;
+    border-bottom-color: var(--primary-700) !important;
+}
+
+[data-bs-theme="dark"] .accordion-body,
+body[data-bs-theme="dark"] .accordion-body {
+    color: var(--text-primary) !important;
+    background-color: var(--bg-card) !important;
+    border-top-color: var(--border-color) !important;
+}
+
+/* Checkboxes en modo oscuro - máximo contraste con borde visible */
+[data-bs-theme="dark"] .accordion-body .form-check-input,
+body[data-bs-theme="dark"] .accordion-body .form-check-input {
+    border: 3px solid var(--primary-400) !important;
+    background-color: var(--bg-card) !important;
+}
+
+[data-bs-theme="dark"] .accordion-body .form-check-input:checked,
+body[data-bs-theme="dark"] .accordion-body .form-check-input:checked {
+    background-color: var(--primary-500) !important;
+    border: 3px solid var(--primary-300) !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e") !important;
+    box-shadow: 0 0 0 0.2rem rgba(13, 202, 240, 0.35) !important;
+}
+
+[data-bs-theme="dark"] .accordion-body .form-check-label,
+body[data-bs-theme="dark"] .accordion-body .form-check-label {
+    color: var(--text-primary) !important;
+}
+
+[data-bs-theme="dark"] .accordion-body .form-check-input:checked + .form-check-label,
+body[data-bs-theme="dark"] .accordion-body .form-check-input:checked + .form-check-label {
+    color: var(--primary-300) !important;
+    font-weight: var(--font-weight-bold) !important;
+}
+
+/* Modo claro - también mejorado */
+.theme-sand .accordion-body .form-check-input,
+.theme-sand .accordion-body .form-check-label {
+    color: var(--text-primary) !important;
+}
+
+.theme-piedra .accordion-body .form-check-input {
+    border-color: var(--primary-400) !important;
+}
+
+.theme-piedra .accordion-body .form-check-input:checked {
+    background-color: var(--primary-500) !important;
+    border-color: var(--primary-500) !important;
+}
+
+/* Responsive para móvil - checkboxes aún más grandes */
+@media (max-width: 768px) {
+    .accordion-button {
+        font-size: 1.2rem !important;
+        padding: 1.25rem 1.5rem !important;
+    }
+    
+    .accordion-body {
+        padding: 1.5rem !important;
+    }
+    
+    .accordion-body .form-check {
+        padding: 1rem 0 !important;
+        margin-bottom: 0.75rem !important;
+    }
+    
+    .accordion-body .form-check-input {
+        width: 1.6em !important;
+        height: 1.6em !important;
+        margin-right: 1rem !important;
+        border-width: 3px !important;
+    }
+    
+    .accordion-body .form-check-label {
+        font-size: 1.15rem !important;
+        font-weight: var(--font-weight-bold) !important;
+        padding-left: 0.5rem;
+    }
+    
+    .accordion-body .form-check:hover {
+        padding-left: 0.75rem !important;
+        margin-left: -0.75rem !important;
+    }
+}
+
+/* ========================================
+   ESTILOS GLOBALES PARA CHECKBOXES - BORDES VISIBLES
+   ======================================== */
+
+/* Todos los checkboxes en cards deben tener borde visible siempre */
+input[type="checkbox"].form-check-input,
+input[type="checkbox"].insumo-check,
+input[type="checkbox"].accion-checkbox {
+    border: 3px solid !important;
+    border-color: var(--primary-600) !important;
+    background-color: var(--bg-card) !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+}
+
+/* Checkboxes en modo oscuro - borde más visible */
+[data-bs-theme="dark"] input[type="checkbox"].form-check-input,
+body[data-bs-theme="dark"] input[type="checkbox"].form-check-input,
+[data-bs-theme="dark"] input[type="checkbox"].insumo-check,
+body[data-bs-theme="dark"] input[type="checkbox"].insumo-check,
+[data-bs-theme="dark"] input[type="checkbox"].accion-checkbox,
+body[data-bs-theme="dark"] input[type="checkbox"].accion-checkbox {
+    border: 3px solid !important;
+    border-color: var(--primary-400) !important;
+    background-color: var(--bg-card) !important;
+}
+
+/* Checkboxes marcados - borde más grueso y visible */
+input[type="checkbox"].form-check-input:checked,
+input[type="checkbox"].insumo-check:checked,
+input[type="checkbox"].accion-checkbox:checked {
+    border: 3px solid !important;
+    border-color: var(--primary-700) !important;
+    background-color: var(--primary-600) !important;
+}
+
+[data-bs-theme="dark"] input[type="checkbox"].form-check-input:checked,
+body[data-bs-theme="dark"] input[type="checkbox"].form-check-input:checked,
+[data-bs-theme="dark"] input[type="checkbox"].insumo-check:checked,
+body[data-bs-theme="dark"] input[type="checkbox"].insumo-check:checked,
+[data-bs-theme="dark"] input[type="checkbox"].accion-checkbox:checked,
+body[data-bs-theme="dark"] input[type="checkbox"].accion-checkbox:checked {
+    border: 3px solid !important;
+    border-color: var(--primary-300) !important;
+    background-color: var(--primary-500) !important;
+}
+
+/* Focus - borde aún más visible */
+input[type="checkbox"].form-check-input:focus,
+input[type="checkbox"].insumo-check:focus,
+input[type="checkbox"].accion-checkbox:focus {
+    border-width: 4px !important;
+    outline: 2px solid rgba(13, 110, 253, 0.5) !important;
+    outline-offset: 2px !important;
+}
+
+/* ========================================
+   ESTILOS MEJORADOS PARA CARDS/LISTAS DE COMPONENTES Y ACCIONES
+   ======================================== */
+
+/* Listas de componentes seleccionados - estilo tipo card */
+#lista-seleccionados,
+#lista-seleccionados-paso3 {
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+}
+
+.list-group-item {
+    background-color: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+    border: none !important;
+    border-bottom: 2px solid var(--border-color) !important;
+    padding: 1rem 1.25rem !important;
+    font-size: 1.1rem !important;
+    font-weight: var(--font-weight-medium) !important;
+    transition: all 0.2s ease;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+}
+
+.list-group-item:last-child {
+    border-bottom: none !important;
+}
+
+.list-group-item:hover {
+    background-color: var(--bg-secondary) !important;
+    transform: translateX(4px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.list-group-item strong {
+    font-weight: var(--font-weight-bold) !important;
+    font-size: 1.15rem !important;
+    color: var(--text-primary) !important;
+}
+
+/* Componentes seleccionados - más destacados */
+#lista-seleccionados .list-group-item,
+#lista-seleccionados-paso3 .list-group-item {
+    background: linear-gradient(to right, var(--primary-50), var(--bg-card)) !important;
+    border-left: 4px solid var(--primary-600) !important;
+    font-weight: var(--font-weight-semibold) !important;
+    font-size: 1.15rem !important;
+}
+
+#lista-seleccionados .list-group-item:hover,
+#lista-seleccionados-paso3 .list-group-item:hover {
+    background: linear-gradient(to right, var(--primary-100), var(--bg-secondary)) !important;
+    border-left-color: var(--primary-700) !important;
+}
+
+/* Lista de acciones - estilo destacado */
+#acciones-para-componentes {
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-card) !important;
+}
+
+#acciones-para-componentes .list-group-item {
+    background-color: var(--bg-card) !important;
+    border-left: 4px solid var(--secondary-600) !important;
+    padding: 1.25rem 1.5rem !important;
+    margin-bottom: 0.5rem !important;
+    border-radius: var(--border-radius-md) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    box-shadow: var(--shadow-sm);
+}
+
+#acciones-para-componentes .list-group-item:hover {
+    background-color: var(--bg-secondary) !important;
+    border-left-color: var(--secondary-700) !important;
+    box-shadow: var(--shadow-md);
+    transform: translateX(6px);
+}
+
+/* Texto dentro de las acciones */
+#acciones-para-componentes .list-group-item strong,
+#acciones-para-componentes .list-group-item .fw-bold {
+    font-weight: var(--font-weight-bold) !important;
+    font-size: 1.2rem !important;
+    color: var(--text-primary) !important;
+}
+
+#acciones-para-componentes .list-group-item .text-muted {
+    font-size: 1.05rem !important;
+    font-weight: var(--font-weight-normal) !important;
+}
+
+/* Inputs dentro de listas - más grandes y visibles */
+.list-group-item input[type="number"],
+.list-group-item input[type="text"],
+.list-group-item .form-control {
+    font-size: 1.15rem !important;
+    font-weight: var(--font-weight-semibold) !important;
+    padding: 0.75rem !important;
+    border: 2px solid var(--border-color) !important;
+    border-radius: var(--border-radius-md) !important;
+}
+
+.list-group-item input[type="number"]:focus,
+.list-group-item input[type="text"]:focus,
+.list-group-item .form-control:focus {
+    border-color: var(--primary-600) !important;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+}
+
+/* Botones dentro de listas */
+.list-group-item .btn {
+    font-size: 1.1rem !important;
+    font-weight: var(--font-weight-semibold) !important;
+    padding: 0.625rem 1rem !important;
+}
+
+/* Total de mano de obra - destacado */
+#total_mano_obra {
+    font-size: 1.5rem !important;
+    font-weight: var(--font-weight-bold) !important;
+    color: var(--success-700) !important;
+}
+
+/* Cards/Contenedores de listas */
+.form-section #componentes-seleccionados,
+.form-section #componentes-seleccionados-paso3,
+.form-section #acciones-container {
+    border-radius: var(--border-radius-lg);
+    background-color: var(--bg-card);
+    padding: 1rem;
+    box-shadow: var(--shadow-sm);
+}
+
+/* Modos oscuro y claro */
+[data-bs-theme="dark"] .list-group-item,
+body[data-bs-theme="dark"] .list-group-item {
+    background-color: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+    border-bottom-color: var(--border-color) !important;
+}
+
+[data-bs-theme="dark"] #lista-seleccionados .list-group-item,
+[data-bs-theme="dark"] #lista-seleccionados-paso3 .list-group-item {
+    background: linear-gradient(to right, var(--primary-900), var(--bg-card)) !important;
+    border-left-color: var(--primary-500) !important;
+}
+
+.theme-piedra .list-group-item {
+    border-left-color: var(--primary-400) !important;
+}
+
+.theme-sand .list-group-item {
+    border-left-color: var(--secondary-600) !important;
+}
+
+/* Responsive móvil - aún más grandes */
+@media (max-width: 768px) {
+    .list-group-item {
+        padding: 1.25rem 1.5rem !important;
+        font-size: 1.2rem !important;
+        font-weight: var(--font-weight-semibold) !important;
+    }
+    
+    .list-group-item strong {
+        font-size: 1.25rem !important;
+        font-weight: var(--font-weight-bold) !important;
+    }
+    
+    #lista-seleccionados .list-group-item,
+    #lista-seleccionados-paso3 .list-group-item {
+        font-size: 1.25rem !important;
+        padding: 1.5rem !important;
+    }
+    
+    #acciones-para-componentes .list-group-item {
+        padding: 1.5rem 1.75rem !important;
+        font-size: 1.2rem !important;
+        margin-bottom: 0.75rem !important;
+    }
+    
+    #acciones-para-componentes .list-group-item strong {
+        font-size: 1.3rem !important;
+    }
+    
+    .list-group-item input[type="number"],
+    .list-group-item input[type="text"],
+    .list-group-item .form-control {
+        font-size: 1.2rem !important;
+        padding: 0.875rem !important;
+    }
+    
+    .list-group-item .btn {
+        font-size: 1.15rem !important;
+        padding: 0.75rem 1.25rem !important;
+    }
+    
+    #total_mano_obra {
+        font-size: 1.75rem !important;
+    }
+}
+
+/* ========================================
+   ESTILOS MEJORADOS PARA LISTAS DE REPUESTOS E INSUMOS
+   ======================================== */
+
+/* Contenedor de búsqueda de repuestos */
+#repuestos-list {
+    border-radius: var(--border-radius-lg);
+    background-color: var(--bg-card);
+    padding: 1rem;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+}
+
+/* Lista de insumos disponibles */
+#lista-insumos-disponibles {
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-card) !important;
+}
+
+#lista-insumos-disponibles .list-group-item {
+    background-color: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+    border: none !important;
+    border-bottom: 2px solid var(--border-color) !important;
+    padding: 1.25rem 1.5rem !important;
+    margin-bottom: 0.5rem !important;
+    border-radius: var(--border-radius-md) !important;
+    border-left: 4px solid var(--info-600) !important;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+#lista-insumos-disponibles .list-group-item:hover {
+    background-color: var(--bg-secondary) !important;
+    border-left-color: var(--info-700) !important;
+    box-shadow: var(--shadow-md);
+    transform: translateX(4px);
+}
+
+/* Texto dentro de insumos disponibles */
+#lista-insumos-disponibles .form-check-label {
+    font-size: 1.15rem !important;
+    font-weight: var(--font-weight-semibold) !important;
+    color: var(--text-primary) !important;
+    cursor: pointer;
+}
+
+#lista-insumos-disponibles .form-check-label strong {
+    font-size: 1.2rem !important;
+    font-weight: var(--font-weight-bold) !important;
+    color: var(--text-primary) !important;
+}
+
+#lista-insumos-disponibles .form-check-label small {
+    font-size: 1rem !important;
+    font-weight: var(--font-weight-normal) !important;
+    display: block;
+    margin-top: 0.5rem;
+}
+
+/* Checkboxes de insumos - más grandes con borde siempre visible */
+#lista-insumos-disponibles .insumo-check {
+    width: 1.5em !important;
+    height: 1.5em !important;
+    margin-top: 0.3em !important;
+    margin-right: 1rem !important;
+    border: 3px solid var(--info-600) !important;
+    background-color: var(--bg-card) !important;
+    cursor: pointer;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+}
+
+#lista-insumos-disponibles .insumo-check:checked {
+    background-color: var(--info-600) !important;
+    border-color: var(--info-600) !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3e%3c/svg%3e") !important;
+    box-shadow: 0 0 0 0.2rem rgba(13, 202, 240, 0.25) !important;
+}
+
+#lista-insumos-disponibles .insumo-check:focus {
+    border-color: var(--info-600) !important;
+    box-shadow: 0 0 0 0.25rem rgba(13, 202, 240, 0.35) !important;
+    outline: none !important;
+}
+
+/* Inputs de cantidad en insumos */
+#lista-insumos-disponibles .insumo-cantidad {
+    font-size: 1.15rem !important;
+    font-weight: var(--font-weight-semibold) !important;
+    padding: 0.75rem !important;
+    border: 2px solid var(--border-color) !important;
+    border-radius: var(--border-radius-md) !important;
+    width: 100px !important;
+    min-width: 100px !important;
+}
+
+#lista-insumos-disponibles .insumo-cantidad:focus {
+    border-color: var(--info-600) !important;
+    box-shadow: 0 0 0 0.25rem rgba(13, 202, 240, 0.25) !important;
+}
+
+/* Tabla de repuestos (ya mejorada, pero reforzamos) */
+#tabla-contenido {
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-card);
+    padding: 1rem;
+}
+
+#tabla-contenido table {
+    font-size: 1.1rem !important;
+    background-color: var(--bg-card) !important;
+}
+
+#tabla-contenido table th {
+    font-size: 1.15rem !important;
+    font-weight: var(--font-weight-bold) !important;
+    padding: 1rem !important;
+    background-color: var(--bg-secondary) !important;
+}
+
+#tabla-contenido table td {
+    font-size: 1.1rem !important;
+    font-weight: var(--font-weight-medium) !important;
+    padding: 1rem 0.75rem !important;
+    vertical-align: middle !important;
+}
+
+#tabla-contenido table td strong {
+    font-size: 1.15rem !important;
+    font-weight: var(--font-weight-bold) !important;
+}
+
+/* Repuestos en la tabla - filas diferenciadas */
+#tabla-contenido .repuesto-row td {
+    font-weight: var(--font-weight-semibold) !important;
+}
+
+#tabla-contenido .insumo-row td {
+    font-weight: var(--font-weight-semibold) !important;
+}
+
+/* Inputs en tabla */
+#tabla-contenido input[type="number"] {
+    font-size: 1.1rem !important;
+    font-weight: var(--font-weight-semibold) !important;
+    padding: 0.625rem !important;
+    border: 2px solid var(--border-color) !important;
+    border-radius: var(--border-radius-md) !important;
+}
+
+#tabla-contenido input[type="number"]:focus {
+    border-color: var(--primary-600) !important;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+}
+
+/* Botones en tabla */
+#tabla-contenido .btn {
+    font-size: 1.1rem !important;
+    font-weight: var(--font-weight-semibold) !important;
+    padding: 0.5rem 0.875rem !important;
+}
+
+/* Totales en tabla - destacados */
+#tabla-contenido tfoot td {
+    font-size: 1.2rem !important;
+    font-weight: var(--font-weight-bold) !important;
+    padding: 1.25rem !important;
+}
+
+#tabla-contenido .table-success td {
+    font-size: 1.3rem !important;
+}
+
+/* Modos oscuro y claro para repuestos */
+[data-bs-theme="dark"] #lista-insumos-disponibles .list-group-item,
+body[data-bs-theme="dark"] #lista-insumos-disponibles .list-group-item {
+    background-color: var(--bg-card) !important;
+    border-left-color: var(--info-400) !important;
+}
+
+[data-bs-theme="dark"] #lista-insumos-disponibles .insumo-check,
+body[data-bs-theme="dark"] #lista-insumos-disponibles .insumo-check {
+    border: 3px solid var(--info-400) !important;
+    background-color: var(--bg-card) !important;
+}
+
+[data-bs-theme="dark"] #lista-insumos-disponibles .insumo-check:checked,
+body[data-bs-theme="dark"] #lista-insumos-disponibles .insumo-check:checked {
+    background-color: var(--info-500) !important;
+    border: 3px solid var(--info-300) !important;
+}
+
+/* Responsive móvil para repuestos */
+@media (max-width: 768px) {
+    #lista-insumos-disponibles .list-group-item {
+        padding: 1.5rem !important;
+        font-size: 1.15rem !important;
+    }
+    
+    #lista-insumos-disponibles .form-check-label {
+        font-size: 1.2rem !important;
+    }
+    
+    #lista-insumos-disponibles .form-check-label strong {
+        font-size: 1.25rem !important;
+    }
+    
+    #lista-insumos-disponibles .form-check-label small {
+        font-size: 1.05rem !important;
+    }
+    
+    #lista-insumos-disponibles .insumo-check {
+        width: 1.6em !important;
+        height: 1.6em !important;
+        margin-right: 1.25rem !important;
+    }
+    
+    #lista-insumos-disponibles .insumo-cantidad {
+        font-size: 1.2rem !important;
+        padding: 0.875rem !important;
+        width: 120px !important;
+        min-width: 120px !important;
+    }
+    
+    #tabla-contenido table {
+        font-size: 1.05rem !important;
+    }
+    
+    #tabla-contenido table th {
+        font-size: 1.2rem !important;
+        padding: 1.25rem 0.75rem !important;
+    }
+    
+    #tabla-contenido table td {
+        font-size: 1.1rem !important;
+        padding: 1.25rem 0.5rem !important;
+    }
+    
+    #tabla-contenido input[type="number"] {
+        font-size: 1.15rem !important;
+        padding: 0.75rem !important;
+    }
+    
+    #tabla-contenido .btn {
+        font-size: 1.15rem !important;
+        padding: 0.625rem 1rem !important;
+    }
+    
+    #tabla-contenido tfoot td {
+        font-size: 1.3rem !important;
+        padding: 1.5rem !important;
+    }
+}
+
+/* ========================================
+   ESTILOS MEJORADOS PARA BÚSQUEDA DE PLACA
+   ======================================== */
+
+/* Ocultar botón duplicado de búsqueda */
+#btn-buscar-placa {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    position: absolute !important;
+    width: 0 !important;
+    height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+}
+
+/* Sección de búsqueda de placa - más resaltada */
+#vehiculo_fields .alert-info {
+    border-width: 3px !important;
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2) !important;
+    animation: subtlePulse 3s ease-in-out infinite;
+}
+
+@keyframes subtlePulse {
+    0%, 100% {
+        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);
+    }
+    50% {
+        box-shadow: 0 6px 16px rgba(13, 110, 253, 0.3);
+    }
+}
+
+/* Botón de búsqueda en API - más destacado */
+#btn-buscar-vehiculo {
+    background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%) !important;
+    border: none !important;
+    box-shadow: 0 4px 8px rgba(13, 110, 253, 0.3) !important;
+    transition: all 0.3s ease !important;
+}
+
+#btn-buscar-vehiculo:hover {
+    background: linear-gradient(135deg, var(--primary-700) 0%, var(--primary-800) 100%) !important;
+    box-shadow: 0 6px 12px rgba(13, 110, 253, 0.4) !important;
+    transform: translateY(-2px);
+}
+
+#btn-buscar-vehiculo:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(13, 110, 253, 0.3) !important;
+}
+
+/* Input de placa - más ancho y visible */
+#vehiculo-placa {
+    border-width: 2px !important;
+    border-color: var(--primary-600) !important;
+    box-shadow: 0 2px 4px rgba(13, 110, 253, 0.1) !important;
+    min-width: 300px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 1rem 1.25rem !important;
+    font-size: 1.4rem !important;
+    font-weight: 700 !important;
+    color: var(--text-primary) !important;
+    letter-spacing: 0.1em !important;
+    text-transform: uppercase !important;
+    background-color: var(--bg-card) !important;
+}
+
+#vehiculo-placa::placeholder {
+    font-size: 1.2rem !important;
+    font-weight: 500 !important;
+    color: var(--text-muted) !important;
+    opacity: 0.7 !important;
+    letter-spacing: 0.05em !important;
+    text-transform: none !important;
+}
+
+#vehiculo-placa:focus {
+    border-color: var(--primary-700) !important;
+    border-width: 3px !important;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.35) !important;
+    outline: none !important;
+    color: var(--text-primary) !important;
+    background-color: var(--bg-card) !important;
+}
+
+/* Input group más ancho */
+#vehiculo_fields .input-group {
+    width: 100% !important;
+    display: flex !important;
+}
+
+#vehiculo_fields .input-group .form-control {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+}
+
+/* Icono de búsqueda circular */
+#vehiculo_fields .bg-primary {
+    box-shadow: 0 4px 8px rgba(13, 110, 253, 0.3) !important;
+    animation: iconPulse 2s ease-in-out infinite;
+}
+
+@keyframes iconPulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+/* Responsive móvil */
+@media (max-width: 768px) {
+    #vehiculo_fields .alert-info {
+        padding: 1.5rem !important;
+        border-width: 3px !important;
+    }
+    
+    #vehiculo_fields h4 {
+        font-size: 1.3rem !important;
+    }
+    
+    #vehiculo-placa {
+        font-size: 1.5rem !important;
+        padding: 1.25rem !important;
+        min-width: 100% !important;
+        width: 100% !important;
+        letter-spacing: 0.15em !important;
+    }
+    
+    #vehiculo-placa::placeholder {
+        font-size: 1.3rem !important;
+    }
+    
+    #btn-buscar-vehiculo {
+        font-size: 1.15rem !important;
+        padding: 1rem 1.5rem !important;
+        width: 100%;
+        margin-top: 0.5rem;
+    }
+    
+    #vehiculo_fields .input-group {
+        flex-direction: column;
+        width: 100% !important;
+    }
+    
+    #vehiculo_fields .input-group-lg .form-control {
+        border-radius: var(--border-radius-md) !important;
+        margin-bottom: 0.5rem;
+        width: 100% !important;
+    }
+    
+    #vehiculo_fields .bg-primary {
+        width: 50px !important;
+        height: 50px !important;
+    }
+}
+
+/* Estilos para la nueva estructura de acciones múltiples */
+.accion-checkbox {
+    transform: scale(1.2);
+    margin-top: 0.1rem;
+}
+
+.accion-precio {
+    font-size: 0.85rem;
+}
+
+.accion-item-selected {
+    background-color: rgba(13, 110, 253, 0.1) !important;
+    border-left: 4px solid #0d6efd !important;
+}
+
+.accion-item-unselected {
+    background-color: rgba(108, 117, 125, 0.05) !important;
+    border-left: 4px solid transparent !important;
+}
+
+/* Animación suave para cambios de estado */
+.list-group-item {
+    transition: var(--transition);
+}
+
+/* Mejorar contraste para precios */
+[data-bs-theme="dark"] .text-success {
+    color: #20c997 !important;
+}
+
+[data-bs-theme="dark"] .text-muted {
+    color: #adb5bd !important;
+}
+
+/* Estilo para acciones sin precio */
+.precio-sin-base {
+    color: #6c757d;
+    font-style: italic;
+}
+</style>
+
+<!-- ---------------- SCRIPTS (TODO integrado aquí) ---------------- -->
+<script src="{% static 'js/ingreso.js' %}"></script>
+<script src="{% static 'js/plano-interactivo.js' %}"></script>
+<script>
+// ---------------------- BUSCAR VEHICULO POR PLACA ----------------------
+// usage: llama buscarVehiculoPorPlaca('JGCX79') o usa el botón/blur
+async function buscarVehiculoPorPlaca(rawPlaca, opts={showAlerts:true}) {
+  const placa = String(rawPlaca || '').trim().toUpperCase();
+  if (!placa) {
+    if (opts.showAlerts) console.warn("buscarVehiculoPorPlaca: placa vacía");
+    return null;
+  }
+  console.debug("buscarVehiculoPorPlaca ->", placa);
+
+  try {
+    const url = `/car/vehiculo_lookup/?placa=${encodeURIComponent(placa)}`;
+    console.debug("Fetch URL:", url);
+    const resp = await fetch(url);
+    if (!resp.ok) {
+      const msg = `Error HTTP ${resp.status}`;
+      console.error(msg);
+      if (opts.showAlerts) alert(msg);
+      return null;
+    }
+    const dataRaw = await resp.json();
+    console.debug("Respuesta JSON:", dataRaw);
+
+    // Soportar dos formatos posibles:
+    // 1) { success: true, data: {...} }
+    // 2) { marca: ..., modelo: ..., ... }
+    const payload = (dataRaw && dataRaw.success && dataRaw.data) ? dataRaw.data : dataRaw;
+
+    // Normalizar campos desde muchas posibles rutas
+    const marca = payload.marca || (payload.model && (payload.model.brand?.name || payload.model.brand_name)) || payload.brand?.name || '';
+    const modelo = payload.modelo || payload.model?.name || payload.version || payload.modelName || '';
+    const anio = payload.anio || payload.year || payload.yearRT || payload.model?.year || '';
+    const vin = payload.vin || payload.vinNumber || payload.vin_number || payload.vin_no || '';
+    const placaRes = payload.placa || payload.licensePlate || placa;
+    const descripcion_motor = payload.descripcion_motor || (payload.engine ? `Motor ${payload.engine} • ${payload.version || ''}` : (payload.engineNumber || ''));
+
+    const datos = {
+      marca: marca || '',
+      modelo: modelo || '',
+      anio: anio || '',
+      vin: vin || '',
+      placa: placaRes || placa,
+      descripcion_motor: descripcion_motor || ''
+    };
+    console.debug("vehículo datos procesados:", datos);
+
+    // Helper: intenta setear un campo probando varios selectores (id y name)
+    function setField(nameSuffix, value) {
+      if (value === undefined || value === null) value = '';
+      const candidates = [
+        `id_vehiculo-${nameSuffix}`,
+        `id_vehiculo_${nameSuffix}`,
+        `vehiculo-${nameSuffix}`,
+        `vehiculo_${nameSuffix}`,
+        `id_${nameSuffix}`,
+        nameSuffix
+      ];
+      for (const sel of candidates) {
+        // por id
+        const eById = document.getElementById(sel);
+        if (eById) { eById.value = value; eById.dispatchEvent(new Event('input',{bubbles:true})); console.debug("setField -> id:", sel, value); return true; }
+        // por name
+        const eByName = document.querySelector(`[name="${sel}"]`);
+        if (eByName) { eByName.value = value; eByName.dispatchEvent(new Event('input',{bubbles:true})); console.debug("setField -> name:", sel, value); return true; }
+      }
+      console.debug("setField: no encontró selector para", nameSuffix);
+      return false;
+    }
+
+    // Intentar rellenar
+    setField('marca', datos.marca);
+    setField('modelo', datos.modelo);
+    setField('anio', datos.anio);
+    setField('vin', datos.vin);
+    setField('placa', datos.placa);
+    setField('descripcion_motor', datos.descripcion_motor);
+
+    // Indicar éxito visualmente si quieres
+    if (opts.showAlerts) {
+      // añade un pequeño feedback en la UI si existe un contenedor para mensajes
+      const placaInput = document.querySelector('#id_vehiculo-placa, #id_vehiculo_placa, [name="vehiculo-placa"]');
+      if (placaInput) {
+        // crear/mostrar pequeño badge temporal
+        let badge = document.getElementById('vehiculo-lookup-badge');
+        if (!badge) {
+          badge = document.createElement('div');
+          badge.id = 'vehiculo-lookup-badge';
+          badge.style.fontSize = '0.9rem';
+          badge.style.marginTop = '0.35rem';
+          placaInput.closest('.mb-3')?.appendChild(badge) || placaInput.parentNode.appendChild(badge);
+        }
+        badge.textContent = `Vehículo encontrado: ${datos.marca} ${datos.modelo} ${datos.anio}`;
+        badge.style.color = '#0b5ed7';
+        setTimeout(()=> badge && badge.remove(), 4500);
+      } else {
+        console.info("Vehículo encontrado:", datos);
+      }
+    }
+
+    return datos;
+  } catch (err) {
+    console.error("Error en buscarVehiculoPorPlaca:", err);
+    if (opts.showAlerts) alert("Error al consultar la API del vehículo. Revisa consola Network/Console.");
+    return null;
+  }
+}
+
+// ------------------ conectar evento: botón o blur en campo placa ------------------
+document.addEventListener('DOMContentLoaded', function () {
+  // intenta localizar el input de placa usando los ids/names más probables
+  const placaInput = document.querySelector('#id_vehiculo-placa, #id_vehiculo_placa, [name="vehiculo-placa"], [name="vehiculo_placa"], [name="placa"]');
+  const btnId = 'btn-buscar-placa';
+
+  // NO crear botón duplicado - ya existe el botón "Buscar en API" en el template
+  // Ocultar y eliminar cualquier botón duplicado si se crea dinámicamente
+  if (placaInput) {
+    // Función para eliminar botón duplicado
+    const eliminarBotonDuplicado = function() {
+      const duplicateBtn = document.getElementById(btnId);
+      if (duplicateBtn) {
+        duplicateBtn.remove(); // Eliminar del DOM completamente
+      }
+    };
+    
+    // Eliminar inmediatamente si ya existe
+    eliminarBotonDuplicado();
+    
+    // Observar cambios en el DOM para eliminar cualquier botón que se cree
+    const observer = new MutationObserver(function(mutations) {
+      eliminarBotonDuplicado();
+    });
+    
+    // Observar cambios en el DOM
+    observer.observe(document.body, { childList: true, subtree: true });
+    
+    // Verificar periódicamente por si acaso
+    setTimeout(eliminarBotonDuplicado, 100);
+    setTimeout(eliminarBotonDuplicado, 500);
+    setTimeout(eliminarBotonDuplicado, 1000);
+
+    // Conectar el botón principal "Buscar en API"
+    const btnBuscarVehiculo = document.getElementById('btn-buscar-vehiculo');
+    if (btnBuscarVehiculo) {
+      btnBuscarVehiculo.addEventListener('click', function () {
+        const val = placaInput.value || placaInput.textContent || '';
+        buscarVehiculoPorPlaca(val);
+      });
+    }
+
+    // también buscar al salir del campo (blur) o al presionar Enter
+    placaInput.addEventListener('blur', function () {
+      const val = placaInput.value || '';
+      if (val && String(val).trim().length >= 3) buscarVehiculoPorPlaca(val, {showAlerts:false});
+    });
+    placaInput.addEventListener('keydown', function(e){
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        buscarVehiculoPorPlaca(placaInput.value);
+      }
+    });
+
+    console.debug("Hook placa instalado en", placaInput);
+  } else {
+    console.debug("No se encontró input de placa (id_vehiculo-placa). Asegúrate del nombre/id del campo en el formulario.");
+  }
+});
+
+</script>
+
+<!-- Estilos para modal de repuestos externos -->
+<style>
+#modalRepuestosExternos .modal-dialog {
+    max-width: 90vw !important;
+    margin: 1.75rem auto !important;
+}
+
+#modalRepuestosExternos .modal-content {
+    background: #fff !important;
+    color: #212529 !important;
+    max-height: 90vh !important;
+    overflow: visible !important;
+}
+
+#modalRepuestosExternos .modal-body {
+    background: #fff !important;
+    color: #212529 !important;
+    max-height: calc(90vh - 150px) !important;
+    overflow-y: auto !important;
+    padding: 1.5rem !important;
+}
+
+#modalRepuestosExternos .form-control,
+#modalRepuestosExternos .form-select,
+#modalRepuestosExternos input,
+#modalRepuestosExternos textarea,
+#modalRepuestosExternos select {
+    background: #fff !important;
+    color: #212529 !important;
+    border: 1px solid #ced4da !important;
+}
+
+#modalRepuestosExternos .form-label {
+    color: #212529 !important;
+    font-weight: 500 !important;
+}
+
+#modalRepuestosExternos .text-muted,
+#modalRepuestosExternos small {
+    color: #6c757d !important;
+}
+
+#modalRepuestosExternos .alert {
+    background: #d1ecf1 !important;
+    color: #0c5460 !important;
+    border: 1px solid #bee5eb !important;
+}
+
+#modalRepuestosExternos .list-group-item {
+    background: #fff !important;
+    color: #212529 !important;
+    border: 1px solid #dee2e6 !important;
+}
+
+#modalRepuestosExternos .tab-content {
+    background: #fff !important;
+    color: #212529 !important;
+    min-height: 500px !important;
+}
+
+#modalRepuestosExternos .tab-pane {
+    background: #fff !important;
+    color: #212529 !important;
+    padding: 1.5rem !important;
+}
+
+#modalRepuestosExternos .nav-tabs {
+    background: #f8f9fa !important;
+    padding: 0.5rem !important;
+    border-radius: 0.25rem !important;
+}
+
+#modalRepuestosExternos .nav-link {
+    color: #212529 !important;
+}
+
+#modalRepuestosExternos .nav-link.active {
+    background: #fff !important;
+    color: #198754 !important;
+    font-weight: bold !important;
+}
+</style>
+
+<!-- Modal de Repuestos Externos -->
+<div class="modal fade" id="modalRepuestosExternos" tabindex="-1" aria-labelledby="modalRepuestosExternosLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title" id="modalRepuestosExternosLabel">
+          🌐 Buscar Repuestos en Proveedores Externos
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Búsqueda de Repuestos Externos -->
+            <div class="row mb-3">
+              <div class="col-md-8">
+                <input type="text" class="form-control" id="buscarRepuestoExterno" placeholder="Buscar repuestos externos guardados...">
+              </div>
+              <div class="col-md-4">
+                <button class="btn btn-primary w-100" onclick="buscarRepuestosExternos()">
+                  🔍 Buscar
+                </button>
+              </div>
+            </div>
+
+            <div id="resultadosExternos" class="mb-3">
+              <p class="text-muted">Ingresa un término para buscar en las referencias guardadas.</p>
+            </div>
+
+            <div class="alert alert-info">
+              <strong>💡 Tip:</strong> Si no encuentras el repuesto guardado, búscalo en los proveedores con los botones de abajo. Usa el <strong>bookmarklet</strong> para guardar nuevas referencias rápidamente.
+            </div>
+
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-success flex-fill" onclick="buscarEnMundoRepuestos()">
+                🛒 Buscar en Mundo Repuestos
+              </button>
+              <button type="button" class="btn btn-primary flex-fill" onclick="buscarEnAutoPlanet()">
+                🚗 Buscar en AutoPlanet
+              </button>
+              <button type="button" class="btn btn-warning flex-fill" onclick="buscarEnAmbosProveedores()">
+                ⚡ Buscar en AMBOS
+              </button>
+            </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ========================================
+// REPUESTOS EXTERNOS - Sistema Simplificado
+// ========================================
+
+// Buscar repuestos externos
+async function buscarRepuestosExternos() {
+  const termino = document.getElementById('buscarRepuestoExterno').value.trim();
+  const container = document.getElementById('resultadosExternos');
+  
+  if (!termino || termino.length < 2) {
+    container.innerHTML = '<p class="text-warning">⚠️ Ingresa al menos 2 caracteres.</p>';
+    return;
+  }
+  
+  container.innerHTML = '<div class="text-center"><div class="spinner-border text-success" role="status"></div><p>Buscando...</p></div>';
+  
+  try {
+    const response = await fetch(`/car/api/repuestos-externos/buscar/?termino=${encodeURIComponent(termino)}`);
+    const data = await response.json();
+    
+    if (!data.repuestos || data.repuestos.length === 0) {
+      container.innerHTML = '<p class="text-muted">No se encontraron repuestos con ese término.</p>';
+      return;
+    }
+    
+    let html = '<div class="list-group">';
+    data.repuestos.forEach(rep => {
+      html += `
+        <div class="list-group-item">
+          <div class="d-flex justify-content-between align-items-start">
+            <div class="flex-grow-1">
+              <h6 class="mb-1">${rep.nombre}</h6>
+              <p class="mb-1 text-muted small">
+                ${rep.proveedor} ${rep.marca ? '• ' + rep.marca : ''} ${rep.codigo ? '• Cód: ' + rep.codigo : ''}
+              </p>
+              <p class="mb-0 fw-bold text-success">$${rep.precio.toLocaleString('es-CL')}</p>
+            </div>
+            <div class="d-flex flex-column gap-1">
+              <button class="btn btn-sm btn-outline-primary" onclick="window.open('${rep.url}', '_blank')">
+                🔗 Ver
+              </button>
+              <button class="btn btn-sm btn-success" onclick="referenciarRepuestoExterno(${rep.id}, '${rep.nombre.replace(/'/g, "\\'")}', ${rep.precio})">
+                ✅ Usar
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    html += '</div>';
+    
+    container.innerHTML = html;
+  } catch (error) {
+    container.innerHTML = '<p class="text-danger">❌ Error al buscar: ' + error.message + '</p>';
+  }
+}
+
+// Array para almacenar repuestos externos agregados
+window.repuestosExternos = window.repuestosExternos || [];
+
+// Referenciar repuesto externo en el diagnóstico (agregar a la lista)
+function referenciarRepuestoExterno(id, nombre, precio) {
+  // Verificar si ya existe
+  const existe = window.repuestosExternos.find(r => r.id === id);
+  if (existe) {
+    alert('⚠️ Este repuesto externo ya está agregado');
+    return;
+  }
+  
+  // Agregar al array
+  window.repuestosExternos.push({
+    id: id,
+    nombre: nombre,
+    precio: precio,
+    cantidad: 1,
+    es_externo: true
+  });
+  
+  // Actualizar la visualización
+  actualizarTablaRepuestosExternos();
+  
+  // Cerrar modal
+  const modal = bootstrap.Modal.getInstance(document.getElementById('modalRepuestosExternos'));
+  if (modal) modal.hide();
+  
+  // Notificar éxito
+  mostrarNotificacion(`✅ Referencia agregada: ${nombre}`, 'success');
+}
+
+// Actualizar la tabla de repuestos (incluyendo externos)
+function actualizarTablaRepuestosExternos() {
+  const tablaContenido = document.getElementById('tabla-contenido');
+  
+  if (!tablaContenido) return;
+  
+  if (window.repuestosExternos.length === 0) {
+    tablaContenido.innerHTML = '<p class="text-muted">No hay repuestos externos agregados aún.</p>';
+    return;
+  }
+  
+  let html = `
+    <div class="alert alert-info mb-2">
+      <strong>ℹ️ Referencias Externas:</strong> Estos repuestos están marcados con 🌐 y son referencias de proveedores externos.
+    </div>
+    <table class="table table-sm table-bordered table-hover">
+      <thead class="table-success">
+        <tr>
+          <th style="width: 5%;">Tipo</th>
+          <th style="width: 40%;">Nombre</th>
+          <th style="width: 15%;">Cantidad</th>
+          <th style="width: 15%;">Precio Ref.</th>
+          <th style="width: 15%;">Subtotal</th>
+          <th style="width: 10%;">Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+  
+  let total = 0;
+  
+  window.repuestosExternos.forEach((rep, index) => {
+    const subtotal = rep.precio * rep.cantidad;
+    total += subtotal;
+    
+    html += `
+      <tr>
+        <td class="text-center">🌐</td>
+        <td>${rep.nombre}</td>
+        <td>
+          <input type="number" 
+                 class="form-control form-control-sm" 
+                 value="${rep.cantidad}" 
+                 min="1" 
+                 style="width: 80px;"
+                 onchange="actualizarCantidadExterna(${index}, this.value)">
+        </td>
+        <td class="text-end">$${rep.precio.toLocaleString('es-CL')}</td>
+        <td class="text-end fw-bold">$${subtotal.toLocaleString('es-CL')}</td>
+        <td class="text-center">
+          <button class="btn btn-sm btn-outline-danger" onclick="eliminarRepuestoExterno(${index})" title="Eliminar">
+            🗑️
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+  
+  html += `
+      </tbody>
+      <tfoot>
+        <tr class="table-light">
+          <td colspan="4" class="text-end fw-bold">TOTAL REFERENCIAS EXTERNAS:</td>
+          <td class="text-end fw-bold text-success">$${total.toLocaleString('es-CL')}</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+  `;
+  
+  tablaContenido.innerHTML = html;
+}
+
+// Actualizar cantidad de repuesto externo
+function actualizarCantidadExterna(index, nuevaCantidad) {
+  const cantidad = parseInt(nuevaCantidad) || 1;
+  if (cantidad < 1) {
+    alert('❌ La cantidad debe ser al menos 1');
+    return;
+  }
+  
+  window.repuestosExternos[index].cantidad = cantidad;
+  actualizarTablaRepuestosExternos();
+}
+
+// Eliminar repuesto externo
+function eliminarRepuestoExterno(index) {
+  if (confirm('¿Eliminar esta referencia externa?')) {
+    window.repuestosExternos.splice(index, 1);
+    actualizarTablaRepuestosExternos();
+    mostrarNotificacion('🗑️ Referencia eliminada', 'info');
+  }
+}
+
+// Mostrar notificación temporal
+function mostrarNotificacion(mensaje, tipo = 'success') {
+  const colores = {
+    'success': '#28a745',
+    'info': '#17a2b8',
+    'warning': '#ffc107',
+    'danger': '#dc3545'
+  };
+  
+  const notif = document.createElement('div');
+  notif.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: ${colores[tipo] || colores.success};
+    color: white;
+    padding: 15px 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    z-index: 9999;
+    animation: slideInRight 0.3s ease;
+    max-width: 350px;
+  `;
+  notif.textContent = mensaje;
+  document.body.appendChild(notif);
+  
+  setTimeout(() => {
+    notif.style.animation = 'slideOutRight 0.3s ease';
+    setTimeout(() => notif.remove(), 300);
+  }, 3000);
+}
+
+// Agregar CSS para animaciones
+const styleNotif = document.createElement('style');
+styleNotif.textContent = `
+  @keyframes slideInRight {
+    from { transform: translateX(400px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes slideOutRight {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(400px); opacity: 0; }
+  }
+`;
+document.head.appendChild(styleNotif);
+
+// Preparar repuestos externos antes de enviar el formulario
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.querySelector('form');
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      // Preparar JSON de repuestos externos
+      const hiddenExternos = document.getElementById('repuestos-externos-json');
+      if (hiddenExternos && window.repuestosExternos) {
+        hiddenExternos.value = JSON.stringify(window.repuestosExternos);
+        console.log('✅ Repuestos externos preparados:', hiddenExternos.value);
+      }
+    });
+  }
+});
+
+// Buscar al presionar Enter
+document.getElementById('buscarRepuestoExterno')?.addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    buscarRepuestosExternos();
+  }
+});
+
+// Buscar directamente en Mundo Repuestos
+function buscarEnMundoRepuestos() {
+  const termino = document.getElementById('buscarRepuestoExterno').value.trim();
+  
+  if (!termino) {
+    alert('❌ Por favor ingresa un término de búsqueda');
+    document.getElementById('buscarRepuestoExterno').focus();
+    return;
+  }
+  
+  // Formato: espacios se convierten en dobles guiones
+  const terminoFormateado = termino.replace(/\s+/g, '--');
+  const url = `https://mundorepuestos.com/busqueda/${terminoFormateado}`;
+  
+  window.open(url, '_blank');
+}
+
+// Buscar directamente en AutoPlanet
+function buscarEnAutoPlanet() {
+  const termino = document.getElementById('buscarRepuestoExterno').value.trim();
+  
+  if (!termino) {
+    alert('❌ Por favor ingresa un término de búsqueda');
+    document.getElementById('buscarRepuestoExterno').focus();
+    return;
+  }
+  
+  const url = `https://www.autoplanet.cl/busqueda/${encodeURIComponent(termino)}`;
+  
+  window.open(url, '_blank');
+}
+
+// Buscar en ambos proveedores simultáneamente
+function buscarEnAmbosProveedores() {
+  const termino = document.getElementById('buscarRepuestoExterno').value.trim();
+  
+  if (!termino) {
+    alert('❌ Por favor ingresa un término de búsqueda');
+    document.getElementById('buscarRepuestoExterno').focus();
+    return;
+  }
+  
+  // Abrir ambos con un pequeño delay
+  buscarEnMundoRepuestos();
+  
+  setTimeout(() => {
+    buscarEnAutoPlanet();
+  }, 300);
+}
+</script>
+
+<!-- ========================================
+     JAVASCRIPT PARA WIZARD
+     ======================================== -->
+<script>
+// Estado del wizard
+let currentWizardStep = 1;
+const totalWizardSteps = 4;
+
+// Inicializar wizard
+function initWizard() {
+  updateWizardUI();
+}
+
+// Actualizar UI del wizard
+function updateWizardUI() {
+  // Actualizar pasos visuales
+  document.querySelectorAll('.wizard-step').forEach((step, index) => {
+    const stepNum = index + 1;
+    step.classList.remove('active', 'completed');
+    if (stepNum < currentWizardStep) {
+      step.classList.add('completed');
+    } else if (stepNum === currentWizardStep) {
+      step.classList.add('active');
+    }
+  });
+  
+  // Actualizar panes
+  document.querySelectorAll('.wizard-step-pane').forEach((pane, index) => {
+    const stepNum = index + 1;
+    pane.classList.remove('active');
+    if (stepNum === currentWizardStep) {
+      pane.classList.add('active');
+    }
+    pane.style.display = stepNum === currentWizardStep ? 'block' : 'none';
+  });
+  
+  // Actualizar barra de progreso
+  const progressPercent = (currentWizardStep / totalWizardSteps) * 100;
+  document.getElementById('wizard-progress-fill').style.width = progressPercent + '%';
+  document.getElementById('wizard-current-step').textContent = currentWizardStep;
+  
+  // Actualizar botones de navegación
+  const btnPrev = document.getElementById('wizard-btn-prev');
+  const btnNext = document.getElementById('wizard-btn-next');
+  const btnSubmit = document.getElementById('wizard-btn-submit');
+  const btnSkip = document.getElementById('wizard-btn-skip');
+  
+  if (currentWizardStep === 1) {
+    btnPrev.style.display = 'none';
+    btnNext.style.display = 'inline-block';
+    btnSubmit.style.display = 'none';
+    if (btnSkip) btnSkip.style.display = 'none';
+  } else if (currentWizardStep === totalWizardSteps) {
+    // Paso 4: Mostrar ambos botones de guardar (normal y omitir)
+    btnPrev.style.display = 'inline-block';
+    btnNext.style.display = 'none';
+    // Siempre mostrar ambos botones en el paso 4
+    if (btnSubmit) {
+      btnSubmit.style.display = 'inline-block';
+      btnSubmit.style.visibility = 'visible';
+      btnSubmit.removeAttribute('hidden');
+      console.log('✅ Botón Guardar Diagnóstico mostrado');
+    } else {
+      console.error('❌ No se encontró btnSubmit');
+    }
+    if (btnSkip) {
+      btnSkip.style.display = 'inline-block';
+      btnSkip.style.visibility = 'visible';
+      btnSkip.removeAttribute('hidden');
+      console.log('✅ Botón Omitir Repuestos mostrado');
+    } else {
+      console.error('❌ No se encontró btnSkip');
+    }
+  } else {
+    btnPrev.style.display = 'inline-block';
+    btnNext.style.display = 'inline-block';
+    btnSubmit.style.display = 'none';
+    if (btnSkip) btnSkip.style.display = 'none';
+  }
+  
+  // Sincronizar componentes seleccionados en paso 3
+  if (currentWizardStep === 3) {
+    sincronizarComponentesPaso3();
+  }
+  
+  // Scroll al inicio del contenido
+  document.getElementById('wizard-content').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// Sincronizar la lista de componentes seleccionados en el paso 3
+function sincronizarComponentesPaso3() {
+  const componentes = document.querySelectorAll('input[name="componentes_seleccionados"]:checked');
+  const listaPaso3 = document.getElementById('lista-seleccionados-paso3');
+  const resumenPaso3 = document.getElementById('resumen-componentes-paso3');
+  
+  if (!listaPaso3 || !resumenPaso3) return;
+  
+  if (componentes.length === 0) {
+    listaPaso3.innerHTML = '<li class="list-group-item text-secondary text-center">Selecciona componentes en el paso anterior para ver las acciones disponibles</li>';
+    resumenPaso3.textContent = 'Selecciona componentes en el paso anterior';
+    return;
+  }
+  
+  // Actualizar resumen
+  resumenPaso3.textContent = `${componentes.length} componente${componentes.length !== 1 ? 's' : ''} seleccionado${componentes.length !== 1 ? 's' : ''}`;
+  
+  // Actualizar lista
+  let html = '';
+  componentes.forEach(comp => {
+    const nombre = comp.dataset.nombre || comp.closest('label')?.textContent.trim() || 'Componente';
+    html += `<li class="list-group-item"><strong>✓ ${nombre}</strong></li>`;
+  });
+  listaPaso3.innerHTML = html || '<li class="list-group-item text-secondary text-center">No hay componentes seleccionados</li>';
+}
+
+// Validar paso antes de avanzar
+function validateStep(step) {
+  if (step === 1) {
+    // Validar cliente y vehículo
+    const clienteExistente = document.getElementById('cliente_existente');
+    const clienteSeleccionado = clienteExistente && clienteExistente.value;
+    
+    // Si hay cliente existente seleccionado, está OK
+    if (clienteSeleccionado) {
+      // Verificar que haya vehículo
+      const vehiculoSelect = document.getElementById('vehiculo_select');
+      const vehiculoSeleccionado = vehiculoSelect && vehiculoSelect.value;
+      
+      if (!vehiculoSeleccionado) {
+        // Verificar campos de nuevo vehículo
+        const placaInput = document.getElementById('vehiculo-placa');
+        if (!placaInput || !placaInput.value.trim()) {
+          alert('⚠️ Por favor completa los datos del vehículo (placa)');
+          return false;
+        }
+      }
+      return true;
+    }
+    
+    // Si no hay cliente existente, validar formulario de nuevo cliente
+    const rutInput = document.querySelector('#id_cliente-rut, [name="cliente-rut"]');
+    const nombreInput = document.querySelector('#id_cliente-nombre, [name="cliente-nombre"]');
+    
+    if (rutInput && !rutInput.value.trim()) {
+      alert('⚠️ Por favor ingresa el RUT del cliente');
+      rutInput.focus();
+      return false;
+    }
+    
+    if (nombreInput && !nombreInput.value.trim()) {
+      alert('⚠️ Por favor ingresa el nombre del cliente');
+      nombreInput.focus();
+      return false;
+    }
+    
+    // Validar vehículo
+    const placaInput = document.getElementById('vehiculo-placa');
+    if (!placaInput || !placaInput.value.trim()) {
+      alert('⚠️ Por favor ingresa la placa del vehículo');
+      if (placaInput) placaInput.focus();
+      return false;
+    }
+    
+    return true;
+  } else if (step === 2) {
+    // Validar que haya al menos un componente seleccionado
+    const componentes = document.querySelectorAll('input[name="componentes_seleccionados"]:checked');
+    if (componentes.length === 0) {
+      alert('⚠️ Por favor selecciona al menos un componente');
+      return false;
+    }
+    return true;
+  } else if (step === 3) {
+    // Paso 3 (Acciones) no requiere validación obligatoria
+    // Pero mejor validar que haya componentes seleccionados antes
+    const componentes = document.querySelectorAll('input[name="componentes_seleccionados"]:checked');
+    if (componentes.length === 0) {
+      alert('⚠️ Debes seleccionar componentes en el paso anterior antes de continuar');
+      return false;
+    }
+    return true;
+  } else if (step === 4) {
+    // Paso 4 es completamente opcional - siempre permite avanzar o guardar
+    return true;
+  }
+  
+  return true;
+}
+
+// Avanzar al siguiente paso
+function wizardNextStep() {
+  if (!validateStep(currentWizardStep)) {
+    return;
+  }
+  
+  if (currentWizardStep < totalWizardSteps) {
+    currentWizardStep++;
+    updateWizardUI();
+  }
+}
+
+// Retroceder al paso anterior
+function wizardPreviousStep() {
+  if (currentWizardStep > 1) {
+    currentWizardStep--;
+    updateWizardUI();
+  }
+}
+
+// Ir a un paso específico
+function wizardGoToStep(step) {
+  if (step >= 1 && step <= totalWizardSteps) {
+    // Validar pasos anteriores antes de avanzar (excepto el paso 4 que es opcional)
+    for (let i = 1; i < step && i < totalWizardSteps; i++) {
+      if (!validateStep(i)) {
+        alert('⚠️ Por favor completa el paso ' + i + ' antes de continuar');
+        currentWizardStep = i;
+        updateWizardUI();
+        return;
+      }
+    }
+    currentWizardStep = step;
+    updateWizardUI();
+  }
+}
+
+// Omitir repuestos/insumos y guardar directamente
+function skipRepuestosAndSubmit() {
+  if (confirm('¿Estás seguro de guardar el diagnóstico sin agregar repuestos ni insumos?\n\nPuedes agregarlos después desde el detalle del diagnóstico.')) {
+    // Limpiar cualquier dato de repuestos/insumos si existe
+    const repuestosJson = document.getElementById('repuestos-json');
+    const repuestosExternosJson = document.getElementById('repuestos-externos-json');
+    
+    if (repuestosJson && repuestosJson.value) {
+      repuestosJson.value = '[]';
+    }
+    if (repuestosExternosJson && repuestosExternosJson.value) {
+      repuestosExternosJson.value = '[]';
+    }
+    
+    // Enviar el formulario
+    document.getElementById('form-ingreso').submit();
+  }
+}
+
+// Inicializar cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+  initWizard();
+  
+  // Sincronizar componentes cuando se seleccionan/deseleccionan
+  const componentesContainer = document.getElementById('componentesAccordion');
+  if (componentesContainer) {
+    componentesContainer.addEventListener('change', function(e) {
+      if (e.target.name === 'componentes_seleccionados') {
+        // Si estamos en el paso 3, actualizar la lista
+        if (currentWizardStep === 3) {
+          sincronizarComponentesPaso3();
+        }
+      }
+    });
+  }
+  
+  // Permitir click en los pasos para navegar (solo a pasos completados)
+  document.querySelectorAll('.wizard-step').forEach((step, index) => {
+    step.addEventListener('click', function() {
+      const stepNum = index + 1;
+      if (stepNum <= currentWizardStep) {
+        wizardGoToStep(stepNum);
+      }
+    });
+  });
+});
+</script>
+
+<!-- ========================================
+     JAVASCRIPT PARA INSUMOS
+     ======================================== -->
+<script>
+// Helper para escapar HTML
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// Función para buscar insumos (con debounce)
+let buscarInsumosTimeout;
+window.buscarInsumos = async function() {
+  const buscarInput = document.getElementById('buscar-insumo');
+  const cont = document.getElementById('lista-insumos-disponibles');
+  
+  if (!buscarInput || !cont) {
+    console.error('❌ Elementos de búsqueda no encontrados');
+    return;
+  }
+  
+  const busqueda = buscarInput.value.trim();
+  
+  if (busqueda.length < 2) {
+    cont.innerHTML = '<div class="alert alert-info">Escribe al menos 2 caracteres para buscar</div>';
+    return;
+  }
+  
+  cont.innerHTML = '<div class="alert alert-info"><i class="fas fa-spinner fa-spin"></i> Buscando insumos...</div>';
+  
+  try {
+    const url = `/car/repuestos/buscar-insumos/?q=${encodeURIComponent(busqueda)}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    if (data.insumos && data.insumos.length > 0) {
+      cont.innerHTML = '';
+      data.insumos.forEach((insumo) => {
+        const item = document.createElement('div');
+        item.className = 'list-group-item';
+        item.innerHTML = `
+          <div class="d-flex justify-content-between align-items-center">
+            <div class="form-check flex-grow-1">
+              <input class="form-check-input insumo-check" type="checkbox" 
+                     data-id="${insumo.id}" 
+                     data-nombre="${escapeHtml(insumo.nombre)}"
+                     data-precio="${insumo.precio || 0}"
+                     data-stock="${insumo.stock || 0}"
+                     id="insumo-${insumo.id}">
+              <label class="form-check-label" for="insumo-${insumo.id}">
+                <strong>${escapeHtml(insumo.nombre)}</strong><br>
+                <small class="text-muted">
+                  SKU: ${escapeHtml(insumo.sku || 'N/A')} | 
+                  ${insumo.marca ? 'Marca: ' + escapeHtml(insumo.marca) + ' | ' : ''}
+                  Precio: $${(insumo.precio || 0).toLocaleString('es-CL')} | 
+                  Stock: ${insumo.stock || 0}
+                </small>
+              </label>
+            </div>
+            <div>
+              <input type="number" class="form-control insumo-cantidad" 
+                     data-id="${insumo.id}" value="1" min="1" max="${insumo.stock || 999}"
+                     style="width: 80px;">
+            </div>
+          </div>
+        `;
+        cont.appendChild(item);
+      });
+    } else {
+      cont.innerHTML = '<div class="alert alert-info">No se encontraron insumos con ese término de búsqueda</div>';
+    }
+    
+  } catch (error) {
+    console.error('❌ Error buscando insumos:', error);
+    cont.innerHTML = '<div class="alert alert-danger">❌ Error buscando insumos: ' + error.message + '</div>';
+  }
+};
+
+// Búsqueda con debounce mientras escribes
+window.buscarInsumosDebounced = function() {
+  clearTimeout(buscarInsumosTimeout);
+  buscarInsumosTimeout = setTimeout(buscarInsumos, 300);
+};
+
+// Conectar evento de búsqueda automática
+document.addEventListener('DOMContentLoaded', function() {
+  const buscarInput = document.getElementById('buscar-insumo');
+  if (buscarInput) {
+    buscarInput.addEventListener('input', buscarInsumosDebounced);
+    buscarInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        buscarInsumos();
+      }
+    });
+  }
+  
+  // Inicializar pestañas Bootstrap (DESACTIVADO - Ahora usamos wizard)
+  // const triggerTabList = document.querySelectorAll('#ingresoTabs button[data-bs-toggle="tab"]');
+  // triggerTabList.forEach(triggerEl => {
+  //   const tabTrigger = new bootstrap.Tab(triggerEl);
+  //   triggerEl.addEventListener('click', event => {
+  //     event.preventDefault();
+  //     tabTrigger.show();
+  //   });
+  // });
+});
+
+// Función para agregar insumos al diagnóstico
+window.agregarInsumos = async function() {
+  console.log('='.repeat(80));
+  console.log('🔧 FUNCIÓN agregarInsumos() LLAMADA');
+  console.log('='.repeat(80));
+  
+  const insumos = [];
+  const checkboxes = document.querySelectorAll("#lista-insumos-disponibles input.insumo-check:checked");
+  console.log('📋 Checkboxes seleccionados:', checkboxes.length);
+  
+  checkboxes.forEach(chk => {
+    const cantidadInput = document.querySelector(
+      `input.insumo-cantidad[data-id="${chk.dataset.id}"]`
+    );
+    const cantidad = cantidadInput ? parseInt(cantidadInput.value) || 1 : 1;
+    insumos.push({
+      id: parseInt(chk.dataset.id),
+      nombre: chk.dataset.nombre,
+      cantidad: cantidad,
+      precio_unitario: parseFloat(chk.dataset.precio) || 0,
+      es_insumo: true  // Marcar como insumo para diferenciarlo
+    });
+  });
+  
+  console.log('📦 Insumos recopilados:', insumos);
+  console.log('📦 Total insumos:', insumos.length);
+  
+  if (insumos.length === 0) {
+    console.warn('⚠️ No hay insumos seleccionados');
+    alert('⚠️ No hay insumos seleccionados para agregar');
+    return;
+  }
+  
+  try {
+    // 🔧 NUEVO: Agregar insumos directamente al campo repuestos_json
+    const repuestosJson = document.getElementById('repuestos-json');
+    console.log('📋 Campo repuestos-json encontrado:', repuestosJson ? 'SÍ' : 'NO');
+    if (repuestosJson) {
+      let repuestosPrevios = [];
+      try {
+        const previos = JSON.parse(repuestosJson.value || '[]');
+        repuestosPrevios = Array.isArray(previos) ? previos : [];
+      } catch (e) {
+        repuestosPrevios = [];
+      }
+      
+      const idsPrevios = new Set(repuestosPrevios.map(r => r.id));
+      const nuevos = insumos.filter(i => !idsPrevios.has(i.id));
+      
+      if (nuevos.length === 0) {
+        alert('⚠️ Todos los insumos seleccionados ya están agregados');
+        return;
+      }
+      
+      // Agregar los insumos al campo de repuestos
+      repuestosPrevios.push(...nuevos);
+      repuestosJson.value = JSON.stringify(repuestosPrevios);
+      
+      console.log('='.repeat(80));
+      console.log('✅ INSUMOS AGREGADOS A REPUESTOS_JSON');
+      console.log('='.repeat(80));
+      console.log('📋 Nuevos insumos agregados:', nuevos);
+      console.log('📋 Total repuestos (incluyendo insumos):', repuestosPrevios.length);
+      console.log('📋 repuestos_json completo:', repuestosJson.value);
+      console.log('='.repeat(80));
+      
+      // 🆕 ACTUALIZAR LA TABLA DE REPUESTOS PARA MOSTRAR LOS INSUMOS
+      actualizarTablaRepuestosConInsumos(repuestosPrevios);
+      
+      const mensaje = document.getElementById('insumos-agregados-mensaje');
+      if (mensaje) {
+        mensaje.style.display = 'block';
+        mensaje.innerHTML = `<i class="fas fa-check-circle"></i> <strong>✅ ${nuevos.length} insumo(s) agregado(s)!</strong> Ve a la pestaña "Repuestos" para verlos.`;
+        
+        document.querySelectorAll("#lista-insumos-disponibles input.insumo-check:checked").forEach(chk => {
+          chk.checked = false;
+        });
+        
+        setTimeout(() => {
+          mensaje.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 100);
+      }
+      
+      // Cambiar automáticamente a la pestaña de Repuestos para que el usuario vea los insumos
+      setTimeout(() => {
+        const btnRepuestos = document.getElementById('tab-repuestos-btn');
+        if (btnRepuestos) {
+          btnRepuestos.click();
+        }
+      }, 1500);
+    }
+  } catch (error) {
+    console.error('❌ Error al agregar insumos:', error);
+    alert('❌ Error al agregar los insumos: ' + error.message);
+  }
+};
+
+// 🆕 Función para actualizar la tabla de repuestos mostrando TODOS los items (repuestos + insumos)
+function actualizarTablaRepuestosConInsumos(todosLosItems) {
+  const tablaContenido = document.getElementById('tabla-contenido');
+  
+  if (!tablaContenido) {
+    console.error('❌ No se encontró tabla-contenido');
+    return;
+  }
+  
+  if (!todosLosItems || todosLosItems.length === 0) {
+    tablaContenido.innerHTML = '<p class="text-secondary">No hay repuestos ni insumos agregados aún.</p>';
+    return;
+  }
+  
+  // Separar repuestos e insumos
+  const repuestos = todosLosItems.filter(item => !item.es_insumo);
+  const insumos = todosLosItems.filter(item => item.es_insumo);
+  
+  let html = `
+    <div class="alert alert-success mb-2">
+      <strong>✅ Repuestos e Insumos:</strong> 
+      ${repuestos.length} repuesto${repuestos.length !== 1 ? 's' : ''} y ${insumos.length} insumo${insumos.length !== 1 ? 's' : ''} (${todosLosItems.length} total).
+    </div>
+    <table class="table table-sm table-bordered table-hover">
+      <thead class="table-light">
+        <tr>
+          <th style="width: 5%;">Tipo</th>
+          <th style="width: 40%;">Nombre</th>
+          <th style="width: 15%;">Cantidad</th>
+          <th style="width: 15%;">Precio Unit.</th>
+          <th style="width: 15%;">Subtotal</th>
+          <th style="width: 10%;">Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+  
+  let total = 0;
+  let totalRepuestos = 0;
+  let totalInsumos = 0;
+  
+  // Primero los repuestos
+  repuestos.forEach((item, index) => {
+    const subtotal = (item.precio_unitario || 0) * (item.cantidad || 1);
+    total += subtotal;
+    totalRepuestos += subtotal;
+    
+    // Encontrar el índice real en el array completo
+    const realIndex = todosLosItems.indexOf(item);
+    
+    html += `
+      <tr class="repuesto-row" style="background-color: rgba(13, 110, 253, 0.05); border-left: 3px solid var(--primary-600);">
+        <td class="text-center">
+          <span class="badge bg-primary">📦</span>
+        </td>
+        <td>
+          <strong>${escapeHtml(item.nombre)}</strong>
+          <br><small class="text-muted">Repuesto específico</small>
+        </td>
+        <td>
+          <input type="number" 
+                 class="form-control form-control-sm" 
+                 value="${item.cantidad || 1}" 
+                 min="1" 
+                 style="width: 80px;"
+                 onchange="actualizarCantidadRepuesto(${realIndex}, this.value)">
+        </td>
+        <td class="text-end">$${(item.precio_unitario || 0).toLocaleString('es-CL')}</td>
+        <td class="text-end fw-bold">$${subtotal.toLocaleString('es-CL')}</td>
+        <td class="text-center">
+          <button class="btn btn-sm btn-outline-danger" onclick="eliminarRepuestoItem(${realIndex})" title="Eliminar">
+            🗑️
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+  
+  // Luego los insumos
+  insumos.forEach((item, index) => {
+    const subtotal = (item.precio_unitario || 0) * (item.cantidad || 1);
+    total += subtotal;
+    totalInsumos += subtotal;
+    
+    // Encontrar el índice real en el array completo
+    const realIndex = todosLosItems.indexOf(item);
+    
+    html += `
+      <tr class="insumo-row" style="background-color: rgba(13, 202, 240, 0.05); border-left: 3px solid var(--info, #0dcaf0);">
+        <td class="text-center">
+          <span class="badge bg-info">🧰</span>
+        </td>
+        <td>
+          <strong>${escapeHtml(item.nombre)}</strong>
+          <br><small class="text-muted">Insumo general</small>
+        </td>
+        <td>
+          <input type="number" 
+                 class="form-control form-control-sm" 
+                 value="${item.cantidad || 1}" 
+                 min="1" 
+                 style="width: 80px;"
+                 onchange="actualizarCantidadRepuesto(${realIndex}, this.value)">
+        </td>
+        <td class="text-end">$${(item.precio_unitario || 0).toLocaleString('es-CL')}</td>
+        <td class="text-end fw-bold">$${subtotal.toLocaleString('es-CL')}</td>
+        <td class="text-center">
+          <button class="btn btn-sm btn-outline-danger" onclick="eliminarRepuestoItem(${realIndex})" title="Eliminar">
+            🗑️
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+  
+  html += `
+      </tbody>
+      <tfoot>
+        ${repuestos.length > 0 ? `
+        <tr class="table-primary">
+          <td colspan="4" class="text-end fw-bold">
+            <span class="badge bg-primary">📦</span> Subtotal Repuestos:
+          </td>
+          <td class="text-end fw-bold">$${totalRepuestos.toLocaleString('es-CL')}</td>
+          <td></td>
+        </tr>
+        ` : ''}
+        ${insumos.length > 0 ? `
+        <tr class="table-info">
+          <td colspan="4" class="text-end fw-bold">
+            <span class="badge bg-info">🧰</span> Subtotal Insumos:
+          </td>
+          <td class="text-end fw-bold">$${totalInsumos.toLocaleString('es-CL')}</td>
+          <td></td>
+        </tr>
+        ` : ''}
+        <tr class="table-success">
+          <td colspan="4" class="text-end fw-bold">💰 TOTAL GENERAL:</td>
+          <td class="text-end fw-bold text-success fs-5">$${total.toLocaleString('es-CL')}</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+  `;
+  
+  tablaContenido.innerHTML = html;
+  console.log('✅ Tabla de repuestos actualizada con', todosLosItems.length, 'items');
+}
+
+// Función para actualizar cantidad de un repuesto/insumo en la tabla
+window.actualizarCantidadRepuesto = function(index, nuevaCantidad) {
+  const cantidad = parseInt(nuevaCantidad) || 1;
+  if (cantidad < 1) {
+    alert('❌ La cantidad debe ser al menos 1');
+    return;
+  }
+  
+  const repuestosJson = document.getElementById('repuestos-json');
+  if (!repuestosJson) return;
+  
+  try {
+    const items = JSON.parse(repuestosJson.value || '[]');
+    if (items[index]) {
+      items[index].cantidad = cantidad;
+      repuestosJson.value = JSON.stringify(items);
+      actualizarTablaRepuestosConInsumos(items);
+    }
+  } catch (error) {
+    console.error('Error actualizando cantidad:', error);
+  }
+};
+
+// Función para eliminar un repuesto/insumo de la tabla
+window.eliminarRepuestoItem = function(index) {
+  if (!confirm('¿Eliminar este item?')) return;
+  
+  const repuestosJson = document.getElementById('repuestos-json');
+  if (!repuestosJson) return;
+  
+  try {
+    const items = JSON.parse(repuestosJson.value || '[]');
+    items.splice(index, 1);
+    repuestosJson.value = JSON.stringify(items);
+    actualizarTablaRepuestosConInsumos(items);
+    alert('🗑️ Item eliminado');
+  } catch (error) {
+    console.error('Error eliminando item:', error);
+    alert('❌ Error al eliminar el item');
+  }
+};
+
+// Función para actualizar la tabla de repuestos con insumos (DEPRECATED - usar actualizarTablaRepuestosConInsumos)
+function actualizarTablaInsumosEnRepuestos() {
+  const tablaContenido = document.getElementById('tabla-contenido');
+  const insumosJson = document.getElementById('insumos-json');
+  
+  if (!tablaContenido || !insumosJson) return;
+  
+  try {
+    const insumos = JSON.parse(insumosJson.value || '[]');
+    
+    if (!Array.isArray(insumos) || insumos.length === 0) {
+      return;
+    }
+    
+    let htmlInsumos = '';
+    let totalInsumos = 0;
+    
+    insumos.forEach((insumo) => {
+      const subtotal = (insumo.precio_unitario || 0) * (insumo.cantidad || 1);
+      totalInsumos += subtotal;
+      
+      htmlInsumos += `
+        <tr class="insumo-row" data-insumo-id="${insumo.id}">
+          <td class="text-center">🧰</td>
+          <td>${escapeHtml(insumo.nombre)}</td>
+          <td>
+            <input type="number" class="form-control form-control-sm cantidad-insumo" 
+                   data-id="${insumo.id}" value="${insumo.cantidad || 1}" min="1" 
+                   style="width: 80px;" onchange="actualizarCantidadInsumo(${insumo.id}, this.value)">
+          </td>
+          <td class="text-end">$${(insumo.precio_unitario || 0).toLocaleString('es-CL')}</td>
+          <td class="text-end fw-bold subtotal-insumo" data-id="${insumo.id}">$${subtotal.toLocaleString('es-CL')}</td>
+          <td class="text-center">
+            <button class="btn btn-sm btn-outline-danger" onclick="eliminarInsumo(${insumo.id})" title="Eliminar">
+              🗑️
+            </button>
+          </td>
+        </tr>
+      `;
+    });
+    
+    let tablaExistente = tablaContenido.querySelector('table');
+    
+    if (!tablaExistente) {
+      tablaContenido.innerHTML = `
+        <div class="alert alert-info mb-2">
+          <strong>📦 Repuestos e Insumos:</strong> Aquí se muestran todos los repuestos e insumos agregados al diagnóstico.
+        </div>
+        <table class="table table-sm table-bordered table-hover">
+          <thead class="table-light">
+            <tr>
+              <th style="width: 5%;">Tipo</th>
+              <th style="width: 35%;">Nombre</th>
+              <th style="width: 12%;">Cantidad</th>
+              <th style="width: 15%;">Precio Unit.</th>
+              <th style="width: 15%;">Subtotal</th>
+              <th style="width: 8%;">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-repuestos-insumos">
+            ${htmlInsumos}
+          </tbody>
+          <tfoot id="tfoot-totales">
+            <tr class="table-light">
+              <td colspan="4" class="text-end fw-bold">TOTAL:</td>
+              <td class="text-end fw-bold text-success" id="total-repuestos-insumos">$${totalInsumos.toLocaleString('es-CL')}</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      `;
+    } else {
+      let tbody = tablaExistente.querySelector('tbody');
+      if (!tbody) {
+        tbody = document.createElement('tbody');
+        tbody.id = 'tbody-repuestos-insumos';
+        tablaExistente.appendChild(tbody);
+      }
+      
+      tbody.querySelectorAll('.insumo-row').forEach(row => row.remove());
+      tbody.insertAdjacentHTML('beforeend', htmlInsumos);
+      actualizarTotalRepuestosInsumos();
+    }
+    
+  } catch (error) {
+    console.error('Error actualizando tabla de insumos:', error);
+  }
+}
+
+// Actualizar cantidad de insumo
+window.actualizarCantidadInsumo = function(insumoId, nuevaCantidad) {
+  const cantidad = parseInt(nuevaCantidad) || 1;
+  if (cantidad < 1) {
+    alert('❌ La cantidad debe ser al menos 1');
+    return;
+  }
+  
+  const insumosJson = document.getElementById('insumos-json');
+  if (!insumosJson) return;
+  
+  try {
+    const insumos = JSON.parse(insumosJson.value || '[]');
+    const insumo = insumos.find(i => i.id === insumoId);
+    if (insumo) {
+      insumo.cantidad = cantidad;
+      insumosJson.value = JSON.stringify(insumos);
+      
+      const subtotalEl = document.querySelector(`.subtotal-insumo[data-id="${insumoId}"]`);
+      if (subtotalEl) {
+        const subtotal = (insumo.precio_unitario || 0) * cantidad;
+        subtotalEl.textContent = `$${subtotal.toLocaleString('es-CL')}`;
+      }
+      
+      actualizarTotalRepuestosInsumos();
+    }
+  } catch (error) {
+    console.error('Error actualizando cantidad:', error);
+  }
+};
+
+// Eliminar insumo
+window.eliminarInsumo = function(insumoId) {
+  if (!confirm('¿Eliminar este insumo?')) return;
+  
+  const insumosJson = document.getElementById('insumos-json');
+  if (!insumosJson) return;
+  
+  try {
+    const insumos = JSON.parse(insumosJson.value || '[]');
+    const filtrados = insumos.filter(i => i.id !== insumoId);
+    insumosJson.value = JSON.stringify(filtrados);
+    
+    actualizarTablaInsumosEnRepuestos();
+    alert('🗑️ Insumo eliminado');
+  } catch (error) {
+    console.error('Error eliminando insumo:', error);
+    alert('❌ Error al eliminar el insumo');
+  }
+};
+
+// Actualizar total combinado (función placeholder - se integra con sistema de repuestos)
+function actualizarTotalRepuestosInsumos() {
+  const totalEl = document.getElementById('total-repuestos-insumos');
+  if (!totalEl) return;
+  
+  const insumosJson = document.getElementById('insumos-json');
+  let totalInsumos = 0;
+  if (insumosJson && insumosJson.value) {
+    try {
+      const insumos = JSON.parse(insumosJson.value || '[]');
+      totalInsumos = insumos.reduce((sum, insumo) => {
+        return sum + ((insumo.precio_unitario || 0) * (insumo.cantidad || 1));
+      }, 0);
+    } catch (e) {
+      console.error('Error calculando total insumos:', e);
+    }
+  }
+  
+  const total = totalInsumos; // TODO: Sumar con total de repuestos
+  totalEl.textContent = `$${total.toLocaleString('es-CL')}`;
+}
+
+// Preparar insumos antes de enviar el formulario
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('form-ingreso');
+  if (form) {
+    console.log('✅ Formulario encontrado:', form);
+    form.addEventListener('submit', function(e) {
+      console.log('='.repeat(80));
+      console.log('🚀 SUBMIT DISPARADO - Preparando datos para envío...');
+      console.log('='.repeat(80));
+      
+      // Verificar repuestos_json (AQUÍ DEBERÍAN ESTAR LOS INSUMOS)
+      const repuestosJson = document.getElementById('repuestos-json');
+      console.log('📦 Campo repuestos-json:', repuestosJson);
+      console.log('📦 Valor:', repuestosJson ? repuestosJson.value : 'NO ENCONTRADO');
+      if (repuestosJson && repuestosJson.value) {
+        try {
+          const repuestosData = JSON.parse(repuestosJson.value);
+          console.log('📦 Total items en repuestos_json:', repuestosData.length);
+          console.log('📦 Items:', repuestosData);
+        } catch (e) {
+          console.error('❌ Error parseando repuestos_json:', e);
+        }
+      }
+      
+      // Verificar repuestos externos
+      const hiddenExternos = document.getElementById('repuestos-externos-json');
+      if (hiddenExternos && window.repuestosExternos) {
+        hiddenExternos.value = JSON.stringify(window.repuestosExternos);
+        console.log('🌐 Repuestos externos:', hiddenExternos.value);
+      }
+      
+      console.log('='.repeat(80));
+      console.log('✅ Formulario listo para enviar');
+      console.log('='.repeat(80));
+    });
+  } else {
+    console.error('❌ No se encontró el formulario form-ingreso');
+  }
+  
+  // Cargar insumos guardados al iniciar
+  actualizarTablaInsumosEnRepuestos();
+  
+  // ========================================
+  // FORZAR ESTILOS DE VISIBILIDAD EN TEMA OSCURO
+  // Aplicar estilos inline directamente para máxima prioridad
+  // ========================================
+  
+  // Flag para prevenir loops infinitos
+  let aplicandoEstilos = false;
+  let ultimaAplicacion = 0;
+  
+  function aplicarEstilosTemaOscuro() {
+    // Prevenir ejecuciones simultáneas o muy frecuentes
+    const ahora = Date.now();
+    if (aplicandoEstilos || (ahora - ultimaAplicacion < 500)) {
+      return;
+    }
+    
+    aplicandoEstilos = true;
+    ultimaAplicacion = ahora;
+    
+    // Detectar si estamos en tema oscuro (verificar en html y body)
+    const htmlClass = document.documentElement.className || '';
+    const bodyClass = document.body.className || '';
+    const isDarkTheme = htmlClass.includes('theme-dark') || 
+                       htmlClass.includes('theme-piedra') ||
+                       bodyClass.includes('theme-dark') || 
+                       bodyClass.includes('theme-piedra');
+    
+    if (!isDarkTheme) {
+      aplicandoEstilos = false;
+      return;
+    }
+    
+    console.log('🌙 Aplicando estilos de tema oscuro...', {htmlClass, bodyClass});
+    
+    try {
+    
+    // Aplicar estilos directamente a inputs de cantidad (MÁXIMA PRIORIDAD - inline styles)
+    document.querySelectorAll('#tabla-contenido input[type="number"], #tab-repuestos input[type="number"], input.cantidad-insumo, .cantidad-insumo').forEach(input => {
+      if (input && input.style) {
+        input.style.setProperty('background-color', '#ffffff', 'important');
+        input.style.setProperty('color', '#212529', 'important');
+        input.style.setProperty('border', '2px solid #ced4da', 'important');
+        input.style.setProperty('font-weight', '700', 'important');
+        input.style.setProperty('font-size', '0.9rem', 'important');
+        input.style.setProperty('opacity', '1', 'important');
+        // Asegurar que los inputs sean clickeables
+        input.style.setProperty('pointer-events', 'auto', 'important');
+        input.style.setProperty('z-index', '10', 'important');
+        input.style.setProperty('position', 'relative', 'important');
+      }
+    });
+    
+    // Aplicar a lista de acciones - FORZAR COLOR BLANCO
+    // NO aplicar pointer-events: none ni bloquear eventos
+    document.querySelectorAll('#acciones-para-componentes .list-group-item').forEach(item => {
+      if (item && item.style) {
+        item.style.setProperty('background-color', '#2a2a2a', 'important');
+        item.style.setProperty('border-color', '#555', 'important');
+        item.style.setProperty('color', '#ffffff', 'important');
+        // Asegurar que los eventos funcionen
+        item.style.setProperty('pointer-events', 'auto', 'important');
+        item.style.setProperty('cursor', 'default', 'important');
+      }
+    });
+    
+    document.querySelectorAll('#acciones-para-componentes .list-group-item *').forEach(el => {
+      // NO aplicar a inputs, buttons, ni elementos interactivos
+      if (el && el.style && 
+          el.tagName !== 'INPUT' && 
+          el.tagName !== 'BUTTON' && 
+          el.tagName !== 'LABEL' &&
+          !el.classList.contains('text-success') &&
+          !el.closest('input') &&
+          !el.closest('button') &&
+          !el.closest('label')) {
+        el.style.setProperty('color', '#ffffff', 'important');
+        el.style.setProperty('opacity', '1', 'important');
+      }
+    });
+    
+    // Precios en verde brillante
+    document.querySelectorAll('#acciones-para-componentes .text-success, #acciones-para-componentes .accion-precio').forEach(el => {
+      if (el && el.style) {
+        el.style.setProperty('color', '#4ade80', 'important');
+        el.style.setProperty('font-weight', '700', 'important');
+        el.style.setProperty('opacity', '1', 'important');
+      }
+    });
+    
+    // Aplicar a total mano de obra
+    const totalMO = document.getElementById('total_mano_obra');
+    if (totalMO && totalMO.style) {
+      totalMO.style.setProperty('color', '#ffffff', 'important');
+      totalMO.style.setProperty('font-weight', '700', 'important');
+      totalMO.style.setProperty('opacity', '1', 'important');
+      totalMO.style.setProperty('font-size', '1.5rem', 'important');
+      totalMO.style.setProperty('text-shadow', '0 2px 4px rgba(0, 0, 0, 0.5)', 'important');
+    }
+    
+    // Contenedor del total
+    const totalContainer = totalMO?.closest('.bg-light, .rounded');
+    if (totalContainer && totalContainer.style) {
+      totalContainer.style.setProperty('background-color', '#333', 'important');
+      totalContainer.style.setProperty('border', '2px solid #555', 'important');
+    }
+    
+    // Labels del total
+    document.querySelectorAll('#tab-acciones .text-secondary, #tab-acciones .small.text-secondary').forEach(el => {
+      if (el && el.style) {
+        el.style.setProperty('color', '#c0c0c0', 'important');
+        el.style.setProperty('font-weight', '600', 'important');
+        el.style.setProperty('opacity', '1', 'important');
+      }
+    });
+    
+    // Aplicar a lista de insumos
+    document.querySelectorAll('#lista-insumos-disponibles .list-group-item').forEach(item => {
+      if (item && item.style) {
+        item.style.setProperty('background-color', '#2a2a2a', 'important');
+        item.style.setProperty('border-color', '#555', 'important');
+        item.style.setProperty('color', '#ffffff', 'important');
+        // Asegurar que los eventos funcionen
+        item.style.setProperty('pointer-events', 'auto', 'important');
+        item.style.setProperty('cursor', 'default', 'important');
+      }
+    });
+    
+    document.querySelectorAll('#lista-insumos-disponibles label, #lista-insumos-disponibles strong, #lista-insumos-disponibles .form-check-label').forEach(el => {
+      if (el && el.style) {
+        el.style.setProperty('color', '#ffffff', 'important');
+        el.style.setProperty('opacity', '1', 'important');
+        el.style.setProperty('font-weight', '600', 'important');
+      }
+    });
+    
+    document.querySelectorAll('#lista-insumos-disponibles small, #lista-insumos-disponibles .text-muted, #lista-insumos-disponibles .text-muted *').forEach(el => {
+      if (el && el.style) {
+        el.style.setProperty('color', '#c0c0c0', 'important');
+        el.style.setProperty('opacity', '1', 'important');
+      }
+    });
+    
+    // Inputs de cantidad en lista de insumos
+    document.querySelectorAll('#lista-insumos-disponibles input[type="number"], input.insumo-cantidad, .insumo-cantidad').forEach(input => {
+      if (input && input.style) {
+        input.style.setProperty('background-color', '#ffffff', 'important');
+        input.style.setProperty('color', '#212529', 'important');
+        input.style.setProperty('border', '2px solid #ced4da', 'important');
+        input.style.setProperty('font-weight', '700', 'important');
+        input.style.setProperty('opacity', '1', 'important');
+        // Asegurar que los inputs sean clickeables
+        input.style.setProperty('pointer-events', 'auto', 'important');
+        input.style.setProperty('z-index', '10', 'important');
+      }
+    });
+    
+    // Checkboxes - asegurar que sean clickeables y visibles cuando están marcados
+    function aplicarEstilosCheckbox(cb) {
+      if (!cb || !cb.style) return;
+      
+      if (cb.checked) {
+        // Checkbox marcado - fondo azul brillante con borde blanco grueso para máximo contraste
+        cb.style.setProperty('background-color', '#0d6efd', 'important');
+        cb.style.setProperty('border-color', '#ffffff', 'important');
+        cb.style.setProperty('border-width', '4px', 'important');
+        cb.style.setProperty('box-shadow', '0 0 0 3px rgba(13, 110, 253, 0.8), inset 0 0 0 2px #ffffff, 0 0 12px rgba(13, 110, 253, 1)', 'important');
+        cb.style.setProperty('outline', '3px solid #ffffff', 'important');
+        cb.style.setProperty('outline-offset', '2px', 'important');
+      } else {
+        // Checkbox no marcado - fondo blanco con borde más visible
+        cb.style.setProperty('background-color', '#ffffff', 'important');
+        cb.style.setProperty('border-color', '#6c757d', 'important');
+        cb.style.setProperty('border-width', '2px', 'important');
+        cb.style.setProperty('box-shadow', 'none', 'important');
+        cb.style.setProperty('outline', 'none', 'important');
+      }
+      cb.style.setProperty('pointer-events', 'auto', 'important');
+      cb.style.setProperty('cursor', 'pointer', 'important');
+      cb.style.setProperty('z-index', '10', 'important');
+      cb.style.setProperty('position', 'relative', 'important');
+      cb.style.setProperty('width', '1.3em', 'important');
+      cb.style.setProperty('height', '1.3em', 'important');
+      cb.style.setProperty('flex-shrink', '0', 'important');
+    }
+    
+    // Aplicar estilos a checkboxes existentes
+    document.querySelectorAll('#lista-insumos-disponibles input[type="checkbox"], #acciones-para-componentes input[type="checkbox"]').forEach(cb => {
+      aplicarEstilosCheckbox(cb);
+      
+      // Agregar listener para actualizar estilos cuando cambie el estado
+      const updateOnChange = function() {
+        setTimeout(() => aplicarEstilosCheckbox(this), 50);
+      };
+      
+      // Remover listener anterior si existe para evitar duplicados
+      cb.removeEventListener('change', updateOnChange);
+      cb.addEventListener('change', updateOnChange);
+      
+      // También actualizar al hacer clic (antes del change) para feedback inmediato
+      cb.addEventListener('click', function(e) {
+        // Permitir que el evento se procese primero
+        setTimeout(() => {
+          aplicarEstilosCheckbox(this);
+        }, 50);
+      });
+    });
+    
+    // Re-aplicar estilos a checkboxes cuando se creen nuevos elementos dinámicamente
+    setTimeout(() => {
+      document.querySelectorAll('#lista-insumos-disponibles input[type="checkbox"], #acciones-para-componentes input[type="checkbox"]').forEach(cb => {
+        if (!cb.hasAttribute('data-estilos-aplicados')) {
+          aplicarEstilosCheckbox(cb);
+          cb.setAttribute('data-estilos-aplicados', 'true');
+          
+          const updateOnChange = function() {
+            setTimeout(() => aplicarEstilosCheckbox(this), 50);
+          };
+          cb.addEventListener('change', updateOnChange);
+          cb.addEventListener('click', function() {
+            setTimeout(() => aplicarEstilosCheckbox(this), 50);
+          });
+        }
+      });
+    }, 500);
+    
+    // Aplicar a tabla de repuestos/insumos
+    document.querySelectorAll('#tabla-contenido td').forEach(td => {
+      if (td && td.style && !td.querySelector('input')) {
+        td.style.setProperty('color', '#ffffff', 'important');
+        td.style.setProperty('background-color', '#2a2a2a', 'important');
+      }
+    });
+    
+    document.querySelectorAll('#tabla-contenido th').forEach(th => {
+      if (th && th.style) {
+        th.style.setProperty('color', '#ffffff', 'important');
+        th.style.setProperty('background-color', '#333', 'important');
+        th.style.setProperty('font-weight', '700', 'important');
+      }
+    });
+    
+    document.querySelectorAll('#tabla-contenido .fw-bold, #tabla-contenido .subtotal-insumo').forEach(el => {
+      if (el && el.style) {
+        el.style.setProperty('color', '#ffffff', 'important');
+        el.style.setProperty('font-weight', '700', 'important');
+        el.style.setProperty('opacity', '1', 'important');
+      }
+    });
+    
+    // Títulos de pestañas
+    document.querySelectorAll('#tab-acciones h4, #tab-repuestos h4, #tab-insumos h4, #tab-insumos h3').forEach(h => {
+      if (h && h.style) {
+        h.style.setProperty('color', '#ffffff', 'important');
+        h.style.setProperty('font-weight', '700', 'important');
+      }
+    });
+    
+      console.log('✅ Estilos de tema oscuro aplicados');
+    } catch (error) {
+      console.error('❌ Error aplicando estilos:', error);
+    } finally {
+      // Siempre liberar el flag
+      setTimeout(() => {
+        aplicandoEstilos = false;
+      }, 100);
+    }
+  }
+  
+  // Ejecutar solo unas pocas veces al inicio (NO excesivamente)
+  aplicarEstilosTemaOscuro();
+  setTimeout(() => aplicarEstilosTemaOscuro(), 1000);
+  
+  // También aplicar cuando la página esté completamente cargada (solo una vez)
+  window.addEventListener('load', () => {
+    setTimeout(() => aplicarEstilosTemaOscuro(), 1500);
+  }, { once: true });
+  
+  // Observar cambios en el DOM (MUY CONSERVADOR para evitar loops infinitos)
+  let observerTimeout;
+  let observerCount = 0;
+  const MAX_OBSERVER_CALLS = 10; // Límite de llamadas por segundo
+  
+  const observer = new MutationObserver((mutations) => {
+    // Limitar llamadas excesivas
+    observerCount++;
+    if (observerCount > MAX_OBSERVER_CALLS) {
+      console.warn('⚠️ Demasiadas llamadas al observer, deteniendo...');
+      return;
+    }
+    
+    // Resetear contador después de 1 segundo
+    setTimeout(() => { observerCount = 0; }, 1000);
+    
+    // Solo re-aplicar si hay cambios relevantes (nuevos elementos importantes)
+    const hasNewElements = mutations.some(m => 
+      m.addedNodes.length > 0 && 
+      Array.from(m.addedNodes).some(node => {
+        if (node.nodeType !== 1) return false;
+        
+        // Solo si es un contenedor importante o hijo directo de uno
+        const isImportant = node.id === 'acciones-para-componentes' || 
+                           node.id === 'lista-insumos-disponibles' || 
+                           node.id === 'tabla-contenido';
+        
+        const isInImportant = node.closest && (
+          node.closest('#acciones-para-componentes') || 
+          node.closest('#lista-insumos-disponibles') ||
+          node.closest('#tabla-contenido')
+        );
+        
+        // Solo si es un elemento HTML real con contenido (no solo un nodo de texto)
+        const hasContent = node.tagName && node.tagName !== 'SCRIPT' && node.tagName !== 'STYLE';
+        
+        return (isImportant || isInImportant) && hasContent;
+      })
+    );
+    
+    if (hasNewElements && !aplicandoEstilos) {
+      clearTimeout(observerTimeout);
+      observerTimeout = setTimeout(() => {
+        aplicarEstilosTemaOscuro();
+      }, 800); // Delay más largo para evitar loops
+    }
+  });
+  
+  // Observar SOLO nuevos elementos hijos, NO atributos ni cambios de estilo
+  observer.observe(document.body, {
+    childList: true,
+    subtree: false, // SOLO cambios directos en hijos del body, no en todo el árbol
+    attributes: false,
+    characterData: false,
+    attributeOldValue: false,
+    characterDataOldValue: false
+  });
+  
+  // Observer más específico solo para los contenedores críticos cuando existan
+  setTimeout(() => {
+    const accionesContainer = document.getElementById('acciones-para-componentes');
+    const insumosContainer = document.getElementById('lista-insumos-disponibles');
+    const tablaContainer = document.getElementById('tabla-contenido');
+    
+    if (accionesContainer) {
+      const accionesObserver = new MutationObserver(() => {
+        if (!aplicandoEstilos) {
+          setTimeout(aplicarEstilosTemaOscuro, 500);
+        }
+      });
+      accionesObserver.observe(accionesContainer, {
+        childList: true,
+        subtree: false,
+        attributes: false
+      });
+    }
+    
+    if (insumosContainer) {
+      const insumosObserver = new MutationObserver(() => {
+        if (!aplicandoEstilos) {
+          setTimeout(aplicarEstilosTemaOscuro, 500);
+        }
+      });
+      insumosObserver.observe(insumosContainer, {
+        childList: true,
+        subtree: false,
+        attributes: false
+      });
+    }
+    
+    if (tablaContainer) {
+      const tablaObserver = new MutationObserver(() => {
+        if (!aplicandoEstilos) {
+          setTimeout(aplicarEstilosTemaOscuro, 500);
+        }
+      });
+      tablaObserver.observe(tablaContainer, {
+        childList: true,
+        subtree: false,
+        attributes: false
+      });
+    }
+  }, 1000);
+  
+  // Re-aplicar cuando cambien las pestañas (solo una vez por cambio)
+  document.querySelectorAll('#ingresoTabs button[data-bs-toggle="tab"]').forEach(btn => {
+    btn.addEventListener('shown.bs.tab', () => {
+      if (!aplicandoEstilos) {
+        setTimeout(() => aplicarEstilosTemaOscuro(), 500);
+      }
+    }, { once: false });
+  });
+  
+  // Re-aplicar cuando se carguen repuestos o acciones dinámicamente
+  if (typeof cargarRepuestos === 'function') {
+    const originalCargarRepuestos = cargarRepuestos;
+    window.cargarRepuestos = function() {
+      originalCargarRepuestos.apply(this, arguments);
+      setTimeout(aplicarEstilosTemaOscuro, 500);
+      setTimeout(aplicarEstilosTemaOscuro, 1500);
+    };
+  }
+  
+  // Interceptar actualización de acciones (del script ingreso.js)
+  const originalUpdateHiddenAndTotal = window.updateHiddenAndTotal;
+  if (typeof originalUpdateHiddenAndTotal === 'function') {
+    window.updateHiddenAndTotal = function() {
+      originalUpdateHiddenAndTotal.apply(this, arguments);
+      setTimeout(aplicarEstilosTemaOscuro, 300);
+    };
+  }
+  
+  // NO hacer re-aplicación periódica automática - solo cuando sea necesario
+  // El observer y los eventos de pestañas son suficientes
+});
+</script>
+
+{% endblock %}

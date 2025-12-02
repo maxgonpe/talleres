@@ -1,0 +1,675 @@
+{% load humanize %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orden de Trabajo #{{ trabajo.id }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm;
+            @bottom-center {
+                content: "Página " counter(page) " de " counter(pages);
+                font-size: 10px;
+                color: #666;
+            }
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 3px solid #2c3e50;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .header-left {
+            flex: 0 0 auto;
+        }
+        
+        .header-right {
+            flex: 1;
+            text-align: center;
+        }
+        
+        .logo {
+            max-height: 60px;
+            max-width: 120px;
+            width: auto;
+            height: auto;
+            display: block;
+            object-fit: contain;
+        }
+        
+        .header-left {
+            min-width: 120px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            font-size: 24px;
+            margin: 0 0 5px 0;
+            font-weight: bold;
+        }
+        
+        .header h2 {
+            color: #7f8c8d;
+            font-size: 16px;
+            margin: 0;
+            font-weight: normal;
+        }
+        
+        .section {
+            margin-bottom: 20px;
+            page-break-inside: avoid;
+        }
+        
+        .section h3 {
+            background: #34495e;
+            color: white;
+            padding: 8px 12px;
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 4px;
+        }
+        
+        .info-grid {
+            display: table;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        
+        .info-row {
+            display: table-row;
+        }
+        
+        .info-label {
+            display: table-cell;
+            font-weight: bold;
+            padding: 5px 10px 5px 0;
+            width: 30%;
+            color: #2c3e50;
+        }
+        
+        .info-value {
+            display: table-cell;
+            padding: 5px 0;
+            width: 70%;
+        }
+        
+        .estado-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+        
+        .estado-iniciado { background: #f39c12; color: white; }
+        .estado-trabajando { background: #3498db; color: white; }
+        .estado-completado { background: #27ae60; color: white; }
+        .estado-entregado { background: #95a5a6; color: white; }
+        
+        .progress-container {
+            background: #ecf0f1;
+            border-radius: 10px;
+            height: 20px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #f39c12 0%, #27ae60 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 11px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+            font-size: 11px;
+        }
+        
+        th {
+            background: #34495e;
+            color: white;
+            padding: 8px;
+            text-align: left;
+            font-weight: bold;
+        }
+        
+        td {
+            padding: 6px 8px;
+            border-bottom: 1px solid #bdc3c7;
+        }
+        
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        .status-completado {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        
+        .status-pendiente {
+            color: #f39c12;
+            font-weight: bold;
+        }
+        
+        .mecanico-item {
+            background: #e8f4f8;
+            padding: 8px;
+            margin: 5px 0;
+            border-left: 4px solid #3498db;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .foto-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .foto-item {
+            text-align: center;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            padding: 5px;
+        }
+        
+        .foto-item img {
+            max-width: 100%;
+            height: auto;
+            max-height: 80px;
+            object-fit: cover;
+            border: 1px solid #ddd;
+        }
+        
+        .total-section {
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .total-section h3 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+        }
+        
+        .total-amount {
+            font-size: 24px;
+            font-weight: bold;
+            color: #f39c12;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px solid #bdc3c7;
+            text-align: center;
+            font-size: 10px;
+            color: #7f8c8d;
+        }
+        
+        .observaciones {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            font-style: italic;
+        }
+        
+        .no-data {
+            color: #7f8c8d;
+            font-style: italic;
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-left">
+            {% if logo_path %}
+                <img src="{{ logo_path }}" alt="Logo del Taller" class="logo">
+            {% else %}
+                <img src="{% static 'images/Logo1.svg' %}" alt="Logo del Taller" class="logo">
+            {% endif %}
+        </div>
+        <div class="header-right">
+            <h1>🔧 ORDEN DE TRABAJO #{{ trabajo.id }}</h1>
+            <h2>{{ trabajo.vehiculo.cliente.nombre }} - {{ trabajo.vehiculo.marca }} {{ trabajo.vehiculo.modelo }}</h2>
+        </div>
+    </div>
+
+    <!-- Información General -->
+    <div class="section">
+        <h3>📋 Información General</h3>
+        <div class="info-grid">
+            <div class="info-row">
+                <div class="info-label">Cliente:</div>
+                <div class="info-value">{{ trabajo.vehiculo.cliente.nombre }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Teléfono:</div>
+                <div class="info-value">{{ trabajo.vehiculo.cliente.telefono }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Vehículo:</div>
+                <div class="info-value">{{ trabajo.vehiculo.marca }} {{ trabajo.vehiculo.modelo }} {{ trabajo.vehiculo.anio }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Placa:</div>
+                <div class="info-value">{{ trabajo.vehiculo.placa }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Estado:</div>
+                <div class="info-value">
+                    <span class="estado-badge estado-{{ trabajo.estado }}">
+                        {% if trabajo.estado == 'iniciado' %}🟡 Iniciado
+                        {% elif trabajo.estado == 'trabajando' %}🔵 Trabajando
+                        {% elif trabajo.estado == 'completado' %}🟢 Completado
+                        {% elif trabajo.estado == 'entregado' %}⚫ Entregado
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Progreso:</div>
+                <div class="info-value">
+                    <div class="progress-container">
+                        <div class="progress-bar" style="width: {{ trabajo.porcentaje_avance }}%;">
+                            {{ trabajo.porcentaje_avance }}%
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Fecha Inicio:</div>
+                <div class="info-value">{{ trabajo.fecha_inicio|date:"d/m/Y H:i"|default:"No iniciado" }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Fecha Fin:</div>
+                <div class="info-value">{{ trabajo.fecha_fin|date:"d/m/Y H:i"|default:"En progreso" }}</div>
+            </div>
+            {% if trabajo.lectura_kilometraje_actual %}
+            <div class="info-row">
+                <div class="info-label">Lectura Kilometraje:</div>
+                <div class="info-value">{{ trabajo.lectura_kilometraje_actual|intcomma }} km</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Observaciones -->
+    {% if trabajo.observaciones %}
+    <div class="section">
+        <h3>📝 Observaciones</h3>
+        <div class="observaciones">
+            {{ trabajo.observaciones|linebreaks }}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Mecánicos Asignados -->
+    <div class="section">
+        <h3>👷 Mecánicos Asignados</h3>
+        {% if trabajo.mecanicos.exists %}
+            {% for mec in trabajo.mecanicos.all %}
+                <div class="mecanico-item">
+                    <strong>{{ mec.user.get_full_name|default:mec.user.first_name }}</strong>
+                    {% if mec.especialidad %}
+                        <br><small>Especialidad: {{ mec.especialidad }}</small>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-data">No hay mecánicos asignados</div>
+        {% endif %}
+    </div>
+
+    <!-- Acciones -->
+    <div class="section">
+        <h3>🛠️ Acciones del Trabajo</h3>
+        {% if trabajo.acciones.all %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Componente</th>
+                        <th>Acción</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unit.</th>
+                        <th>Estado</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for accion in trabajo.acciones.all %}
+                        <tr>
+                            <td>{{ accion.componente.nombre|capfirst }}</td>
+                            <td>{{ accion.accion.nombre }}</td>
+                            <td style="text-align: center;">{{ accion.cantidad }}</td>
+                            <td style="text-align: right;">
+                                {% if accion.precio_mano_obra %}
+                                    ${{ accion.precio_mano_obra|floatformat:0|intcomma }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if accion.completado %}
+                                    <span class="status-completado">✅ Completado</span>
+                                {% else %}
+                                    <span class="status-pendiente">⏳ Pendiente</span>
+                                {% endif %}
+                            </td>
+                            <td style="text-align: right;">
+                                {% if accion.subtotal %}
+                                    <strong>${{ accion.subtotal|floatformat:0|intcomma }}</strong>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="no-data">No hay acciones registradas</div>
+        {% endif %}
+    </div>
+
+    <!-- Repuestos -->
+    <div class="section">
+        <h3>🔧 Repuestos del Trabajo</h3>
+        {% if trabajo.repuestos.all %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Repuesto</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unit.</th>
+                        <th>Subtotal</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for repuesto in trabajo.repuestos.all %}
+                        <tr>
+                            <td>
+                                {% if repuesto.repuesto_externo %}
+                                    🌐 {{ repuesto.repuesto_externo.nombre }}
+                                {% elif repuesto.repuesto %}
+                                    {{ repuesto.repuesto.nombre }}
+                                {% else %}
+                                    Repuesto sin nombre
+                                {% endif %}
+                            </td>
+                            <td>{{ repuesto.cantidad }}</td>
+                            <td>
+                                {% if repuesto.precio_unitario %}
+                                    ${{ repuesto.precio_unitario|floatformat:0|intcomma }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if repuesto.precio_unitario %}
+                                    ${{ repuesto.subtotal|floatformat:0|intcomma }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if repuesto.completado %}
+                                    <span class="status-completado">✅ Completado</span>
+                                {% else %}
+                                    <span class="status-pendiente">⏳ Pendiente</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="no-data">No hay repuestos registrados</div>
+        {% endif %}
+    </div>
+
+    <!-- Fotos del Progreso -->
+    {% if trabajo.fotos.all %}
+    <div class="section">
+        <h3>📷 Fotos del Progreso</h3>
+        <div class="foto-grid">
+            {% for foto in trabajo.fotos.all %}
+                <div class="foto-item">
+                    <img src="file://{{ foto.imagen.path }}" alt="{{ foto.descripcion|default:'Foto del trabajo' }}">
+                    {% if foto.descripcion %}
+                        <div style="font-size: 10px; margin-top: 5px;">{{ foto.descripcion }}</div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Conceptos Adicionales -->
+    {% if trabajo.adicionales.all %}
+        {% regroup trabajo.adicionales.all by descuento as adicionales_grouped %}
+        
+        <!-- Adicionales -->
+        {% for group in adicionales_grouped %}
+            {% if not group.grouper %}
+            <div class="section">
+                <h3>➕ Conceptos Adicionales</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Concepto</th>
+                            <th>Monto</th>
+                            <th>Registrado por</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for adicional in group.list %}
+                            <tr>
+                                <td>{{ adicional.fecha|date:"d/m/Y H:i" }}</td>
+                                <td>{{ adicional.concepto }}</td>
+                                <td>${{ adicional.monto|floatformat:0|intcomma }}</td>
+                                <td>{{ adicional.usuario.username|default:"Sistema" }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr style="background: #e7f9ef;">
+                            <td colspan="2"><strong>TOTAL ADICIONALES:</strong></td>
+                            <td><strong>${{ trabajo.total_adicionales|floatformat:0|intcomma }}</strong></td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            {% endif %}
+        {% endfor %}
+        
+        <!-- Descuentos -->
+        {% for group in adicionales_grouped %}
+            {% if group.grouper %}
+            <div class="section">
+                <h3>🏷️ Descuentos Aplicados</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Concepto</th>
+                            <th>Monto</th>
+                            <th>Registrado por</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for adicional in group.list %}
+                            <tr>
+                                <td>{{ adicional.fecha|date:"d/m/Y H:i" }}</td>
+                                <td>{{ adicional.concepto }}</td>
+                                <td style="color: #dc3545;">-${{ adicional.monto|floatformat:0|intcomma }}</td>
+                                <td>{{ adicional.usuario.username|default:"Sistema" }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr style="background: #f8d7da;">
+                            <td colspan="2"><strong>TOTAL DESCUENTOS:</strong></td>
+                            <td style="color: #dc3545;"><strong>-${{ trabajo.total_descuentos|floatformat:0|intcomma }}</strong></td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+    <!-- Abonos -->
+    {% if trabajo.abonos.all %}
+    <div class="section">
+        <h3>💵 Abonos Registrados</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Monto</th>
+                    <th>Método</th>
+                    <th>Descripción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for abono in trabajo.abonos.all %}
+                    <tr>
+                        <td>{{ abono.fecha|date:"d/m/Y H:i" }}</td>
+                        <td>${{ abono.monto|floatformat:0|intcomma }}</td>
+                        <td>
+                            {% if abono.metodo_pago == 'efectivo' %}Efectivo
+                            {% elif abono.metodo_pago == 'tarjeta' %}Tarjeta
+                            {% elif abono.metodo_pago == 'transferencia' %}Transferencia
+                            {% elif abono.metodo_pago == 'cheque' %}Cheque
+                            {% else %}Otro
+                            {% endif %}
+                        </td>
+                        <td>{{ abono.descripcion|default:"-" }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <!-- Resumen Financiero -->
+    <div class="section">
+        <h3>💰 Resumen Financiero</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th colspan="2">Concepto</th>
+                    <th style="text-align: right;">Monto</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td colspan="2"><strong>Total Presupuestado (Mano de Obra + Repuestos + Adicionales)</strong></td>
+                    <td style="text-align: right;"><strong>${{ trabajo.total_presupuesto|floatformat:0|intcomma }}</strong></td>
+                </tr>
+                <tr>
+                    <td style="padding-left: 20px;">Mano de Obra</td>
+                    <td></td>
+                    <td style="text-align: right;">${{ trabajo.total_mano_obra|floatformat:0|intcomma }}</td>
+                </tr>
+                <tr>
+                    <td style="padding-left: 20px;">Repuestos</td>
+                    <td></td>
+                    <td style="text-align: right;">${{ trabajo.total_repuestos|floatformat:0|intcomma }}</td>
+                </tr>
+                {% if trabajo.total_adicionales > 0 %}
+                <tr>
+                    <td style="padding-left: 20px;">Conceptos Adicionales</td>
+                    <td></td>
+                    <td style="text-align: right;">${{ trabajo.total_adicionales|floatformat:0|intcomma }}</td>
+                </tr>
+                {% endif %}
+                <tr style="background: #e7f9ef;">
+                    <td colspan="2"><strong>Total Realizado (Solo completados)</strong></td>
+                    <td style="text-align: right;"><strong>${{ trabajo.total_realizado|floatformat:0|intcomma }}</strong></td>
+                </tr>
+                <tr>
+                    <td style="padding-left: 20px;">Mano de Obra</td>
+                    <td></td>
+                    <td style="text-align: right;">${{ trabajo.total_realizado_mano_obra|floatformat:0|intcomma }}</td>
+                </tr>
+                <tr>
+                    <td style="padding-left: 20px;">Repuestos</td>
+                    <td></td>
+                    <td style="text-align: right;">${{ trabajo.total_realizado_repuestos|floatformat:0|intcomma }}</td>
+                </tr>
+                {% if trabajo.total_realizado_adicionales > 0 %}
+                <tr>
+                    <td style="padding-left: 20px;">Conceptos Adicionales</td>
+                    <td></td>
+                    <td style="text-align: right;">${{ trabajo.total_realizado_adicionales|floatformat:0|intcomma }}</td>
+                </tr>
+                {% endif %}
+                <tr style="background: #fff3cd;">
+                    <td colspan="2"><strong>(-) Total Abonos</strong></td>
+                    <td style="text-align: right;"><strong>-${{ trabajo.total_abonos|floatformat:0|intcomma }}</strong></td>
+                </tr>
+            </tbody>
+            <tfoot>
+                <tr style="background: {% if trabajo.saldo_pendiente > 0 %}#f8d7da{% else %}#d1e7dd{% endif %};">
+                    <td colspan="2"><strong style="font-size: 14px;">SALDO PENDIENTE</strong></td>
+                    <td style="text-align: right;"><strong style="font-size: 16px; color: {% if trabajo.saldo_pendiente > 0 %}#dc3545{% else %}#198754{% endif %};">${{ trabajo.saldo_pendiente|floatformat:0|intcomma }}</strong></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>Documento generado el {{ "now"|date:"d/m/Y H:i" }} - Sistema de Gestión de Taller</p>
+        <p>Trabajo #{{ trabajo.id }} - Cliente: {{ trabajo.vehiculo.cliente.nombre }}</p>
+    </div>
+</body>
+</html>
+
+
+
+
+

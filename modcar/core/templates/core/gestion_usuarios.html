@@ -1,0 +1,944 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Gestión de Usuarios y Permisos{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+{% endblock %}
+
+{% block extra_head %}
+<style>
+    .usuarios-container {
+        max-width: 100%;
+        margin: 0;
+        padding: var(--spacing-sm);
+    }
+    
+    .usuarios-header {
+        background: linear-gradient(135deg, var(--btn-bg) 0%, var(--muted) 100%);
+        color: var(--btn-fg);
+        padding: var(--spacing-md);
+        border-radius: var(--border-radius-lg);
+        margin-bottom: 1rem;
+        text-align: center;
+    }
+    
+    /* Estadísticas */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: var(--card-bg);
+        border-radius: var(--border-radius-xl);
+        padding: var(--spacing-lg);
+        text-align: center;
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--primary-600);
+    }
+    
+    .stat-label {
+        color: var(--muted);
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+    }
+    
+    /* Barra de búsqueda */
+    .search-bar {
+        background: var(--card-bg);
+        border-radius: var(--border-radius-xl);
+        padding: var(--spacing-lg);
+        margin-bottom: 1rem;
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .search-input {
+        width: 100%;
+        padding: 0.75rem 1rem 0.75rem 2.5rem;
+        border: 2px solid var(--muted);
+        border-radius: var(--border-radius-lg);
+        background: var(--card-bg);
+        color: var(--fg);
+        font-size: 1rem;
+    }
+    
+    .search-input:focus {
+        outline: none;
+        border-color: var(--primary-600);
+        box-shadow: 0 0 0 0.2rem var(--primary-200);
+    }
+    
+    .search-icon {
+        position: absolute;
+        left: calc(var(--spacing-lg) + 0.75rem);
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--muted);
+    }
+    
+    .crear-usuario-card {
+        background: var(--card-bg);
+        border-radius: var(--border-radius-xl);
+        padding: var(--spacing-lg);
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .usuarios-table {
+        background: var(--card-bg);
+        border-radius: var(--border-radius-xl);
+        padding: var(--spacing-lg);
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .table {
+        color: var(--fg);
+    }
+    
+    .table th {
+        background: var(--muted);
+        color: var(--fg);
+        border: none;
+        font-weight: 600;
+        padding: 0.5rem 0.3rem;
+        font-size: 0.85rem;
+        text-align: center;
+    }
+    
+    .table td {
+        border-color: var(--muted);
+        vertical-align: middle;
+        padding: 0.5rem 0.3rem;
+        font-size: 0.85rem;
+    }
+    
+    /* Columnas compactas para permisos */
+    .table th.col-permiso,
+    .table td.col-permiso {
+        width: 40px;
+        text-align: center;
+        padding: 0.3rem;
+    }
+    
+    /* Tooltips para abreviaciones */
+    .col-header-tooltip {
+        cursor: help;
+        position: relative;
+        display: inline-block;
+    }
+    
+    .col-header-tooltip:hover::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #333;
+        color: #fff;
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        white-space: nowrap;
+        z-index: 1000;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    
+    .col-header-tooltip:hover::before {
+        content: '';
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%) translateY(8px);
+        border: 5px solid transparent;
+        border-top-color: #333;
+        z-index: 1000;
+    }
+    
+    .rol-badge {
+        padding: var(--spacing-xs) 0.75rem;
+        border-radius: var(--border-radius-xl);
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .rol-mecanico {
+        background: var(--primary-600);
+        color: var(--text-inverse);
+    }
+    
+    .rol-vendedor {
+        background: var(--success-600);
+        color: var(--text-inverse);
+    }
+    
+    .rol-admin {
+        background: var(--danger-600);
+        color: var(--text-inverse);
+    }
+    
+    .permiso-checkbox {
+        transform: scale(1.2);
+        cursor: pointer;
+    }
+    
+    .btn-eliminar {
+        background: var(--danger-600);
+        border: none;
+        color: var(--text-inverse);
+        padding: var(--spacing-xs) 0.5rem;
+        border-radius: var(--border-radius-sm);
+        font-size: 0.8rem;
+    }
+    
+    .btn-eliminar:hover {
+        background: var(--danger-700);
+        color: var(--text-inverse);
+    }
+    
+    .btn-editar {
+        background: var(--primary-600);
+        border: none;
+        color: var(--text-inverse);
+        padding: 0.25rem 0.4rem;
+        border-radius: var(--border-radius-sm);
+        font-size: 0.9rem;
+        margin-right: 0.15rem;
+        cursor: pointer;
+        line-height: 1;
+    }
+    
+    .btn-editar:hover {
+        background: var(--primary-700);
+        color: var(--text-inverse);
+        transform: scale(1.1);
+    }
+    
+    .btn-password {
+        background: var(--warning-600);
+        border: none;
+        color: var(--text-inverse);
+        padding: 0.25rem 0.4rem;
+        border-radius: var(--border-radius-sm);
+        font-size: 0.9rem;
+        margin-right: 0.15rem;
+        cursor: pointer;
+        line-height: 1;
+    }
+    
+    .btn-password:hover {
+        background: var(--warning-700);
+        color: var(--text-inverse);
+        transform: scale(1.1);
+    }
+    
+    .btn-eliminar {
+        padding: 0.25rem 0.4rem;
+        font-size: 0.9rem;
+        line-height: 1;
+    }
+    
+    .form-control, .form-select {
+        background: var(--card-bg);
+        border: 1px solid var(--muted);
+        color: var(--fg);
+    }
+    
+    .form-control:focus, .form-select:focus {
+        background: var(--card-bg);
+        border-color: var(--primary-600);
+        color: var(--fg);
+        box-shadow: 0 0 0 0.2rem var(--primary-200);
+    }
+    
+    /* Modales */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .modal.active {
+        display: flex;
+    }
+    
+    .modal-content {
+        background: #ffffff;
+        border-radius: var(--border-radius-xl);
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        max-width: 600px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        animation: modalSlideIn 0.3s ease;
+        border: 2px solid #e0e0e0;
+    }
+    
+    /* Tema oscuro para el modal */
+    body.theme-oscuro .modal-content {
+        background: #2d2d2d;
+        border-color: #444;
+    }
+    
+    @keyframes modalSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-50px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .modal-header {
+        padding: var(--spacing-lg);
+        background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+        color: #ffffff;
+        border-radius: var(--border-radius-xl) var(--border-radius-xl) 0 0;
+    }
+    
+    .modal-header h5 {
+        margin: 0;
+        color: #ffffff;
+    }
+    
+    .modal-body {
+        padding: var(--spacing-lg);
+        background: #ffffff;
+        color: #333;
+    }
+    
+    body.theme-oscuro .modal-body {
+        background: #2d2d2d;
+        color: #e0e0e0;
+    }
+    
+    .modal-body .form-label {
+        color: #333;
+        font-weight: 600;
+    }
+    
+    body.theme-oscuro .modal-body .form-label {
+        color: #e0e0e0;
+    }
+    
+    .modal-body .form-control,
+    .modal-body .form-select {
+        background: #f5f5f5;
+        border: 1px solid #ccc;
+        color: #333;
+    }
+    
+    body.theme-oscuro .modal-body .form-control,
+    body.theme-oscuro .modal-body .form-select {
+        background: #1a1a1a;
+        border-color: #555;
+        color: #e0e0e0;
+    }
+    
+    .modal-body .form-control:focus,
+    .modal-body .form-select:focus {
+        background: #ffffff;
+        border-color: #4a90e2;
+        color: #333;
+    }
+    
+    body.theme-oscuro .modal-body .form-control:focus,
+    body.theme-oscuro .modal-body .form-select:focus {
+        background: #2d2d2d;
+        border-color: #4a90e2;
+        color: #e0e0e0;
+    }
+    
+    .modal-body .alert {
+        background: #e3f2fd;
+        border: 1px solid #90caf9;
+        color: #1565c0;
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+    }
+    
+    body.theme-oscuro .modal-body .alert {
+        background: #1a3a52;
+        border-color: #2980b9;
+        color: #90caf9;
+    }
+    
+    .modal-body .text-muted {
+        color: #777 !important;
+    }
+    
+    body.theme-oscuro .modal-body .text-muted {
+        color: #999 !important;
+    }
+    
+    .modal-footer {
+        padding: var(--spacing-md) var(--spacing-lg);
+        background: #f5f5f5;
+        border-radius: 0 0 var(--border-radius-xl) var(--border-radius-xl);
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        border-top: 1px solid #e0e0e0;
+    }
+    
+    body.theme-oscuro .modal-footer {
+        background: #1a1a1a;
+        border-top-color: #444;
+    }
+    
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.5rem;
+        border-radius: var(--border-radius-sm);
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .status-active {
+        background: var(--success-200);
+        color: var(--success-800);
+    }
+    
+    .status-inactive {
+        background: var(--danger-200);
+        color: var(--danger-800);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="usuarios-container">
+    <!-- Header -->
+    <div class="usuarios-header">
+        <h1 class="mb-0">👥 Gestión de Usuarios y Permisos</h1>
+        <small>Administra usuarios, roles y permisos del sistema</small>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">{{ total_usuarios }}</div>
+            <div class="stat-label">Total Usuarios</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ usuarios_activos }}</div>
+            <div class="stat-label">Usuarios Activos</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ usuarios_inactivos }}</div>
+            <div class="stat-label">Usuarios Inactivos</div>
+        </div>
+    </div>
+
+    <!-- Barra de Búsqueda -->
+    <div class="search-bar">
+        <div style="position: relative;">
+            <i class="fas fa-search search-icon"></i>
+            <input 
+                type="text" 
+                class="search-input" 
+                id="searchUsers" 
+                placeholder="🔍 Buscar por nombre, apellido, username, email o especialidad..."
+            >
+        </div>
+    </div>
+
+    <!-- Crear Usuario -->
+    <div class="crear-usuario-card">
+        <h4 class="mb-3">➕ Crear Nuevo Usuario</h4>
+        <form method="post" id="crearUsuarioForm">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="crear_usuario">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Username *</label>
+                    <input type="text" class="form-control" name="username" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Nombre *</label>
+                    <input type="text" class="form-control" name="first_name" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Apellido *</label>
+                    <input type="text" class="form-control" name="last_name" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-control" name="email">
+                </div>
+            </div>
+            <div class="row g-3 mt-1">
+                <div class="col-md-3">
+                    <label class="form-label">Contraseña *</label>
+                    <input type="password" class="form-control" name="password" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Rol *</label>
+                    <select class="form-select" name="rol" required>
+                        {% for value, label in roles_choices %}
+                        <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Especialidad / Cargo</label>
+                    <input type="text" class="form-control" name="especialidad" placeholder="Ej: Jefe de Taller, Mecánico, Ayudante">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary w-100">
+                        ➕ Crear Usuario
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Lista de Usuarios -->
+    <div class="usuarios-table">
+        <h4 class="mb-3">👥 Usuarios del Sistema</h4>
+        
+        {% if usuarios %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th style="text-align: left;">Usuario</th>
+                        <th style="text-align: left;">Nombre</th>
+                        <th style="text-align: left;">Email</th>
+                        <th style="text-align: left;">Especialidad</th>
+                        <th>Estado</th>
+                        <th>Rol</th>
+                        <th class="col-permiso">
+                            <span class="col-header-tooltip" data-tooltip="Diagnósticos">
+                                📋 Dia
+                            </span>
+                        </th>
+                        <th class="col-permiso">
+                            <span class="col-header-tooltip" data-tooltip="Trabajos">
+                                🔧 Tra
+                            </span>
+                        </th>
+                        <th class="col-permiso">
+                            <span class="col-header-tooltip" data-tooltip="Punto de Venta">
+                                💰 POS
+                            </span>
+                        </th>
+                        <th class="col-permiso">
+                            <span class="col-header-tooltip" data-tooltip="Compras">
+                                📦 Com
+                            </span>
+                        </th>
+                        <th class="col-permiso">
+                            <span class="col-header-tooltip" data-tooltip="Inventario">
+                                📊 Inv
+                            </span>
+                        </th>
+                        <th class="col-permiso">
+                            <span class="col-header-tooltip" data-tooltip="Administración">
+                                ⚙️ Adm
+                            </span>
+                        </th>
+                        <th style="min-width: 120px;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                    {% for usuario in usuarios %}
+                    <tr>
+                        <td>
+                            <strong>{{ usuario.username }}</strong>
+                            {% if usuario == request.user %}
+                            <span class="badge bg-info">Tú</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if usuario.first_name or usuario.last_name %}
+                                {{ usuario.first_name }} {{ usuario.last_name }}
+                            {% else %}
+                                <em style="color: var(--muted);">Sin nombre</em>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if usuario.email %}
+                                {{ usuario.email }}
+                            {% else %}
+                                <em style="color: var(--muted);">Sin email</em>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if usuario.mecanico.especialidad %}
+                                {{ usuario.mecanico.especialidad }}
+                            {% else %}
+                                <em style="color: var(--muted);">Sin definir</em>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if usuario.is_active %}
+                                <span class="status-badge status-active">✓ Activo</span>
+                            {% else %}
+                                <span class="status-badge status-inactive">✗ Inactivo</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <form method="post" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="cambiar_rol">
+                                <input type="hidden" name="user_id" value="{{ usuario.id }}">
+                                <select name="nuevo_rol" class="form-select form-select-sm" onchange="this.form.submit()">
+                                    {% for value, label in roles_choices %}
+                                    <option value="{{ value }}" {% if usuario.mecanico.rol == value %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </form>
+                        </td>
+                        <td class="col-permiso">
+                            <form method="post" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="toggle_permiso">
+                                <input type="hidden" name="user_id" value="{{ usuario.id }}">
+                                <input type="hidden" name="permiso" value="puede_ver_diagnosticos">
+                                <input type="checkbox" class="form-check-input permiso-checkbox" 
+                                       {% if usuario.mecanico.puede_ver_diagnosticos %}checked{% endif %}
+                                       onchange="this.form.submit()">
+                            </form>
+                        </td>
+                        <td class="col-permiso">
+                            <form method="post" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="toggle_permiso">
+                                <input type="hidden" name="user_id" value="{{ usuario.id }}">
+                                <input type="hidden" name="permiso" value="puede_ver_trabajos">
+                                <input type="checkbox" class="form-check-input permiso-checkbox" 
+                                       {% if usuario.mecanico.puede_ver_trabajos %}checked{% endif %}
+                                       onchange="this.form.submit()">
+                            </form>
+                        </td>
+                        <td class="col-permiso">
+                            <form method="post" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="toggle_permiso">
+                                <input type="hidden" name="user_id" value="{{ usuario.id }}">
+                                <input type="hidden" name="permiso" value="puede_ver_pos">
+                                <input type="checkbox" class="form-check-input permiso-checkbox" 
+                                       {% if usuario.mecanico.puede_ver_pos %}checked{% endif %}
+                                       onchange="this.form.submit()">
+                            </form>
+                        </td>
+                        <td class="col-permiso">
+                            <form method="post" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="toggle_permiso">
+                                <input type="hidden" name="user_id" value="{{ usuario.id }}">
+                                <input type="hidden" name="permiso" value="puede_ver_compras">
+                                <input type="checkbox" class="form-check-input permiso-checkbox" 
+                                       {% if usuario.mecanico.puede_ver_compras %}checked{% endif %}
+                                       onchange="this.form.submit()">
+                            </form>
+                        </td>
+                        <td class="col-permiso">
+                            <form method="post" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="toggle_permiso">
+                                <input type="hidden" name="user_id" value="{{ usuario.id }}">
+                                <input type="hidden" name="permiso" value="puede_ver_inventario">
+                                <input type="checkbox" class="form-check-input permiso-checkbox" 
+                                       {% if usuario.mecanico.puede_ver_inventario %}checked{% endif %}
+                                       onchange="this.form.submit()">
+                            </form>
+                        </td>
+                        <td class="col-permiso">
+                            <form method="post" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="toggle_permiso">
+                                <input type="hidden" name="user_id" value="{{ usuario.id }}">
+                                <input type="hidden" name="permiso" value="puede_ver_administracion">
+                                <input type="checkbox" class="form-check-input permiso-checkbox" 
+                                       {% if usuario.mecanico.puede_ver_administracion %}checked{% endif %}
+                                       onchange="this.form.submit()">
+                            </form>
+                        </td>
+                        <td style="white-space: nowrap;">
+                            <button class="btn-editar btn-editar-user" 
+                                    data-user-id="{{ usuario.id }}"
+                                    data-username="{{ usuario.username }}"
+                                    data-firstname="{{ usuario.first_name }}"
+                                    data-lastname="{{ usuario.last_name }}"
+                                    data-email="{{ usuario.email }}"
+                                    data-especialidad="{{ usuario.mecanico.especialidad|default:'' }}"
+                                    data-active="{{ usuario.is_active|lower }}"
+                                    title="Editar información">
+                                ✏️
+                            </button>
+                            <button class="btn-password btn-password-user" 
+                                    data-user-id="{{ usuario.id }}"
+                                    data-username="{{ usuario.username }}"
+                                    title="Cambiar contraseña">
+                                🔑
+                            </button>
+                            {% if usuario != request.user %}
+                            <form method="post" class="d-inline" onsubmit="return confirm('¿Estás seguro de eliminar este usuario?')">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="eliminar_usuario">
+                                <input type="hidden" name="user_id" value="{{ usuario.id }}">
+                                <button type="submit" class="btn-eliminar" title="Eliminar usuario">
+                                    🗑️
+                                </button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center text-secondary py-4">
+            <h5>No hay usuarios registrados</h5>
+            <p>Crea el primer usuario del sistema</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal Editar Usuario -->
+<div id="modalEdit" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5><i class="fas fa-user-edit me-2"></i>Editar Usuario</h5>
+        </div>
+        <form method="post" id="formEditUser">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="editar_usuario">
+            <input type="hidden" name="user_id" id="editUserId">
+            
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Username</label>
+                    <input type="text" class="form-control" id="editUsername" readonly style="background: #e9ecef;">
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Nombre</label>
+                    <input type="text" class="form-control" name="first_name" id="editFirstName" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Apellido</label>
+                    <input type="text" class="form-control" name="last_name" id="editLastName" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-control" name="email" id="editEmail">
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Especialidad / Cargo</label>
+                    <input type="text" class="form-control" name="especialidad" id="editEspecialidad" placeholder="Ej: Jefe de Taller, Mecánico, Ayudante">
+                    <small class="text-muted">Define el cargo o especialidad del usuario</small>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-check-label" style="cursor: pointer;">
+                        <input type="checkbox" class="form-check-input" name="is_active" id="editIsActive">
+                        Usuario activo
+                    </label>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modalEdit')">Cancelar</button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i>Guardar Cambios
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Cambiar Contraseña -->
+<div id="modalPassword" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5><i class="fas fa-key me-2"></i>Cambiar Contraseña</h5>
+        </div>
+        <form method="post" id="formChangePassword">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="cambiar_password">
+            <input type="hidden" name="user_id" id="passwordUserId">
+            
+            <div class="modal-body">
+                <div class="alert alert-info mb-3">
+                    <i class="fas fa-info-circle"></i>
+                    Cambiando contraseña para: <strong id="passwordUsername"></strong>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Nueva Contraseña</label>
+                    <input type="password" class="form-control" name="new_password" id="newPassword" required minlength="4">
+                    <small class="text-muted">Mínimo 4 caracteres</small>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Confirmar Contraseña</label>
+                    <input type="password" class="form-control" name="confirm_password" id="confirmPassword" required minlength="4">
+                </div>
+                
+                <div class="mb-3">
+                    <button type="button" class="btn btn-warning btn-sm" onclick="setTemporaryPassword()">
+                        <i class="fas fa-random me-2"></i>Usar Password Temporal (Taller2024!)
+                    </button>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modalPassword')">Cancelar</button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-key me-2"></i>Cambiar Contraseña
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Aplicar tema automáticamente
+    const saved = localStorage.getItem("theme") || "piedra";
+    document.body.className = `theme-${saved}`;
+    
+    // Búsqueda en tiempo real
+    const searchInput = document.getElementById('searchUsers');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const rows = document.querySelectorAll('#usersTableBody tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        });
+    }
+    
+    // Event listeners para botones de editar
+    document.querySelectorAll('.btn-editar-user').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const id = this.dataset.userId;
+            const username = this.dataset.username;
+            const firstName = this.dataset.firstname;
+            const lastName = this.dataset.lastname;
+            const email = this.dataset.email;
+            const especialidad = this.dataset.especialidad;
+            const isActive = this.dataset.active === 'true';
+            
+            editUser(id, username, firstName, lastName, email, especialidad, isActive);
+        });
+    });
+    
+    // Event listeners para botones de password
+    document.querySelectorAll('.btn-password-user').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const id = this.dataset.userId;
+            const username = this.dataset.username;
+            
+            changePassword(id, username);
+        });
+    });
+});
+
+// Editar usuario
+function editUser(id, username, firstName, lastName, email, especialidad, isActive) {
+    document.getElementById('editUserId').value = id;
+    document.getElementById('editUsername').value = username;
+    document.getElementById('editFirstName').value = firstName;
+    document.getElementById('editLastName').value = lastName;
+    document.getElementById('editEmail').value = email;
+    document.getElementById('editEspecialidad').value = especialidad || '';
+    document.getElementById('editIsActive').checked = isActive;
+    
+    openModal('modalEdit');
+}
+
+// Cambiar contraseña
+function changePassword(id, username) {
+    document.getElementById('passwordUserId').value = id;
+    document.getElementById('passwordUsername').textContent = username;
+    document.getElementById('newPassword').value = '';
+    document.getElementById('confirmPassword').value = '';
+    
+    openModal('modalPassword');
+}
+
+// Establecer contraseña temporal
+function setTemporaryPassword() {
+    const tempPass = 'Taller2024!';
+    document.getElementById('newPassword').value = tempPass;
+    document.getElementById('confirmPassword').value = tempPass;
+}
+
+// Abrir modal
+function openModal(modalId) {
+    document.getElementById(modalId).classList.add('active');
+}
+
+// Cerrar modal
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.remove('active');
+}
+
+// Cerrar modal al hacer clic fuera
+document.querySelectorAll('.modal').forEach(modal => {
+    modal.addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeModal(this.id);
+        }
+    });
+});
+
+// Validar formulario de contraseña
+const formPassword = document.getElementById('formChangePassword');
+if (formPassword) {
+    formPassword.addEventListener('submit', function(e) {
+        const password = document.getElementById('newPassword').value;
+        const confirm = document.getElementById('confirmPassword').value;
+        
+        if (password !== confirm) {
+            e.preventDefault();
+            alert('❌ Las contraseñas no coinciden');
+            return false;
+        }
+        
+        if (password.length < 4) {
+            e.preventDefault();
+            alert('❌ La contraseña debe tener al menos 4 caracteres');
+            return false;
+        }
+    });
+}
+</script>
+{% endblock %}

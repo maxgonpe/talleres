@@ -1,0 +1,454 @@
+/* ========================================
+   INTEGRACIÓN DEL SISTEMA DE TEMAS
+   ======================================== */
+
+/* ========================================
+   IMPORTAR ARCHIVOS DEL SISTEMA
+   ======================================== */
+
+@import url('variables.css');
+@import url('contrast.css');
+@import url('themes.css');
+
+/* ========================================
+   APLICACIÓN AUTOMÁTICA DEL SISTEMA
+   ======================================== */
+
+/* Aplicar automáticamente a todos los elementos */
+* {
+  transition: var(--transition);
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: var(--transition);
+}
+
+/* ========================================
+   CLASES DE INTEGRACIÓN AUTOMÁTICA
+   ======================================== */
+
+/* Aplicar automáticamente a elementos comunes */
+.card, .card-body, .card-header, .card-footer {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  transition: var(--transition);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+.modal-content, .modal-header, .modal-body, .modal-footer {
+  background-color: var(--bg-modal);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  transition: var(--transition);
+}
+
+.form-control, .form-select, .input-group-text {
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  transition: var(--transition);
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 0.2rem rgba(var(--accent), 0.25);
+}
+
+.btn {
+  transition: var(--transition);
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.alert {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  transition: var(--transition);
+}
+
+.table {
+  color: var(--text-primary);
+  background-color: var(--bg-card);
+  transition: var(--transition);
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+  background-color: var(--bg-secondary);
+}
+
+.table-hover tbody tr:hover {
+  background-color: var(--hover-bg);
+}
+
+.navbar, .nav-link, .navbar-brand {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  transition: var(--transition);
+}
+
+.nav-link:hover {
+  background-color: var(--hover-bg);
+  color: var(--text-primary);
+}
+
+/* ========================================
+   CLASES DE INTEGRACIÓN ESPECÍFICAS
+   ======================================== */
+
+/* POS específico */
+.pos-integration {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.pos-integration .carrito-item {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.pos-integration .carrito-item:hover {
+  background-color: var(--hover-bg);
+}
+
+.pos-integration .form-control {
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.pos-integration .btn {
+  background-color: var(--btn-bg);
+  color: var(--btn-fg);
+  border: 1px solid var(--btn-bg);
+}
+
+.pos-integration .btn:hover {
+  background-color: var(--hover-bg);
+}
+
+/* Dashboard específico */
+.dashboard-integration {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.dashboard-integration .card {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+}
+
+.dashboard-integration .card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+/* Compras específico */
+.compras-integration {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.compras-integration .table {
+  color: var(--text-primary);
+  background-color: var(--bg-card);
+}
+
+.compras-integration .table-striped tbody tr:nth-of-type(odd) {
+  background-color: var(--bg-secondary);
+}
+
+.compras-integration .form-control {
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+/* Repuestos específico */
+.repuestos-integration {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.repuestos-integration .card {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.repuestos-integration .card:hover {
+  background-color: var(--hover-bg);
+}
+
+.repuestos-integration .form-control {
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+/* ========================================
+   CLASES DE INTEGRACIÓN PARA MODALES
+   ======================================== */
+
+.modal-integration .modal-content {
+  background-color: var(--bg-modal);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.modal-integration .modal-header {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-integration .modal-footer {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-top: 1px solid var(--border-color);
+}
+
+.modal-integration .form-control {
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.modal-integration .btn {
+  background-color: var(--btn-bg);
+  color: var(--btn-fg);
+  border: 1px solid var(--btn-bg);
+}
+
+/* ========================================
+   CLASES DE INTEGRACIÓN PARA FORMULARIOS
+   ======================================== */
+
+.form-integration .form-control,
+.form-integration .form-select,
+.form-integration .input-group-text {
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.form-integration .form-control:focus,
+.form-integration .form-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 0.2rem rgba(var(--accent), 0.25);
+}
+
+.form-integration .form-label {
+  color: var(--text-primary);
+}
+
+.form-integration .form-text {
+  color: var(--text-muted);
+}
+
+/* ========================================
+   CLASES DE INTEGRACIÓN PARA TABLAS
+   ======================================== */
+
+.table-integration {
+  color: var(--text-primary);
+  background-color: var(--bg-card);
+}
+
+.table-integration .table-striped tbody tr:nth-of-type(odd) {
+  background-color: var(--bg-secondary);
+}
+
+.table-integration .table-hover tbody tr:hover {
+  background-color: var(--hover-bg);
+}
+
+.table-integration .table th {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+.table-integration .table td {
+  border-color: var(--border-color);
+}
+
+/* ========================================
+   CLASES DE INTEGRACIÓN PARA NAVEGACIÓN
+   ======================================== */
+
+.nav-integration {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.nav-integration .navbar-brand,
+.nav-integration .nav-link {
+  color: var(--text-primary);
+}
+
+.nav-integration .nav-link:hover {
+  background-color: var(--hover-bg);
+  color: var(--text-primary);
+}
+
+.nav-integration .dropdown-menu {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.nav-integration .dropdown-item {
+  color: var(--text-primary);
+}
+
+.nav-integration .dropdown-item:hover {
+  background-color: var(--hover-bg);
+  color: var(--text-primary);
+}
+
+/* ========================================
+   CLASES DE INTEGRACIÓN PARA ALERTAS
+   ======================================== */
+
+.alert-integration {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.alert-integration.alert-success {
+  background-color: var(--success-bg);
+  color: var(--success-text);
+  border-color: var(--success-color);
+}
+
+.alert-integration.alert-warning {
+  background-color: var(--warning-bg);
+  color: var(--warning-text);
+  border-color: var(--warning-color);
+}
+
+.alert-integration.alert-danger {
+  background-color: var(--danger-bg);
+  color: var(--danger-text);
+  border-color: var(--danger-color);
+}
+
+.alert-integration.alert-info {
+  background-color: var(--info-bg);
+  color: var(--info-text);
+  border-color: var(--info-color);
+}
+
+/* ========================================
+   CLASES DE INTEGRACIÓN PARA BOTONES
+   ======================================== */
+
+.btn-integration {
+  background-color: var(--btn-bg);
+  color: var(--btn-fg);
+  border: 1px solid var(--btn-bg);
+  transition: var(--transition);
+}
+
+.btn-integration:hover {
+  background-color: var(--hover-bg);
+  color: var(--btn-fg);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-integration.btn-primary {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.btn-integration.btn-secondary {
+  background-color: var(--secondary-color);
+  border-color: var(--secondary-color);
+}
+
+.btn-integration.btn-success {
+  background-color: var(--success-color);
+  border-color: var(--success-color);
+}
+
+.btn-integration.btn-warning {
+  background-color: var(--warning-color);
+  border-color: var(--warning-color);
+}
+
+.btn-integration.btn-danger {
+  background-color: var(--danger-color);
+  border-color: var(--danger-color);
+}
+
+.btn-integration.btn-info {
+  background-color: var(--info-color);
+  border-color: var(--info-color);
+}
+
+/* ========================================
+   RESPONSIVE Y ACCESIBILIDAD
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (prefers-contrast: high) {
+  :root {
+    --border-color: currentColor;
+    --border-color-light: currentColor;
+    --border-color-dark: currentColor;
+  }
+  
+  .card, .modal-content, .form-control {
+    border-width: 2px !important;
+  }
+}
+
+/* ========================================
+   DEBUGGING (solo para desarrollo)
+   ======================================== */
+.debug-integration * {
+  outline: 1px solid red !important;
+}
+
+.debug-integration .auto-contrast {
+  outline: 1px solid green !important;
+}
+
+.debug-integration .theme-dark {
+  outline: 1px solid blue !important;
+}
+
+.debug-integration .theme-light {
+  outline: 1px solid orange !important;
+}
+
+
+
+
+
+
+

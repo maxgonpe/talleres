@@ -1,0 +1,373 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+{% endblock %}
+
+{% block title %}Procesar Cotización - POS{% endblock %}
+
+{% block extra_head %}
+<style>
+    .cotizacion-container {
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .cotizacion-header {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: var(--text-inverse);
+        padding: var(--spacing-md);
+        text-align: center;
+    }
+    
+    .resumen-container {
+        background-color: var(--bg-card);
+        border-radius: var(--border-radius-lg);
+        margin: var(--spacing-md);
+        padding: var(--spacing-md);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .resumen-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--spacing-sm) 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .resumen-item:last-child {
+        border-bottom: none;
+        font-weight: bold;
+        font-size: 1.2rem;
+        color: var(--info-600);
+    }
+    
+    .form-container {
+        background-color: var(--bg-card);
+        border-radius: var(--border-radius-lg);
+        margin: var(--spacing-md);
+        padding: var(--spacing-md);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .btn-cotizacion {
+        border-radius: var(--border-radius-full);
+        padding: var(--spacing-md) 2rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 1.1rem;
+    }
+    
+    .btn-success-cotizacion {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        border: none;
+    }
+    
+    .btn-secondary-cotizacion {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        border: none;
+    }
+    
+    .cliente-rapido {
+        background-color: var(--bg-secondary);
+        border-radius: var(--border-radius-sm);
+        padding: var(--spacing-md);
+        margin-top: 1rem;
+    }
+    
+    .descuento-container {
+        background: #d1ecf1;
+        border: 1px solid #bee5eb;
+        border-radius: var(--border-radius-sm);
+        padding: var(--spacing-md);
+        margin: var(--spacing-md) 0;
+    }
+    
+    .descuento-container .form-label,
+    .descuento-container label,
+    .descuento-container small,
+    .descuento-container input,
+    .descuento-container .input-group-text {
+        color: #0c5460 !important;
+        font-weight: 600;
+    }
+    
+    .fecha-vencimiento {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: var(--border-radius-sm);
+        padding: var(--spacing-md);
+        margin: var(--spacing-md) 0;
+    }
+    
+    .fecha-vencimiento .form-label,
+    .fecha-vencimiento label,
+    .fecha-vencimiento small,
+    .fecha-vencimiento input {
+        color: #856404 !important;
+        font-weight: 600;
+    }
+    
+    /* Modo oscuro - Ajustes para mejor contraste */
+    .theme-dark .descuento-container,
+    .theme-piedra .descuento-container {
+        background: rgba(13, 110, 253, 0.25);
+        border-color: rgba(13, 110, 253, 0.5);
+    }
+    
+    .theme-dark .descuento-container .form-label,
+    .theme-dark .descuento-container label,
+    .theme-dark .descuento-container small,
+    .theme-dark .descuento-container input,
+    .theme-dark .descuento-container .input-group-text,
+    .theme-piedra .descuento-container .form-label,
+    .theme-piedra .descuento-container label,
+    .theme-piedra .descuento-container small,
+    .theme-piedra .descuento-container input,
+    .theme-piedra .descuento-container .input-group-text {
+        color: #ffffff !important;
+        font-weight: 700;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+    
+    .theme-dark .fecha-vencimiento,
+    .theme-piedra .fecha-vencimiento {
+        background: rgba(255, 193, 7, 0.25);
+        border-color: rgba(255, 193, 7, 0.5);
+    }
+    
+    .theme-dark .fecha-vencimiento .form-label,
+    .theme-dark .fecha-vencimiento label,
+    .theme-dark .fecha-vencimiento small,
+    .theme-dark .fecha-vencimiento input,
+    .theme-piedra .fecha-vencimiento .form-label,
+    .theme-piedra .fecha-vencimiento label,
+    .theme-piedra .fecha-vencimiento small,
+    .theme-piedra .fecha-vencimiento input {
+        color: #ffffff !important;
+        font-weight: 700;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+    
+    @media (max-width: 768px) {
+        .cotizacion-container {
+            padding: 0;
+        }
+        
+        .resumen-container,
+        .form-container {
+            margin: var(--spacing-sm);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cotizacion-container">
+    <!-- Header -->
+    <div class="cotizacion-header">
+        <h4 class="mb-0">📋 Procesar Cotización</h4>
+        <small>Genera una cotización sin afectar el stock</small>
+    </div>
+
+    <!-- Resumen del carrito -->
+    <div class="resumen-container">
+        <h5 class="mb-3">📋 Resumen de la Cotización</h5>
+        
+        {% for item in carrito_items %}
+            <div class="resumen-item">
+                <div>
+                    <div class="fw-bold">{{ item.repuesto.nombre }}</div>
+                    <small class="text-secondary">{{ item.cantidad }} x ${{ item.precio_unitario|floatformat:0|intcomma }}</small>
+                </div>
+                <div class="fw-bold">${{ item.subtotal|floatformat:0|intcomma }}</div>
+            </div>
+        {% endfor %}
+        
+        <div class="resumen-item">
+            <div>Subtotal:</div>
+            <div>${{ subtotal|floatformat:0|intcomma }}</div>
+        </div>
+    </div>
+
+    <!-- Formulario de cotización -->
+    <div class="form-container">
+        <form method="post" id="cotizacion-form">
+            {% csrf_token %}
+            
+            <!-- Cliente -->
+            <div class="mb-3">
+                <label class="form-label">Cliente (opcional)</label>
+                <div class="d-flex gap-2">
+                    {{ form.cliente }}
+                    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#clienteModal">
+                        ➕ Nuevo
+                    </button>
+                </div>
+            </div>
+
+            <!-- Fecha de vencimiento -->
+            <div class="fecha-vencimiento">
+                <label class="form-label">📅 Fecha de Vencimiento</label>
+                {{ form.valida_hasta }}
+                <small class="text-secondary">La cotización será válida hasta esta fecha</small>
+            </div>
+
+            <!-- Descuento -->
+            <div class="descuento-container">
+                <label class="form-label">Descuento</label>
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    {{ form.descuento }}
+                </div>
+                <small class="text-secondary">Ingresa el monto del descuento</small>
+            </div>
+
+            <!-- Observaciones -->
+            <div class="mb-3">
+                <label class="form-label">Observaciones</label>
+                {{ form.observaciones }}
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-success btn-cotizacion btn-success-cotizacion">
+                    📋 GENERAR COTIZACIÓN
+                </button>
+                <a href="{% url 'pos_principal' %}" class="btn btn-secondary btn-cotizacion btn-secondary-cotizacion">
+                    ← Volver al POS
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal para crear cliente rápido -->
+<div class="modal fade" id="clienteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Crear Cliente Rápido</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="cliente-form">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Nombre *</label>
+                        <input type="text" class="form-control" name="nombre" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Teléfono</label>
+                        <input type="text" class="form-control" name="telefono">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="crearCliente()">Crear</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Calcular total con descuento
+document.getElementById('id_descuento').addEventListener('input', function() {
+    const subtotal = {{ subtotal }};
+    const descuento = parseFloat(this.value) || 0;
+    const total = subtotal - descuento;
+    
+    // Actualizar el total en pantalla si hay un elemento para mostrarlo
+    const totalElement = document.querySelector('.total-final');
+    if (totalElement) {
+        totalElement.textContent = `$${Math.round(total).toLocaleString()}`;
+    }
+});
+
+// Validación del formulario
+document.getElementById('cotizacion-form').addEventListener('submit', function(e) {
+    const descuento = parseFloat(document.getElementById('id_descuento').value) || 0;
+    const subtotal = {{ subtotal }};
+    const fechaVencimiento = document.getElementById('id_valida_hasta').value;
+    
+    if (descuento > subtotal) {
+        e.preventDefault();
+        alert('El descuento no puede ser mayor al subtotal');
+        return false;
+    }
+    
+    if (descuento < 0) {
+        e.preventDefault();
+        alert('El descuento no puede ser negativo');
+        return false;
+    }
+    
+    if (!fechaVencimiento) {
+        e.preventDefault();
+        alert('Debe seleccionar una fecha de vencimiento');
+        return false;
+    }
+    
+    // Verificar que la fecha no sea en el pasado
+    const hoy = new Date().toISOString().split('T')[0];
+    if (fechaVencimiento < hoy) {
+        e.preventDefault();
+        alert('La fecha de vencimiento no puede ser en el pasado');
+        return false;
+    }
+    
+    // Confirmar cotización
+    if (!confirm('¿Generar esta cotización?')) {
+        e.preventDefault();
+        return false;
+    }
+});
+
+function crearCliente() {
+    const form = document.getElementById('cliente-form');
+    const formData = new FormData(form);
+    
+    fetch('{% url "pos_crear_cliente" %}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Agregar el nuevo cliente al select
+            const select = document.getElementById('id_cliente');
+            const option = document.createElement('option');
+            option.value = data.cliente.rut;
+            option.textContent = data.cliente.nombre;
+            option.selected = true;
+            select.appendChild(option);
+            
+            bootstrap.Modal.getInstance(document.getElementById('clienteModal')).hide();
+            form.reset();
+            
+            alert('Cliente creado exitosamente');
+        } else {
+            alert('Error: ' + JSON.stringify(data.errors));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al crear cliente');
+    });
+}
+
+// Auto-focus en el campo de fecha de vencimiento
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('id_valida_hasta').focus();
+});
+</script>
+{% endblock %}
+

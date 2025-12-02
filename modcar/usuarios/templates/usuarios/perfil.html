@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mi Perfil - ModTaller{% endblock %}
+
+{% block content %}
+<div class="usuario-card">
+  <div class="container-fluid">
+    <h1 class="mb-4">👤 Mi Perfil</h1>
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Usuario: {{ user.username }}</h5>
+        <p class="card-text"><strong>Nombre:</strong> {{ user.get_full_name|default:"No especificado" }}</p>
+        <p class="card-text"><strong>Email:</strong> {{ user.email|default:"No especificado" }}</p>
+        <p class="card-text"><strong>Último acceso:</strong> {{ user.last_login|default:"Nunca" }}</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+
+

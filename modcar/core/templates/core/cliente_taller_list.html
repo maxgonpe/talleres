@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+  <style>
+    .container {
+      background: var(--bg-card);
+      border-radius: var(--border-radius-lg);
+      padding: var(--spacing-lg);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .table {
+      color: var(--text-primary);
+    }
+    
+    .table-dark {
+      background: var(--primary-600) !important;
+    }
+    
+    .table-dark th {
+      background: var(--primary-600);
+      color: var(--text-inverse);
+      border: none;
+      font-weight: 600;
+    }
+    
+    .table td {
+      border-color: var(--border-color);
+      vertical-align: middle;
+    }
+    
+    .table-striped tbody tr:nth-of-type(odd) {
+      background-color: var(--bg-secondary);
+    }
+    
+    .table-hover tbody tr:hover {
+      background-color: var(--bg-secondary);
+    }
+    
+    .btn {
+      border-radius: var(--border-radius-sm);
+      font-weight: 500;
+      transition: var(--transition);
+    }
+    
+    .btn-primary {
+      background: var(--primary-600);
+      border-color: var(--primary-600);
+    }
+    
+    .btn-primary:hover {
+      background: var(--primary-700);
+      border-color: var(--primary-700);
+    }
+    
+    .btn-outline-primary {
+      color: var(--primary-600);
+      border-color: var(--primary-600);
+    }
+    
+    .btn-outline-primary:hover {
+      background: var(--primary-600);
+      border-color: var(--primary-600);
+      color: var(--text-inverse);
+    }
+    
+    .btn-secondary {
+      background: var(--neutral-600);
+      border-color: var(--neutral-600);
+    }
+    
+    .btn-secondary:hover {
+      background: var(--neutral-700);
+      border-color: var(--neutral-700);
+    }
+    
+    .btn-warning {
+      background: var(--warning-600);
+      border-color: var(--warning-600);
+    }
+    
+    .btn-warning:hover {
+      background: var(--warning-700);
+      border-color: var(--warning-700);
+    }
+    
+    .btn-danger {
+      background: var(--danger-600);
+      border-color: var(--danger-600);
+    }
+    
+    .btn-danger:hover {
+      background: var(--danger-700);
+      border-color: var(--danger-700);
+    }
+    
+    .form-control {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      border-radius: var(--border-radius-sm);
+    }
+    
+    .form-control:focus {
+      background: var(--bg-card);
+      border-color: var(--primary-600);
+      color: var(--text-primary);
+      box-shadow: 0 0 0 0.2rem var(--primary-200);
+    }
+    
+    .pagination .page-link {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+    }
+    
+    .pagination .page-link:hover {
+      background: var(--bg-secondary);
+      border-color: var(--primary-600);
+      color: var(--primary-600);
+    }
+    
+    .pagination .page-item.active .page-link {
+      background: var(--primary-600);
+      border-color: var(--primary-600);
+      color: var(--text-inverse);
+    }
+    
+    h2 {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+    
+    code {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      padding: 0.2rem 0.4rem;
+      border-radius: var(--border-radius-sm);
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h2>👥 Clientes del Taller</h2>
+  
+  <!-- Barra de búsqueda -->
+  <div class="row mb-3">
+    <div class="col-md-6">
+      <form method="get" class="d-flex">
+        <input type="text" name="search" class="form-control me-2" 
+               placeholder="Buscar por nombre, RUT o teléfono..." 
+               value="{{ request.GET.search }}">
+        <button type="submit" class="btn btn-outline-primary">🔍 Buscar</button>
+      </form>
+    </div>
+    <div class="col-md-6 text-end">
+      <a href="{% url 'cliente_taller_create' %}" class="btn btn-primary">➕ Nuevo Cliente</a>
+      <a href="javascript:history.back()" class="btn btn-secondary">⬅️ Volver</a>
+    </div>
+  </div>
+
+  <!-- Tabla de clientes -->
+  <div class="table-responsive">
+    <table class="table table-striped table-hover">
+      <thead class="table-dark">
+        <tr>
+          <th>RUT</th>
+          <th>Nombre</th>
+          <th>Teléfono</th>
+          <th>Email</th>
+          <th>Fecha Registro</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for cliente in clientes %}
+        <tr>
+          <td><code>{{ cliente.rut }}</code></td>
+          <td><strong>{{ cliente.nombre }}</strong></td>
+          <td>{{ cliente.telefono|default:"-" }}</td>
+          <td>{{ cliente.email|default:"-" }}</td>
+          <td>{{ cliente.fecha_registro|date:"d/m/Y" }}</td>
+          <td>
+            <a href="{% url 'cliente_taller_update' cliente.rut %}" 
+               class="btn btn-sm btn-warning">✏️ Editar</a>
+            <a href="{% url 'cliente_taller_delete' cliente.rut %}" 
+               class="btn btn-sm btn-danger">🗑️ Eliminar</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="text-center text-secondary">
+            {% if request.GET.search %}
+              No se encontraron clientes con "{{ request.GET.search }}"
+            {% else %}
+              No hay clientes registrados.
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Paginación -->
+  {% if is_paginated %}
+  <nav aria-label="Paginación de clientes">
+    <ul class="pagination justify-content-center">
+      {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Primera</a>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Anterior</a>
+        </li>
+      {% endif %}
+      
+      <li class="page-item active">
+        <span class="page-link">
+          Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+        </span>
+      </li>
+      
+      {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Siguiente</a>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Última</a>
+        </li>
+      {% endif %}
+    </ul>
+  </nav>
+  {% endif %}
+</div>
+{% endblock %}

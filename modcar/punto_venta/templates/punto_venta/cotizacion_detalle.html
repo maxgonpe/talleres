@@ -1,0 +1,1194 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+{% endblock %}
+
+{% block title %}Detalle de Cotización - POS{% endblock %}
+
+{% block extra_head %}
+<style>
+    .cotizacion-detalle-container {
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .cotizacion-header {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: var(--text-inverse);
+        padding: var(--spacing-md);
+        text-align: center;
+    }
+    
+    .cotizacion-info {
+        background-color: var(--bg-card);
+        border-radius: var(--border-radius-lg);
+        margin: var(--spacing-md);
+        padding: var(--spacing-md);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--spacing-sm) 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .info-row:last-child {
+        border-bottom: none;
+    }
+    
+    .items-container {
+        background-color: var(--bg-card);
+        border-radius: var(--border-radius-lg);
+        margin: var(--spacing-md);
+        padding: var(--spacing-md);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .item-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        border-bottom: 1px solid var(--border-color);
+        background-color: var(--bg-secondary);
+        margin-bottom: 0.5rem;
+        border-radius: var(--border-radius-sm);
+    }
+    
+    .item-row:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+    
+    .total-container {
+        background: #17a2b8;
+        color: var(--text-inverse);
+        padding: var(--spacing-md);
+        margin: var(--spacing-md);
+        border-radius: var(--border-radius-lg);
+        text-align: center;
+    }
+    
+    .btn-accion {
+        border-radius: var(--border-radius-full);
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .btn-primary-accion {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        border: none;
+    }
+    
+    .btn-success-accion {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+    }
+    
+    .btn-secondary-accion {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        border: none;
+    }
+    
+    .status-badge {
+        padding: var(--spacing-xs) 0.75rem;
+        border-radius: var(--border-radius-xl);
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .status-activa {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .status-vencida {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .status-convertida {
+        background: #cce5ff;
+        color: #004085;
+    }
+    
+    .fecha-vencimiento {
+        background: #fff3cd;
+        color: #856404;
+        padding: var(--spacing-xs) 0.5rem;
+        border-radius: var(--border-radius-lg);
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    @media (max-width: 768px) {
+        .cotizacion-detalle-container {
+            padding: 0;
+        }
+        
+        .cotizacion-info,
+        .items-container,
+        .total-container {
+            margin: var(--spacing-sm);
+        }
+        
+        .info-row {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.25rem;
+        }
+        
+        .item-row {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cotizacion-detalle-container">
+    <!-- Header -->
+    <div class="cotizacion-header">
+        <h4 class="mb-0">📋 Cotización Generada</h4>
+        <small>Cotización #{{ cotizacion.id }} - {{ cotizacion.fecha|date:"d/m/Y H:i" }}</small>
+    </div>
+
+    <!-- Información de la cotización -->
+    <div class="cotizacion-info">
+        <h5 class="mb-3">📋 Información de la Cotización</h5>
+        
+        <div class="info-row">
+            <span class="fw-bold">Número de Cotización:</span>
+            <span>#{{ cotizacion.id }}</span>
+        </div>
+        
+        <div class="info-row">
+            <span class="fw-bold">Fecha y Hora:</span>
+            <span>{{ cotizacion.fecha|date:"d/m/Y H:i:s" }}</span>
+        </div>
+        
+        <div class="info-row">
+            <span class="fw-bold">Cliente:</span>
+            <span>{{ cotizacion.cliente.nombre|default:"Cliente General" }}</span>
+        </div>
+        
+        <div class="info-row">
+            <span class="fw-bold">Estado:</span>
+            <span class="status-badge status-{{ cotizacion.estado }}">{{ cotizacion.get_estado_display }}</span>
+        </div>
+        
+        <div class="info-row">
+            <span class="fw-bold">Válida hasta:</span>
+            <span class="fecha-vencimiento">{{ cotizacion.valida_hasta|date:"d/m/Y" }}</span>
+        </div>
+        
+        {% if cotizacion.observaciones %}
+            <div class="info-row">
+                <span class="fw-bold">Observaciones:</span>
+                <span>{{ cotizacion.observaciones }}</span>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Items de la cotización -->
+    <div class="items-container">
+        <h5 class="mb-3">📦 Productos Cotizados</h5>
+        
+        {% for item in items %}
+            <div class="item-row">
+                <div>
+                    <div class="fw-bold">{{ item.repuesto.nombre }}</div>
+                    <small class="text-secondary">
+                        SKU: {{ item.repuesto.sku|default:"N/A" }} | 
+                        Cantidad: {{ item.cantidad }}
+                    </small>
+                </div>
+                <div class="text-end">
+                    <div class="fw-bold">${{ item.precio_unitario|floatformat:0|intcomma }}</div>
+                    <small class="text-secondary">c/u</small>
+                    <div class="fw-bold text-success">${{ item.subtotal|floatformat:0|intcomma }}</div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Totales -->
+    <div class="total-container">
+        <div class="row text-center">
+            <div class="col-4">
+                <div class="fw-bold">Subtotal</div>
+                <div>${{ cotizacion.subtotal|floatformat:0|intcomma }}</div>
+            </div>
+            <div class="col-4">
+                <div class="fw-bold">Descuento</div>
+                <div>${{ cotizacion.descuento|floatformat:0|intcomma }}</div>
+            </div>
+            <div class="col-4">
+                <div class="fw-bold">Total</div>
+                <div class="fs-4">${{ cotizacion.total|floatformat:0|intcomma }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botones de acción -->
+    <div class="d-grid gap-2 m-3">
+        {% if cotizacion.estado == 'activa' %}
+            <a href="{% url 'convertir_cotizacion_a_venta' cotizacion.id %}" class="btn btn-success btn-accion btn-success-accion">
+                💳 Convertir a Venta
+            </a>
+        {% endif %}
+        
+        <button type="button" class="btn btn-primary btn-accion btn-primary-accion" onclick="imprimirCotizacionPWA()">
+            🖨️ Imprimir Cotización
+        </button>
+        
+        <a href="{% url 'pos_principal' %}" class="btn btn-success btn-accion btn-success-accion">
+            🛒 Nueva Cotización
+        </a>
+        
+        <a href="{% url 'pos_historial_cotizaciones' %}" class="btn btn-secondary btn-accion btn-secondary-accion">
+            📋 Ver Historial
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function imprimirCotizacionPWA() {
+    console.log('🖨️ Iniciando impresión de cotización - VERSIÓN PWA');
+    // Crear un modal en la misma ventana para mantener la PWA
+    const modal = document.createElement('div');
+    modal.id = 'cotizacion-modal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.8);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        box-sizing: border-box;
+    `;
+    
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+        background: white;
+        border-radius: 10px;
+        max-width: 90%;
+        max-height: 90%;
+        overflow: auto;
+        position: relative;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    `;
+    
+    const closeButton = document.createElement('button');
+    closeButton.innerHTML = '✕';
+    closeButton.style.cssText = `
+        position: absolute;
+        top: 10px;
+        right: 15px;
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+        z-index: 10000;
+    `;
+    
+    const printButton = document.createElement('button');
+    printButton.innerHTML = '🖨️ Imprimir';
+    printButton.style.cssText = `
+        position: absolute;
+        top: 10px;
+        right: 60px;
+        background: #17a2b8;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 8px 15px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: bold;
+        z-index: 10000;
+    `;
+    
+    const contenidoCotizacion = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Cotización #{{ cotizacion.id }}</title>
+            <meta charset="UTF-8">
+            <style>
+                * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                }
+                
+                body { 
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                    font-size: 12px; 
+                    line-height: 1.4;
+                    color: #2c3e50;
+                    background: #ffffff;
+                }
+                
+                .container {
+                    max-width: 800px;
+                    margin: 0 auto;
+                    padding: 20px;
+                }
+                
+                /* HEADER */
+                .header {
+                    text-align: center;
+                    margin-bottom: 30px;
+                    border-bottom: 3px solid #17a2b8;
+                    padding-bottom: 20px;
+                }
+                
+                .taller-header {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 30px;
+                    margin-bottom: 20px;
+                }
+                
+                .taller-logo {
+                    max-width: 120px;
+                    max-height: 120px;
+                    object-fit: contain;
+                }
+                
+                .taller-name {
+                    font-size: 28px;
+                    font-weight: bold;
+                    color: #17a2b8;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    line-height: 1.2;
+                }
+                
+                .cotizacion-title {
+                    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+                    color: white;
+                    padding: 15px 30px;
+                    border-radius: 10px;
+                    margin: 15px 0;
+                    font-size: 20px;
+                    font-weight: bold;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    box-shadow: 0 4px 8px rgba(23, 162, 184, 0.3);
+                }
+                
+                .fecha-info {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-top: 15px;
+                    font-size: 14px;
+                }
+                
+                .fecha-item {
+                    background: #f8f9fa;
+                    padding: 8px 15px;
+                    border-radius: 20px;
+                    border: 1px solid #dee2e6;
+                }
+                
+                /* CLIENTE INFO */
+                .cliente-section {
+                    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+                    border: 2px solid #f39c12;
+                    border-radius: 10px;
+                    padding: 20px;
+                    margin: 20px 0;
+                    box-shadow: 0 2px 4px rgba(243, 156, 18, 0.2);
+                }
+                
+                .cliente-title {
+                    font-size: 16px;
+                    font-weight: bold;
+                    color: #d68910;
+                    margin-bottom: 10px;
+                    text-transform: uppercase;
+                }
+                
+                .cliente-details {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 10px;
+                }
+                
+                .cliente-detail {
+                    background: white;
+                    padding: 10px;
+                    border-radius: 5px;
+                    border-left: 4px solid #f39c12;
+                }
+                
+                .cliente-detail strong {
+                    color: #d68910;
+                }
+                
+                /* ITEMS SECTION */
+                .items-section {
+                    margin: 30px 0;
+                }
+                
+                .items-title {
+                    font-size: 18px;
+                    font-weight: bold;
+                    color: #17a2b8;
+                    margin-bottom: 20px;
+                    text-align: center;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                }
+                
+                .items-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    background: white;
+                    border-radius: 10px;
+                    overflow: hidden;
+                    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                }
+                
+                .items-table thead {
+                    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+                    color: white;
+                }
+                
+                .items-table th {
+                    padding: 15px 10px;
+                    text-align: left;
+                    font-weight: bold;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    font-size: 11px;
+                }
+                
+                /* Alineación de encabezados para que coincidan con los datos */
+                .items-table th.th-quantity {
+                    text-align: center;
+                }
+                
+                .items-table th.th-price {
+                    text-align: right;
+                }
+                
+                .items-table th.th-subtotal {
+                    text-align: right;
+                }
+                
+                .items-table td {
+                    padding: 12px 10px;
+                    border-bottom: 1px solid #e9ecef;
+                }
+                
+                .items-table tbody tr:nth-child(even) {
+                    background: #f8f9fa;
+                }
+                
+                .items-table tbody tr:hover {
+                    background: #e3f2fd;
+                }
+                
+                .item-name {
+                    font-weight: bold;
+                    color: #2c3e50;
+                    font-size: 13px;
+                }
+                
+                .item-sku {
+                    color: #6c757d;
+                    font-size: 11px;
+                    margin-top: 2px;
+                }
+                
+                .item-quantity {
+                    text-align: center;
+                    font-weight: bold;
+                    color: #17a2b8;
+                }
+                
+                .item-price {
+                    text-align: right;
+                    font-weight: bold;
+                    color: #28a745;
+                }
+                
+                .item-subtotal {
+                    text-align: right;
+                    font-weight: bold;
+                    color: #dc3545;
+                    font-size: 14px;
+                }
+                
+                /* TOTALS SECTION */
+                .totals-section {
+                    background: linear-gradient(135deg, #e9ecef 0%, #f8f9fa 100%);
+                    border: 2px solid #17a2b8;
+                    border-radius: 10px;
+                    padding: 25px;
+                    margin: 30px 0;
+                    box-shadow: 0 4px 8px rgba(23, 162, 184, 0.2);
+                }
+                
+                .totals-grid {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr 1fr;
+                    gap: 20px;
+                    text-align: center;
+                }
+                
+                .total-item {
+                    background: white;
+                    padding: 15px;
+                    border-radius: 8px;
+                    border: 1px solid #dee2e6;
+                }
+                
+                .total-label {
+                    font-size: 12px;
+                    color: #6c757d;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    margin-bottom: 5px;
+                }
+                
+                .total-value {
+                    font-size: 16px;
+                    font-weight: bold;
+                    color: #2c3e50;
+                }
+                
+                .total-final {
+                    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+                    color: white;
+                    border: none;
+                }
+                
+                .total-final .total-label {
+                    color: rgba(255,255,255,0.8);
+                }
+                
+                .total-final .total-value {
+                    color: white;
+                    font-size: 20px;
+                }
+                
+                /* OBSERVACIONES */
+                .observaciones-section {
+                    background: #f8f9fa;
+                    border-left: 4px solid #17a2b8;
+                    padding: 20px;
+                    margin: 20px 0;
+                    border-radius: 0 8px 8px 0;
+                }
+                
+                .observaciones-title {
+                    font-weight: bold;
+                    color: #17a2b8;
+                    margin-bottom: 10px;
+                    text-transform: uppercase;
+                    font-size: 14px;
+                }
+                
+                /* FOOTER */
+                .footer {
+                    text-align: center;
+                    margin-top: 40px;
+                    padding: 20px;
+                    background: #f8f9fa;
+                    border-radius: 10px;
+                    border-top: 3px solid #17a2b8;
+                }
+                
+                .footer-title {
+                    font-weight: bold;
+                    color: #dc3545;
+                    font-size: 14px;
+                    margin-bottom: 10px;
+                }
+                
+                .footer-info {
+                    color: #6c757d;
+                    font-size: 11px;
+                    line-height: 1.6;
+                }
+                
+                /* PRINT STYLES */
+                @media print {
+                    body { 
+                        margin: 0; 
+                        padding: 10px; 
+                        font-size: 11px;
+                    }
+                    .container {
+                        max-width: 100%;
+                        padding: 10px;
+                    }
+                    .items-table {
+                        box-shadow: none;
+                    }
+                    .totals-section {
+                        box-shadow: none;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <!-- HEADER -->
+                <div class="header">
+                    <div class="taller-header">
+                        {% if logo_url %}
+                            <img src="{{ logo_url }}" alt="Logo del Taller" class="taller-logo">
+                        {% endif %}
+                        <div class="taller-name">
+                            {% if config.nombre_taller and config.nombre_taller != "Mi Taller Mecánico" %}
+                                {{ config.nombre_taller }}
+                            {% else %}
+                                TALLER MECÁNICO
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="cotizacion-title">COTIZACIÓN #{{ cotizacion.id }}</div>
+                    <div class="fecha-info">
+                        <div class="fecha-item">
+                            <strong>Fecha:</strong> {{ cotizacion.fecha|date:"d/m/Y H:i" }}
+                        </div>
+                        <div class="fecha-item">
+                            <strong>Válida hasta:</strong> {{ cotizacion.valida_hasta|date:"d/m/Y" }}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- CLIENTE -->
+                {% if cotizacion.cliente %}
+                    <div class="cliente-section">
+                        <div class="cliente-title">📋 Información del Cliente</div>
+                        <div class="cliente-details">
+                            <div class="cliente-detail">
+                                <strong>Nombre:</strong><br>
+                                {{ cotizacion.cliente.nombre }}
+                            </div>
+                            {% if cotizacion.cliente.telefono %}
+                                <div class="cliente-detail">
+                                    <strong>Teléfono:</strong><br>
+                                    {{ cotizacion.cliente.telefono }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+                
+                <!-- PRODUCTOS -->
+                <div class="items-section">
+                    <div class="items-title">📦 Productos Cotizados</div>
+                    <table class="items-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 40%;">Producto</th>
+                                <th style="width: 15%;" class="th-quantity">Cantidad</th>
+                                <th style="width: 20%;" class="th-price">Precio Unit.</th>
+                                <th style="width: 25%;" class="th-subtotal">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in items %}
+                                <tr>
+                                    <td>
+                                        <div class="item-name">{{ item.repuesto.nombre }}</div>
+                                        <div class="item-sku">SKU: {{ item.repuesto.sku|default:"N/A" }}</div>
+                                    </td>
+                                    <td class="item-quantity">{{ item.cantidad }}</td>
+                                    <td class="item-price">${{ item.precio_unitario|floatformat:0|intcomma }}</td>
+                                    <td class="item-subtotal">${{ item.subtotal|floatformat:0|intcomma }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- TOTALES -->
+                <div class="totals-section">
+                    <div class="totals-grid">
+                        <div class="total-item">
+                            <div class="total-label">Subtotal</div>
+                            <div class="total-value">${{ cotizacion.subtotal|floatformat:0|intcomma }}</div>
+                        </div>
+                        {% if cotizacion.descuento > 0 %}
+                            <div class="total-item">
+                                <div class="total-label">Descuento</div>
+                                <div class="total-value">-${{ cotizacion.descuento|floatformat:0|intcomma }}</div>
+                            </div>
+                        {% endif %}
+                        <div class="total-item total-final">
+                            <div class="total-label">Total</div>
+                            <div class="total-value">${{ cotizacion.total|floatformat:0|intcomma }}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- OBSERVACIONES -->
+                {% if cotizacion.observaciones %}
+                    <div class="observaciones-section">
+                        <div class="observaciones-title">📝 Observaciones</div>
+                        <div>{{ cotizacion.observaciones }}</div>
+                    </div>
+                {% endif %}
+                
+                <!-- FOOTER -->
+                <div class="footer">
+                    <div class="footer-title">⚠️ Esta es una cotización, no una factura</div>
+                    <div class="footer-info">
+                        <p><strong>Válida hasta:</strong> {{ cotizacion.valida_hasta|date:"d/m/Y" }}</p>
+                        <p><strong>Generada el:</strong> {{ cotizacion.fecha|date:"d/m/Y H:i:s" }}</p>
+                        <p>Esta cotización tiene validez limitada y está sujeta a disponibilidad de stock.</p>
+                    </div>
+                </div>
+            </div>
+        </body>
+        </html>
+    `;
+    
+    // Insertar el contenido en el modal
+    modalContent.innerHTML = contenidoCotizacion;
+    modalContent.appendChild(closeButton);
+    modalContent.appendChild(printButton);
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+    
+    // Eventos de los botones
+    closeButton.onclick = function() {
+        document.body.removeChild(modal);
+    };
+    
+    printButton.onclick = function() {
+        console.log('🖨️ Botón imprimir clickeado - MANTENIENDO EN PWA');
+        console.log('🚫 NO USANDO window.open() - MANTENIENDO EN PWA');
+        // Imprimir directamente desde el modal sin abrir ventanas nuevas
+        const printContent = modalContent.innerHTML;
+        
+        // Crear un iframe oculto para la impresión
+        const iframe = document.createElement('iframe');
+        iframe.style.cssText = `
+            position: absolute;
+            left: -9999px;
+            top: -9999px;
+            width: 0;
+            height: 0;
+            border: none;
+        `;
+        
+        document.body.appendChild(iframe);
+        
+        // Escribir el contenido en el iframe
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+        iframeDoc.open();
+        iframeDoc.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Cotización #{{ cotizacion.id }}</title>
+                <meta charset="UTF-8">
+                <style>
+                    * {
+                        margin: 0;
+                        padding: 0;
+                        box-sizing: border-box;
+                    }
+                    
+                    body { 
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                        font-size: 12px; 
+                        line-height: 1.4;
+                        color: #2c3e50;
+                        background: #ffffff;
+                    }
+                    
+                    .container {
+                        max-width: 800px;
+                        margin: 0 auto;
+                        padding: 20px;
+                    }
+                    
+                    /* HEADER */
+                    .header {
+                        text-align: center;
+                        margin-bottom: 30px;
+                        border-bottom: 3px solid #17a2b8;
+                        padding-bottom: 20px;
+                    }
+                    
+                    .taller-header {
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 30px;
+                        margin-bottom: 20px;
+                    }
+                    
+                    .taller-logo {
+                        max-width: 120px;
+                        max-height: 120px;
+                        object-fit: contain;
+                    }
+                    
+                    .taller-name {
+                        font-size: 28px;
+                        font-weight: bold;
+                        color: #17a2b8;
+                        text-transform: uppercase;
+                        letter-spacing: 1px;
+                        line-height: 1.2;
+                    }
+                    
+                    .cotizacion-title {
+                        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+                        color: white;
+                        padding: 15px 30px;
+                        border-radius: 10px;
+                        margin: 15px 0;
+                        font-size: 20px;
+                        font-weight: bold;
+                        text-transform: uppercase;
+                        letter-spacing: 1px;
+                        box-shadow: 0 4px 8px rgba(23, 162, 184, 0.3);
+                    }
+                    
+                    .fecha-info {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        margin-top: 15px;
+                        font-size: 14px;
+                    }
+                    
+                    .fecha-item {
+                        background: #f8f9fa;
+                        padding: 8px 15px;
+                        border-radius: 20px;
+                        border: 1px solid #dee2e6;
+                    }
+                    
+                    /* CLIENTE INFO */
+                    .cliente-section {
+                        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+                        border: 2px solid #f39c12;
+                        border-radius: 10px;
+                        padding: 20px;
+                        margin: 20px 0;
+                        box-shadow: 0 2px 4px rgba(243, 156, 18, 0.2);
+                    }
+                    
+                    .cliente-title {
+                        font-size: 16px;
+                        font-weight: bold;
+                        color: #d68910;
+                        margin-bottom: 10px;
+                        text-transform: uppercase;
+                    }
+                    
+                    .cliente-details {
+                        display: grid;
+                        grid-template-columns: 1fr 1fr;
+                        gap: 10px;
+                    }
+                    
+                    .cliente-detail {
+                        background: white;
+                        padding: 10px;
+                        border-radius: 5px;
+                        border-left: 4px solid #f39c12;
+                    }
+                    
+                    .cliente-detail strong {
+                        color: #d68910;
+                    }
+                    
+                    /* ITEMS SECTION */
+                    .items-section {
+                        margin: 30px 0;
+                    }
+                    
+                    .items-title {
+                        font-size: 18px;
+                        font-weight: bold;
+                        color: #17a2b8;
+                        margin-bottom: 20px;
+                        text-align: center;
+                        text-transform: uppercase;
+                        letter-spacing: 1px;
+                    }
+                    
+                    .items-table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        background: white;
+                        border-radius: 10px;
+                        overflow: hidden;
+                        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                    }
+                    
+                    .items-table thead {
+                        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+                        color: white;
+                    }
+                    
+                    .items-table th {
+                        padding: 15px 10px;
+                        text-align: left;
+                        font-weight: bold;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                        font-size: 11px;
+                    }
+                    
+                    .items-table td {
+                        padding: 12px 10px;
+                        border-bottom: 1px solid #e9ecef;
+                    }
+                    
+                    .items-table tbody tr:nth-child(even) {
+                        background: #f8f9fa;
+                    }
+                    
+                    .item-name {
+                        font-weight: bold;
+                        color: #2c3e50;
+                        font-size: 13px;
+                    }
+                    
+                    .item-sku {
+                        color: #6c757d;
+                        font-size: 11px;
+                        margin-top: 2px;
+                    }
+                    
+                    .item-quantity {
+                        text-align: center;
+                        font-weight: bold;
+                        color: #17a2b8;
+                    }
+                    
+                    .item-price {
+                        text-align: right;
+                        font-weight: bold;
+                        color: #28a745;
+                    }
+                    
+                    .item-subtotal {
+                        text-align: right;
+                        font-weight: bold;
+                        color: #dc3545;
+                        font-size: 14px;
+                    }
+                    
+                    /* TOTALS SECTION */
+                    .totals-section {
+                        background: linear-gradient(135deg, #e9ecef 0%, #f8f9fa 100%);
+                        border: 2px solid #17a2b8;
+                        border-radius: 10px;
+                        padding: 25px;
+                        margin: 30px 0;
+                        box-shadow: 0 4px 8px rgba(23, 162, 184, 0.2);
+                    }
+                    
+                    .totals-grid {
+                        display: grid;
+                        grid-template-columns: 1fr 1fr 1fr;
+                        gap: 20px;
+                        text-align: center;
+                    }
+                    
+                    .total-item {
+                        background: white;
+                        padding: 15px;
+                        border-radius: 8px;
+                        border: 1px solid #dee2e6;
+                    }
+                    
+                    .total-label {
+                        font-size: 12px;
+                        color: #6c757d;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                        margin-bottom: 5px;
+                    }
+                    
+                    .total-value {
+                        font-size: 16px;
+                        font-weight: bold;
+                        color: #2c3e50;
+                    }
+                    
+                    .total-final {
+                        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+                        color: white;
+                        border: none;
+                    }
+                    
+                    .total-final .total-label {
+                        color: rgba(255,255,255,0.8);
+                    }
+                    
+                    .total-final .total-value {
+                        color: white;
+                        font-size: 20px;
+                    }
+                    
+                    /* OBSERVACIONES */
+                    .observaciones-section {
+                        background: #f8f9fa;
+                        border-left: 4px solid #17a2b8;
+                        padding: 20px;
+                        margin: 20px 0;
+                        border-radius: 0 8px 8px 0;
+                    }
+                    
+                    .observaciones-title {
+                        font-weight: bold;
+                        color: #17a2b8;
+                        margin-bottom: 10px;
+                        text-transform: uppercase;
+                        font-size: 14px;
+                    }
+                    
+                    /* FOOTER */
+                    .footer {
+                        text-align: center;
+                        margin-top: 40px;
+                        padding: 20px;
+                        background: #f8f9fa;
+                        border-radius: 10px;
+                        border-top: 3px solid #17a2b8;
+                    }
+                    
+                    .footer-title {
+                        font-weight: bold;
+                        color: #dc3545;
+                        font-size: 14px;
+                        margin-bottom: 10px;
+                    }
+                    
+                    .footer-info {
+                        color: #6c757d;
+                        font-size: 11px;
+                        line-height: 1.6;
+                    }
+                    
+                    @media print {
+                        body { 
+                            margin: 0; 
+                            padding: 10px; 
+                            font-size: 11px;
+                        }
+                        .container {
+                            max-width: 100%;
+                            padding: 10px;
+                        }
+                        .items-table {
+                            box-shadow: none;
+                        }
+                        .totals-section {
+                            box-shadow: none;
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                ${printContent}
+            </body>
+            </html>
+        `);
+        iframeDoc.close();
+        
+        // Imprimir desde el iframe
+        setTimeout(function() {
+            console.log('🖨️ Imprimiendo desde iframe - NO ABRIENDO VENTANA NUEVA');
+            iframe.contentWindow.print();
+            document.body.removeChild(iframe);
+        }, 500);
+    };
+    
+    // Cerrar modal al hacer clic fuera del contenido
+    modal.onclick = function(e) {
+        if (e.target === modal) {
+            document.body.removeChild(modal);
+        }
+    };
+    
+    // Cerrar modal con tecla Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && document.getElementById('cotizacion-modal')) {
+            document.body.removeChild(modal);
+        }
+    });
+}
+
+// Auto-focus para mejor UX
+document.addEventListener('DOMContentLoaded', function() {
+    // Resaltar el total
+    const totalElement = document.querySelector('.total-container .fs-4');
+    if (totalElement) {
+        totalElement.style.animation = 'pulse 2s infinite';
+    }
+    
+    // Verificar si la cotización está vencida
+    const fechaVencimiento = new Date('{{ cotizacion.valida_hasta|date:"Y-m-d" }}');
+    const hoy = new Date();
+    
+    if (fechaVencimiento < hoy && '{{ cotizacion.estado }}' === 'activa') {
+        // Mostrar alerta si está vencida
+        const alerta = document.createElement('div');
+        alerta.className = 'alert alert-warning alert-dismissible fade show position-fixed';
+        alerta.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        alerta.innerHTML = `
+            ⚠️ Esta cotización ha vencido
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(alerta);
+    }
+});
+
+// Animación CSS para el total
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}
+

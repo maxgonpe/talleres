@@ -1,0 +1,762 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block mobile_components %}
+  {% include 'car/mobile_bottom_nav.html' %}
+  {% include 'car/mobile_fab.html' %}
+{% endblock %}
+
+{% block title %}Panel Principal - Taller Mecánico{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+<style>
+    .panel-container {
+        max-width: 100%;
+        margin: 0;
+        padding: var(--spacing-sm);
+    }
+    
+    .panel-header {
+        background: linear-gradient(135deg, var(--accent) 0%, var(--primary-600) 100%);
+        color: var(--text-inverse);
+        padding: var(--spacing-md);
+        text-align: center;
+        border-radius: var(--border-radius-lg);
+        margin-bottom: var(--spacing-md);
+    }
+    
+    /* NAVEGACIÓN POR TABS */
+    .nav-tabs {
+        border-bottom: 2px solid var(--border-color);
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .nav-tabs .nav-link {
+        border: none;
+        background: transparent;
+        color: var(--text-muted);
+        font-weight: 600;
+        padding: var(--spacing-sm) var(--spacing-lg);
+        border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+        transition: var(--transition);
+    }
+    
+    .nav-tabs .nav-link:hover {
+        background: var(--hover-bg);
+        color: var(--text-primary);
+    }
+    
+    .nav-tabs .nav-link.active {
+        background: var(--accent);
+        color: var(--text-inverse);
+        border: none;
+    }
+    
+    .tab-content {
+        background: var(--card-bg);
+        border-radius: var(--border-radius-xl);
+        padding: var(--spacing-lg);
+        box-shadow: var(--shadow-lg);
+        min-height: 500px;
+    }
+    
+    /* ESTILOS PARA INICIO */
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        position: relative;
+        z-index: 5;
+    }
+    
+    .stat-card {
+        background: var(--card-bg) !important;
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-md);
+        text-align: center;
+        box-shadow: var(--shadow-md);
+        border-left: 4px solid var(--btn-bg);
+        transition: transform 0.2s ease;
+        position: relative;
+        z-index: 10;
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .stat-number {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: var(--btn-bg) !important;
+        margin-bottom: 0.25rem;
+        position: relative;
+        z-index: 11;
+        opacity: 1 !important;
+        visibility: visible !important;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    
+    .stat-label {
+        font-size: 0.8rem;
+        color: var(--muted) !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        position: relative;
+        z-index: 11;
+        opacity: 1 !important;
+        visibility: visible !important;
+        font-weight: 600;
+    }
+    
+    .actions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .action-card {
+        background: var(--hover-bg);
+        border-radius: var(--border-radius-xl);
+        padding: var(--spacing-lg);
+        text-align: center;
+        box-shadow: var(--shadow-lg);
+        transition: var(--transition);
+        border: 2px solid transparent;
+        text-decoration: none;
+        color: var(--fg);
+    }
+    
+    .action-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        border-color: var(--btn-bg);
+        text-decoration: none;
+        color: var(--fg);
+    }
+    
+    .action-icon {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    
+    .action-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        color: var(--fg);
+    }
+    
+    .action-description {
+        font-size: 0.85rem;
+        color: var(--muted);
+        line-height: 1.3;
+    }
+    
+    /* PIZARRA COMPLETA */
+    .pizarra-section {
+        background: var(--hover-bg);
+        border-radius: var(--border-radius-xl);
+        padding: var(--spacing-lg);
+        box-shadow: var(--shadow-lg);
+        margin-bottom: 1rem;
+    }
+    
+    .pizarra-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--muted);
+    }
+    
+    .pizarra-title {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--fg);
+        margin: 0;
+        margin-left: 0.5rem;
+    }
+    
+    .pizarra-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1rem;
+    }
+    
+    .pizarra-cell {
+        background: var(--card-bg);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-md);
+        min-height: 300px;
+        border: 2px solid var(--muted);
+    }
+    
+    .pizarra-cell-header {
+        font-weight: 600;
+        color: var(--fg);
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--muted);
+        text-align: center;
+        font-size: 1.1rem;
+    }
+    
+    .vehiculo-item {
+        background: var(--hover-bg);
+        border-radius: var(--border-radius-md);
+        padding: 0.75rem;
+        margin-bottom: 0.75rem;
+        border-left: 3px solid var(--btn-bg);
+        transition: var(--transition-fast) ease;
+    }
+    
+    .vehiculo-item:hover {
+        transform: translateX(5px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .vehiculo-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    
+    .vehiculo-icon {
+        font-size: 1.5rem;
+        margin-right: 0.5rem;
+    }
+    
+    .vehiculo-info {
+        flex-grow: 1;
+    }
+    
+    .vehiculo-placa-link {
+        text-decoration: none;
+        display: inline-block;
+        margin-right: 0.5rem;
+    }
+    
+    .vehiculo-placa-link:hover {
+        text-decoration: none;
+    }
+    
+    .vehiculo-placa {
+        display: inline-block;
+        padding: 0.3rem 0.7rem;
+        border: 3px solid var(--primary-600);
+        border-radius: var(--border-radius-sm);
+        background-color: var(--card-bg);
+        color: var(--fg);
+        font-weight: bold;
+        font-family: 'Arial Black', sans-serif;
+        letter-spacing: 1px;
+        font-size: 0.9rem;
+        transition: var(--transition-fast) ease;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .vehiculo-placa-link:hover .vehiculo-placa {
+        background-color: var(--btn-bg);
+        color: var(--btn-fg);
+        border-color: var(--btn-bg);
+        transform: scale(1.05);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    
+    .vehiculo-cliente {
+        color: var(--muted);
+        font-size: 0.85rem;
+        font-weight: 500;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+    
+    /* Contador de días en taller */
+    .dias-taller {
+        display: inline-block;
+        padding: 0.2rem 0.5rem;
+        border-radius: var(--border-radius-sm);
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-top: 0.25rem;
+        text-shadow: none;
+        white-space: nowrap;
+    }
+    
+    .dias-taller.pocos {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+    
+    .dias-taller.medios {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+        animation: pulse-warning 2s ease-in-out infinite;
+    }
+    
+    .dias-taller.muchos {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+        animation: pulse-danger 1.5s ease-in-out infinite;
+    }
+    
+    .dias-taller.entregado {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+    }
+    
+    /* Animaciones para alertar sobre permanencia prolongada */
+    @keyframes pulse-warning {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+    
+    @keyframes pulse-danger {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.8; transform: scale(1.05); }
+    }
+    
+    /* Modo oscuro - ajustes de color para días en taller */
+    .theme-oscuro .dias-taller.pocos {
+        background: #1e4620;
+        color: #a3e6a9;
+        border-color: #2d682f;
+    }
+    
+    .theme-oscuro .dias-taller.medios {
+        background: #4a3c0f;
+        color: #ffd966;
+        border-color: #6b5720;
+    }
+    
+    .theme-oscuro .dias-taller.muchos {
+        background: #4a1e1e;
+        color: #ff9999;
+        border-color: #6b2929;
+    }
+    
+    .theme-oscuro .dias-taller.entregado {
+        background: #0f3540;
+        color: #7dd3e0;
+        border-color: #1a4f5c;
+    }
+    
+    .progress {
+        height: 12px;
+        background-color: var(--muted);
+        border-radius: var(--border-radius-md);
+        margin-top: 0.5rem;
+        overflow: hidden;
+    }
+    
+    .progress-bar {
+        height: 100%;
+        border-radius: var(--border-radius-md);
+        transition: width 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        font-weight: bold;
+        color: var(--text-inverse);
+    }
+    
+    .progress-bar.bg-warning {
+        background: linear-gradient(90deg, #ffc107, #ff8f00) !important;
+    }
+    
+    .progress-bar.bg-primary {
+        background: linear-gradient(90deg, #007bff, #0056b3) !important;
+    }
+    
+    .progress-bar.bg-success {
+        background: linear-gradient(90deg, #28a745, #1e7e34) !important;
+    }
+    
+    .progress-bar.bg-dark {
+        background: linear-gradient(90deg, #343a40, #212529) !important;
+    }
+    
+    
+    @media (max-width: 768px) {
+        .panel-container {
+            padding: var(--spacing-xs);
+        }
+        
+        .nav-tabs .nav-link {
+            padding: var(--spacing-sm) 1rem;
+            font-size: 0.9rem;
+        }
+        
+        .stats-row {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+        }
+        
+        .actions-grid {
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
+        
+        .pizarra-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .action-card {
+            padding: var(--spacing-md);
+        }
+        
+        .tab-content {
+            padding: var(--spacing-md);
+        }
+        
+        .pizarra-cell {
+            min-height: 250px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="panel-container">
+    <!-- Header -->
+    <!--
+    <div class="panel-header">
+        <h1 class="mb-0">🏠 Panel Principal</h1>
+        <small>Gestión completa del taller</small>
+    </div>
+    -->
+
+    <!-- Navegación por Tabs -->
+    <ul class="nav nav-tabs" id="panelTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="inicio-tab" data-bs-toggle="tab" data-bs-target="#inicio" type="button" role="tab" aria-controls="inicio" aria-selected="true">
+                🏠 Inicio
+            </button>
+        </li>
+    </ul>
+
+    <!-- Contenido de los Tabs -->
+    <div class="tab-content" id="panelTabsContent">
+        <!-- TAB INICIO -->
+        <div class="tab-pane fade show active" id="inicio" role="tabpanel" aria-labelledby="inicio-tab">
+            <!-- Estadísticas rápidas -->
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-number">{{ diagnosticos_hoy|default:"0" }}</div>
+                    <div class="stat-label">Diagnósticos Hoy</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ trabajos_activos|default:"0" }}</div>
+                    <div class="stat-label">Trabajos Activos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ ventas_hoy|default:"0" }}</div>
+                    <div class="stat-label">Ventas Hoy</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ repuestos_total|default:"0" }}</div>
+                    <div class="stat-label">Total Repuestos</div>
+                </div>
+            </div>
+            
+
+            <!-- Acciones principales -->
+            <div class="actions-grid">
+                {% if request.permisos.diagnosticos %}
+                <a href="{% url 'ingreso' %}" class="action-card">
+                    <span class="action-icon">🔧</span>
+                    <div class="action-title">Nuevo Diagnóstico</div>
+                    <div class="action-description">Crear nuevo diagnóstico de vehículo</div>
+                </a>
+
+                <a href="{% url 'ingreso_rapido' %}" class="action-card">
+                    <span class="action-icon">⚡</span>
+                    <div class="action-title">Nuevo Diagnóstico Rápido</div>
+                    <div class="action-description">Flujo fusionado en 3 pasos</div>
+                </a>
+
+                <a href="{% url 'ingreso_voz' %}" class="action-card">
+                    <span class="action-icon">🎤</span>
+                    <div class="action-title">Ingreso por Voz</div>
+                    <div class="action-description">Diagnóstico con control por voz</div>
+                </a>
+                
+                <a href="{% url 'lista_diagnosticos' %}" class="action-card">
+                    <span class="action-icon">📋</span>
+                    <div class="action-title">Ver Diagnósticos</div>
+                    <div class="action-description">Lista de diagnósticos pendientes</div>
+                </a>
+                {% endif %}
+                
+                {% if request.permisos.trabajos %}
+                <a href="{% url 'lista_trabajos' %}" class="action-card">
+                    <span class="action-icon">🚗</span>
+                    <div class="action-title">Ver Trabajos</div>
+                    <div class="action-description">Lista completa de trabajos activos</div>
+                </a>
+                {% endif %}
+                
+                {% if request.permisos.inventario %}
+                <a href="{% url 'repuesto_list' %}" class="action-card">
+                    <span class="action-icon">📦</span>
+                    <div class="action-title">Inventario</div>
+                    <div class="action-description">Gestionar repuestos y stock</div>
+                </a>
+                {% endif %}
+                
+                {% if request.permisos.pos %}
+                <a href="{% url 'pos_principal' %}" class="action-card">
+                    <span class="action-icon">🛒</span>
+                    <div class="action-title">Punto de Venta</div>
+                    <div class="action-description">Ventas y cotizaciones de repuestos</div>
+                </a>
+                {% endif %}
+                
+                {% if request.permisos.compras %}
+                <a href="{% url 'compra_dashboard' %}" class="action-card">
+                    <span class="action-icon">📥</span>
+                    <div class="action-title">Compras</div>
+                    <div class="action-description">Gestiona compras de repuestos</div>
+                </a>
+                {% endif %}
+                
+                {% if request.permisos.administracion %}
+                <a href="{% url 'gestion_usuarios' %}" class="action-card">
+                    <span class="action-icon">👥</span>
+                    <div class="action-title">Gestión de Usuarios</div>
+                    <div class="action-description">Administrar usuarios y permisos</div>
+                </a>
+                {% endif %}
+            </div>
+
+            <!-- Sección de Administración -->
+            <div class="pizarra-section" style="margin-top: 2rem;">
+                <div class="pizarra-header">
+                    <span class="action-icon">⚙️</span>
+                    <h2 class="pizarra-title">Administración</h2>
+                </div>
+                
+                <div class="actions-grid">
+                    {% if request.permisos.trabajos %}
+                    <a href="{% url 'configuracion_bonos' %}" class="action-card">
+                        <span class="action-icon">💰</span>
+                        <div class="action-title">Bonos de Mecánicos</div>
+                        <div class="action-description">Configurar y gestionar bonos e incentivos</div>
+                    </a>
+                    {% endif %}
+                    
+                    {% if request.permisos.administracion %}
+                    <a href="{% url 'administracion_taller' %}" class="action-card">
+                        <span class="action-icon">🏢</span>
+                        <div class="action-title">Configurar Taller</div>
+                        <div class="action-description">Ajustes generales del taller</div>
+                    </a>
+                    {% endif %}
+                    
+                    {% if request.permisos.trabajos %}
+                    <a href="{% url 'estadisticas_trabajos' %}" class="action-card">
+                        <span class="action-icon">📊</span>
+                        <div class="action-title">Estadísticas</div>
+                        <div class="action-description">Ver estadísticas de trabajos</div>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Pizarra de trabajos -->
+            <div class="pizarra-section">
+                <div class="pizarra-header">
+                    <span class="action-icon">📊</span>
+                    <h2 class="pizarra-title">Pizarra de Trabajos</h2>
+                </div>
+                
+                <div class="pizarra-grid">
+                    <!-- Trabajos Iniciados -->
+                    <div class="pizarra-cell">
+                        <div class="pizarra-cell-header">
+                            🟡 Iniciados ({{ iniciados|length }})
+                        </div>
+                        {% for trabajo in iniciados %}
+                        <div class="vehiculo-item">
+                            <div class="vehiculo-header">
+                                <span class="vehiculo-icon">🚗</span>
+                                <div class="vehiculo-info">
+                                    <a href="{% url 'trabajo_detalle' trabajo.pk %}" class="vehiculo-placa-link">
+                                        <span class="vehiculo-placa">{{ trabajo.vehiculo.placa|default:"(sin patente)" }}</span>
+                                    </a>
+                                    <span class="vehiculo-cliente">{{ trabajo.vehiculo.cliente.nombre }}</span>
+                                    <span class="dias-taller {{ trabajo.dias_en_taller_texto.css_class }}">
+                                        ⏱️ {{ trabajo.dias_en_taller_texto.texto }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-warning" style="width: {{ trabajo.porcentaje_avance|default:0 }}%">
+                                    {{ trabajo.porcentaje_avance|default:0 }}%
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-secondary text-center">No hay trabajos iniciados</div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Trabajos en Progreso -->
+                    <div class="pizarra-cell">
+                        <div class="pizarra-cell-header">
+                            🔵 En Progreso ({{ trabajando|length }})
+                        </div>
+                        {% for trabajo in trabajando %}
+                        <div class="vehiculo-item">
+                            <div class="vehiculo-header">
+                                <span class="vehiculo-icon">🚙</span>
+                                <div class="vehiculo-info">
+                                    <a href="{% url 'trabajo_detalle' trabajo.pk %}" class="vehiculo-placa-link">
+                                        <span class="vehiculo-placa">{{ trabajo.vehiculo.placa|default:"(sin patente)" }}</span>
+                                    </a>
+                                    <span class="vehiculo-cliente">{{ trabajo.vehiculo.cliente.nombre }}</span>
+                                    <span class="dias-taller {{ trabajo.dias_en_taller_texto.css_class }}">
+                                        ⏱️ {{ trabajo.dias_en_taller_texto.texto }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-primary" style="width: {{ trabajo.porcentaje_avance|default:0 }}%">
+                                    {{ trabajo.porcentaje_avance|default:0 }}%
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-secondary text-center">No hay trabajos en progreso</div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Trabajos Completados -->
+                    <div class="pizarra-cell">
+                        <div class="pizarra-cell-header">
+                            🟢 Completados ({{ completados|length }})
+                        </div>
+                        {% for trabajo in completados %}
+                        <div class="vehiculo-item">
+                            <div class="vehiculo-header">
+                                <span class="vehiculo-icon">🚕</span>
+                                <div class="vehiculo-info">
+                                    <a href="{% url 'trabajo_detalle' trabajo.pk %}" class="vehiculo-placa-link">
+                                        <span class="vehiculo-placa">{{ trabajo.vehiculo.placa|default:"(sin patente)" }}</span>
+                                    </a>
+                                    <span class="vehiculo-cliente">{{ trabajo.vehiculo.cliente.nombre }}</span>
+                                    <span class="dias-taller {{ trabajo.dias_en_taller_texto.css_class }}">
+                                        ⏱️ {{ trabajo.dias_en_taller_texto.texto }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-success" style="width: {{ trabajo.porcentaje_avance|default:100 }}%">
+                                    {{ trabajo.porcentaje_avance|default:100 }}%
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-secondary text-center">No hay trabajos completados</div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Trabajos Entregados -->
+                    <div class="pizarra-cell">
+                        <div class="pizarra-cell-header">
+                            ⚫ Entregados ({{ entregados|length }})
+                        </div>
+                        {% for trabajo in entregados %}
+                        <div class="vehiculo-item">
+                            <div class="vehiculo-header">
+                                <span class="vehiculo-icon">🚐</span>
+                                <div class="vehiculo-info">
+                                    <a href="{% url 'trabajo_detalle' trabajo.pk %}" class="vehiculo-placa-link">
+                                        <span class="vehiculo-placa">{{ trabajo.vehiculo.placa|default:"(sin patente)" }}</span>
+                                    </a>
+                                    <span class="vehiculo-cliente">{{ trabajo.vehiculo.cliente.nombre }}</span>
+                                    <span class="dias-taller {{ trabajo.dias_en_taller_texto.css_class }}">
+                                        ⏱️ {{ trabajo.dias_en_taller_texto.texto }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-primary" style="width: {{ trabajo.porcentaje_avance|default:100 }}%">
+                                    {{ trabajo.porcentaje_avance|default:100 }}%
+                                </div>
+                            </div>
+                            <div class="mt-2 text-end">
+                                <form method="post" style="display: inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="trabajo_id" value="{{ trabajo.id }}">
+                                    <button type="submit" name="ocultar_trabajo" class="btn btn-sm btn-outline-secondary">
+                                        🗑️ Ocultar
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-secondary text-center">No hay trabajos entregados</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// JavaScript simplificado para el panel principal
+document.addEventListener('DOMContentLoaded', function() {
+    // Aplicar tema automáticamente
+    const saved = localStorage.getItem("theme") || "piedra";
+    document.body.className = `theme-${saved}`;
+    
+    // Forzar visibilidad de las estadísticas
+    setTimeout(function() {
+        const statCards = document.querySelectorAll('.stat-card');
+        const statNumbers = document.querySelectorAll('.stat-number');
+        const statLabels = document.querySelectorAll('.stat-label');
+        
+        statCards.forEach(function(card) {
+            card.style.opacity = '1';
+            card.style.visibility = 'visible';
+            card.style.zIndex = '10';
+            card.style.position = 'relative';
+        });
+        
+        statNumbers.forEach(function(number) {
+            number.style.opacity = '1';
+            number.style.visibility = 'visible';
+            number.style.zIndex = '11';
+            number.style.position = 'relative';
+        });
+        
+        statLabels.forEach(function(label) {
+            label.style.opacity = '1';
+            label.style.visibility = 'visible';
+            label.style.zIndex = '11';
+            label.style.position = 'relative';
+        });
+    }, 100);
+});
+</script>
+{% endblock %}

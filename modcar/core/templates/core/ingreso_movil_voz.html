@@ -1,0 +1,580 @@
+{% extends "base.html" %}
+{% load static crispy_forms_tags humanize %}
+
+{% block title %}Ingreso de Diagnóstico por Voz{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+  <style>
+    .wizard-progress { background: var(--bg-card); border-radius: 16px; padding: 1.5rem; box-shadow: var(--shadow-md); margin-bottom: 2rem; }
+    .wizard-steps { display: flex; justify-content: center; gap: 2.5rem; }
+    .wizard-step { text-align: center; min-width: 110px; }
+    .wizard-step-circle { width: 42px; height: 42px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; margin-bottom: .35rem; }
+    .wizard-step.active .wizard-step-circle { background: var(--primary-600); color: #fff; }
+    .wizard-step.done .wizard-step-circle { background: var(--success-500); color: #fff; }
+    .wizard-step.pending .wizard-step-circle { background: var(--border-color); color: var(--text-secondary); }
+    .wizard-step-label { font-size: .9rem; font-weight: 600; color: var(--text-secondary); }
+
+    .wizard-pane { display: none; }
+    .wizard-pane.active { display: block; }
+
+    .componente-item { border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1rem; background: var(--bg-card); transition: border .3s, box-shadow .3s; }
+    .componente-item.active { border-color: var(--primary-500); box-shadow: 0 8px 24px rgba(13, 110, 253, .12); }
+    .componente-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; cursor: pointer; }
+    .componente-header strong { font-size: 1.05rem; color: var(--text-primary); }
+    .acciones-panel { margin-top: 1rem; border-top: 1px dashed var(--border-color); padding-top: 1rem; display: none; }
+    .acciones-panel.show { display: block; }
+    .accion-item { border: 1px solid var(--border-color); border-radius: 10px; padding: .85rem; margin-bottom: .75rem; background: var(--bg-secondary); }
+    .accion-item.seleccionada { border-color: var(--primary-500); background: rgba(13, 110, 253, 0.08); }
+    .accion-item .accion-head { display: flex; justify-content: space-between; align-items: center; gap: .75rem; }
+    .accion-item .accion-head .badge { font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; }
+    .accion-item .accion-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: .75rem; margin-top: .75rem; }
+    .accion-item .accion-subtotal { text-align: right; font-weight: 700; color: var(--success-600); }
+
+    .resumen-card { border: 1px solid var(--border-color); border-radius: 12px; padding: 1.25rem; background: var(--bg-card); box-shadow: var(--shadow-sm); }
+    .resumen-card h5 { font-size: 1.05rem; font-weight: 700; color: var(--text-secondary); margin-bottom: .75rem; }
+    .resumen-card ul { list-style: none; padding: 0; margin: 0; }
+    .resumen-card ul li { padding: .35rem 0; border-bottom: 1px dashed var(--border-color); font-size: .95rem; }
+    .resumen-card ul li:last-child { border-bottom: none; }
+
+    .total-mano-obra { font-size: 1.4rem; font-weight: 800; color: var(--primary-700); }
+    .wizard-navigation { position: sticky; bottom: 0; background: var(--bg-card); padding: 1rem 0; margin-top: 1.5rem; border-top: 1px solid var(--border-color); box-shadow: 0 -4px 24px rgba(0,0,0,.05); z-index: 50; }
+
+    /* ============================================
+       ESTILOS PARA CONTROL POR VOZ
+       ============================================ */
+    .voice-control-container {
+      position: fixed;
+      bottom: 80px;
+      right: 20px;
+      z-index: 1000;
+    }
+
+    .voice-btn {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      border: none;
+      background: var(--primary-600);
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .voice-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+    }
+
+    .voice-btn.listening {
+      background: #dc3545;
+      animation: pulse 1.5s infinite;
+    }
+
+    .voice-btn.processing {
+      background: #ffc107;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.15); }
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .voice-status-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      font-weight: 600;
+      z-index: 999;
+      transform: translateY(-100%);
+      transition: transform 0.3s ease;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    .voice-status-banner.show {
+      transform: translateY(0);
+    }
+
+    .voice-status-banner.listening {
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    }
+
+    .voice-status-banner.processing {
+      background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+    }
+
+    .voice-feedback-toast {
+      position: fixed;
+      bottom: 160px;
+      right: 20px;
+      background: var(--bg-card);
+      border: 2px solid var(--primary-500);
+      border-radius: 12px;
+      padding: 1rem 1.5rem;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      z-index: 1001;
+      max-width: 300px;
+      transform: translateX(400px);
+      transition: transform 0.3s ease;
+    }
+
+    .voice-feedback-toast.show {
+      transform: translateX(0);
+    }
+
+    .voice-feedback-toast.success {
+      border-color: var(--success-500);
+      background: rgba(40, 167, 69, 0.1);
+    }
+
+    .voice-feedback-toast.error {
+      border-color: var(--danger-500);
+      background: rgba(220, 53, 69, 0.1);
+    }
+
+    .voice-help-card {
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+      border: 2px solid var(--primary-500);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .voice-help-card h6 {
+      color: var(--primary-600);
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+    }
+
+    .voice-help-card ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .voice-help-card li {
+      padding: 0.5rem 0;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    .voice-help-card li:before {
+      content: "🎤 ";
+      margin-right: 0.5rem;
+    }
+
+    @media (max-width: 992px) {
+      .wizard-steps { flex-direction: column; gap: 1rem; }
+      .componente-header { flex-direction: column; align-items: flex-start; }
+      .wizard-navigation { position: static; box-shadow: none; border-top: none; }
+      .voice-control-container {
+        bottom: 100px;
+        right: 15px;
+      }
+      .voice-btn {
+        width: 56px;
+        height: 56px;
+        font-size: 20px;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4" id="ingreso-voz-root"
+     data-acciones-template="{% url 'acciones_por_componente' 0 %}">
+
+  <div class="voice-help-card">
+    <h6>🎤 Control por Voz Activado</h6>
+    <p class="mb-2 small text-muted">Presiona el botón de micrófono una vez y sigue hablando. El micrófono permanecerá activo hasta que lo desactives.</p>
+    <p class="mb-2 small text-muted fw-bold">Comandos principales:</p>
+    <ul>
+      <li><strong>Control:</strong> "Desactivar micrófono", "Apagar micrófono", "Stop"</li>
+      <li><strong>Navegación:</strong> "Siguiente paso", "Paso anterior", "Ir a paso uno/dos/tres"</li>
+      <li><strong>Datos del cliente:</strong> "RUT [número]", "Nombre [nombre]", "Teléfono [número]", "Email [correo]", "Dirección [dirección]"</li>
+      <li><strong>Vehículo:</strong> "Placa [patente]" (busca automáticamente) o "Buscar" / "Buscar en API"</li>
+      <li><strong>Descripción:</strong> "Descripción [texto del problema]" o "Problema [texto]"</li>
+      <li><strong>Componentes:</strong> "Seleccionar motor", "Activar bujías", "Marcar frenos"</li>
+      <li><strong>Acciones:</strong> "Acción limpiar para bujías", "Para motor acción revisar"</li>
+      <li><strong>Finalizar:</strong> "Guardar diagnóstico", "Omitir repuestos", "Cancelar"</li>
+      <li><strong>Ayuda:</strong> Di "Mostrar comandos" o "Ayuda" para ver todos los comandos disponibles</li>
+    </ul>
+    <p class="mb-0 small text-warning fw-bold">💡 Tip: Di "Mostrar comandos" para ver la lista completa de comandos disponibles</p>
+  </div>
+
+  <h1 class="mb-4">🎤 Ingreso de Diagnóstico por Voz</h1>
+  <p class="text-muted mb-4">
+    Flujo optimizado para móvil con control por voz. Di tus comandos usando el botón de micrófono.
+  </p>
+
+  <div class="wizard-progress">
+    <div class="wizard-steps">
+      <div class="wizard-step active" data-step="1">
+        <div class="wizard-step-circle">1</div>
+        <div class="wizard-step-label">Cliente y Vehículo</div>
+      </div>
+      <div class="wizard-step" data-step="2">
+        <div class="wizard-step-circle">2</div>
+        <div class="wizard-step-label">Diagnóstico + Acciones</div>
+      </div>
+      <div class="wizard-step" data-step="3">
+        <div class="wizard-step-circle">3</div>
+        <div class="wizard-step-label">Repuestos y Resumen</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Banner de estado de voz -->
+  <div class="voice-status-banner" id="voice-status-banner">
+    <span id="voice-status-text">🎤 Di tu comando...</span>
+  </div>
+
+  <!-- Toast de feedback -->
+  <div class="voice-feedback-toast" id="voice-feedback-toast">
+    <div id="voice-feedback-text"></div>
+  </div>
+
+  <!-- Botón flotante de micrófono -->
+  <div class="voice-control-container">
+    <button class="voice-btn" id="voice-btn" aria-label="Activar micrófono">
+      🎤
+    </button>
+  </div>
+
+  <form id="form-ingreso" method="post" novalidate>
+    {% csrf_token %}
+
+    <!-- Paso 1 -->
+    <section class="wizard-pane active" data-step-pane="1">
+      <div class="row g-4">
+        <div class="col-lg-6">
+          <div class="resumen-card h-100">
+            <h5>👤 Cliente</h5>
+            <div class="mb-3">
+              <label class="form-label">Cliente existente</label>
+              <select id="cliente_existente" name="cliente_existente" class="form-select">
+                <option value="">-- Nuevo cliente --</option>
+                {% for cliente in clientes_existentes %}
+                  <option value="{{ cliente.rut }}"
+                    {% if selected_cliente and selected_cliente|stringformat:"s" == cliente.rut|stringformat:"s" %}selected{% endif %}>
+                    {{ cliente.nombre }} ({{ cliente.rut }}) – {{ cliente.telefono|default:"Sin teléfono" }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div id="nuevo_cliente_campos">
+              {{ cliente_form|crispy }}
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="resumen-card h-100">
+            <h5>🚘 Vehículo</h5>
+            <div class="mb-3">
+              <label class="form-label">Seleccionar vehículo existente</label>
+              <select id="vehiculo_select" name="vehiculo_existente" class="form-select"
+                      data-selected="{{ selected_vehiculo|default:'' }}">
+                <option value="">-- Nuevo vehículo --</option>
+              </select>
+            </div>
+            <div id="vehiculo_fields">
+              <div class="alert alert-info border border-primary border-3 rounded-3 p-4 mb-4 shadow-sm" style="background: linear-gradient(135deg, rgba(13, 110, 253, 0.12) 0%, rgba(13, 110, 253, 0.05) 100%);">
+                <div class="d-flex align-items-center mb-3">
+                  <div class="bg-primary text-white rounded-circle p-3 me-3" style="width: 52px; height: 52px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-search fa-lg"></i>
+                  </div>
+                  <div>
+                    <h6 class="mb-1 text-primary fw-bold">Buscar datos del vehículo</h6>
+                    <p class="mb-0 text-muted small">Introduce la placa y consulta la API para autocompletar los campos.</p>
+                  </div>
+                </div>
+                <label for="vehiculo-placa" class="form-label fw-semibold">Placa del vehículo</label>
+                <div class="input-group">
+                  <input type="text"
+                         id="vehiculo-placa"
+                         name="vehiculo-placa"
+                         class="form-control text-uppercase fw-semibold"
+                         placeholder="Ej: JGCX79"
+                         autocomplete="off"
+                         style="letter-spacing: 0.12em;">
+                  <button type="button" class="btn btn-primary" id="btn-buscar-vehiculo">
+                    <i class="fas fa-search me-1"></i> Buscar en API
+                  </button>
+                </div>
+                <small class="text-muted d-block mt-2">
+                  Consejo: presiona Enter o sal del campo para buscar automáticamente.
+                </small>
+              </div>
+              {{ vehiculo_form|crispy }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Paso 2 -->
+    <section class="wizard-pane" data-step-pane="2">
+      <div class="row g-4">
+        <div class="col-xl-8">
+          <div class="resumen-card mb-4">
+            <h5>📝 Descripción del problema</h5>
+            {{ diagnostico_form|crispy }}
+          </div>
+
+          <div class="resumen-card">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+              <h5 class="mb-0">🔧 Componentes y Acciones</h5>
+              <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse"
+                      data-bs-target="#plano-colapsable" aria-expanded="false">
+                🗺️ Mostrar plano interactivo
+              </button>
+            </div>
+
+            <div class="accordion" id="componentesAccordion">
+              {% for padre in componentes %}
+                <div class="accordion-item mb-3">
+                  <h2 class="accordion-header" id="heading-{{ padre.id }}">
+                    <button class="accordion-button collapsed" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#collapse-{{ padre.id }}"
+                            aria-expanded="false" aria-controls="collapse-{{ padre.id }}">
+                      {{ padre.nombre }}
+                    </button>
+                  </h2>
+                  <div id="collapse-{{ padre.id }}" class="accordion-collapse collapse"
+                       aria-labelledby="heading-{{ padre.id }}" data-bs-parent="#componentesAccordion">
+                    <div class="accordion-body">
+                      {% for hijo in padre.hijos.all %}
+                        <div class="componente-item" data-componente-id="{{ hijo.id }}" data-componente-nombre="{{ hijo.nombre|lower }}">
+                          <div class="componente-header">
+                            <div>
+                              <div class="form-check form-switch mb-1">
+                                <input class="form-check-input componente-checkbox"
+                                       type="checkbox"
+                                       id="comp-{{ hijo.id }}"
+                                       name="componentes_seleccionados"
+                                       value="{{ hijo.id }}"
+                                       data-nombre="{{ hijo.nombre }}"
+                                       {% if hijo.id in selected_componentes_ids %}checked{% endif %}>
+                                <label class="form-check-label fw-semibold" for="comp-{{ hijo.id }}">
+                                  {{ hijo.nombre }}
+                                </label>
+                              </div>
+                              <small class="text-muted">ID: {{ hijo.id }} • Código: {{ hijo.codigo }}</small>
+                            </div>
+                            <div class="text-end">
+                              <span class="badge bg-secondary">Acciones sugeridas</span>
+                              <div class="small text-muted">Se cargan al activar el componente</div>
+                            </div>
+                          </div>
+                          <div class="acciones-panel" id="acciones-panel-{{ hijo.id }}">
+                            <div class="acciones-placeholder text-muted small">
+                              Activa el componente para ver las acciones disponibles.
+                            </div>
+                            <div class="acciones-contenido"></div>
+                          </div>
+                        </div>
+                      {% empty %}
+                        <p class="text-muted small">No hay subcomponentes registrados en este grupo.</p>
+                      {% endfor %}
+                    </div>
+                  </div>
+                </div>
+              {% empty %}
+                <div class="alert alert-info mb-0">No existen componentes disponibles.</div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="collapse mt-4" id="plano-colapsable">
+            <div class="resumen-card">
+              <h5 class="mb-3">🗺️ Plano interactivo</h5>
+              <div id="plano-container"
+                   style="border:1px solid var(--border-color); max-height:600px; min-height:400px; overflow:auto;"
+                   data-inicial-url="{% static 'images/vehiculo-desde-abajo.svg' %}">
+                <div style="transform:scale(1.024); transform-origin: top left;">
+                  {{ svg|safe }}
+                </div>
+              </div>
+              <button id="btn-reset-plano" type="button" class="btn btn-outline-secondary btn-sm mt-3">
+                ⬅️ Resetear plano
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-xl-4">
+          <div class="resumen-card mb-4">
+            <h5>✅ Componentes Seleccionados</h5>
+            <ul id="lista-seleccionados" class="list-unstyled mb-0">
+              <li class="text-muted">Aún no hay componentes seleccionados.</li>
+            </ul>
+          </div>
+
+          <div class="resumen-card">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h5 class="mb-0">⚡ Acciones Confirmadas</h5>
+              <span class="badge bg-primary-subtle text-primary-emphasis" id="acciones-count">0 acciones</span>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-sm align-middle mb-0" id="acciones-resumen-table">
+                <thead class="table-light">
+                  <tr>
+                    <th>Componente</th>
+                    <th>Acción</th>
+                    <th class="text-end">Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td colspan="3" class="text-muted text-center small">
+                      Selecciona acciones para ver el resumen.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="mt-3 text-end">
+              <div class="small text-muted">Total Mano de Obra</div>
+              <div class="total-mano-obra" id="total_mano_obra">$0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <input type="hidden" id="acciones_componentes_json" name="acciones_componentes_json" value="[]">
+    </section>
+
+    <!-- Paso 3 -->
+    <section class="wizard-pane" data-step-pane="3">
+      <div class="row g-4">
+        <div class="col-lg-7">
+          <div class="resumen-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="mb-0">📦 Repuestos sugeridos</h5>
+              <div>
+                <button type="button" class="btn btn-outline-primary btn-sm" onclick="cargarRepuestos()">
+                  📦 Inventario propio
+                </button>
+                <button type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="modal"
+                        data-bs-target="#modalRepuestosExternos">
+                  🌐 Proveedores externos
+                </button>
+              </div>
+            </div>
+
+            <div id="diagnostico-meta"
+                 data-diagnostico-id="{{ diagnostico.id|default:'' }}"
+                 data-csrf="{{ csrf_token }}">
+            </div>
+
+            <div id="repuestos-list"
+                 data-preview-url="{% url 'sugerir_repuestos_preview' %}"
+                 data-with-id-template="{% url 'sugerir_repuestos' 0 %}">
+              <p class="text-muted">Selecciona componentes para recibir sugerencias automáticas.</p>
+            </div>
+
+            <div class="mt-3 text-end">
+              <button class="btn btn-success" type="button" onclick="prepararRepuestosParaEnvio()">
+                💾 Guardar selección de repuestos
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-5">
+          <div class="resumen-card mb-4">
+            <h5>🧾 Resumen de repuestos/insumos</h5>
+            <div id="tabla-contenido">
+              <p class="text-muted">Los repuestos agregados aparecerán aquí.</p>
+            </div>
+          </div>
+
+          <div class="resumen-card">
+            <h5>🧰 Insumos rápidos</h5>
+            <div class="mb-2">
+              <label for="buscar-insumo" class="form-label small">Buscar insumo</label>
+              <div class="input-group input-group-sm">
+                <input type="text" id="buscar-insumo" class="form-control"
+                       placeholder="Nombre, SKU, código…">
+                <button class="btn btn-outline-primary" type="button" onclick="buscarInsumos()">Buscar</button>
+              </div>
+              <small class="text-muted">La búsqueda inicia con 2 caracteres.</small>
+            </div>
+            <div id="insumos-disponibles" class="mb-3">
+              <div class="list-group" id="lista-insumos-disponibles">
+                <div class="alert alert-info small mb-0">Escribe para ver insumos disponibles.</div>
+              </div>
+            </div>
+            <button class="btn btn-success w-100" type="button" onclick="agregarInsumos()">
+              ➕ Agregar insumos seleccionados
+            </button>
+            <div class="alert alert-success mt-3 small" id="insumos-agregados-mensaje" style="display:none;">
+              ✅ Insumos agregados. Revisa la tabla de repuestos.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <input type="hidden" name="repuestos_json" id="repuestos-json">
+      <input type="hidden" name="repuestos_externos_json" id="repuestos-externos-json">
+      <input type="hidden" name="insumos_json" id="insumos-json">
+    </section>
+
+    <div class="wizard-navigation">
+      <div class="container">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+          <button type="button" class="btn btn-outline-secondary" id="wizard-prev" style="display:none;">
+            ← Anterior
+          </button>
+          <div class="flex-grow-1"></div>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-primary" id="wizard-next">
+              Siguiente →
+            </button>
+            <button type="submit" class="btn btn-success" id="wizard-submit" style="display:none;">
+              💾 Guardar diagnóstico
+            </button>
+            <button type="button" class="btn btn-outline-warning" id="wizard-skip" style="display:none;"
+                    onclick="skipRepuestosAndSubmit()">
+              ⏭️ Omitir repuestos y guardar
+            </button>
+          </div>
+          <a href="javascript:history.back()" class="btn btn-secondary">
+            Cancelar
+          </a>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <div id="acciones-endpoints" data-acciones-url-template="{% url 'acciones_por_componente' 0 %}"></div>
+  <div id="componentes-endpoints" data-lookup-url="{% url 'componentes_lookup' %}"></div>
+  <div id="repuestos-endpoints"
+       data-preview-url="{% url 'sugerir_repuestos_preview' %}"
+       data-with-id-template="{% url 'sugerir_repuestos' 0 %}"></div>
+</div>
+
+{% include "car/partials/repuestos_externos_modal.html" %}
+{% endblock %}
+
+{% block extra_js %}
+  <script src="{% static 'js/ingreso_fusionado.js' %}"></script>
+  <script src="{% static 'js/ingreso_movil_voz.js' %}"></script>
+{% endblock %}
+

@@ -1,0 +1,306 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es" class="h-100">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes" />
+  <title>{% block title %}Taller Mecánico{% endblock %}</title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}">
+
+  <!-- PWA Meta Tags -->
+  <meta name="description" content="Sistema de gestión para talleres mecánicos. Control de trabajos, clientes, repuestos y más.">
+  <meta name="theme-color" content="#0d6efd">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Taller">
+  <link rel="apple-touch-icon" href="{% static 'images/pwa-icon-192.png' %}">
+  
+  <!-- Manifest PWA -->
+  <link rel="manifest" href="{% static 'manifest.json' %}">
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Sistema de colores centralizado -->
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+  
+  <!-- Optimización móvil - Botones grandes, fácil uso con dedos -->
+  <link rel="stylesheet" href="{% static 'css/mobile-optimized.css' %}">
+  
+  <!-- Menú inferior y FAB (se incluyen en los templates que los necesiten) -->
+
+  <!-- Aplicación automática del tema -->
+  <script>
+    (function() {
+      const saved = localStorage.getItem("theme") || "piedra";
+      document.documentElement.className = `theme-${saved}`;
+    })();
+  </script>
+
+  {% block extra_css %}{% endblock %}
+  {% block extra_head %}{% endblock %}
+</head>
+
+<body class="d-flex flex-column min-vh-100">
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg mb-3 shadow-sm">
+    <div class="container-fluid">
+      <a class="navbar-brand fw-bold" href="{% url 'panel_principal' %}">
+        {% if config %}
+          <img src="{{ config.logo_principal_url }}" alt="Logo" style="height: 48px; width: auto;">
+        {% else %}
+        <img src="{% static 'images/Logo2.png' %}" alt="Car Icon" style="height: 48px; width: auto;">
+        {% endif %}
+      </a>
+
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#carNavbar" aria-controls="carNavbar" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="carNavbar">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item">
+            <a class="nav-link fw-bold" href="{% url 'panel_principal' %}">
+              🏠 Panel Principal
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'ingreso' %}">
+              🔧 Diagnóstico
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'lista_trabajos' %}">
+              📋 Trabajos
+            </a>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+              ⚙️ Admin
+            </a>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="{% url 'administracion_taller' %}">🏢 Configurar Taller</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="{% url 'pos_principal' %}">🛒 Punto de Venta</a></li>
+              <li><a class="dropdown-item" href="{% url 'compra_dashboard' %}">📥 Compras</a></li>
+              <li><a class="dropdown-item" href="{% url 'estadisticas_trabajos' %}">📊 Estadísticas</a></li>
+              <li><a class="dropdown-item" href="{% url 'historial_trabajos' %}">📜 Historial de Trabajos</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="{% url 'repuesto_list' %}">📦 Repuestos</a></li>
+              <li><a class="dropdown-item" href="{% url 'cliente_taller_list' %}">👤 Clientes del Taller</a></li>
+              <li><a class="dropdown-item" href="{% url 'vehiculo_list' %}">🚗 Vehículos</a></li>
+              <li><a class="dropdown-item" href="{% url 'vehiculo_compatibilidad_list' %}">🔗 Compatibilidad Vehículos</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="{% url 'componente_list' %}">🔧 Componentes</a></li>
+              <li><a class="dropdown-item" href="{% url 'accion_list' %}">⚙️ Acciones</a></li>
+              <li><a class="dropdown-item" href="{% url 'mecanico_list' %}">👨‍🔧 Mecánicos</a></li>
+              <li><a class="dropdown-item" href="{% url 'configuracion_bonos' %}">💰 Bonos de Mecánicos</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="{% url 'gestion_usuarios' %}">👥 Gestión de Usuarios</a></li>
+            </ul>
+          </li>
+        </ul>
+        
+        <!-- Botones de tema -->
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item d-flex align-items-center">
+            <span class="me-2">🎨</span>
+            <span class="theme-btn piedra" title="Piedra (oscuro)" onclick="setTheme('piedra')"></span>
+            <span class="theme-btn sand" title="Sand (claro)" onclick="setTheme('sand')"></span>
+          </li>
+        </ul>
+        
+        <!-- Usuario -->
+        <ul class="navbar-nav ms-auto">
+          {% if user.is_authenticated %}
+            <li class="nav-item d-flex align-items-center me-2">
+              <span class="fw-bold">👋 {{ user.username }}</span>
+            </li>
+            <li class="nav-item">
+              <a href="{% url 'logout' %}" class="btn btn-outline-danger btn-sm">Salir</a>
+            </li>
+          {% else %}
+            <li class="nav-item">
+              <a href="{% url 'login' %}" class="btn btn-outline-primary btn-sm">Ingresar</a>
+            </li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Contenido -->
+  <main class="flex-grow-1">
+    <div class="container">
+      {% if messages %}
+      <div class="messages">
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+          </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="mt-auto py-3 border-top">
+    <div class="container text-center small">
+      © 2025 Taller Mecánico
+    </div>
+  </footer>
+  
+  <!-- Componentes móviles avanzados (opcional - solo si existen) -->
+  {% block mobile_components %}
+    {# Los componentes móviles se incluyen solo si los templates existen #}
+    {# Para activarlos, agrega en un template que extienda base.html: #}
+    {# {% block mobile_components %}{% include 'car/mobile_bottom_nav.html' %}{% include 'car/mobile_fab.html' %}{% endblock %} #}
+  {% endblock %}
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <!-- Script de temas mejorado -->
+  <script>
+    function setTheme(theme) {
+      // Limpiar clases de tema existentes
+      document.body.className = document.body.className.replace(/theme-\w+/g, '').trim();
+      document.documentElement.className = document.documentElement.className.replace(/theme-\w+/g, '').trim();
+      
+      // Aplicar nuevo tema
+      document.body.classList.add(`theme-${theme}`);
+      document.documentElement.classList.add(`theme-${theme}`);
+
+      // Guardar en localStorage
+      localStorage.setItem("theme", theme);
+      
+      // Actualizar indicadores visuales
+      updateThemeButtons(theme);
+    }
+
+    function updateThemeButtons(activeTheme) {
+      // Remover clase active de todos los botones
+      document.querySelectorAll('.theme-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      
+      // Agregar clase active al botón del tema activo
+      const activeBtn = document.querySelector(`.theme-btn.${activeTheme}`);
+      if (activeBtn) {
+        activeBtn.classList.add('active');
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+      const saved = localStorage.getItem("theme") || "piedra";
+      setTheme(saved);
+    });
+  </script>
+
+  <!-- PWA: Service Worker Registration -->
+  <script>
+    // Registrar Service Worker para PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('{% static "js/service-worker.js" %}')
+          .then(function(registration) {
+            console.log('✅ Service Worker registrado exitosamente:', registration.scope);
+            
+            // Detectar actualizaciones del service worker
+            registration.addEventListener('updatefound', function() {
+              console.log('🔄 Nueva versión del Service Worker disponible');
+              const newWorker = registration.installing;
+              
+              newWorker.addEventListener('statechange', function() {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // Hay una nueva versión disponible
+                  showUpdateNotification();
+                }
+              });
+            });
+            
+            // Verificar actualizaciones cada 5 minutos
+            setInterval(function() {
+              registration.update();
+            }, 300000); // 5 minutos
+            
+            // Verificar actualizaciones al obtener foco
+            document.addEventListener('visibilitychange', function() {
+              if (!document.hidden) {
+                registration.update();
+              }
+            });
+          })
+          .catch(function(error) {
+            console.log('❌ Error al registrar Service Worker:', error);
+          });
+      });
+    }
+    
+    // Función para mostrar notificación de actualización
+    function showUpdateNotification() {
+      // Crear o mostrar banner de actualización
+      let updateBanner = document.getElementById('pwa-update-banner');
+      if (!updateBanner) {
+        updateBanner = document.createElement('div');
+        updateBanner.id = 'pwa-update-banner';
+        updateBanner.style.cssText = 'position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #0d6efd; color: white; padding: 1rem 1.5rem; border-radius: 0.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10000; display: flex; align-items: center; gap: 1rem; max-width: 90%;';
+        updateBanner.innerHTML = `
+          <span>🔄 Nueva versión disponible</span>
+          <button onclick="refreshPWA()" style="background: white; color: #0d6efd; border: none; padding: 0.5rem 1rem; border-radius: 0.25rem; font-weight: 600; cursor: pointer;">Actualizar</button>
+          <button onclick="this.closest(\'#pwa-update-banner\').remove()" style="background: transparent; color: white; border: 1px solid white; padding: 0.5rem; border-radius: 0.25rem; cursor: pointer;">✕</button>
+        `;
+        document.body.appendChild(updateBanner);
+      } else {
+        updateBanner.style.display = 'flex';
+      }
+    }
+    
+    // Función para refrescar la PWA
+    function refreshPWA() {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          registrations.forEach(function(registration) {
+            registration.unregister().then(function() {
+              // Limpiar todos los caches
+              caches.keys().then(function(cacheNames) {
+                return Promise.all(
+                  cacheNames.map(function(cacheName) {
+                    return caches.delete(cacheName);
+                  })
+                );
+              }).then(function() {
+                // Recargar la página
+                window.location.reload(true);
+              });
+            });
+          });
+        });
+      } else {
+        window.location.reload(true);
+      }
+    }
+  </script>
+
+  <!-- PWA: Install Prompt -->
+  <script src="{% static 'js/pwa-install.js' %}"></script>
+  
+  <!-- Pull to Refresh (solo móviles) -->
+  <script src="{% static 'js/pull-to-refresh.js' %}"></script>
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

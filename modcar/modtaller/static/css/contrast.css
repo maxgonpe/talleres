@@ -1,0 +1,350 @@
+/* ========================================
+   CLASES DE CONTRASTE Y LEGIBILIDAD
+   ======================================== */
+
+/* ========================================
+   SISTEMA DE CONTRASTE AUTOMÁTICO
+   ======================================== */
+
+/* Aplicar automáticamente a elementos comunes */
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Cards con contraste automático */
+.card, .card-body, .card-header, .card-footer {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.card-header {
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.card-footer {
+  background-color: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+}
+
+/* Modales con contraste automático */
+.modal-content {
+  background-color: var(--bg-modal);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.modal-header {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-footer {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-top: 1px solid var(--border-color);
+}
+
+/* Formularios con contraste automático */
+.form-control, .form-select, .input-group-text {
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 0.2rem rgba(var(--accent), 0.25);
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+}
+
+/* Botones con contraste automático */
+.btn {
+  transition: var(--transition);
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Alertas con contraste automático */
+.alert {
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.alert-success {
+  background-color: var(--success-bg);
+  color: var(--success-text);
+  border-color: var(--success-color);
+}
+
+.alert-warning {
+  background-color: var(--warning-bg);
+  color: var(--warning-text);
+  border-color: var(--warning-color);
+}
+
+.alert-danger {
+  background-color: var(--danger-bg);
+  color: var(--danger-text);
+  border-color: var(--danger-color);
+}
+
+.alert-info {
+  background-color: var(--info-bg);
+  color: var(--info-text);
+  border-color: var(--info-color);
+}
+
+/* Tablas con contraste automático */
+.table {
+  color: var(--text-primary);
+  background-color: var(--bg-card);
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+  background-color: var(--bg-secondary);
+}
+
+.table-hover tbody tr:hover {
+  background-color: var(--hover-bg);
+}
+
+/* Navegación con contraste automático */
+.navbar {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.navbar-brand, .nav-link {
+  color: var(--text-primary);
+}
+
+.nav-link:hover {
+  background-color: var(--hover-bg);
+  color: var(--text-primary);
+}
+
+/* ========================================
+   CLASES UTILITARIAS DE CONTRASTE
+   ======================================== */
+
+/* Texto con contraste garantizado */
+.text-contrast-high {
+  color: var(--text-primary) !important;
+  font-weight: 600;
+}
+
+.text-contrast-medium {
+  color: var(--text-secondary) !important;
+}
+
+.text-contrast-low {
+  color: var(--text-muted) !important;
+}
+
+/* Fondos con contraste garantizado */
+.bg-contrast-high {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+}
+
+.bg-contrast-medium {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+}
+
+.bg-contrast-low {
+  background-color: var(--bg-tertiary) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Cards con contraste garantizado */
+.card-contrast {
+  background-color: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+.card-contrast:hover {
+  box-shadow: var(--shadow-lg) !important;
+  transform: translateY(-2px);
+  transition: var(--transition);
+}
+
+/* Modales con contraste garantizado */
+.modal-contrast .modal-content {
+  background-color: var(--bg-modal) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+.modal-contrast .modal-header {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+.modal-contrast .modal-footer {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  border-top: 1px solid var(--border-color) !important;
+}
+
+/* Formularios con contraste garantizado */
+.form-contrast .form-control,
+.form-contrast .form-select,
+.form-contrast .input-group-text {
+  background-color: var(--bg-input) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+.form-contrast .form-control:focus,
+.form-contrast .form-select:focus {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 0.2rem rgba(var(--accent), 0.25) !important;
+}
+
+/* Botones con contraste garantizado */
+.btn-contrast {
+  background-color: var(--btn-bg) !important;
+  color: var(--btn-fg) !important;
+  border: 1px solid var(--btn-bg) !important;
+  transition: var(--transition) !important;
+}
+
+.btn-contrast:hover {
+  background-color: var(--hover-bg) !important;
+  color: var(--btn-fg) !important;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md) !important;
+}
+
+/* ========================================
+   CLASES DE LEGIBILIDAD ESPECÍFICAS
+   ======================================== */
+
+/* Texto con sombra para mejor legibilidad */
+.text-shadow {
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+}
+
+.text-shadow-light {
+  text-shadow: 1px 1px 2px rgba(255,255,255,0.5);
+}
+
+/* Fondo con patrón sutil */
+.bg-pattern {
+  background-image: 
+    radial-gradient(circle at 1px 1px, var(--border-color) 1px, transparent 0);
+  background-size: 20px 20px;
+}
+
+/* Contraste forzado */
+.force-contrast {
+  filter: contrast(1.2) brightness(1.1);
+}
+
+.force-subtle {
+  filter: contrast(0.9) brightness(0.9);
+}
+
+/* ========================================
+   CLASES PARA ELEMENTOS ESPECÍFICOS
+   ======================================== */
+
+/* POS específico */
+.pos-item {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.pos-item:hover {
+  background-color: var(--hover-bg);
+}
+
+/* Carrito específico */
+.carrito-item {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.carrito-item:hover {
+  background-color: var(--hover-bg);
+}
+
+/* Dashboard específico */
+.dashboard-card {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+}
+
+.dashboard-card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+  transition: var(--transition);
+}
+
+/* ========================================
+   RESPONSIVE Y ACCESIBILIDAD
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (prefers-contrast: high) {
+  :root {
+    --border-color: currentColor;
+    --border-color-light: currentColor;
+    --border-color-dark: currentColor;
+  }
+  
+  .card, .modal-content, .form-control {
+    border-width: 2px !important;
+  }
+}
+
+/* ========================================
+   DEBUGGING (solo para desarrollo)
+   ======================================== */
+.debug-contrast * {
+  outline: 1px solid red !important;
+}
+
+.debug-contrast .text-contrast-high {
+  outline: 1px solid green !important;
+}
+
+.debug-contrast .bg-contrast-high {
+  outline: 1px solid blue !important;
+}
+
+.debug-contrast .card-contrast {
+  outline: 1px solid orange !important;
+}
+
+
+
+
+
+
+

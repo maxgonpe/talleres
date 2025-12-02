@@ -1,0 +1,52 @@
+{% load static %}
+<!-- Menú inferior fijo para móviles -->
+<div class="mobile-bottom-nav d-md-none">
+  <a href="{% url 'panel_principal' %}" class="mobile-bottom-nav-item {% if request.resolver_match.url_name == 'panel_principal' %}active{% endif %}">
+    <i class="fas fa-home"></i>
+    <span>Inicio</span>
+  </a>
+  
+  <a href="{% url 'ingreso' %}" class="mobile-bottom-nav-item {% if request.resolver_match.url_name == 'ingreso' %}active{% endif %}">
+    <i class="fas fa-wrench"></i>
+    <span>Diagnóstico</span>
+  </a>
+  
+  <a href="{% url 'lista_trabajos' %}" class="mobile-bottom-nav-item {% if request.resolver_match.url_name == 'lista_trabajos' %}active{% endif %}">
+    <i class="fas fa-list"></i>
+    <span>Trabajos</span>
+  </a>
+  
+  <a href="{% url 'pos_principal' %}" class="mobile-bottom-nav-item {% if request.resolver_match.url_name == 'pos_principal' %}active{% endif %}">
+    <i class="fas fa-cash-register"></i>
+    <span>Venta</span>
+  </a>
+  
+  {% if user.is_authenticated %}
+    <a href="{% url 'logout' %}" class="mobile-bottom-nav-item">
+      <i class="fas fa-sign-out-alt"></i>
+      <span>Salir</span>
+    </a>
+  {% else %}
+    <a href="{% url 'login' %}" class="mobile-bottom-nav-item">
+      <i class="fas fa-sign-in-alt"></i>
+      <span>Ingresar</span>
+    </a>
+  {% endif %}
+</div>
+
+<style>
+  /* Incluir estilos del menú inferior */
+  @import url("{% static 'css/mobile-bottom-nav.css' %}");
+</style>
+
+<script>
+  // Agregar clase al body cuando hay menú inferior
+  document.addEventListener('DOMContentLoaded', function() {
+    if (document.querySelector('.mobile-bottom-nav')) {
+      document.body.classList.add('has-bottom-nav');
+    }
+  });
+</script>
+
+
+

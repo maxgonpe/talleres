@@ -1,0 +1,423 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+{% load humanize %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+{% endblock %}
+
+{% block title %}Compra {{ compra.numero_compra }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-0">🛒 Compra {{ compra.numero_compra }}</h2>
+                    <p class="text-secondary">{{ compra.proveedor }} • {{ compra.fecha_compra|date:"d/m/Y" }}</p>
+                </div>
+                <div>
+                    <a href="{% url 'compra_edit' compra.pk %}" class="btn btn-outline-primary">
+                        <i class="fas fa-edit me-2"></i>Editar
+                    </a>
+                    <a href="{% url 'compra_dashboard' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Volver
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Información de la Compra -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Información de la Compra</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Proveedor:</strong> {{ compra.proveedor }}</p>
+                            <p><strong>Fecha de Compra:</strong> {{ compra.fecha_compra|date:"d/m/Y" }}</p>
+                            <p><strong>Estado:</strong> 
+                                {% if compra.estado == 'borrador' %}
+                                    <span class="badge bg-secondary">Borrador</span>
+                                {% elif compra.estado == 'confirmada' %}
+                                    <span class="badge bg-warning">Confirmada</span>
+                                {% elif compra.estado == 'recibida' %}
+                                    <span class="badge bg-success">Recibida</span>
+                                {% elif compra.estado == 'cancelada' %}
+                                    <span class="badge bg-danger">Cancelada</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Fecha de Recepción:</strong> 
+                                {% if compra.fecha_recibida %}
+                                    {{ compra.fecha_recibida|date:"d/m/Y" }}
+                                {% else %}
+                                    <span class="text-secondary">No recibida</span>
+                                {% endif %}
+                            </p>
+                            <p><strong>Creado por:</strong> {{ compra.creado_por.get_full_name|default:compra.creado_por.username }}</p>
+                            <p><strong>Creado en:</strong> {{ compra.creado_en|date:"d/m/Y H:i" }}</p>
+                        </div>
+                    </div>
+                    {% if compra.observaciones %}
+                        <div class="mt-3">
+                            <strong>Observaciones:</strong>
+                            <p class="text-secondary">{{ compra.observaciones }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Resumen</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Items:</span>
+                        <strong>{{ items.count }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Total:</span>
+                        <strong>${{ compra.total|floatformat:0|intcomma }}</strong>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                        <span>Items Recibidos:</span>
+                        <strong>{{ items|length|add:"-1"|add:"1" }}</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Items de la Compra -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Items de la Compra</h5>
+                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#agregarItemModal">
+                        <i class="fas fa-plus me-2"></i>Agregar Item
+                    </button>
+                </div>
+                <div class="card-body">
+                    {% if items %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Repuesto</th>
+                                        <th>Cantidad</th>
+                                        <th>Precio Unitario</th>
+                                        <th>Subtotal</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in items %}
+                                    <tr>
+                                        <td>
+                                            <div>
+                                                <strong>{{ item.repuesto.nombre }}</strong>
+                                                <br>
+                                                <small class="text-secondary">
+                                                    SKU: {{ item.repuesto.sku|default:"N/A" }} | 
+                                                    Stock actual: {{ item.repuesto.stock_total }}
+                                                </small>
+                                            </div>
+                                        </td>
+                                        <td>{{ item.cantidad }}</td>
+                                        <td>${{ item.precio_unitario|floatformat:0|intcomma }}</td>
+                                        <td>${{ item.subtotal|floatformat:0|intcomma }}</td>
+                                        <td>
+                                            {% if item.recibido %}
+                                                <span class="badge bg-success">Recibido</span>
+                                                <br>
+                                                <small class="text-secondary">{{ item.fecha_recibido|date:"d/m/Y H:i" }}</small>
+                                            {% else %}
+                                                <span class="badge bg-warning">Pendiente</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{% url 'compra_item_edit' item.pk %}" class="btn btn-sm btn-outline-primary" title="Editar">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                {% if not item.recibido %}
+                                                    <a href="{% url 'compra_item_recibir' item.pk %}" class="btn btn-sm btn-outline-success" title="Recibir">
+                                                        <i class="fas fa-check"></i>
+                                                    </a>
+                                                {% endif %}
+                                                <a href="{% url 'compra_item_delete' item.pk %}" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                            <h5>No hay items en esta compra</h5>
+                            <p class="text-secondary">Agrega items para comenzar</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Acciones de la Compra -->
+    {% if compra.estado != 'cancelada' %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5>Acciones</h5>
+                    <div class="btn-group" role="group">
+                        {% if compra.estado == 'borrador' %}
+                            <a href="{% url 'compra_confirmar' compra.pk %}" class="btn btn-warning">
+                                <i class="fas fa-check me-2"></i>Confirmar Compra
+                            </a>
+                        {% endif %}
+                        {% if compra.estado == 'confirmada' and items %}
+                            <a href="{% url 'compra_recibir' compra.pk %}" class="btn btn-success">
+                                <i class="fas fa-truck me-2"></i>Recibir Todos los Items
+                            </a>
+                        {% endif %}
+                        {% if compra.estado != 'recibida' %}
+                            <a href="{% url 'compra_cancelar' compra.pk %}" class="btn btn-danger">
+                                <i class="fas fa-times me-2"></i>Cancelar Compra
+                            </a>
+                        {% endif %}
+                        <a href="{% url 'compra_dashboard' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Volver al Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal para agregar item -->
+<div class="modal fade" id="agregarItemModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Agregar Item a la Compra</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="repuesto_search" class="form-label">Buscar Repuesto *</label>
+                        <input type="text" 
+                               id="repuesto_search" 
+                               class="form-control" 
+                               placeholder="Escriba nombre, SKU, código de barras o escanee..."
+                               autocomplete="off">
+                        <input type="hidden" id="id_repuesto" name="repuesto" value="">
+                        <div id="repuesto_suggestions" class="list-group" style="display: none; position: absolute; z-index: 1000; width: 100%; max-height: 300px; overflow-y: auto;"></div>
+                        
+                        <!-- Información del producto seleccionado -->
+                        <div id="producto_info" class="mt-2" style="display: none;">
+                            <div class="alert alert-info">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <strong>📦 Stock Actual:</strong> <span id="stock_info">-</span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>💰 Último Precio:</strong> <span id="precio_info">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-text">Si el repuesto ya existe en la compra, se sumará la cantidad</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.cantidad.id_for_label }}" class="form-label">Cantidad *</label>
+                                {{ form.cantidad }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.precio_unitario.id_for_label }}" class="form-label">Precio Unitario *</label>
+                                {{ form.precio_unitario }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Agregar Item</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const repuestoSearch = document.getElementById('repuesto_search');
+    const repuestoHidden = document.getElementById('id_repuesto');
+    const suggestions = document.getElementById('repuesto_suggestions');
+    let searchTimeout;
+
+    // Búsqueda de repuestos en tiempo real
+    repuestoSearch.addEventListener('input', function() {
+        const query = this.value.trim();
+        
+        // Limpiar timeout anterior
+        if (searchTimeout) {
+            clearTimeout(searchTimeout);
+        }
+        
+        // Si el campo está vacío, ocultar sugerencias y info del producto
+        if (query.length < 2) {
+            suggestions.style.display = 'none';
+            repuestoHidden.value = '';
+            ocultarInfoProducto();
+            return;
+        }
+        
+        // Buscar después de 300ms de inactividad
+        searchTimeout = setTimeout(() => {
+            buscarRepuestos(query);
+        }, 300);
+    });
+
+    // Función para buscar repuestos
+    function buscarRepuestos(query) {
+        fetch(`/car/api/buscar-repuestos-compra/?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                mostrarSugerencias(data.repuestos);
+            })
+            .catch(error => {
+                console.error('Error al buscar repuestos:', error);
+            });
+    }
+
+    // Mostrar sugerencias de repuestos
+    function mostrarSugerencias(repuestos) {
+        suggestions.innerHTML = '';
+        
+        if (repuestos.length === 0) {
+            suggestions.innerHTML = '<div class="list-group-item text-muted">No se encontraron repuestos</div>';
+            suggestions.style.display = 'block';
+            return;
+        }
+
+        repuestos.forEach(repuesto => {
+            const item = document.createElement('div');
+            item.className = 'list-group-item list-group-item-action';
+            item.style.cursor = 'pointer';
+            
+            item.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>${repuesto.nombre}</strong><br>
+                        <small class="text-secondary">
+                            SKU: ${repuesto.sku || 'N/A'} | 
+                            OEM: ${repuesto.oem || 'N/A'} |
+                            Stock: ${repuesto.stock_actual || 0} | 
+                            Precio: $${repuesto.precio_costo || 0}
+                        </small>
+                    </div>
+                </div>
+            `;
+            
+            item.addEventListener('click', function() {
+                repuestoSearch.value = repuesto.nombre;
+                repuestoHidden.value = repuesto.id;
+                suggestions.style.display = 'none';
+                
+                // Auto-completar precio si está disponible
+                const precioInput = document.querySelector('input[name="precio_unitario"]');
+                if (precioInput && repuesto.precio_costo) {
+                    precioInput.value = repuesto.precio_costo;
+                }
+                
+                // Mostrar información del producto seleccionado
+                mostrarInfoProducto(repuesto);
+            });
+            
+            suggestions.appendChild(item);
+        });
+        
+        suggestions.style.display = 'block';
+    }
+
+    // Función para mostrar información del producto seleccionado
+    function mostrarInfoProducto(repuesto) {
+        const productoInfo = document.getElementById('producto_info');
+        const stockInfo = document.getElementById('stock_info');
+        const precioInfo = document.getElementById('precio_info');
+        
+        if (productoInfo && stockInfo && precioInfo) {
+            stockInfo.textContent = repuesto.stock_actual || 0;
+            precioInfo.textContent = `$${repuesto.precio_costo || 0}`;
+            productoInfo.style.display = 'block';
+        }
+    }
+
+    // Función para ocultar información del producto
+    function ocultarInfoProducto() {
+        const productoInfo = document.getElementById('producto_info');
+        if (productoInfo) {
+            productoInfo.style.display = 'none';
+        }
+    }
+
+    // Ocultar sugerencias al hacer clic fuera
+    document.addEventListener('click', function(e) {
+        if (!repuestoSearch.contains(e.target) && !suggestions.contains(e.target)) {
+            suggestions.style.display = 'none';
+        }
+    });
+
+    // Limpiar campos al cerrar el modal
+    document.getElementById('agregarItemModal').addEventListener('hidden.bs.modal', function() {
+        repuestoSearch.value = '';
+        repuestoHidden.value = '';
+        suggestions.style.display = 'none';
+        ocultarInfoProducto();
+        document.querySelector('input[name="cantidad"]').value = '';
+        document.querySelector('input[name="precio_unitario"]').value = '';
+    });
+
+    // Forzar actualización de la página después de agregar un item
+    if (window.location.search.includes('item_agregado=true')) {
+        const url = new URL(window.location);
+        url.searchParams.delete('item_agregado');
+        window.history.replaceState({}, '', url);
+        
+        setTimeout(() => {
+            window.location.reload();
+        }, 500);
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Panel Principal - ModTaller{% endblock %}
+
+{% block content %}
+<div class="panel-principal">
+  <div class="container-fluid">
+    <h1 class="mb-4">🏠 Panel Principal</h1>
+    
+    <div class="row">
+      <div class="col-md-3 mb-4">
+        <div class="card diagnostico-card">
+          <div class="card-body">
+            <h5 class="card-title">🔧 Diagnósticos</h5>
+            <p class="card-text">Gestiona los diagnósticos de vehículos</p>
+            <a href="{% url 'diagnosticos:lista' %}" class="btn btn-primary">Ver Diagnósticos</a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-3 mb-4">
+        <div class="card trabajo-card">
+          <div class="card-body">
+            <h5 class="card-title">📋 Trabajos</h5>
+            <p class="card-text">Gestiona los trabajos en curso</p>
+            <a href="{% url 'trabajos:lista' %}" class="btn btn-primary">Ver Trabajos</a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-3 mb-4">
+        <div class="card inventario-card">
+          <div class="card-body">
+            <h5 class="card-title">📦 Inventario</h5>
+            <p class="card-text">Gestiona el inventario de repuestos</p>
+            <a href="{% url 'inventario:lista' %}" class="btn btn-primary">Ver Inventario</a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-3 mb-4">
+        <div class="card pos-card">
+          <div class="card-body">
+            <h5 class="card-title">🛒 Punto de Venta</h5>
+            <p class="card-text">Sistema de punto de venta</p>
+            <a href="{% url 'punto_venta:pos_principal' %}" class="btn btn-primary">Abrir POS</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="row">
+      <div class="col-md-3 mb-4">
+        <div class="card compra-card">
+          <div class="card-body">
+            <h5 class="card-title">📥 Compras</h5>
+            <p class="card-text">Gestiona las compras de repuestos</p>
+            <a href="{% url 'compras:compra_dashboard' %}" class="btn btn-primary">Ver Compras</a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-3 mb-4">
+        <div class="card usuario-card">
+          <div class="card-body">
+            <h5 class="card-title">👤 Usuarios</h5>
+            <p class="card-text">Gestiona usuarios y permisos</p>
+            <a href="{% url 'usuarios:lista' %}" class="btn btn-primary">Ver Usuarios</a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-3 mb-4">
+        <div class="card bono-card">
+          <div class="card-body">
+            <h5 class="card-title">💰 Bonos</h5>
+            <p class="card-text">Gestiona bonos de mecánicos</p>
+            <a href="{% url 'bonos:configuracion_bonos' %}" class="btn btn-primary">Ver Bonos</a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-3 mb-4">
+        <div class="card estadistica-card">
+          <div class="card-body">
+            <h5 class="card-title">📊 Estadísticas</h5>
+            <p class="card-text">Ver estadísticas del taller</p>
+            <a href="{% url 'estadisticas:estadisticas_trabajos' %}" class="btn btn-primary">Ver Estadísticas</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

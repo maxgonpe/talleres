@@ -1,0 +1,15 @@
+{% load static %}
+{% extends 'base.html' %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+{% endblock %}
+
+{% block content %}
+<h2>Editar Diagnóstico</h2>
+<form method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Actualizar</button>
+</form>
+<a href="{% url 'ingreso' %}">Cancelar</a>
+{% endblock %}

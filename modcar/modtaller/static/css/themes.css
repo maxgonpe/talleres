@@ -1,0 +1,465 @@
+/* ========================================
+   SISTEMA DE TEMAS CENTRALIZADO
+   ======================================== */
+
+/* ========================================
+   APLICACIÓN AUTOMÁTICA DE TEMAS
+   ======================================== */
+
+/* Aplicar tema automáticamente al cargar */
+body {
+  transition: var(--transition);
+}
+
+/* Aplicar tema a todos los elementos */
+* {
+  transition: var(--transition);
+}
+
+/* ========================================
+   CLASES DE TEMA AUTOMÁTICAS
+   ======================================== */
+
+/* Aplicar automáticamente a elementos comunes */
+.card, .card-body, .card-header, .card-footer {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+.modal-content, .modal-header, .modal-body, .modal-footer {
+  background-color: var(--bg-modal);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+.form-control, .form-select, .input-group-text {
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+.btn {
+  transition: var(--transition);
+}
+
+.alert {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+.table {
+  color: var(--text-primary);
+  background-color: var(--bg-card);
+}
+
+.navbar, .nav-link, .navbar-brand {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+/* ========================================
+   CLASES DE TEMA ESPECÍFICAS
+   ======================================== */
+
+/* Tema oscuro */
+.theme-dark {
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #2d2d2d;
+  --bg-card: #2d2d2d;
+  --text-primary: #ffffff;
+  --text-secondary: #b3b3b3;
+  --text-muted: #8a8a8a;
+  --border-color: #404040;
+}
+
+/* Tema claro */
+.theme-light {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --bg-card: #ffffff;
+  --text-primary: #212529;
+  --text-secondary: #6c757d;
+  --text-muted: #6c757d;
+  --border-color: #dee2e6;
+}
+
+/* ========================================
+   CLASES DE CONTRASTE AUTOMÁTICO
+   ======================================== */
+
+/* Aplicar contraste automático a elementos problemáticos */
+.auto-contrast {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.auto-contrast:hover {
+  background-color: var(--hover-bg);
+}
+
+/* Texto con contraste automático */
+.auto-contrast-text {
+  color: var(--text-primary);
+}
+
+.auto-contrast-text-secondary {
+  color: var(--text-secondary);
+}
+
+.auto-contrast-text-muted {
+  color: var(--text-muted);
+}
+
+/* ========================================
+   CLASES DE TEMA PARA COMPONENTES ESPECÍFICOS
+   ======================================== */
+
+/* POS específico */
+.pos-theme {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.pos-theme .carrito-item {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.pos-theme .carrito-item:hover {
+  background-color: var(--hover-bg);
+}
+
+.pos-theme .form-control {
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.pos-theme .btn {
+  background-color: var(--btn-bg);
+  color: var(--btn-fg);
+  border: 1px solid var(--btn-bg);
+}
+
+.pos-theme .btn:hover {
+  background-color: var(--hover-bg);
+}
+
+/* Dashboard específico */
+.dashboard-theme {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.dashboard-theme .card {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+}
+
+.dashboard-theme .card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+/* Compras específico */
+.compras-theme {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.compras-theme .table {
+  color: var(--text-primary);
+  background-color: var(--bg-card);
+}
+
+.compras-theme .table-striped tbody tr:nth-of-type(odd) {
+  background-color: var(--bg-secondary);
+}
+
+.compras-theme .form-control {
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+/* Repuestos específico */
+.repuestos-theme {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.repuestos-theme .card {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.repuestos-theme .card:hover {
+  background-color: var(--hover-bg);
+}
+
+.repuestos-theme .form-control {
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+/* ========================================
+   CLASES DE TEMA PARA MODALES
+   ======================================== */
+
+.modal-theme .modal-content {
+  background-color: var(--bg-modal);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.modal-theme .modal-header {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-theme .modal-footer {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-top: 1px solid var(--border-color);
+}
+
+.modal-theme .form-control {
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.modal-theme .btn {
+  background-color: var(--btn-bg);
+  color: var(--btn-fg);
+  border: 1px solid var(--btn-bg);
+}
+
+/* ========================================
+   CLASES DE TEMA PARA FORMULARIOS
+   ======================================== */
+
+.form-theme .form-control,
+.form-theme .form-select,
+.form-theme .input-group-text {
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.form-theme .form-control:focus,
+.form-theme .form-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 0.2rem rgba(var(--accent), 0.25);
+}
+
+.form-theme .form-label {
+  color: var(--text-primary);
+}
+
+.form-theme .form-text {
+  color: var(--text-muted);
+}
+
+/* ========================================
+   CLASES DE TEMA PARA TABLAS
+   ======================================== */
+
+.table-theme {
+  color: var(--text-primary);
+  background-color: var(--bg-card);
+}
+
+.table-theme .table-striped tbody tr:nth-of-type(odd) {
+  background-color: var(--bg-secondary);
+}
+
+.table-theme .table-hover tbody tr:hover {
+  background-color: var(--hover-bg);
+}
+
+.table-theme .table th {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+.table-theme .table td {
+  border-color: var(--border-color);
+}
+
+/* ========================================
+   CLASES DE TEMA PARA NAVEGACIÓN
+   ======================================== */
+
+.nav-theme {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.nav-theme .navbar-brand,
+.nav-theme .nav-link {
+  color: var(--text-primary);
+}
+
+.nav-theme .nav-link:hover {
+  background-color: var(--hover-bg);
+  color: var(--text-primary);
+}
+
+.nav-theme .dropdown-menu {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.nav-theme .dropdown-item {
+  color: var(--text-primary);
+}
+
+.nav-theme .dropdown-item:hover {
+  background-color: var(--hover-bg);
+  color: var(--text-primary);
+}
+
+/* ========================================
+   CLASES DE TEMA PARA ALERTAS
+   ======================================== */
+
+.alert-theme {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.alert-theme.alert-success {
+  background-color: var(--success-bg);
+  color: var(--success-text);
+  border-color: var(--success-color);
+}
+
+.alert-theme.alert-warning {
+  background-color: var(--warning-bg);
+  color: var(--warning-text);
+  border-color: var(--warning-color);
+}
+
+.alert-theme.alert-danger {
+  background-color: var(--danger-bg);
+  color: var(--danger-text);
+  border-color: var(--danger-color);
+}
+
+.alert-theme.alert-info {
+  background-color: var(--info-bg);
+  color: var(--info-text);
+  border-color: var(--info-color);
+}
+
+/* ========================================
+   CLASES DE TEMA PARA BOTONES
+   ======================================== */
+
+.btn-theme {
+  background-color: var(--btn-bg);
+  color: var(--btn-fg);
+  border: 1px solid var(--btn-bg);
+  transition: var(--transition);
+}
+
+.btn-theme:hover {
+  background-color: var(--hover-bg);
+  color: var(--btn-fg);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-theme.btn-primary {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.btn-theme.btn-secondary {
+  background-color: var(--secondary-color);
+  border-color: var(--secondary-color);
+}
+
+.btn-theme.btn-success {
+  background-color: var(--success-color);
+  border-color: var(--success-color);
+}
+
+.btn-theme.btn-warning {
+  background-color: var(--warning-color);
+  border-color: var(--warning-color);
+}
+
+.btn-theme.btn-danger {
+  background-color: var(--danger-color);
+  border-color: var(--danger-color);
+}
+
+.btn-theme.btn-info {
+  background-color: var(--info-color);
+  border-color: var(--info-color);
+}
+
+/* ========================================
+   RESPONSIVE Y ACCESIBILIDAD
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (prefers-contrast: high) {
+  :root {
+    --border-color: currentColor;
+    --border-color-light: currentColor;
+    --border-color-dark: currentColor;
+  }
+  
+  .card, .modal-content, .form-control {
+    border-width: 2px !important;
+  }
+}
+
+/* ========================================
+   DEBUGGING (solo para desarrollo)
+   ======================================== */
+.debug-theme * {
+  outline: 1px solid red !important;
+}
+
+.debug-theme .auto-contrast {
+  outline: 1px solid green !important;
+}
+
+.debug-theme .theme-dark {
+  outline: 1px solid blue !important;
+}
+
+.debug-theme .theme-light {
+  outline: 1px solid orange !important;
+}
+
+
+
+
+
+
+

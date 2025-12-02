@@ -1,0 +1,233 @@
+/* ========================================
+   SISTEMA SIMPLIFICADO DE VARIABLES CSS
+   Solo Piedra (oscuro) y Sand (claro)
+   ======================================== */
+
+/* ========================================
+   ESTILOS BASE DEL SISTEMA
+   ======================================== */
+html, body { 
+  height: 100%; 
+  margin: 0;
+  padding: 0;
+}
+
+body { 
+  -webkit-tap-highlight-color: transparent;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* ========================================
+   DEFINICIÓN DE TEMAS
+   ======================================== */
+
+/* TEMA OSCURO: PIEDRA */
+.theme-piedra {
+  --bg: #2a374e;
+  --fg: #e6e6e6;
+  --card-bg: #3c4a6e;
+  --muted: #a8b3c7;
+  --footer-bg: #1e2a3e;
+  --btn-bg: #4a5c7a;
+  --btn-fg: #ffffff;
+  --hover-bg: #5a6c8a;
+}
+
+/* TEMA CLARO: SAND */
+.theme-sand {
+  --bg: #faf7f0;
+  --fg: #3e2723;
+  --card-bg: #ffffff;
+  --muted: #5d4037;
+  --footer-bg: #efebe9;
+  --btn-bg: #5d4037;
+  --btn-fg: #ffffff;
+  --hover-bg: #3e2723;
+}
+
+/* ========================================
+   APLICACIÓN DE VARIABLES
+   ======================================== */
+
+/* Aplicar variables a todos los elementos */
+body {
+  background-color: var(--bg) !important;
+  color: var(--fg) !important;
+}
+
+.navbar {
+  background-color: var(--card-bg) !important;
+  border-bottom: 1px solid var(--muted);
+}
+
+.navbar-brand, .nav-link {
+  color: var(--fg) !important;
+}
+
+.container, .card, .btn {
+  background-color: var(--card-bg) !important;
+  color: var(--fg) !important;
+}
+
+.btn-primary {
+  background-color: var(--btn-bg) !important;
+  border-color: var(--btn-bg) !important;
+  color: var(--btn-fg) !important;
+}
+
+.btn-primary:hover {
+  background-color: var(--hover-bg) !important;
+  border-color: var(--hover-bg) !important;
+}
+
+.text-muted {
+  color: var(--muted) !important;
+}
+
+/* Footer */
+footer {
+  background-color: var(--footer-bg) !important;
+  color: var(--fg) !important;
+}
+
+/* Mensajes */
+.alert {
+  background-color: var(--card-bg) !important;
+  border-color: var(--muted) !important;
+  color: var(--fg) !important;
+}
+
+/* ========================================
+   BOTONES DE TEMA
+   ======================================== */
+.theme-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.85);
+  cursor: pointer;
+  display: inline-block;
+  transition: all 0.2s ease;
+  margin: 0 2px;
+}
+
+.theme-btn:hover {
+  transform: scale(1.1);
+  border-color: var(--btn-bg);
+}
+
+.theme-btn.piedra { background-color: #2a374e; }
+.theme-btn.sand { background-color: #faf7f0; }
+
+/* ========================================
+   NAVBAR HOVER SIMPLIFICADO
+   ======================================== */
+
+/* Hover para tema oscuro (Piedra) */
+.theme-piedra .nav-link:hover {
+  color: #ffffff !important;
+  background-color: transparent !important;
+  border: 2px solid rgba(60, 74, 106, 0.8) !important;
+  border-radius: 6px !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 8px rgba(60, 74, 106, 0.2) !important;
+}
+
+/* Hover para tema claro (Sand) */
+.theme-sand .nav-link:hover {
+  color: #ffffff !important;
+  background-color: #5d4037 !important;
+  border-radius: 5px !important;
+}
+
+/* ========================================
+   CARDS Y ELEMENTOS
+   ======================================== */
+
+/* Cards para tema oscuro */
+.theme-piedra .card {
+  background-color: var(--card-bg) !important;
+  color: var(--fg) !important;
+  border: 1px solid var(--muted) !important;
+}
+
+/* Cards para tema claro */
+.theme-sand .card {
+  background-color: var(--card-bg) !important;
+  color: var(--fg) !important;
+  border: 1px solid var(--muted) !important;
+}
+
+/* ========================================
+   BOTONES SIMPLIFICADOS
+   ======================================== */
+
+/* Botones para tema oscuro */
+.theme-piedra .btn {
+  background-color: var(--btn-bg) !important;
+  border-color: var(--btn-bg) !important;
+  color: var(--btn-fg) !important;
+}
+
+.theme-piedra .btn:hover {
+  background-color: var(--hover-bg) !important;
+  border-color: var(--hover-bg) !important;
+}
+
+/* Botones para tema claro */
+.theme-sand .btn {
+  background-color: var(--btn-bg) !important;
+  border-color: var(--btn-bg) !important;
+  color: var(--btn-fg) !important;
+}
+
+.theme-sand .btn:hover {
+  background-color: var(--hover-bg) !important;
+  border-color: var(--hover-bg) !important;
+}
+
+/* ========================================
+   TABLAS Y LISTAS
+   ======================================== */
+
+/* Títulos de tabla para tema oscuro */
+.theme-piedra .table thead th {
+  background-color: var(--btn-bg) !important;
+  color: var(--btn-fg) !important;
+}
+
+/* Títulos de tabla para tema claro */
+.theme-sand .table thead th {
+  background-color: var(--btn-bg) !important;
+  color: var(--btn-fg) !important;
+}
+
+/* ========================================
+   UTILIDADES
+   ======================================== */
+
+/* Forzar aplicación de tema en elementos específicos */
+.search-item .text-muted,
+.search-item small,
+.carrito-item .text-muted,
+.carrito-item small {
+  color: var(--muted) !important;
+}
+
+/* Mejorar contraste en tema claro */
+.theme-sand .stat-number {
+  color: var(--muted) !important;
+  font-weight: 700;
+}
+
+.theme-sand .vehiculo-cliente {
+  color: var(--muted) !important;
+  font-weight: 500;
+}
+
+
+
+
+
+
+

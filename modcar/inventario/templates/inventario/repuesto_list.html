@@ -1,0 +1,823 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}NetGoGo - Inventario de Repuestos{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+<style>
+    .repuestos-container {
+        max-width: 100%;
+        margin: 0;
+        padding: var(--spacing-md);
+    }
+    
+    .repuestos-header {
+        background: var(--gradient);
+        color: var(--btn-fg);
+        padding: var(--spacing-xl);
+        text-align: center;
+        border-radius: var(--border-radius-lg);
+        margin-bottom: 2rem;
+        box-shadow: var(--card-shadow);
+    }
+    
+    .repuestos-header h2 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .search-container {
+        background: var(--card-bg);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-lg);
+        margin-bottom: 2rem;
+        box-shadow: var(--card-shadow);
+    }
+    
+    .search-input {
+        border-radius: var(--border-radius);
+        border: 2px solid var(--muted);
+        background: var(--bg);
+        color: var(--fg);
+        padding: var(--spacing-md);
+        font-size: 1.1rem;
+        transition: var(--transition);
+    }
+    
+    .search-input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 0.2rem rgba(var(--accent), 0.25);
+        outline: none;
+    }
+    
+    .search-input::placeholder {
+        color: var(--muted);
+    }
+    
+    .table-container {
+        background: var(--card-bg);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-lg);
+        box-shadow: var(--card-shadow);
+        overflow: hidden;
+    }
+    
+    .table {
+        color: var(--fg);
+        margin-bottom: 0;
+        border-radius: var(--border-radius);
+        overflow: hidden;
+    }
+    
+    .table thead th {
+        background: var(--gradient);
+        color: var(--btn-fg);
+        border: none;
+        font-weight: 600;
+        padding: var(--spacing-md);
+        text-align: center;
+    }
+    
+    .table tbody tr {
+        border-bottom: 1px solid var(--muted);
+        transition: var(--transition);
+    }
+    
+    .table tbody tr:hover {
+        background-color: var(--hover-bg);
+        transform: scale(1.01);
+    }
+    
+    .btn-action {
+        border-radius: var(--border-radius);
+        padding: var(--spacing-sm) 0.75rem;
+        font-size: 0.85rem;
+        margin: 0 0.15rem;
+        min-width: 38px;
+        height: 38px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: var(--transition);
+        border: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    }
+    
+    .btn-group .btn-action {
+        margin: 0;
+        border-radius: 0;
+        border-right: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .btn-group .btn-action:first-child {
+        border-top-left-radius: 8px;
+        border-bottom-left-radius: 8px;
+    }
+    
+    .btn-group .btn-action:last-child {
+        border-top-right-radius: 8px;
+        border-bottom-right-radius: 8px;
+        border-right: none;
+    }
+    
+    
+    .table th, .table td {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 150px;
+    }
+    
+    .table th:nth-child(3), .table td:nth-child(3) { /* Nombre */
+        max-width: 200px;
+        white-space: normal;
+    }
+    
+    .table th:nth-child(7), .table td:nth-child(7) { /* Marca Vehículo */
+        max-width: 120px;
+    }
+    
+    .table th:nth-child(8), .table td:nth-child(8) { /* Acciones */
+        max-width: 200px;
+        min-width: 180px;
+    }
+    
+    
+    .ficha-modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+    }
+    
+    .ficha-content {
+        background-color: var(--card-bg);
+        margin: 2% auto;
+        padding: 20px;
+        border-radius: var(--border-radius-xl);
+        width: 95%;
+        max-width: 1200px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    
+    .ficha-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #4A90E2;
+    }
+    
+    .ficha-title {
+        color: #4A90E2;
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin: 0;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+    
+    .ficha-close {
+        color: #FF6B6B;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        background: none;
+        border: none;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+    
+    .ficha-close:hover {
+        color: #FF5252;
+        transform: scale(1.1);
+        transition: all 0.2s ease;
+    }
+    
+    .ficha-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+    }
+    
+    .ficha-field {
+        background: var(--hover-bg);
+        padding: 8px;
+        border-radius: 6px;
+        border-left: 3px solid #4A90E2;
+        min-height: 60px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .ficha-label {
+        font-weight: bold;
+        color: #4A90E2;
+        font-size: 0.8rem;
+        margin-bottom: 3px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+    
+    /* Color por defecto: oscuro para modo claro */
+    .ficha-value {
+        color: #212529;
+        font-size: 0.9rem;
+        word-break: break-word;
+        line-height: 1.2;
+        font-weight: 500;
+    }
+    
+    .ficha-value.empty {
+        color: #6c757d;
+        font-style: italic;
+        opacity: 0.8;
+    }
+    
+    /* Ajustes para esquemas oscuros */
+    @media (prefers-color-scheme: dark) {
+        .ficha-value {
+            color: #FFFFFF;
+        }
+        
+        .ficha-value.empty {
+            color: #CCCCCC;
+        }
+    }
+    
+    /* Ajustes adicionales basados en variables CSS del tema */
+    /* Modo oscuro - texto blanco */
+    .ficha-modal[data-theme="dark"] .ficha-value,
+    .ficha-modal.dark-theme .ficha-value,
+    .theme-dark .ficha-modal .ficha-value,
+    .theme-piedra .ficha-modal .ficha-value {
+        color: #FFFFFF !important;
+    }
+    
+    .ficha-modal[data-theme="dark"] .ficha-value.empty,
+    .ficha-modal.dark-theme .ficha-value.empty,
+    .theme-dark .ficha-modal .ficha-value.empty,
+    .theme-piedra .ficha-modal .ficha-value.empty {
+        color: #CCCCCC !important;
+    }
+    
+    /* Modo claro - texto oscuro (asegurar que se aplique) */
+    .ficha-modal[data-theme="light"] .ficha-value,
+    .ficha-modal.light-theme .ficha-value,
+    .theme-light .ficha-modal .ficha-value,
+    body:not(.theme-dark):not(.theme-piedra) .ficha-modal .ficha-value {
+        color: #212529 !important;
+    }
+    
+    .ficha-modal[data-theme="light"] .ficha-value.empty,
+    .ficha-modal.light-theme .ficha-value.empty,
+    .theme-light .ficha-modal .ficha-value.empty,
+    body:not(.theme-dark):not(.theme-piedra) .ficha-modal .ficha-value.empty {
+        color: #6c757d !important;
+    }
+    
+    /* Media queries para diferentes tamaños de pantalla */
+    @media (max-width: 1200px) {
+        .ficha-grid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+        .ficha-content {
+            max-width: 1000px;
+        }
+    }
+    
+    @media (max-width: 992px) {
+        .ficha-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        .ficha-content {
+            max-width: 800px;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .ficha-grid {
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+        .ficha-content {
+            width: 95%;
+            margin: 2% auto;
+            padding: 15px;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .repuestos-container {
+            padding: var(--spacing-xs);
+        }
+        
+        .search-container,
+        .table-container {
+            margin: var(--spacing-xs);
+            padding: 0.75rem;
+        }
+        
+        .stats-row {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+        }
+        
+        .table-responsive {
+            font-size: 0.7rem;
+        }
+        
+        .table th, .table td {
+            max-width: 80px;
+            font-size: 0.7rem;
+        }
+        
+        .table th:nth-child(3), .table td:nth-child(3) { /* Nombre */
+            max-width: 120px;
+        }
+        
+        .btn-action {
+            padding: 0.2rem 0.4rem;
+            font-size: 0.65rem;
+            min-width: 32px;
+            height: 32px;
+        }
+        
+        .table th:nth-child(8), .table td:nth-child(8) { /* Acciones en móvil */
+            max-width: 140px;
+            min-width: 120px;
+        }
+        
+        .ficha-field {
+            padding: 8px;
+        }
+        
+        .ficha-label {
+            font-size: 0.8rem;
+        }
+        
+        .ficha-value {
+            font-size: 0.85rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="repuestos-container">
+    <!-- Header -->
+    <div class="repuestos-header">
+        <h2 class="mb-0">🛒 NetGoGo - Inventario</h2>
+        <p class="mb-0">Gestiona tu inventario de repuestos automotrices</p>
+    </div>
+
+
+    <!-- Barra de búsqueda -->
+    <div class="search-container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" 
+                           id="search-repuestos" 
+                           class="form-control search-input" 
+                           placeholder="🔍 Buscar por nombre, SKU, código de barras, marca, OEM, origen, marca vehículo, tipo motor, carrocería..."
+                           autocomplete="off">
+                </div>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'repuesto_create' %}" class="btn btn-primary btn-action">
+                    <i class="fas fa-plus me-2"></i>Nuevo Repuesto
+                </a>
+                <a href="javascript:history.back()" class="btn btn-outline-secondary btn-action">
+                    <i class="fas fa-arrow-left me-2"></i>Volver
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de repuestos -->
+    <div class="table-container">
+        <div class="table-responsive">
+            <table class="table" id="repuestos-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>SKU</th>
+                        <th>Nombre</th>
+                        <th>Marca</th>
+                        <th>Marca Vehículo</th>
+                        <th>Stock</th>
+                        <th>Precio Venta</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="repuestos-tbody">
+                    {% for repuesto in repuestos %}
+                    <tr class="repuesto-row" 
+                        data-id="{{ repuesto.id }}"
+                        data-sku="{{ repuesto.sku|default:'' }}"
+                        data-nombre="{{ repuesto.nombre|lower }}"
+                        data-marca="{{ repuesto.marca|lower }}"
+                        data-oem="{{ repuesto.oem|default:''|lower }}"
+                        data-codigo-barra="{{ repuesto.codigo_barra|default:''|lower }}"
+                        data-origen="{{ repuesto.origen_repuesto|default:''|lower }}"
+                        data-codigo-proveedor="{{ repuesto.cod_prov|default:''|lower }}"
+                        data-marca-vehiculo="{{ repuesto.marca_veh|default:''|lower }}"
+                        data-tipo-motor="{{ repuesto.tipo_de_motor|default:''|lower }}"
+                        data-carroceria="{{ repuesto.carroceria|default:''|lower }}">
+                        <td>{{ repuesto.id }}</td>
+                        <td>{{ repuesto.sku|default:"-" }}</td>
+                        <td>{{ repuesto.nombre }}</td>
+                        <td>{{ repuesto.marca|default:"-" }}</td>
+                        <td>{{ repuesto.marca_veh|default:"-" }}</td>
+                        <td>
+                            <span class="badge {% if repuesto.stock_total > 0 %}bg-success text-inverse{% else %}bg-danger text-inverse{% endif %}">
+                                {{ repuesto.stock_total }}
+                            </span>
+                        </td>
+                        <td>${{ repuesto.precio_venta|default:"0"|floatformat:0|intcomma }}</td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'repuesto_update' repuesto.pk %}" class="btn btn-warning btn-action" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button class="btn btn-info btn-action" title="Ver Ficha" onclick="mostrarFicha({{ repuesto.id }})">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <a href="{% url 'repuesto_compatibilidad' repuesto.pk %}" class="btn btn-success btn-action" title="Compatibilidad">
+                                    <i class="fas fa-link"></i>
+                                </a>
+                                <a href="{% url 'repuesto_delete' repuesto.pk %}" class="btn btn-danger btn-action" title="Eliminar">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center text-secondary">No hay repuestos registrados.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Ficha de Repuesto -->
+<div id="ficha-modal" class="ficha-modal">
+    <div class="ficha-content">
+        <div class="ficha-header">
+            <h3 class="ficha-title">📦 Ficha del Repuesto</h3>
+            <button class="ficha-close" onclick="cerrarFicha()">&times;</button>
+        </div>
+        <div id="ficha-content-body">
+            <!-- El contenido se llenará dinámicamente -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Datos de repuestos para el modal de ficha
+let repuestosData = {};
+try {
+    repuestosData = {
+        {% for repuesto in repuestos %}
+        {{ repuesto.id }}: {
+            id: {{ repuesto.id }},
+            sku: "{{ repuesto.sku|default:'-'|escapejs }}",
+            oem: "{{ repuesto.oem|default:'-'|escapejs }}",
+            referencia: "{{ repuesto.referencia|default:'-'|escapejs }}",
+            nombre: "{{ repuesto.nombre|escapejs }}",
+            marca: "{{ repuesto.marca|default:'-'|escapejs }}",
+            descripcion: "{{ repuesto.descripcion|default:'-'|escapejs }}",
+            medida: "{{ repuesto.medida|default:'-'|escapejs }}",
+            posicion: "{{ repuesto.posicion|default:'-'|escapejs }}",
+            unidad: "{{ repuesto.unidad|default:'-'|escapejs }}",
+            precio_costo: "{{ repuesto.precio_costo|default:'0'|floatformat:0|intcomma|escapejs }}",
+            precio_venta: "{{ repuesto.precio_venta|default:'0'|floatformat:0|intcomma|escapejs }}",
+            codigo_barra: "{{ repuesto.codigo_barra|default:'-'|escapejs }}",
+            origen_repuesto: "{{ repuesto.origen_repuesto|default:'-'|escapejs }}",
+            cod_prov: "{{ repuesto.cod_prov|default:'-'|escapejs }}",
+            marca_veh: "{{ repuesto.marca_veh|default:'-'|escapejs }}",
+            tipo_de_motor: "{{ repuesto.tipo_de_motor|default:'-'|escapejs }}",
+            stock_total: {{ repuesto.stock_total|default:0 }},
+            created: "{{ repuesto.created|date:'d/m/Y H:i'|escapejs }}"
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    };
+} catch (e) {
+    console.error('❌ Error cargando datos de repuestos para el modal:', e);
+    repuestosData = {};
+}
+
+// Función para detectar el tema actual
+function detectarTema() {
+    const body = document.body;
+    
+    // Primero verificar clases del body (más confiable)
+    if (body.classList.contains('theme-dark') || body.classList.contains('theme-piedra')) {
+        return 'dark';
+    }
+    if (body.classList.contains('theme-light') || body.classList.contains('theme-sand')) {
+        return 'light';
+    }
+    
+    // Si no hay clases, intentar detectar por color de fondo
+    const computedStyle = getComputedStyle(body);
+    const bgColor = computedStyle.backgroundColor;
+    
+    // Convertir RGB a HSL para detectar si es oscuro
+    const rgb = bgColor.match(/\d+/g);
+    if (rgb) {
+        const r = parseInt(rgb[0]) / 255;
+        const g = parseInt(rgb[1]) / 255;
+        const b = parseInt(rgb[2]) / 255;
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        const lightness = (max + min) / 2;
+        
+        return lightness < 0.5 ? 'dark' : 'light';
+    }
+    
+    return 'light'; // Por defecto
+}
+
+// Función para mostrar ficha del repuesto
+function mostrarFicha(repuestoId) {
+    try {
+        console.log('Mostrando ficha para repuesto ID:', repuestoId);
+        const repuesto = repuestosData[repuestoId];
+        if (!repuesto) {
+            console.error('No se encontró el repuesto con ID:', repuestoId);
+            alert('No se pudo cargar la información del repuesto');
+            return;
+        }
+        
+        const modal = document.getElementById('ficha-modal');
+        const contentBody = document.getElementById('ficha-content-body');
+        
+        if (!modal || !contentBody) {
+            console.error('No se encontraron los elementos del modal');
+            return;
+        }
+        
+        // Detectar y aplicar tema
+        const tema = detectarTema();
+        modal.setAttribute('data-theme', tema);
+        if (tema === 'dark') {
+            modal.classList.add('dark-theme');
+            modal.classList.remove('light-theme');
+        } else {
+            modal.classList.add('light-theme');
+            modal.classList.remove('dark-theme');
+        }
+        
+        // Crear contenido de la ficha
+        contentBody.innerHTML = `
+        <div class="ficha-grid">
+            <div class="ficha-field">
+                <div class="ficha-label">ID</div>
+                <div class="ficha-value">${repuesto.id}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">SKU</div>
+                <div class="ficha-value ${repuesto.sku === '-' ? 'empty' : ''}">${repuesto.sku}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Marca</div>
+                <div class="ficha-value ${repuesto.marca === '-' ? 'empty' : ''}">${repuesto.marca}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Referencia</div>
+                <div class="ficha-value ${repuesto.referencia === '-' ? 'empty' : ''}">${repuesto.referencia}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Nombre</div>
+                <div class="ficha-value">${repuesto.nombre}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Marca</div>
+                <div class="ficha-value ${repuesto.marca === '-' ? 'empty' : ''}">${repuesto.marca}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Descripción</div>
+                <div class="ficha-value ${repuesto.descripcion === '-' ? 'empty' : ''}">${repuesto.descripcion}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Medida</div>
+                <div class="ficha-value ${repuesto.medida === '-' ? 'empty' : ''}">${repuesto.medida}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Posición</div>
+                <div class="ficha-value ${repuesto.posicion === '-' ? 'empty' : ''}">${repuesto.posicion}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Unidad</div>
+                <div class="ficha-value ${repuesto.unidad === '-' ? 'empty' : ''}">${repuesto.unidad}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Precio Costo</div>
+                <div class="ficha-value">$${repuesto.precio_costo}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Precio Venta</div>
+                <div class="ficha-value">$${repuesto.precio_venta}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Código de Barras</div>
+                <div class="ficha-value ${repuesto.codigo_barra === '-' ? 'empty' : ''}">${repuesto.codigo_barra}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Origen</div>
+                <div class="ficha-value ${repuesto.origen_repuesto === '-' ? 'empty' : ''}">${repuesto.origen_repuesto}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Código Proveedor</div>
+                <div class="ficha-value ${repuesto.cod_prov === '-' ? 'empty' : ''}">${repuesto.cod_prov}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Marca Vehículo</div>
+                <div class="ficha-value ${repuesto.marca_veh === '-' ? 'empty' : ''}">${repuesto.marca_veh}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Tipo de Motor</div>
+                <div class="ficha-value ${repuesto.tipo_de_motor === '-' ? 'empty' : ''}">${repuesto.tipo_de_motor}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Stock Total</div>
+                <div class="ficha-value">
+                    <span class="badge ${repuesto.stock_total > 0 ? 'bg-success text-inverse' : 'bg-danger text-inverse'}">
+                        ${repuesto.stock_total}
+                    </span>
+                </div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Fecha Creación</div>
+                <div class="ficha-value">${repuesto.created}</div>
+            </div>
+        </div>
+    `;
+    
+        modal.style.display = 'block';
+    } catch (error) {
+        console.error('❌ Error mostrando ficha del repuesto:', error);
+        alert('Error al mostrar la información del repuesto');
+    }
+}
+
+// Función para cerrar ficha
+function cerrarFicha() {
+    document.getElementById('ficha-modal').style.display = 'none';
+}
+
+// Cerrar modal al hacer clic fuera de él
+window.onclick = function(event) {
+    const modal = document.getElementById('ficha-modal');
+    if (event.target === modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Función de búsqueda en tiempo real
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        const searchInput = document.getElementById('search-repuestos');
+        if (!searchInput) {
+            console.error('❌ No se encontró el input de búsqueda');
+            return;
+        }
+        
+        const repuestosRows = document.querySelectorAll('.repuesto-row');
+        const tbody = document.getElementById('repuestos-tbody');
+        
+        if (!tbody) {
+            console.error('❌ No se encontró el tbody de la tabla');
+            return;
+        }
+        
+        console.log('✅ Búsqueda inicializada. Repuestos encontrados:', repuestosRows.length);
+        
+        // Función para filtrar repuestos
+        function filtrarRepuestos(termino) {
+            try {
+                console.log('🔍 Buscando:', termino);
+                const terminoLower = termino.toLowerCase();
+                let repuestosVisibles = 0;
+                
+                repuestosRows.forEach(row => {
+                    try {
+                        const id = row.dataset.id || '';
+                        const sku = row.dataset.sku || '';
+                        const nombre = row.dataset.nombre || '';
+                        const marca = row.dataset.marca || '';
+                        const oem = row.dataset.oem || '';
+                        const codigoBarra = row.dataset.codigoBarra || '';
+                        const origen = row.dataset.origen || '';
+                        const codigoProveedor = row.dataset.codigoProveedor || '';
+                        const marcaVehiculo = row.dataset.marcaVehiculo || '';
+                        const tipoMotor = row.dataset.tipoMotor || '';
+                        const carroceria = row.dataset.carroceria || '';
+                        
+                        // Búsqueda simple y directa (case-insensitive)
+                        const coincide = (id && id.toLowerCase().includes(terminoLower)) || 
+                                       (sku && sku.toLowerCase().includes(terminoLower)) || 
+                                       (nombre && nombre.toLowerCase().includes(terminoLower)) || 
+                                       (marca && marca.toLowerCase().includes(terminoLower)) ||
+                                       (oem && oem.toLowerCase().includes(terminoLower)) ||
+                                       (codigoBarra && codigoBarra.toLowerCase().includes(terminoLower)) ||
+                                       (origen && origen.toLowerCase().includes(terminoLower)) ||
+                                       (codigoProveedor && codigoProveedor.toLowerCase().includes(terminoLower)) ||
+                                       (marcaVehiculo && marcaVehiculo.toLowerCase().includes(terminoLower)) ||
+                                       (tipoMotor && tipoMotor.toLowerCase().includes(terminoLower)) ||
+                                       (carroceria && carroceria.toLowerCase().includes(terminoLower));
+                        
+                        if (coincide) {
+                            row.style.display = '';
+                            repuestosVisibles++;
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    } catch (rowError) {
+                        console.error('Error procesando fila:', rowError);
+                        row.style.display = 'none';
+                    }
+                });
+                
+                console.log('📊 Repuestos visibles:', repuestosVisibles);
+                
+                // Mostrar mensaje si no hay resultados
+                if (repuestosVisibles === 0 && termino.length > 0) {
+                    if (!document.getElementById('no-results-message')) {
+                        const noResultsRow = document.createElement('tr');
+                        noResultsRow.id = 'no-results-message';
+                        noResultsRow.innerHTML = `
+                            <td colspan="8" class="text-center text-secondary">
+                                🔍 No se encontraron repuestos que coincidan con "${termino.replace(/"/g, '&quot;')}"
+                            </td>
+                        `;
+                        tbody.appendChild(noResultsRow);
+                    }
+                } else {
+                    const noResultsMessage = document.getElementById('no-results-message');
+                    if (noResultsMessage) {
+                        noResultsMessage.remove();
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Error en filtrarRepuestos:', error);
+            }
+        }
+        
+        // Event listener para la búsqueda con debounce
+        let searchTimeout;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                const termino = this.value.trim();
+                filtrarRepuestos(termino);
+            }, 150); // Debounce de 150ms
+        });
+        
+        // Limpiar búsqueda con Escape
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                this.value = '';
+                filtrarRepuestos('');
+                this.blur();
+            }
+        });
+        
+        // Auto-focus en la búsqueda
+        searchInput.focus();
+    } catch (error) {
+        console.error('❌ Error inicializando búsqueda:', error);
+    }
+});
+
+</script>
+{% endblock %}

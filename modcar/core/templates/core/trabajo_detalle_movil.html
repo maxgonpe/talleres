@@ -1,0 +1,1478 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block mobile_components %}
+  {% include 'car/mobile_bottom_nav.html' %}
+  {% include 'car/mobile_fab.html' %}
+{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+{% endblock %}
+
+{% block title %}Trabajo #{{ trabajo.id }} - Móvil{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* ==================== ESTILOS MÓVILES ==================== */
+    body {
+        padding-bottom: 80px; /* Espacio para navegación inferior */
+    }
+    
+    .trabajo-movil-container {
+        max-width: 100%;
+        margin: 0;
+        padding: 0.5rem;
+    }
+    
+    /* Header fijo */
+    .trabajo-header-movil {
+        background: linear-gradient(135deg, var(--accent) 0%, var(--primary-600) 100%);
+        color: white;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 0.75rem;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .trabajo-header-movil h3 {
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin: 0;
+        margin-bottom: 0.25rem;
+    }
+    
+    .trabajo-header-movil p {
+        font-size: 0.9rem;
+        margin: 0;
+        opacity: 0.95;
+    }
+    
+    /* Estado badge */
+    .estado-badge-movil {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 1.5rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+    }
+    
+    .estado-iniciado { background: #ffc107; color: #000; }
+    .estado-trabajando { background: #0d6efd; color: #fff; }
+    .estado-completado { background: #198754; color: #fff; }
+    .estado-entregado { background: #6c757d; color: #fff; }
+    
+    /* Barra de progreso */
+    .progress-movil {
+        width: 100%;
+        height: 1.5rem;
+        background: rgba(255,255,255,0.3);
+        border-radius: 1rem;
+        margin-top: 0.5rem;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .progress-fill-movil {
+        height: 100%;
+        background: rgba(255,255,255,0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: #000;
+        transition: width 0.3s ease;
+    }
+    
+    /* Navegación rápida - botones grandes */
+    .nav-rapida {
+        display: none; /* Oculto - no se usa */
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .nav-btn {
+        background: var(--card-bg);
+        border: 2px solid var(--border-color);
+        border-radius: 0.75rem;
+        padding: 1rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--fg);
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .nav-btn:active {
+        transform: scale(0.98);
+        background: var(--hover-bg);
+    }
+    
+    /* Cards de sección - estilo acordeón */
+    .section-card {
+        background: var(--card-bg);
+        border-radius: 0.75rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+    }
+    
+    .section-header {
+        padding: 1rem;
+        background: var(--bg-secondary);
+        border-bottom: 2px solid var(--border-color);
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+    
+    .section-header:active {
+        background: var(--hover-bg);
+    }
+    
+    .section-icon {
+        font-size: 1.5rem;
+        margin-right: 0.5rem;
+    }
+    
+    .section-toggle {
+        font-size: 1.2rem;
+        transition: transform 0.3s;
+    }
+    
+    .section-card.expanded .section-toggle {
+        transform: rotate(180deg);
+    }
+    
+    .section-content {
+        display: none;
+        padding: 1rem;
+    }
+    
+    .section-card.expanded .section-content {
+        display: block;
+    }
+    
+    /* Item cards - acciones y repuestos */
+    .item-card-movil {
+        background: var(--muted);
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        border-left: 4px solid var(--accent);
+    }
+    
+    .item-card-movil.completado {
+        background: #d4edda;
+        border-left-color: #198754;
+    }
+    
+    .item-card-movil.pendiente {
+        background: #fff3cd;
+        border-left-color: #ffc107;
+    }
+    
+    .item-header-movil {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 0.5rem;
+    }
+    
+    .item-title-movil {
+        font-weight: 600;
+        font-size: 1rem;
+        flex: 1;
+    }
+    
+    .item-status-movil {
+        font-size: 0.85rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+    }
+    
+    .item-details-movil {
+        font-size: 0.9rem;
+        color: var(--muted);
+        margin-top: 0.25rem;
+    }
+    
+    .item-price-movil {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #198754;
+        margin-top: 0.5rem;
+    }
+    
+    /* Botones de acción grandes */
+    .btn-action-movil {
+        width: 100%;
+        padding: 1rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border-radius: 0.75rem;
+        margin-bottom: 0.5rem;
+        border: 2px solid;
+        transition: all 0.2s;
+    }
+    
+    .btn-action-movil:active {
+        transform: scale(0.98);
+    }
+    
+    .btn-toggle-movil {
+        min-width: 80px;
+        padding: 0.75rem;
+        font-size: 1rem;
+        font-weight: 600;
+        border-radius: 0.5rem;
+        border: 2px solid;
+    }
+    
+    .btn-toggle-movil.completado {
+        background: #198754;
+        border-color: #198754;
+        color: white;
+    }
+    
+    .btn-toggle-movil.pendiente {
+        background: #ffc107;
+        border-color: #ffc107;
+        color: #000;
+    }
+    
+    /* Formularios móviles */
+    .form-group-movil {
+        margin-bottom: 1rem;
+    }
+    
+    .form-label-movil {
+        font-weight: 600;
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+        display: block;
+        color: var(--fg);
+    }
+    
+    .form-control-movil {
+        width: 100%;
+        padding: 0.75rem;
+        font-size: 1rem;
+        border: 2px solid var(--border-color);
+        border-radius: 0.5rem;
+        background: var(--bg);
+        color: var(--fg);
+    }
+    
+    .form-control-movil:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+    }
+    
+    /* Info rows */
+    .info-row-movil {
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .info-row-movil:last-child {
+        border-bottom: none;
+    }
+    
+    .info-label-movil {
+        font-weight: 600;
+        color: var(--accent);
+        font-size: 0.9rem;
+    }
+    
+    .info-value-movil {
+        color: var(--fg);
+        font-size: 1rem;
+        margin-top: 0.25rem;
+    }
+    
+    /* Grid de fotos */
+    .fotos-grid-movil {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+    
+    .foto-item-movil {
+        border-radius: 0.5rem;
+        overflow: hidden;
+        position: relative;
+        background: var(--bg-secondary);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .foto-item-movil img {
+        width: 100%;
+        aspect-ratio: 1;
+        object-fit: cover;
+        display: block;
+    }
+    
+    .foto-descripcion-movil {
+        padding: 0.5rem;
+        font-size: 0.85rem;
+        color: var(--fg);
+        background: var(--bg-secondary);
+        border-top: 1px solid var(--border-color);
+    }
+    
+    .foto-item-movil img {
+        cursor: pointer;
+    }
+    
+    /* Modal para fotos expandidas (móvil) */
+    .foto-modal {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.95);
+        overflow: auto;
+    }
+    
+    .foto-modal.active {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .foto-modal-content {
+        position: relative;
+        max-width: 95%;
+        max-height: 95%;
+        margin: auto;
+        padding: 1rem;
+    }
+    
+    .foto-modal-content img {
+        width: 100%;
+        height: auto;
+        max-height: 85vh;
+        object-fit: contain;
+        border-radius: 0.5rem;
+    }
+    
+    .foto-modal-close {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        color: #fff;
+        font-size: 2rem;
+        font-weight: bold;
+        cursor: pointer;
+        background: rgba(0,0,0,0.7);
+        border: none;
+        border-radius: 50%;
+        width: 45px;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+    }
+    
+    .foto-modal-close:hover {
+        background: rgba(0,0,0,0.9);
+    }
+    
+    .foto-modal-descripcion {
+        color: #fff;
+        text-align: center;
+        padding: 1rem;
+        font-size: 1rem;
+        background: rgba(0,0,0,0.7);
+        border-radius: 0.5rem;
+        margin-top: 1rem;
+    }
+    
+    /* Badges de estado botones */
+    .estado-btn-movil {
+        width: 100%;
+        padding: 1rem;
+        font-size: 1rem;
+        font-weight: 600;
+        border-radius: 0.75rem;
+        margin-bottom: 0.5rem;
+        border: 3px solid;
+        transition: all 0.2s;
+    }
+    
+    .estado-btn-movil.active {
+        background: var(--btn-bg);
+        color: white;
+        border-color: var(--btn-bg);
+    }
+    
+    /* Botón flotante para scroll arriba */
+    .scroll-top-btn {
+        position: fixed;
+        bottom: 90px;
+        right: 1rem;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: var(--accent);
+        color: white;
+        border: none;
+        font-size: 1.5rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 99;
+        display: none;
+    }
+    
+    .scroll-top-btn.show {
+        display: block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="trabajo-movil-container">
+    <!-- Header Fijo -->
+    <div class="trabajo-header-movil">
+        <h3>🔧 Trabajo #{{ trabajo.id }}</h3>
+        <p>{{ trabajo.vehiculo }}</p>
+        <p style="font-size: 0.85rem;">{{ trabajo.vehiculo.cliente.nombre }}</p>
+        
+        <div class="estado-badge-movil estado-{{ trabajo.estado }}">
+            {% if trabajo.estado == 'iniciado' %}🟡 Iniciado
+            {% elif trabajo.estado == 'trabajando' %}🔵 Trabajando
+            {% elif trabajo.estado == 'completado' %}🟢 Completado
+            {% elif trabajo.estado == 'entregado' %}⚫ Entregado
+            {% endif %}
+        </div>
+        
+        <div class="progress-movil">
+            <div class="progress-fill-movil" style="width: {{ trabajo.porcentaje_avance }}%;">
+                {{ trabajo.porcentaje_avance }}%
+            </div>
+        </div>
+    </div>
+    
+           <!-- Navegación Rápida -->
+           <div class="nav-rapida">
+               <button class="nav-btn" onclick="scrollToSection('info')">📋 Info</button>
+               <button class="nav-btn" onclick="scrollToSection('acciones')">🛠️ Acciones</button>
+               <button class="nav-btn" onclick="scrollToSection('repuestos')">🔧 Repuestos</button>
+               <button class="nav-btn" onclick="scrollToSection('insumos')">📦 Insumos</button>
+               <button class="nav-btn" onclick="scrollToSection('adicionales')">➕ Adicionales</button>
+               <button class="nav-btn" onclick="scrollToSection('fotos')">📷 Fotos</button>
+               <button class="nav-btn" onclick="scrollToSection('abonos')">💵 Abonos</button>
+               <button class="nav-btn" onclick="scrollToSection('estado')">⚡ Estado</button>
+           </div>
+    
+    <!-- ==================== SECCIÓN: INFO ==================== -->
+    <div class="section-card" id="section-info" data-section="info">
+        <div class="section-header" onclick="toggleSection('info')">
+            <span><span class="section-icon">📋</span> Información del Trabajo</span>
+            <span class="section-toggle">▼</span>
+        </div>
+        <div class="section-content">
+            <div class="info-row-movil">
+                <div class="info-label-movil">Cliente:</div>
+                <div class="info-value-movil">{{ trabajo.vehiculo.cliente.nombre }}</div>
+            </div>
+            <div class="info-row-movil">
+                <div class="info-label-movil">Teléfono:</div>
+                <div class="info-value-movil">{{ trabajo.vehiculo.cliente.telefono }}</div>
+            </div>
+            <div class="info-row-movil">
+                <div class="info-label-movil">Vehículo:</div>
+                <div class="info-value-movil">{{ trabajo.vehiculo.marca }} {{ trabajo.vehiculo.modelo }} {{ trabajo.vehiculo.anio }}</div>
+            </div>
+            <div class="info-row-movil">
+                <div class="info-label-movil">Placa:</div>
+                <div class="info-value-movil"><strong>{{ trabajo.vehiculo.placa }}</strong></div>
+            </div>
+            <div class="info-row-movil">
+                <div class="info-label-movil">Fecha Inicio:</div>
+                <div class="info-value-movil">{{ trabajo.fecha_inicio|date:"d/m/Y H:i"|default:"No iniciado" }}</div>
+            </div>
+            <div class="info-row-movil">
+                <div class="info-label-movil">Fecha Fin:</div>
+                <div class="info-value-movil">{{ trabajo.fecha_fin|date:"d/m/Y H:i"|default:"En progreso" }}</div>
+            </div>
+            
+            <hr style="margin: 1rem 0;">
+            
+            <!-- Resumen Financiero -->
+            <h5 style="font-weight: 600; margin-bottom: 0.75rem;">💰 Resumen Financiero</h5>
+            <div class="info-row-movil">
+                <div class="info-label-movil" style="font-size: 0.9rem; color: #6c757d;">Mano de Obra:</div>
+                <div class="info-value-movil">${{ trabajo.total_mano_obra|default:0|floatformat:0|intcomma }}</div>
+            </div>
+            <div class="info-row-movil">
+                <div class="info-label-movil" style="font-size: 0.9rem; color: #6c757d;">Repuestos:</div>
+                <div class="info-value-movil">${{ trabajo.total_repuestos|default:0|floatformat:0|intcomma }}</div>
+            </div>
+            {% if trabajo.total_adicionales > 0 %}
+            <div class="info-row-movil">
+                <div class="info-label-movil" style="font-size: 0.9rem; color: #6c757d;">Adicionales:</div>
+                <div class="info-value-movil">${{ trabajo.total_adicionales|default:0|floatformat:0|intcomma }}</div>
+            </div>
+            {% endif %}
+            <div class="info-row-movil" style="border-top: 2px solid #dee2e6; padding-top: 0.5rem; margin-top: 0.5rem;">
+                <div class="info-label-movil">Total Presupuesto:</div>
+                <div class="info-value-movil" style="color: #0d6efd; font-weight: 700;">${{ trabajo.total_presupuesto|default:0|floatformat:0|intcomma }}</div>
+            </div>
+            <div class="info-row-movil">
+                <div class="info-label-movil">Total Ejecutado:</div>
+                <div class="info-value-movil" style="color: #198754; font-weight: 700;">${{ trabajo.total_realizado|default:0|floatformat:0|intcomma }}</div>
+            </div>
+            <div class="info-row-movil">
+                <div class="info-label-movil">Total Abonos:</div>
+                <div class="info-value-movil" style="color: #ffc107; font-weight: 700;">${{ trabajo.total_abonos|default:0|floatformat:0|intcomma }}</div>
+            </div>
+            <div class="info-row-movil" style="background: {% if trabajo.saldo_pendiente > 0 %}#fff3cd{% else %}#d1e7dd{% endif %}; padding: 0.75rem; border-radius: 0.5rem; margin-top: 0.5rem;">
+                <div class="info-label-movil" style="font-size: 1.1rem; color: {% if trabajo.saldo_pendiente > 0 %}#dc3545{% else %}#198754{% endif %};">
+                    Saldo Pendiente:
+                </div>
+                <div class="info-value-movil" style="font-size: 1.3rem; font-weight: 700; color: {% if trabajo.saldo_pendiente > 0 %}#dc3545{% else %}#198754{% endif %};">
+                    ${{ trabajo.saldo_pendiente|default:0|floatformat:0|intcomma }}
+                </div>
+            </div>
+            
+            <hr style="margin: 1rem 0;">
+            
+            <!-- Observaciones -->
+            <h5 style="font-weight: 600; margin-bottom: 0.75rem;">📝 Observaciones</h5>
+            <form method="post">
+                {% csrf_token %}
+                <textarea name="observaciones" class="form-control-movil" rows="4" 
+                          placeholder="Agregar observaciones...">{{ trabajo.observaciones|default:"" }}</textarea>
+                <button type="submit" name="guardar_observaciones" class="btn-action-movil btn btn-primary">
+                    💾 Guardar Observaciones
+                </button>
+            </form>
+            
+            <!-- Kilometraje -->
+            <h5 style="font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.75rem;">🚗 Kilometraje</h5>
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group-movil">
+                    <label class="form-label-movil">Lectura del Odómetro (km)</label>
+                    <input type="number" name="lectura_kilometraje_actual" 
+                           class="form-control-movil" 
+                           value="{{ trabajo.lectura_kilometraje_actual|default:'' }}"
+                           placeholder="Ej: 45000">
+                </div>
+                <button type="submit" name="guardar_kilometraje" class="btn-action-movil btn btn-primary">
+                    💾 Guardar Kilometraje
+                </button>
+            </form>
+            
+            <!-- Mecánicos -->
+            <h5 style="font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.75rem;">👷 Mecánicos</h5>
+            {% if trabajo.mecanicos.exists %}
+                {% for mec in trabajo.mecanicos.all %}
+                    <div class="item-card-movil" style="margin-bottom: 0.5rem;">
+                        <strong>{{ mec.user.get_full_name|default:mec.user.first_name }}</strong>
+                        {% if mec.especialidad %}
+                            <div style="font-size: 0.9rem; color: var(--muted);">{{ mec.especialidad }}</div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p style="color: var(--muted);">No hay mecánicos asignados</p>
+            {% endif %}
+            
+            <form method="post" style="margin-top: 1rem;">
+                {% csrf_token %}
+                <div class="form-group-movil">
+                    <label class="form-label-movil">Asignar Mecánicos:</label>
+                    {{ asignar_form.mecanicos }}
+                </div>
+                <button type="submit" name="asignar_mecanicos" class="btn-action-movil btn btn-primary">
+                    👷 Asignar Mecánicos
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- ==================== SECCIÓN: ACCIONES ==================== -->
+    <div class="section-card" id="section-acciones" data-section="acciones">
+        <div class="section-header" onclick="toggleSection('acciones')">
+            <span><span class="section-icon">🛠️</span> Acciones</span>
+            <span class="section-toggle">▼</span>
+        </div>
+        <div class="section-content">
+            <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1rem;">
+                Total: {{ trabajo.acciones.count }} | 
+                Completadas: {{ trabajo.acciones.filter.completado|length }} | 
+                Pendientes: {{ trabajo.acciones.exclude.completado|length }}
+            </p>
+            
+            <!-- Lista de acciones -->
+            {% for accion in trabajo.acciones.all %}
+                <div class="item-card-movil {% if accion.completado %}completado{% else %}pendiente{% endif %}">
+                    <div class="item-header-movil">
+                        <div class="item-title-movil">
+                            <strong>{{ accion.componente.nombre }}</strong>
+                            <div class="item-details-movil">
+                                {{ accion.accion.nombre }}
+                                {% if accion.cantidad > 1 %}
+                                    <span class="badge bg-info" style="margin-left: 0.5rem;">Cant: {{ accion.cantidad }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <span class="item-status-movil {% if accion.completado %}completado{% else %}pendiente{% endif %}">
+                            {% if accion.completado %}✅{% else %}⏳{% endif %}
+                        </span>
+                    </div>
+                    {% if accion.cantidad > 1 %}
+                    <div style="font-size: 0.85rem; color: var(--muted); margin-top: 0.25rem;">
+                        Unitario: ${{ accion.precio_mano_obra|default:0|floatformat:0|intcomma }} × {{ accion.cantidad }} =
+                    </div>
+                    {% endif %}
+                    <div class="item-price-movil">
+                        💰 ${{ accion.subtotal|default:0|floatformat:0|intcomma }}
+                        {% if accion.cantidad == 1 %}
+                            <small style="color: var(--muted); font-size: 0.8rem;">(unitario)</small>
+                        {% endif %}
+                    </div>
+                    <!-- Formulario para editar cantidad -->
+                    <form method="post" style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.5rem; margin-bottom: 0.5rem;" onsubmit="return confirm('¿Actualizar cantidad?')">
+                        {% csrf_token %}
+                        <input type="hidden" name="accion_id" value="{{ accion.id }}">
+                        <label style="font-size: 0.85rem; color: var(--muted); white-space: nowrap;">Cantidad:</label>
+                        <input type="number" 
+                               name="cantidad_accion" 
+                               value="{{ accion.cantidad }}" 
+                               min="1" 
+                               step="1"
+                               style="flex: 1; max-width: 80px; padding: 0.5rem; text-align: center; border: 1px solid var(--border-color); border-radius: 0.5rem;"
+                               required>
+                        <button type="submit" name="editar_cantidad_accion" class="btn btn-sm btn-outline-primary" style="padding: 0.5rem 1rem;">
+                            ✏️
+                        </button>
+                    </form>
+                    <!-- Formulario para editar precio -->
+                    <form method="post" style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.5rem; margin-bottom: 0.5rem;" onsubmit="return confirm('¿Actualizar precio? Este cambio solo afectará a este trabajo.')">
+                        {% csrf_token %}
+                        <input type="hidden" name="accion_id" value="{{ accion.id }}">
+                        <label style="font-size: 0.85rem; color: var(--muted); white-space: nowrap;">Precio:</label>
+                        <input type="number" 
+                               name="precio_accion" 
+                               value="{{ accion.precio_mano_obra|default:0|floatformat:0 }}" 
+                               min="0" 
+                               step="0.01"
+                               style="flex: 1; max-width: 100px; padding: 0.5rem; text-align: center; border: 1px solid var(--border-color); border-radius: 0.5rem;"
+                               required>
+                        <button type="submit" name="editar_precio_accion" class="btn btn-sm btn-outline-success" style="padding: 0.5rem 1rem;">
+                            💰
+                        </button>
+                    </form>
+                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                        <form method="post" style="flex: 1;">
+                            {% csrf_token %}
+                            <input type="hidden" name="accion_toggle" value="{{ accion.id }}">
+                            <button type="submit" class="btn-toggle-movil {% if accion.completado %}completado{% else %}pendiente{% endif %}">
+                                {% if accion.completado %}✅ Completado{% else %}⏳ Pendiente{% endif %}
+                            </button>
+                        </form>
+                        <form method="post" style="flex: 1;">
+                            {% csrf_token %}
+                            <input type="hidden" name="eliminar_accion" value="{{ accion.id }}">
+                            <button type="submit" class="btn-action-movil btn btn-danger" 
+                                    onclick="return confirm('¿Eliminar esta acción?')">
+                                🗑️ Eliminar
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            {% empty %}
+                <p style="color: var(--muted); text-align: center; padding: 2rem;">
+                    No hay acciones registradas
+                </p>
+            {% endfor %}
+            
+            <!-- Botón para agregar acciones (simplificado en móvil) -->
+            <div style="margin-top: 1rem; padding: 1rem; background: var(--bg-secondary); border-radius: 0.5rem;">
+                <p style="font-size: 0.9rem; color: var(--muted); margin-bottom: 0.5rem;">
+                    Para agregar acciones, usa la versión de escritorio o contacta al administrador.
+                </p>
+                <a href="{% url 'trabajo_detalle' trabajo.pk %}" class="btn-action-movil btn btn-secondary">
+                    📱 Abrir en PC
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ==================== SECCIÓN: REPUESTOS ==================== -->
+    <div class="section-card" id="section-repuestos" data-section="repuestos">
+        <div class="section-header" onclick="toggleSection('repuestos')">
+            <span><span class="section-icon">🔧</span> Repuestos</span>
+            <span class="section-toggle">▼</span>
+        </div>
+        <div class="section-content">
+            <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1rem;">
+                Total: {{ trabajo.repuestos.count }} | 
+                Instalados: {{ trabajo.repuestos.filter.completado|length }} | 
+                Pendientes: {{ trabajo.repuestos.exclude.completado|length }}
+            </p>
+            
+            <!-- Lista de repuestos -->
+            {% for repuesto in trabajo.repuestos.all %}
+                <div class="item-card-movil {% if repuesto.completado %}completado{% else %}pendiente{% endif %}">
+                    <div class="item-header-movil">
+                        <div class="item-title-movil">
+                            <strong>
+                                {% if repuesto.repuesto_externo %}
+                                    🌐 {{ repuesto.repuesto_externo.nombre }}
+                                {% elif repuesto.repuesto %}
+                                    {{ repuesto.repuesto.nombre }}
+                                {% else %}
+                                    Repuesto sin nombre
+                                {% endif %}
+                            </strong>
+                            <div class="item-details-movil">
+                                Cantidad: {{ repuesto.cantidad }}
+                                {% if repuesto.precio_unitario %}
+                                    | ${{ repuesto.precio_unitario|floatformat:0|intcomma }} c/u
+                                {% endif %}
+                            </div>
+                        </div>
+                        <span class="item-status-movil {% if repuesto.completado %}completado{% else %}pendiente{% endif %}">
+                            {% if repuesto.completado %}✅{% else %}⏳{% endif %}
+                        </span>
+                    </div>
+                    {% if repuesto.subtotal %}
+                        <div class="item-price-movil">
+                            💰 Total: ${{ repuesto.subtotal|floatformat:0|intcomma }}
+                        </div>
+                    {% endif %}
+                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                        <form method="post" style="flex: 1;">
+                            {% csrf_token %}
+                            <input type="hidden" name="repuesto_toggle" value="{{ repuesto.id }}">
+                            <button type="submit" class="btn-toggle-movil {% if repuesto.completado %}completado{% else %}pendiente{% endif %}">
+                                {% if repuesto.completado %}✅ Instalado{% else %}⏳ Pendiente{% endif %}
+                            </button>
+                        </form>
+                        <form method="post" style="flex: 1;">
+                            {% csrf_token %}
+                            <input type="hidden" name="eliminar_repuesto" value="{{ repuesto.id }}">
+                            <button type="submit" class="btn-action-movil btn btn-danger" 
+                                    onclick="return confirm('¿Eliminar este repuesto?')">
+                                🗑️ Eliminar
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            {% empty %}
+                <p style="color: var(--muted); text-align: center; padding: 2rem;">
+                    No hay repuestos registrados
+                </p>
+            {% endfor %}
+            
+            <!-- Botón para agregar repuestos -->
+            <div style="margin-top: 1rem; padding: 1rem; background: var(--bg-secondary); border-radius: 0.5rem;">
+                <p style="font-size: 0.9rem; color: var(--muted); margin-bottom: 0.5rem;">
+                    Para agregar repuestos, usa la versión de escritorio.
+                </p>
+                <a href="{% url 'trabajo_detalle' trabajo.pk %}" class="btn-action-movil btn btn-secondary">
+                    📱 Abrir en PC
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ==================== SECCIÓN: INSUMOS ==================== -->
+    <div class="section-card" id="section-insumos" data-section="insumos">
+        <div class="section-header" onclick="toggleSection('insumos')">
+            <span><span class="section-icon">📦</span> Insumos</span>
+            <span class="section-toggle">▼</span>
+        </div>
+        <div class="section-content">
+            <div style="padding: 0.75rem; background: var(--warning-100); border-radius: 0.5rem; margin-bottom: 1rem;">
+                <small style="color: var(--warning-800);">
+                    <strong>🔍 Filtro Amplio:</strong> 
+                    Aquí puedes agregar cualquier insumo del inventario sin restricciones de compatibilidad.
+                </small>
+            </div>
+            
+            <!-- Búsqueda de insumos -->
+            <div class="form-group-movil">
+                <label class="form-label-movil">🔍 Buscar Insumo:</label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" id="buscar-insumo" class="form-control-movil" 
+                           placeholder="Buscar por nombre, SKU, código... (mínimo 2 caracteres)"
+                           style="flex: 1;">
+                    <button class="btn-action-movil btn btn-primary" type="button" onclick="buscarInsumos()" 
+                            style="width: auto; padding: 0.75rem 1rem;">
+                        🔍
+                    </button>
+                </div>
+                <small style="color: var(--muted); font-size: 0.8rem; display: block; margin-top: 0.25rem;">
+                    La búsqueda se realiza automáticamente mientras escribes
+                </small>
+            </div>
+            
+            <!-- Lista de insumos disponibles -->
+            <div id="insumos-disponibles" style="margin-top: 1rem;">
+                <h6 style="font-weight: 600; margin-bottom: 0.5rem;">📋 Insumos Disponibles:</h6>
+                <div id="lista-insumos-disponibles" style="max-height: 400px; overflow-y: auto;">
+                    <div style="padding: 1rem; text-align: center; color: var(--muted);">
+                        Escribe al menos 2 caracteres para buscar insumos
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Botón para agregar insumos -->
+            <button class="btn-action-movil btn btn-success" onclick="agregarInsumos()" style="margin-top: 1rem;">
+                📦 Agregar Insumos al Trabajo
+            </button>
+            
+            <!-- Formulario oculto para enviar datos -->
+            <form method="post" id="form-insumos" style="display: none;">
+                {% csrf_token %}
+                <input type="hidden" name="insumos_json" id="insumos-json-trabajo">
+            </form>
+            
+            <div style="margin-top: 1rem; padding: 0.75rem; background: var(--bg-secondary); border-radius: 0.5rem;">
+                <small style="color: var(--muted);">
+                    <strong>ℹ️ Nota:</strong> Los insumos agregados aparecerán automáticamente en la sección "Repuestos" del trabajo.
+                </small>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ==================== SECCIÓN: ADICIONALES ==================== -->
+    <div class="section-card" id="section-adicionales" data-section="adicionales">
+        <div class="section-header" onclick="toggleSection('adicionales')">
+            <span><span class="section-icon">➕</span> Adicionales</span>
+            <span class="section-toggle">▼</span>
+        </div>
+        <div class="section-content">
+            <!-- Formulario para Agregar Adicional -->
+            <div style="margin-bottom: 1.5rem;">
+                <h6 style="font-weight: 600; margin-bottom: 0.75rem;">➕ Registrar Concepto Adicional</h6>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-group-movil">
+                        <label class="form-label-movil">Concepto / Descripción *</label>
+                        <textarea class="form-control-movil" 
+                                  name="concepto_adicional" 
+                                  rows="3"
+                                  placeholder="Ej: Servicio de grúa, Material adicional, Servicio extra..."
+                                  required></textarea>
+                    </div>
+                    <div class="form-group-movil">
+                        <label class="form-label-movil">Monto *</label>
+                        <input type="number" 
+                               class="form-control-movil" 
+                               name="monto_adicional" 
+                               step="0.01" 
+                               min="0.01"
+                               placeholder="0.00"
+                               required>
+                    </div>
+                    <div class="form-group-movil">
+                        <div class="form-check">
+                            <input class="form-check-input" 
+                                   type="checkbox" 
+                                   name="es_descuento" 
+                                   id="es_descuento_movil">
+                            <label class="form-check-label" for="es_descuento_movil" style="font-size: 0.9rem;">
+                                🏷️ Es Descuento (restará del total)
+                            </label>
+                        </div>
+                    </div>
+                    <button type="submit" name="agregar_adicional" class="btn-action-movil btn btn-success">
+                        💰 Agregar Concepto
+                    </button>
+                </form>
+            </div>
+
+            <!-- Lista de Adicionales y Descuentos -->
+            <div>
+                <h6 style="font-weight: 600; margin-bottom: 0.75rem;">📋 Conceptos Adicionales y Descuentos</h6>
+                
+                {% if trabajo.adicionales.all %}
+                    {% regroup trabajo.adicionales.all by descuento as adicionales_grouped %}
+                    
+                    <!-- Adicionales -->
+                    {% for group in adicionales_grouped %}
+                        {% if not group.grouper %}
+                        <h6 style="font-weight: 600; margin-top: 1rem; margin-bottom: 0.5rem; color: #198754;">➕ Conceptos Adicionales</h6>
+                        {% for adicional in group.list %}
+                            <div class="item-card-movil" style="margin-bottom: 0.75rem;">
+                                <div class="item-header-movil">
+                                    <div class="item-title-movil">
+                                        <strong>{{ adicional.concepto }}</strong>
+                                    </div>
+                                    <form method="post" class="d-inline" onsubmit="return confirm('¿Eliminar este concepto adicional?')">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="adicional_id" value="{{ adicional.id }}">
+                                        <button type="submit" name="eliminar_adicional" class="btn btn-outline-danger btn-sm" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                                            🗑️
+                                        </button>
+                                    </form>
+                                </div>
+                                <div style="margin-top: 0.5rem;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <small style="color: var(--muted);">Fecha: {{ adicional.fecha|date:"d/m/Y H:i" }}</small>
+                                        <strong style="color: #198754; font-size: 1.1rem;">${{ adicional.monto|floatformat:0|intcomma }}</strong>
+                                    </div>
+                                    <small style="color: var(--muted);">Registrado por: {{ adicional.usuario.username|default:"Sistema" }}</small>
+                                </div>
+                            </div>
+                        {% endfor %}
+                        <div class="info-row-movil" style="background: #d1e7dd; padding: 0.75rem; border-radius: 0.5rem; margin-top: 0.5rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <strong>TOTAL ADICIONALES:</strong>
+                                <strong style="color: #198754; font-size: 1.1rem;">${{ trabajo.total_adicionales|floatformat:0|intcomma }}</strong>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    <!-- Descuentos -->
+                    {% for group in adicionales_grouped %}
+                        {% if group.grouper %}
+                        <h6 style="font-weight: 600; margin-top: 1rem; margin-bottom: 0.5rem; color: #dc3545;">🏷️ Descuentos Aplicados</h6>
+                        {% for adicional in group.list %}
+                            <div class="item-card-movil" style="margin-bottom: 0.75rem;">
+                                <div class="item-header-movil">
+                                    <div class="item-title-movil">
+                                        <strong>{{ adicional.concepto }}</strong>
+                                    </div>
+                                    <form method="post" class="d-inline" onsubmit="return confirm('¿Eliminar este descuento?')">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="adicional_id" value="{{ adicional.id }}">
+                                        <button type="submit" name="eliminar_adicional" class="btn btn-outline-danger btn-sm" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                                            🗑️
+                                        </button>
+                                    </form>
+                                </div>
+                                <div style="margin-top: 0.5rem;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <small style="color: var(--muted);">Fecha: {{ adicional.fecha|date:"d/m/Y H:i" }}</small>
+                                        <strong style="color: #dc3545; font-size: 1.1rem;">-${{ adicional.monto|floatformat:0|intcomma }}</strong>
+                                    </div>
+                                    <small style="color: var(--muted);">Registrado por: {{ adicional.usuario.username|default:"Sistema" }}</small>
+                                </div>
+                            </div>
+                        {% endfor %}
+                        <div class="info-row-movil" style="background: #f8d7da; padding: 0.75rem; border-radius: 0.5rem; margin-top: 0.5rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <strong>TOTAL DESCUENTOS:</strong>
+                                <strong style="color: #dc3545; font-size: 1.1rem;">-${{ trabajo.total_descuentos|floatformat:0|intcomma }}</strong>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <div style="padding: 2rem; text-align: center; color: var(--muted);">
+                        <p>No hay conceptos adicionales registrados para este trabajo</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- ==================== SECCIÓN: FOTOS ==================== -->
+    <div class="section-card" id="section-fotos" data-section="fotos">
+        <div class="section-header" onclick="toggleSection('fotos')">
+            <span><span class="section-icon">📷</span> Fotos</span>
+            <span class="section-toggle">▼</span>
+        </div>
+        <div class="section-content">
+            {% if trabajo.fotos.exists %}
+                <div class="fotos-grid-movil">
+                    {% for foto in trabajo.fotos.all %}
+                        <div class="foto-item-movil">
+                            <img src="{{ foto.imagen.url }}" alt="Foto {{ foto.id }}" 
+                                 onclick="abrirFotoModal('{{ foto.imagen.url }}', '{{ foto.descripcion|default:""|escapejs }}')">
+                            <form method="post" style="position: absolute; top: 2px; right: 2px;">
+                                {% csrf_token %}
+                                <input type="hidden" name="eliminar_foto" value="{{ foto.id }}">
+                                <button type="submit" onclick="return confirm('¿Eliminar esta foto?')"
+                                        style="background: rgba(220,53,69,0.9); color: white; border: none; 
+                                               border-radius: 50%; width: 30px; height: 30px; font-size: 0.9rem;">
+                                    🗑️
+                                </button>
+                            </form>
+                            {% if foto.descripcion %}
+                                <div class="foto-descripcion-movil">
+                                    {{ foto.descripcion }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p style="color: var(--muted); text-align: center; padding: 2rem;">
+                    No hay fotos registradas
+                </p>
+            {% endif %}
+            
+            <!-- Formulario para subir foto -->
+            <form method="post" enctype="multipart/form-data" style="margin-top: 1rem;">
+                {% csrf_token %}
+                <div class="form-group-movil">
+                    <label class="form-label-movil">Agregar Foto:</label>
+                    <input type="file" name="imagen" accept="image/*" class="form-control-movil" required>
+                    <textarea name="descripcion" class="form-control-movil" rows="2" 
+                              placeholder="Descripción (opcional)" style="margin-top: 0.5rem;"></textarea>
+                </div>
+                <button type="submit" name="subir_foto" class="btn-action-movil btn btn-primary">
+                    📷 Subir Foto
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Modal para fotos expandidas -->
+    <div id="fotoModal" class="foto-modal" onclick="cerrarFotoModal()">
+        <div class="foto-modal-content" onclick="event.stopPropagation()">
+            <button class="foto-modal-close" onclick="cerrarFotoModal()">&times;</button>
+            <img id="fotoModalImg" src="" alt="Foto expandida">
+            <div id="fotoModalDescripcion" class="foto-modal-descripcion"></div>
+        </div>
+    </div>
+    
+    <!-- ==================== SECCIÓN: ABONOS ==================== -->
+    <div class="section-card" id="section-abonos" data-section="abonos">
+        <div class="section-header" onclick="toggleSection('abonos')">
+            <span><span class="section-icon">💵</span> Abonos</span>
+            <span class="section-toggle">▼</span>
+        </div>
+        <div class="section-content">
+            <div class="info-row-movil" style="background: var(--bg-secondary); padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+                <div class="info-label-movil">Total Abonos:</div>
+                <div class="info-value-movil" style="font-size: 1.2rem; font-weight: 700; color: #ffc107;">
+                    ${{ trabajo.total_abonos|default:0|floatformat:0|intcomma }}
+                </div>
+            </div>
+            
+            <!-- Lista de abonos -->
+            {% for abono in trabajo.abonos.all %}
+                <div class="item-card-movil" style="background: var(--bg-secondary);">
+                    <div class="item-header-movil">
+                        <div class="item-title-movil">
+                            <strong>${{ abono.monto|floatformat:0|intcomma }}</strong>
+                            <div class="item-details-movil">
+                                {{ abono.get_metodo_pago_display }} | 
+                                {{ abono.fecha|date:"d/m/Y H:i" }}
+                            </div>
+                            {% if abono.descripcion %}
+                                <div class="item-details-movil" style="margin-top: 0.25rem;">
+                                    {{ abono.descripcion }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="abono_id" value="{{ abono.id }}">
+                            <button type="submit" name="eliminar_abono" 
+                                    onclick="return confirm('¿Eliminar este abono?')"
+                                    style="background: #dc3545; color: white; border: none; 
+                                           border-radius: 0.5rem; padding: 0.5rem; font-size: 0.9rem;">
+                                🗑️
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            {% empty %}
+                <p style="color: var(--muted); text-align: center; padding: 2rem;">
+                    No hay abonos registrados
+                </p>
+            {% endfor %}
+            
+            <!-- Formulario para agregar abono -->
+            <form method="post" style="margin-top: 1rem;">
+                {% csrf_token %}
+                <div class="form-group-movil">
+                    <label class="form-label-movil">Monto:</label>
+                    <input type="number" name="monto_abono" class="form-control-movil" 
+                           placeholder="0" step="0.01" min="0" required>
+                </div>
+                <div class="form-group-movil">
+                    <label class="form-label-movil">Método de Pago:</label>
+                    <select name="metodo_pago" class="form-control-movil">
+                        <option value="efectivo">Efectivo</option>
+                        <option value="tarjeta">Tarjeta</option>
+                        <option value="transferencia">Transferencia</option>
+                        <option value="cheque">Cheque</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
+                <div class="form-group-movil">
+                    <label class="form-label-movil">Descripción (opcional):</label>
+                    <textarea name="descripcion_abono" class="form-control-movil" rows="2" 
+                              placeholder="Nota del abono..."></textarea>
+                </div>
+                <button type="submit" name="agregar_abono" class="btn-action-movil btn btn-success">
+                    💵 Agregar Abono
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- ==================== SECCIÓN: ESTADO ==================== -->
+    <div class="section-card" id="section-estado" data-section="estado">
+        <div class="section-header" onclick="toggleSection('estado')">
+            <span><span class="section-icon">⚡</span> Cambiar Estado</span>
+            <span class="section-toggle">▼</span>
+        </div>
+        <div class="section-content">
+            <h5 style="font-weight: 600; margin-bottom: 1rem;">Estado Actual: 
+                <span class="estado-badge-movil estado-{{ trabajo.estado }}">
+                    {{ trabajo.get_estado_display }}
+                </span>
+            </h5>
+            
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" name="cambiar_estado" value="iniciado" 
+                        class="estado-btn-movil {% if trabajo.estado == 'iniciado' %}active{% endif %}"
+                        style="background: {% if trabajo.estado == 'iniciado' %}var(--btn-bg){% else %}transparent{% endif %}; 
+                               color: {% if trabajo.estado == 'iniciado' %}white{% else %}var(--fg){% endif %}; 
+                               border-color: #ffc107;">
+                    🟡 Iniciado
+                </button>
+                <button type="submit" name="cambiar_estado" value="trabajando" 
+                        class="estado-btn-movil {% if trabajo.estado == 'trabajando' %}active{% endif %}"
+                        style="background: {% if trabajo.estado == 'trabajando' %}var(--btn-bg){% else %}transparent{% endif %}; 
+                               color: {% if trabajo.estado == 'trabajando' %}white{% else %}var(--fg){% endif %}; 
+                               border-color: #0d6efd;">
+                    🔵 Trabajando
+                </button>
+                <button type="submit" name="cambiar_estado" value="completado" 
+                        class="estado-btn-movil {% if trabajo.estado == 'completado' %}active{% endif %}"
+                        style="background: {% if trabajo.estado == 'completado' %}var(--btn-bg){% else %}transparent{% endif %}; 
+                               color: {% if trabajo.estado == 'completado' %}white{% else %}var(--fg){% endif %}; 
+                               border-color: #198754;">
+                    🟢 Completado
+                </button>
+                <button type="submit" name="cambiar_estado" value="entregado" 
+                        class="estado-btn-movil {% if trabajo.estado == 'entregado' %}active{% endif %}"
+                        style="background: {% if trabajo.estado == 'entregado' %}var(--btn-bg){% else %}transparent{% endif %}; 
+                               color: {% if trabajo.estado == 'entregado' %}white{% else %}var(--fg){% endif %}; 
+                               border-color: #6c757d;">
+                    ⚫ Entregado
+                </button>
+            </form>
+            
+            <!-- Botones de Acción Adicionales -->
+            <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
+                <h6 style="font-weight: 600; margin-bottom: 1rem;">📄 Acciones Adicionales</h6>
+                
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <a href="{% url 'trabajo_pdf' trabajo.pk %}" 
+                       class="btn-action-movil btn btn-info" 
+                       style="width: 100%; text-align: center;"
+                       title="Se abrirá en el navegador"
+                       onclick="verificarPDF(this.href); return false;">
+                        📄 Generar Orden de Trabajo
+                    </a>
+                    
+                    <a href="{% url 'panel_principal' %}" 
+                       class="btn-action-movil btn btn-secondary" 
+                       style="width: 100%; text-align: center;">
+                        🏠 Volver a la Pizarra
+                    </a>
+                    
+                    <a href="javascript:history.back()" 
+                       class="btn-action-movil btn btn-outline-secondary" 
+                       style="width: 100%; text-align: center;">
+                        ← Regresar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Botón flotante para scroll arriba -->
+<button class="scroll-top-btn" onclick="scrollToTop()" title="Ir arriba">↑</button>
+
+<script>
+// Toggle de secciones (acordeón)
+function toggleSection(sectionName) {
+    const section = document.getElementById('section-' + sectionName);
+    section.classList.toggle('expanded');
+}
+
+// Scroll a sección específica
+function scrollToSection(sectionName) {
+    const section = document.getElementById('section-' + sectionName);
+    section.classList.add('expanded'); // Expandir al hacer scroll
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Ajustar para header fijo
+    setTimeout(() => {
+        window.scrollBy(0, -80);
+    }, 100);
+}
+
+// Scroll to top
+function scrollToTop() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Mostrar/ocultar botón scroll top
+window.addEventListener('scroll', function() {
+    const scrollBtn = document.querySelector('.scroll-top-btn');
+    if (window.scrollY > 300) {
+        scrollBtn.classList.add('show');
+    } else {
+        scrollBtn.classList.remove('show');
+    }
+});
+
+// Función para verificar y abrir PDF
+function verificarPDF(url) {
+    console.log('🔍 Verificando PDF:', url);
+    
+    // Crear un iframe oculto para verificar el tipo de contenido
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.src = url;
+    
+    iframe.onload = function() {
+        console.log('✅ PDF cargado en iframe');
+        // Si se carga en iframe, abrir en nueva ventana
+        window.open(url, '_blank');
+    };
+    
+    iframe.onerror = function() {
+        console.log('❌ Error cargando PDF en iframe');
+        // Si hay error, intentar abrir directamente
+        window.open(url, '_blank');
+    };
+    
+    document.body.appendChild(iframe);
+    
+    // Limpiar el iframe después de 3 segundos
+    setTimeout(() => {
+        if (iframe.parentNode) {
+            iframe.parentNode.removeChild(iframe);
+        }
+    }, 3000);
+}
+
+// Expandir sección activa desde URL
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tab = urlParams.get('tab');
+    if (tab) {
+        setTimeout(() => scrollToSection(tab), 100);
+    } else {
+        // Expandir primera sección por defecto
+        toggleSection('info');
+    }
+    
+    // Configurar búsqueda de insumos
+    const buscarInput = document.getElementById('buscar-insumo');
+    if (buscarInput) {
+        buscarInput.addEventListener('input', buscarInsumosDebounced);
+        buscarInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                buscarInsumos();
+            }
+        });
+    }
+});
+
+// ==================== FUNCIONES PARA INSUMOS ====================
+let buscarInsumosTimeout;
+
+// Función para escapar HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Función para buscar insumos
+window.buscarInsumos = async function() {
+    const buscarInput = document.getElementById('buscar-insumo');
+    const cont = document.getElementById('lista-insumos-disponibles');
+    
+    if (!buscarInput || !cont) {
+        console.error('❌ Elementos de búsqueda no encontrados');
+        return;
+    }
+    
+    const busqueda = buscarInput.value.trim();
+    
+    if (busqueda.length < 2) {
+        cont.innerHTML = '<div style="padding: 1rem; text-align: center; color: var(--muted);">Escribe al menos 2 caracteres para buscar</div>';
+        return;
+    }
+    
+    cont.innerHTML = '<div style="padding: 1rem; text-align: center; color: var(--muted);"><i class="fas fa-spinner fa-spin"></i> Buscando insumos...</div>';
+    
+    try {
+        const url = `/car/repuestos/buscar-insumos/?q=${encodeURIComponent(busqueda)}`;
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.insumos && data.insumos.length > 0) {
+            cont.innerHTML = '';
+            data.insumos.forEach((insumo) => {
+                const item = document.createElement('div');
+                item.className = 'item-card-movil';
+                item.style.cssText = 'margin-bottom: 0.75rem; padding: 1rem; background: var(--bg-secondary); border-radius: 0.5rem;';
+                
+                item.innerHTML = `
+                    <div style="display: flex; align-items: flex-start; gap: 0.75rem;">
+                        <input type="checkbox" class="insumo-check" 
+                               data-id="${insumo.id}" 
+                               data-nombre="${escapeHtml(insumo.nombre)}"
+                               data-precio="${insumo.precio || 0}"
+                               data-stock="${insumo.stock || 0}"
+                               id="insumo-${insumo.id}"
+                               style="margin-top: 0.25rem; width: 20px; height: 20px;">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: var(--fg); margin-bottom: 0.25rem;">
+                                ${escapeHtml(insumo.nombre)}
+                            </div>
+                            <div style="font-size: 0.85rem; color: var(--muted); margin-bottom: 0.5rem;">
+                                SKU: ${escapeHtml(insumo.sku || 'N/A')} | 
+                                ${insumo.marca ? 'Marca: ' + escapeHtml(insumo.marca) + ' | ' : ''}
+                                Precio: $${(insumo.precio || 0).toLocaleString('es-CL')} | 
+                                Stock: ${insumo.stock || 0}
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <label style="font-size: 0.85rem; color: var(--fg);">Cantidad:</label>
+                                <input type="number" class="insumo-cantidad form-control-movil" 
+                                       data-id="${insumo.id}" 
+                                       value="1" 
+                                       min="1" 
+                                       max="${insumo.stock || 999}"
+                                       style="width: 80px; padding: 0.5rem; font-size: 0.9rem;">
+                            </div>
+                        </div>
+                    </div>
+                `;
+                cont.appendChild(item);
+            });
+        } else {
+            cont.innerHTML = '<div style="padding: 1rem; text-align: center; color: var(--muted);">No se encontraron insumos con ese término de búsqueda</div>';
+        }
+    } catch (error) {
+        console.error('❌ Error buscando insumos:', error);
+        cont.innerHTML = '<div style="padding: 1rem; text-align: center; color: var(--danger-600);">❌ Error buscando insumos: ' + error.message + '</div>';
+    }
+};
+
+// Búsqueda con debounce
+window.buscarInsumosDebounced = function() {
+    clearTimeout(buscarInsumosTimeout);
+    buscarInsumosTimeout = setTimeout(buscarInsumos, 300);
+};
+
+// Función para agregar insumos al trabajo
+window.agregarInsumos = async function() {
+    const insumos = [];
+    const checkboxes = document.querySelectorAll("#lista-insumos-disponibles input.insumo-check:checked");
+    
+    checkboxes.forEach(chk => {
+        const cantidadInput = document.querySelector(
+            `input.insumo-cantidad[data-id="${chk.dataset.id}"]`
+        );
+        const cantidad = cantidadInput ? parseInt(cantidadInput.value) || 1 : 1;
+        insumos.push({
+            id: parseInt(chk.dataset.id),
+            nombre: chk.dataset.nombre,
+            cantidad: cantidad,
+            precio_unitario: parseFloat(chk.dataset.precio) || 0,
+            es_insumo: true
+        });
+    });
+    
+    if (insumos.length === 0) {
+        alert('⚠️ No hay insumos seleccionados para agregar');
+        return;
+    }
+    
+    try {
+        const form = document.getElementById('form-insumos');
+        const csrfToken = form.querySelector('[name=csrfmiddlewaretoken]').value;
+        const formData = new FormData();
+        formData.append('insumos_json', JSON.stringify(insumos));
+        formData.append('agregar_insumos_multiples', 'true');
+        formData.append('csrfmiddlewaretoken', csrfToken);
+        
+        const response = await fetch(window.location.pathname, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        });
+        
+        if (response.ok) {
+            alert('✅ Insumos agregados exitosamente');
+            // Recargar la página manteniendo la pestaña de insumos activa
+            window.location.href = window.location.pathname + '?tab=insumos';
+        } else {
+            console.error('❌ Error al agregar insumos:', response.status);
+            alert('❌ Error al agregar los insumos');
+        }
+    } catch (error) {
+        console.error('❌ Error:', error);
+        alert('❌ Error al agregar los insumos');
+    }
+};
+
+// Funciones para modal de fotos expandidas
+function abrirFotoModal(url, descripcion) {
+    const modal = document.getElementById('fotoModal');
+    const img = document.getElementById('fotoModalImg');
+    const desc = document.getElementById('fotoModalDescripcion');
+    
+    img.src = url;
+    if (descripcion) {
+        desc.textContent = descripcion;
+        desc.style.display = 'block';
+    } else {
+        desc.style.display = 'none';
+    }
+    
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden'; // Prevenir scroll del body
+}
+
+function cerrarFotoModal() {
+    const modal = document.getElementById('fotoModal');
+    modal.classList.remove('active');
+    document.body.style.overflow = 'auto'; // Restaurar scroll del body
+}
+
+// Cerrar modal con tecla Escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        cerrarFotoModal();
+    }
+});
+</script>
+{% endblock %}
+

@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+{% endblock %}
+
+{% block title %}Procesar Venta - POS{% endblock %}
+
+{% block extra_head %}
+<style>
+    .venta-container {
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .venta-header {
+        background: linear-gradient(135deg, var(--success-600) 0%, var(--success-500) 100%);
+        color: var(--text-inverse);
+        padding: var(--spacing-md);
+        text-align: center;
+    }
+    
+    .resumen-container {
+        background-color: var(--bg-card);
+        border-radius: var(--border-radius-lg);
+        margin: var(--spacing-md);
+        padding: var(--spacing-md);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-color);
+    }
+    
+    .resumen-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--spacing-sm) 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .resumen-item:last-child {
+        border-bottom: none;
+        font-weight: bold;
+        font-size: 1.2rem;
+        color: var(--success-600);
+    }
+    
+    .form-container {
+        background-color: var(--bg-card);
+        border-radius: var(--border-radius-lg);
+        margin: var(--spacing-md);
+        padding: var(--spacing-md);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-color);
+    }
+    
+    .btn-venta {
+        border-radius: var(--border-radius-full);
+        padding: var(--spacing-md) var(--spacing-xl);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 1.1rem;
+        transition: var(--transition);
+    }
+    
+    .btn-success-venta {
+        background: linear-gradient(135deg, var(--success-600) 0%, var(--success-500) 100%);
+        border: none;
+        color: var(--text-inverse);
+    }
+    
+    .btn-success-venta:hover {
+        background: linear-gradient(135deg, var(--success-700) 0%, var(--success-600) 100%);
+        color: var(--text-inverse);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .btn-secondary-venta {
+        background: linear-gradient(135deg, var(--neutral-600) 0%, var(--neutral-700) 100%);
+        border: none;
+        color: var(--text-inverse);
+    }
+    
+    .btn-secondary-venta:hover {
+        background: linear-gradient(135deg, var(--neutral-700) 0%, var(--neutral-800) 100%);
+        color: var(--text-inverse);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .cliente-rapido {
+        background-color: var(--bg-secondary);
+        border-radius: var(--border-radius-md);
+        padding: var(--spacing-md);
+        margin-top: var(--spacing-md);
+        border: 1px solid var(--border-color);
+    }
+    
+    .descuento-container {
+        background-color: var(--warning-50);
+        border: 1px solid var(--warning-200);
+        border-radius: var(--border-radius-md);
+        padding: var(--spacing-md);
+        margin: var(--spacing-md) 0;
+    }
+    
+    @media (max-width: 768px) {
+        .venta-container {
+            padding: 0;
+        }
+        
+        .resumen-container,
+        .form-container {
+            margin: var(--spacing-sm);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="venta-container">
+    <!-- Header -->
+    <div class="venta-header">
+        <h4 class="mb-0">💳 Procesar Venta</h4>
+        <small>Completa los datos para finalizar la venta</small>
+    </div>
+
+    <!-- Resumen del carrito -->
+    <div class="resumen-container">
+        <h5 class="mb-3">📋 Resumen de la Venta</h5>
+        
+        {% for item in carrito_items %}
+            <div class="resumen-item">
+                <div>
+                    <div class="fw-bold">{{ item.repuesto.nombre }}</div>
+                    <small class="text-secondary">{{ item.cantidad }} x ${{ item.precio_unitario|floatformat:0|intcomma }}</small>
+                </div>
+                <div class="fw-bold">${{ item.subtotal|floatformat:0|intcomma }}</div>
+            </div>
+        {% endfor %}
+        
+        <div class="resumen-item">
+            <div>Subtotal:</div>
+            <div>${{ subtotal|floatformat:0|intcomma }}</div>
+        </div>
+    </div>
+
+    <!-- Formulario de venta -->
+    <div class="form-container">
+        <form method="post" id="venta-form">
+            {% csrf_token %}
+            
+            <!-- Cliente -->
+            <div class="mb-3">
+                <label class="form-label">Cliente (opcional)</label>
+                <div class="d-flex gap-2">
+                    {{ form.cliente }}
+                    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#clienteModal">
+                        ➕ Nuevo
+                    </button>
+                </div>
+            </div>
+
+            <!-- Descuento -->
+            <div class="descuento-container">
+                <label class="form-label">Descuento</label>
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    {{ form.descuento }}
+                </div>
+                <small class="text-secondary">Ingresa el monto del descuento</small>
+            </div>
+
+            <!-- Método de pago -->
+            <div class="mb-3">
+                <label class="form-label">Método de Pago</label>
+                {{ form.metodo_pago }}
+            </div>
+
+            <!-- Observaciones -->
+            <div class="mb-3">
+                <label class="form-label">Observaciones</label>
+                {{ form.observaciones }}
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-success btn-venta btn-success-venta">
+                    💳 CONFIRMAR VENTA
+                </button>
+                <a href="{% url 'pos_principal' %}" class="btn btn-secondary btn-venta btn-secondary-venta">
+                    ← Volver al POS
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal para crear cliente rápido -->
+<div class="modal fade" id="clienteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Crear Cliente Rápido</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="cliente-form">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Nombre *</label>
+                        <input type="text" class="form-control" name="nombre" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Teléfono</label>
+                        <input type="text" class="form-control" name="telefono">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="crearCliente()">Crear</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Calcular total con descuento
+document.getElementById('id_descuento').addEventListener('input', function() {
+    const subtotal = {{ subtotal }};
+    const descuento = parseFloat(this.value) || 0;
+    const total = subtotal - descuento;
+    
+    // Actualizar el total en pantalla si hay un elemento para mostrarlo
+    const totalElement = document.querySelector('.total-final');
+    if (totalElement) {
+        totalElement.textContent = `$${Math.round(total).toLocaleString()}`;
+    }
+});
+
+// Validación del formulario
+document.getElementById('venta-form').addEventListener('submit', function(e) {
+    const descuento = parseFloat(document.getElementById('id_descuento').value) || 0;
+    const subtotal = {{ subtotal }};
+    
+    if (descuento > subtotal) {
+        e.preventDefault();
+        alert('El descuento no puede ser mayor al subtotal');
+        return false;
+    }
+    
+    if (descuento < 0) {
+        e.preventDefault();
+        alert('El descuento no puede ser negativo');
+        return false;
+    }
+    
+    // Confirmar venta
+    if (!confirm('¿Confirmar esta venta?')) {
+        e.preventDefault();
+        return false;
+    }
+});
+
+function crearCliente() {
+    const form = document.getElementById('cliente-form');
+    const formData = new FormData(form);
+    
+    fetch('{% url "pos_crear_cliente" %}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Agregar el nuevo cliente al select
+            const select = document.getElementById('id_cliente');
+            const option = document.createElement('option');
+            option.value = data.cliente.rut;
+            option.textContent = data.cliente.nombre;
+            option.selected = true;
+            select.appendChild(option);
+            
+            bootstrap.Modal.getInstance(document.getElementById('clienteModal')).hide();
+            form.reset();
+            
+            alert('Cliente creado exitosamente');
+        } else {
+            alert('Error: ' + JSON.stringify(data.errors));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al crear cliente');
+    });
+}
+
+// Auto-focus en el campo de descuento
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('id_descuento').focus();
+});
+</script>
+{% endblock %}
+

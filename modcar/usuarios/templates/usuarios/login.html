@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+{% endblock %}
+
+{% block title %}Iniciar Sesión{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-10 col-lg-9">
+      <div class="card shadow-lg border-0 rounded-3">
+        <div class="card-body p-4">
+          <div class="row g-4 align-items-start">
+            <div class="col-md-6">
+              <h3 class="mb-4">🔑 Iniciar Sesión</h3>
+
+              {% if form.errors %}
+              <div class="alert alert-danger">
+                <strong>Usuario o contraseña incorrectos.</strong><br>
+                Por favor intenta nuevamente.
+              </div>
+              {% endif %}
+
+              <form method="post" novalidate>
+                {% csrf_token %}
+
+                <div class="mb-3">
+                  <label for="id_username" class="form-label">Usuario</label>
+                  <input type="text" name="username" autofocus
+                         class="form-control" id="id_username"
+                         placeholder="Ingresa tu usuario" required>
+                </div>
+
+                <div class="mb-3">
+                  <label for="id_password" class="form-label">Contraseña</label>
+                  <input type="password" name="password"
+                         class="form-control" id="id_password"
+                         placeholder="Ingresa tu contraseña" required>
+                </div>
+
+                <div class="d-grid mb-3">
+                  <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-sign-in-alt me-2"></i>Entrar
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <div class="col-md-6">
+              <div class="p-3 p-md-4 rounded-3 border" style="background: linear-gradient(135deg, var(--warning-50), var(--warning-100));">
+                <div class="d-flex align-items-center mb-3">
+                  {% if config and config.logo_secundario_url %}
+                    <img src="{{ config.logo_secundario_url }}" alt="Taller" style="height:40px" class="me-2">
+                  {% else %}
+                    <img src="{% static 'images/Logo1.svg' %}" alt="Taller" style="height:40px" class="me-2">
+                  {% endif %}
+                  <h5 class="mb-0">Seguimiento de vehículo</h5>
+                </div>
+                <p class="text-secondary small mb-2">Ingresa la placa para ver el avance si tu vehículo está en taller.</p>
+                <div class="input-group mb-2">
+                  <input id="tracking-placa" type="text" class="form-control" placeholder="Ej: JGCX79">
+                  <button id="tracking-buscar" class="btn btn-primary" type="button">Ver</button>
+                </div>
+                <div id="tracking-preview"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="text-center mt-3">
+            <small class="text-secondary">¿Olvidaste tu contraseña? <a href="#">Recupérala aquí</a></small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  const input = document.getElementById('tracking-placa');
+  const btn = document.getElementById('tracking-buscar');
+  const out = document.getElementById('tracking-preview');
+  function buscar(){
+    const placa = (input.value||'').trim().toUpperCase();
+    if(!placa){ out.innerHTML=''; return; }
+    fetch('{% url "tracking_publico_preview" %}?placa='+encodeURIComponent(placa))
+  .then(async r => {
+    const txt = await r.text();
+    if (!r.ok) throw new Error(`HTTP ${r.status}: ${txt}`);
+    try { return JSON.parse(txt); } catch(e){ throw new Error(`JSON parse error: ${e.message}\nBody: ${txt}`); }
+  })
+  .then(({html})=>{ out.innerHTML = html; })
+  .catch(err=>{ out.innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`; });
+  }
+  btn.addEventListener('click', buscar);
+  input.addEventListener('keydown', e=>{ if(e.key==='Enter'){ buscar(); }});
+});
+</script>
+{% endblock %}
+

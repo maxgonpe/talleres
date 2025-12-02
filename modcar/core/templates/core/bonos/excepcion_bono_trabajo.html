@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Excepción de Bono - Trabajo #{{ trabajo.id }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 2rem auto; padding: 2rem; background: var(--card-bg); border-radius: var(--border-radius-lg); box-shadow: var(--card-shadow);">
+    <h1>🚫 Crear Excepción de Bono</h1>
+    <p><strong>Trabajo:</strong> #{{ trabajo.id }} - {{ trabajo.vehiculo }}</p>
+    
+    <form method="post">
+        {% csrf_token %}
+        <div style="margin-bottom: 1.5rem;">
+            <label for="motivo" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">
+                Motivo de la Excepción:
+            </label>
+            <textarea name="motivo" id="motivo" rows="4" required 
+                      style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: var(--border-radius);"
+                      placeholder="Explica por qué este trabajo no debe generar bonos..."></textarea>
+        </div>
+        
+        <button type="submit" style="background: var(--accent); color: white; padding: 0.75rem 1.5rem; border: none; border-radius: var(--border-radius); cursor: pointer; font-weight: 600;">
+            Crear Excepción
+        </button>
+        <a href="{% url 'trabajo_detalle' trabajo.id %}" style="margin-left: 1rem; color: var(--muted);">Cancelar</a>
+    </form>
+</div>
+{% endblock %}
+

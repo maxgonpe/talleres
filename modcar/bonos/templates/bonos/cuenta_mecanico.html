@@ -1,0 +1,341 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Cuenta de {{ mecanico }} - Bonos{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+<style>
+    .cuenta-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: var(--spacing-md);
+    }
+    
+    .cuenta-header {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+        padding: var(--spacing-xl);
+        border-radius: var(--border-radius-lg);
+        margin-bottom: 2rem;
+        box-shadow: var(--card-shadow);
+    }
+    
+    .saldo-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .saldo-card {
+        background: var(--card-bg);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-lg);
+        box-shadow: var(--card-shadow);
+        border-left: 4px solid var(--accent);
+    }
+    
+    .saldo-card.pendiente {
+        border-left-color: #ffc107;
+    }
+    
+    .saldo-card.total {
+        border-left-color: #28a745;
+    }
+    
+    .saldo-card.pagado {
+        border-left-color: #17a2b8;
+    }
+    
+    .saldo-card h3 {
+        font-size: 0.9rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+    }
+    
+    .saldo-card .valor {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--accent);
+    }
+    
+    .saldo-card.pendiente .valor {
+        color: #ffc107;
+    }
+    
+    .saldo-card.total .valor {
+        color: #28a745;
+    }
+    
+    .saldo-card.pagado .valor {
+        color: #17a2b8;
+    }
+    
+    .table-bonos {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--card-bg);
+        border-radius: var(--border-radius-lg);
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+        margin-bottom: 2rem;
+    }
+    
+    .table-bonos th,
+    .table-bonos td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .table-bonos th {
+        background: var(--bg-secondary);
+        font-weight: 600;
+        color: var(--fg);
+    }
+    
+    .table-bonos tbody tr:hover {
+        background: var(--hover-bg);
+    }
+    
+    .badge-pagado {
+        background: #28a745;
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: var(--border-radius-xl);
+        font-size: 0.85rem;
+    }
+    
+    .badge-pendiente {
+        background: #ffc107;
+        color: #000;
+        padding: 0.25rem 0.75rem;
+        border-radius: var(--border-radius-xl);
+        font-size: 0.85rem;
+    }
+    
+    .btn-primary {
+        background: var(--accent);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+        transition: background 0.3s;
+    }
+    
+    .btn-primary:hover {
+        background: #138496;
+    }
+    
+    .btn-success {
+        background: #28a745;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .btn-success:hover {
+        background: #218838;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cuenta-container">
+    <div class="cuenta-header">
+        <h1>💰 Cuenta de Bonos - {{ mecanico }}</h1>
+        <p>{{ mecanico.user.email|default:"Sin email" }}</p>
+    </div>
+    
+    <!-- Tarjetas de saldo -->
+    <div class="saldo-cards">
+        <div class="saldo-card pendiente">
+            <h3>Saldo Pendiente</h3>
+            <div class="valor">${{ saldo_pendiente|floatformat:0|intcomma }}</div>
+            <p style="color: var(--muted); font-size: 0.9rem; margin-top: 0.5rem;">
+                Bonos generados sin pagar
+            </p>
+        </div>
+        
+        <div class="saldo-card total">
+            <h3>Total Generado</h3>
+            <div class="valor">${{ total_generado|floatformat:0|intcomma }}</div>
+            <p style="color: var(--muted); font-size: 0.9rem; margin-top: 0.5rem;">
+                Bonos generados en total
+            </p>
+        </div>
+        
+        <div class="saldo-card pagado">
+            <h3>Total Pagado</h3>
+            <div class="valor">${{ total_pagado|floatformat:0|intcomma }}</div>
+            <p style="color: var(--muted); font-size: 0.9rem; margin-top: 0.5rem;">
+                Pagos realizados
+            </p>
+        </div>
+    </div>
+    
+    <!-- Información de configuración -->
+    {% if config_bono %}
+    <div style="background: var(--card-bg); padding: 1rem; border-radius: var(--border-radius-lg); margin-bottom: 2rem; box-shadow: var(--card-shadow);">
+        <h3>⚙️ Configuración de Bonos</h3>
+        <p>
+            <strong>Tipo:</strong> 
+            {% if config_bono.tipo_bono == 'porcentaje' %}
+            Porcentaje ({{ config_bono.porcentaje_mano_obra }}%)
+            {% else %}
+            Cantidad Fija (${{ config_bono.cantidad_fija|floatformat:0|intcomma }})
+            {% endif %}
+            | 
+            <strong>Estado:</strong> 
+            {% if config_bono.activo %}
+            <span class="badge-pagado">Activo</span>
+            {% else %}
+            <span class="badge-pendiente">Inactivo</span>
+            {% endif %}
+        </p>
+    </div>
+    {% else %}
+    <div style="background: #fff3cd; padding: 1rem; border-radius: var(--border-radius-lg); margin-bottom: 2rem; border-left: 4px solid #ffc107;">
+        <p><strong>⚠️ Atención:</strong> Este mecánico no tiene configuración de bonos. 
+        <a href="{% url 'configuracion_bonos' %}">Configurar bonos</a></p>
+    </div>
+    {% endif %}
+    
+    <!-- Botón para registrar pago -->
+    {% if saldo_pendiente > 0 %}
+    <div style="margin-bottom: 2rem; text-align: center;">
+        <a href="{% url 'registrar_pago_mecanico' mecanico.id %}" class="btn-success">
+            💵 Registrar Pago
+        </a>
+    </div>
+    {% endif %}
+    
+    <!-- Bonos pendientes -->
+    <h2>📋 Bonos Pendientes</h2>
+    {% if bonos_pendientes %}
+    <table class="table-bonos">
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Trabajo</th>
+                <th>Tipo</th>
+                <th>Mano de Obra</th>
+                <th>Monto del Bono</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for bono in bonos_pendientes %}
+            <tr>
+                <td>{{ bono.fecha_generacion|date:"d/m/Y H:i" }}</td>
+                <td>
+                    <a href="{% url 'trabajo_detalle' bono.trabajo.id %}" style="color: var(--accent); text-decoration: none;">
+                        Trabajo #{{ bono.trabajo.id }} - {{ bono.trabajo.vehiculo }}
+                    </a>
+                </td>
+                <td>
+                    {% if bono.tipo_bono == 'porcentaje' %}
+                    Porcentaje ({{ bono.porcentaje_aplicado }}%)
+                    {% else %}
+                    Cantidad Fija
+                    {% endif %}
+                </td>
+                <td>${{ bono.total_mano_obra|floatformat:0|intcomma }}</td>
+                <td><strong style="color: #ffc107;">${{ bono.monto|floatformat:0|intcomma }}</strong></td>
+                <td><span class="badge-pendiente">Pendiente</span></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div style="background: var(--card-bg); padding: 2rem; border-radius: var(--border-radius-lg); text-align: center; box-shadow: var(--card-shadow);">
+        <p style="color: var(--muted);">No hay bonos pendientes</p>
+    </div>
+    {% endif %}
+    
+    <!-- Bonos pagados (últimos 20) -->
+    <h2 style="margin-top: 2rem;">✅ Bonos Pagados (Últimos 20)</h2>
+    {% if bonos_pagados %}
+    <table class="table-bonos">
+        <thead>
+            <tr>
+                <th>Fecha Generación</th>
+                <th>Fecha Pago</th>
+                <th>Trabajo</th>
+                <th>Monto</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for bono in bonos_pagados %}
+            <tr>
+                <td>{{ bono.fecha_generacion|date:"d/m/Y" }}</td>
+                <td>{{ bono.fecha_pago|date:"d/m/Y"|default:"-" }}</td>
+                <td>
+                    <a href="{% url 'trabajo_detalle' bono.trabajo.id %}" style="color: var(--accent); text-decoration: none;">
+                        Trabajo #{{ bono.trabajo.id }}
+                    </a>
+                </td>
+                <td>${{ bono.monto|floatformat:0|intcomma }}</td>
+                <td><span class="badge-pagado">Pagado</span></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div style="background: var(--card-bg); padding: 2rem; border-radius: var(--border-radius-lg); text-align: center; box-shadow: var(--card-shadow);">
+        <p style="color: var(--muted);">No hay bonos pagados aún</p>
+    </div>
+    {% endif %}
+    
+    <!-- Historial de pagos -->
+    <h2 style="margin-top: 2rem;">💵 Historial de Pagos</h2>
+    {% if pagos %}
+    <table class="table-bonos">
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Monto</th>
+                <th>Método</th>
+                <th>Bonos Aplicados</th>
+                <th>Notas</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pago in pagos %}
+            <tr>
+                <td>{{ pago.fecha_pago|date:"d/m/Y H:i" }}</td>
+                <td><strong>${{ pago.monto|floatformat:0|intcomma }}</strong></td>
+                <td>{{ pago.get_metodo_pago_display }}</td>
+                <td>{{ pago.bonos_aplicados.count }} bono(s)</td>
+                <td>{{ pago.notas|default:"-" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div style="background: var(--card-bg); padding: 2rem; border-radius: var(--border-radius-lg); text-align: center; box-shadow: var(--card-shadow);">
+        <p style="color: var(--muted);">No hay pagos registrados</p>
+    </div>
+    {% endif %}
+    
+    <div style="margin-top: 2rem; text-align: center;">
+        <a href="{% url 'lista_mecanicos_bonos' %}" class="btn-primary">
+            ← Volver a Lista de Mecánicos
+        </a>
+    </div>
+</div>
+{% endblock %}
+

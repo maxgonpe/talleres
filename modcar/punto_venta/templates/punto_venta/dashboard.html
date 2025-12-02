@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+{% endblock %}
+
+{% block title %}Dashboard POS{% endblock %}
+
+{% block extra_head %}
+<style>
+    .dashboard-container {
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .dashboard-header {
+        background: linear-gradient(135deg, var(--btn-bg) 0%, var(--muted) 100%);
+        color: var(--btn-fg);
+        padding: var(--spacing-md);
+        text-align: center;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin: var(--spacing-md);
+    }
+    
+    .stat-card {
+        background: var(--card-bg);
+        border-radius: var(--border-radius-xl);
+        padding: var(--spacing-lg);
+        text-align: center;
+        box-shadow: var(--shadow-lg);
+        border-top: 4px solid;
+        transition: transform 0.3s ease;
+        color: var(--fg);
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .stat-card.primary { border-top-color: #007bff; }
+    .stat-card.success { border-top-color: var(--success-600); }
+    .stat-card.warning { border-top-color: var(--warning-600); }
+    .stat-card.info { border-top-color: var(--info-600); }
+    .stat-card.danger { border-top-color: var(--danger-600); }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        color: var(--muted);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+    }
+    
+    .quick-actions {
+        background: var(--card-bg);
+        border-radius: var(--border-radius-xl);
+        margin: var(--spacing-md);
+        padding: var(--spacing-lg);
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .action-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 1rem;
+    }
+    
+    .action-btn {
+        background: linear-gradient(135deg, var(--btn-bg) 0%, var(--muted) 100%);
+        color: var(--btn-fg);
+        border: none;
+        border-radius: var(--border-radius-xl);
+        padding: var(--spacing-lg) 1rem;
+        text-align: center;
+        text-decoration: none;
+        transition: var(--transition);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .action-btn:hover {
+        color: var(--btn-fg);
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .action-icon {
+        font-size: 2rem;
+    }
+    
+    .action-text {
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    @media (max-width: 768px) {
+        .dashboard-container {
+            padding: 0;
+        }
+        
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+            margin: var(--spacing-sm);
+        }
+        
+        .quick-actions {
+            margin: var(--spacing-sm);
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+        }
+        
+        .action-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Header -->
+    <div class="dashboard-header">
+        <h4 class="mb-0">📊 Dashboard POS</h4>
+        <small>Resumen de ventas y estadísticas del día</small>
+    </div>
+
+    <!-- Estadísticas principales -->
+    <div class="stats-grid">
+        <div class="stat-card success">
+            <div class="stat-number">${{ total_hoy|floatformat:0|intcomma }}</div>
+            <div class="stat-label">Ventas Hoy</div>
+        </div>
+        
+        <div class="stat-card primary">
+            <div class="stat-number">{{ cantidad_ventas_hoy }}</div>
+            <div class="stat-label">Transacciones</div>
+        </div>
+        
+        <div class="stat-card warning">
+            <div class="stat-number">
+                {% if cantidad_ventas_hoy > 0 %}
+                    ${{ promedio_venta|floatformat:0|intcomma }}
+                {% else %}
+                    $0
+                {% endif %}
+            </div>
+            <div class="stat-label">Promedio</div>
+        </div>
+        
+        <div class="stat-card info">
+            <div class="stat-number">{{ top_repuestos|length }}</div>
+            <div class="stat-label">Productos</div>
+        </div>
+    </div>
+
+    <!-- Acciones rápidas -->
+    <div class="quick-actions">
+        <h5 class="mb-3">⚡ Acciones Rápidas</h5>
+        
+        <div class="action-grid">
+            <a href="{% url 'pos_principal' %}" class="action-btn">
+                <div class="action-icon">🛒</div>
+                <div class="action-text">Nueva Venta</div>
+            </a>
+            
+            <a href="{% url 'pos_historial_ventas' %}" class="action-btn">
+                <div class="action-icon">📋</div>
+                <div class="action-text">Historial</div>
+            </a>
+            
+            <a href="{% url 'repuesto_list' %}" class="action-btn">
+                <div class="action-icon">📦</div>
+                <div class="action-text">Repuestos</div>
+            </a>
+            
+            <a href="{% url 'pos_configuracion' %}" class="action-btn">
+                <div class="action-icon">⚙️</div>
+                <div class="action-text">Configuración</div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Botones de navegación -->
+    <div class="d-grid gap-2 m-3">
+        <a href="{% url 'pos_principal' %}" class="btn btn-primary btn-lg">
+            🛒 Ir al Punto de Venta
+        </a>
+        <a href="{% url 'panel_principal' %}" class="btn btn-outline-secondary">
+            🏠 Panel Principal
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Animaciones para las tarjetas de estadísticas
+document.addEventListener('DOMContentLoaded', function() {
+    const statCards = document.querySelectorAll('.stat-card');
+    
+    statCards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(30px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.6s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 150);
+    });
+});
+</script>
+{% endblock %}

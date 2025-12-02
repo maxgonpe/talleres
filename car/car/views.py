@@ -4112,12 +4112,29 @@ def repuesto_compatibilidad(request, pk):
                 posicion = request.POST.get(f"posicion_{version_id}", "")
                 motor = request.POST.get(f"motor_{version_id}", "")
                 carroceria = request.POST.get(f"carroceria_{version_id}", "")
+                cilindrada = request.POST.get(f"cilindrada_{version_id}", "")
+                nro_valvulas = request.POST.get(f"nro_valvulas_{version_id}", "")
+                combustible = request.POST.get(f"combustible_{version_id}", "")
+                otro_especial = request.POST.get(f"otro_especial_{version_id}", "")
+                
+                # Convertir nro_valvulas a entero si existe
+                nro_valvulas_int = None
+                if nro_valvulas:
+                    try:
+                        nro_valvulas_int = int(nro_valvulas)
+                    except ValueError:
+                        nro_valvulas_int = None
+                
                 RepuestoAplicacion.objects.create(
                     repuesto=repuesto,
                     version=version,
                     posicion=posicion,
                     motor=motor,
-                    carroceria=carroceria
+                    carroceria=carroceria,
+                    cilindrada=cilindrada,
+                    nro_valvulas=nro_valvulas_int,
+                    combustible=combustible,
+                    otro_especial=otro_especial
                 )
             except VehiculoVersion.DoesNotExist:
                 continue
