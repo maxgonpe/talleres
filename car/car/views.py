@@ -1196,12 +1196,14 @@ def sugerir_repuestos2(request, diagnostico_id=None):
     # 2) compatibilidad con versión del vehículo
     candidates = repuestos_comp
     if veh_marca and veh_modelo and veh_anio:
-        version = VehiculoVersion.objects.filter(
+        # Buscar versión exacta con filtros adicionales si están disponibles
+        version_query = VehiculoVersion.objects.filter(
             marca__iexact=veh_marca.strip(),
             modelo__iexact=veh_modelo.strip(),
             anio_desde__lte=veh_anio,
             anio_hasta__gte=veh_anio
-        ).first()
+        )
+        version = version_query.first()
         if version:
             repuestos_by_version = Repuesto.objects.filter(aplicaciones__version=version).distinct()
             candidates = (repuestos_comp | repuestos_by_version).distinct()
@@ -1238,7 +1240,7 @@ def sugerir_repuestos(request, diagnostico_id=None):
     
     componentes_ids = []
     veh_marca = veh_modelo = veh_anio = None
-    veh_motor = None
+    veh_motor = veh_cilindrada = veh_nro_valvulas = veh_combustible = veh_otro_especial = None
 
     # MODO "DIAGNÓSTICO GUARDADO"
     if diagnostico_id:
@@ -1247,6 +1249,8 @@ def sugerir_repuestos(request, diagnostico_id=None):
         veh_marca, veh_modelo, veh_anio = veh.marca, veh.modelo, veh.anio
         veh_motor = veh.descripcion_motor  # Campo del motor del vehículo
         componentes_ids = list(diag.componentes.values_list('id', flat=True))
+        # Obtener datos adicionales del vehículo si están disponibles
+        # Nota: Estos campos pueden no estar en el modelo Vehiculo, solo en VehiculoVersion
 
     # MODO "PREVIEW" (sin guardar)
     else:
@@ -1255,6 +1259,10 @@ def sugerir_repuestos(request, diagnostico_id=None):
         veh_modelo = (request.GET.get("modelo") or "").strip()
         veh_anio_raw = (request.GET.get("anio") or "").strip()
         veh_motor = (request.GET.get("motor") or "").strip()
+        veh_cilindrada = (request.GET.get("cilindrada") or "").strip()
+        veh_nro_valvulas = (request.GET.get("nro_valvulas") or "").strip()
+        veh_combustible = (request.GET.get("combustible") or "").strip()
+        veh_otro_especial = (request.GET.get("otro_especial") or "").strip()
         try:
             veh_anio = int(veh_anio_raw) if veh_anio_raw else None
         except ValueError:
@@ -1284,7 +1292,7 @@ def sugerir_repuestos(request, diagnostico_id=None):
             candidates = repuestos_comp.filter(aplicaciones__version=version).distinct()
 
     # 3) FILTRO INTELIGENTE POR CARACTERÍSTICAS DEL VEHÍCULO
-    if veh_marca or veh_motor:
+    if veh_marca or veh_motor or veh_cilindrada or veh_nro_valvulas or veh_combustible or veh_otro_especial:
         filtro_vehiculo = Q()
         
         # Filtrar por marca del vehículo
@@ -1300,6 +1308,30 @@ def sugerir_repuestos(request, diagnostico_id=None):
             filtro_vehiculo |= Q(tipo_de_motor__icontains=veh_motor)
             # También incluir repuestos generales
             filtro_vehiculo |= Q(tipo_de_motor__in=['zzzzzz', ''])
+        
+        # Filtrar por cilindrada
+        if veh_cilindrada:
+            filtro_vehiculo |= Q(cilindrada__icontains=veh_cilindrada)
+            filtro_vehiculo |= Q(cilindrada__isnull=True) | Q(cilindrada='')
+        
+        # Filtrar por número de válvulas
+        if veh_nro_valvulas:
+            try:
+                nro_valvulas_int = int(veh_nro_valvulas)
+                filtro_vehiculo |= Q(nro_valvulas=nro_valvulas_int)
+                filtro_vehiculo |= Q(nro_valvulas__isnull=True)
+            except ValueError:
+                pass
+        
+        # Filtrar por combustible
+        if veh_combustible:
+            filtro_vehiculo |= Q(combustible__icontains=veh_combustible)
+            filtro_vehiculo |= Q(combustible__isnull=True) | Q(combustible='')
+        
+        # Filtrar por otro especial
+        if veh_otro_especial:
+            filtro_vehiculo |= Q(otro_especial__icontains=veh_otro_especial)
+            filtro_vehiculo |= Q(otro_especial__isnull=True) | Q(otro_especial='')
         
         # Aplicar filtro de vehículo
         candidates = candidates.filter(filtro_vehiculo).distinct()

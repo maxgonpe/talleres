@@ -372,3 +372,52 @@ def eliminar_excepcion_bono(request, trabajo_id):
     
     return redirect('trabajo_detalle', pk=trabajo.id)
 
+
+@login_required
+@requiere_permiso('trabajos')
+def eliminar_configuracion_bono(request, pk):
+    """
+    Vista para eliminar una configuración de bono.
+    No afecta los bonos ya generados, solo elimina la configuración.
+    """
+    config = get_object_or_404(ConfiguracionBonoMecanico, pk=pk)
+    mecanico_nombre = str(config.mecanico)
+    
+    if request.method == 'POST':
+        # Verificar si hay bonos pendientes (opcional, solo informativo)
+        bonos_pendientes = BonoGenerado.objects.filter(
+            mecanico=config.mecanico,
+            pagado=False
+        ).count()
+        
+        # Eliminar la configuración
+        config.delete()
+        
+        if bonos_pendientes > 0:
+            messages.success(
+                request, 
+                f"Configuración de bono eliminada para {mecanico_nombre}. "
+                f"Nota: Este mecánico tiene {bonos_pendientes} bono(s) pendiente(s) que no se verán afectados."
+            )
+        else:
+            messages.success(request, f"Configuración de bono eliminada para {mecanico_nombre}")
+        
+        return redirect('configuracion_bonos')
+    
+    # Si es GET, mostrar confirmación
+    bonos_pendientes = BonoGenerado.objects.filter(
+        mecanico=config.mecanico,
+        pagado=False
+    ).count()
+    bonos_total = BonoGenerado.objects.filter(
+        mecanico=config.mecanico
+    ).count()
+    
+    context = {
+        'config': config,
+        'bonos_pendientes': bonos_pendientes,
+        'bonos_total': bonos_total,
+    }
+    
+    return render(request, 'car/bonos/confirmar_eliminar_configuracion.html', context)
+

@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Eliminar Configuración de Bono - NetGoGo{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+<style>
+    .confirm-container {
+        max-width: 600px;
+        margin: 2rem auto;
+        padding: var(--spacing-xl);
+        background: var(--card-bg);
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--card-shadow);
+    }
+    
+    .confirm-header {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        padding: var(--spacing-lg);
+        border-radius: var(--border-radius-lg);
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .confirm-header h2 {
+        margin: 0;
+        font-size: 1.5rem;
+    }
+    
+    .info-box {
+        background: var(--hover-bg);
+        border-left: 4px solid #ffc107;
+        padding: var(--spacing-md);
+        border-radius: var(--border-radius);
+        margin-bottom: 1.5rem;
+    }
+    
+    .info-box h4 {
+        color: #856404;
+        margin-bottom: 0.5rem;
+    }
+    
+    .info-box p {
+        margin: 0.25rem 0;
+        color: var(--fg);
+    }
+    
+    .config-details {
+        background: var(--bg-secondary);
+        padding: var(--spacing-md);
+        border-radius: var(--border-radius);
+        margin-bottom: 1.5rem;
+    }
+    
+    .config-details p {
+        margin: 0.5rem 0;
+    }
+    
+    .config-details strong {
+        color: var(--accent);
+    }
+    
+    .btn-group {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 2rem;
+    }
+    
+    .btn {
+        padding: 0.75rem 2rem;
+        border: none;
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s;
+    }
+    
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+    }
+    
+    .btn-danger:hover {
+        background: #c82333;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+    }
+    
+    .btn-secondary {
+        background: var(--muted);
+        color: var(--btn-fg);
+    }
+    
+    .btn-secondary:hover {
+        background: var(--warm-gray);
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="confirm-container">
+    <div class="confirm-header">
+        <h2>🗑️ Eliminar Configuración de Bono</h2>
+    </div>
+    
+    <div class="info-box">
+        <h4>⚠️ Importante</h4>
+        <p><strong>Esta acción eliminará la configuración de bono para {{ config.mecanico }}.</strong></p>
+        <p>Los bonos ya generados y registrados <strong>NO se verán afectados</strong> y permanecerán en el sistema.</p>
+        {% if bonos_pendientes > 0 %}
+        <p style="color: #856404; font-weight: 600;">
+            Este mecánico tiene <strong>{{ bonos_pendientes }}</strong> bono(s) pendiente(s) que seguirán siendo válidos.
+        </p>
+        {% endif %}
+    </div>
+    
+    <div class="config-details">
+        <h4 style="margin-top: 0; color: var(--accent);">Detalles de la Configuración:</h4>
+        <p><strong>Mecánico:</strong> {{ config.mecanico }}</p>
+        <p><strong>Estado:</strong> 
+            {% if config.activo %}
+                <span style="color: #28a745; font-weight: 600;">Activo</span>
+            {% else %}
+                <span style="color: #dc3545; font-weight: 600;">Inactivo</span>
+            {% endif %}
+        </p>
+        <p><strong>Tipo de Bono:</strong> 
+            {% if config.tipo_bono == 'porcentaje' %}
+                Porcentaje ({{ config.porcentaje_mano_obra }}%)
+            {% else %}
+                Cantidad Fija (${{ config.cantidad_fija|floatformat:0|intcomma }})
+            {% endif %}
+        </p>
+        {% if config.notas %}
+        <p><strong>Notas:</strong> {{ config.notas }}</p>
+        {% endif %}
+        <p><strong>Total de bonos generados:</strong> {{ bonos_total }}</p>
+        <p><strong>Bonos pendientes:</strong> {{ bonos_pendientes }}</p>
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        <div class="btn-group">
+            <button type="submit" class="btn btn-danger">
+                🗑️ Sí, Eliminar Configuración
+            </button>
+            <a href="{% url 'configuracion_bonos' %}" class="btn btn-secondary">
+                ❌ Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

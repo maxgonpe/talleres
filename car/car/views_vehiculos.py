@@ -21,7 +21,13 @@ def vehiculo_list(request):
             Q(marca__icontains=search_query) |
             Q(modelo__icontains=search_query) |
             Q(anio_desde__icontains=search_query) |
-            Q(anio_hasta__icontains=search_query)
+            Q(anio_hasta__icontains=search_query) |
+            Q(motor__icontains=search_query) |
+            Q(carroceria__icontains=search_query) |
+            Q(cilindrada__icontains=search_query) |
+            Q(nro_valvulas__icontains=search_query) |
+            Q(combustible__icontains=search_query) |
+            Q(otro_especial__icontains=search_query)
         )
     
     # Agrupar por marca

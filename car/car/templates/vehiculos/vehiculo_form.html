@@ -162,6 +162,37 @@
         font-size: 0.9rem;
     }
     
+    /* ========================================
+       ESTILOS PARA CAMPOS DE COMPATIBILIDAD EN MODO CLARO
+       ======================================== */
+    
+    /* Campos de compatibilidad con fondo destacado en modo claro */
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_cilindrada,
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_nro_valvulas,
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_combustible,
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_otro_especial {
+        background-color: #f8f9fa !important;
+        border: 2px solid #dee2e6 !important;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_cilindrada:focus,
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_nro_valvulas:focus,
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_combustible:focus,
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_otro_especial:focus {
+        background-color: #ffffff !important;
+        border-color: #4A90E2 !important;
+        box-shadow: 0 0 0 0.2rem rgba(74, 144, 226, 0.25), inset 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_cilindrada:hover,
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_nro_valvulas:hover,
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_combustible:hover,
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_otro_especial:hover {
+        background-color: #e9ecef !important;
+        border-color: #adb5bd !important;
+    }
+    
     /* Responsive */
     @media (max-width: 768px) {
         .form-container {
@@ -207,6 +238,10 @@
             <li><strong>Año hasta:</strong> Año final de producción</li>
             <li><strong>Motor:</strong> Tipo de motor (ej: 1.6L, 2.0L Turbo, V6) - Opcional</li>
             <li><strong>Carrocería:</strong> Tipo de carrocería (ej: Sedán, Hatchback, SUV) - Opcional</li>
+            <li><strong>Cilindrada:</strong> Cilindrada del motor (ej: 1.6L, 2000cc, 2.4L) - Opcional</li>
+            <li><strong>Número de Válvulas:</strong> Cantidad de válvulas (ej: 8, 16, 24) - Opcional</li>
+            <li><strong>Combustible:</strong> Tipo de combustible (ej: Gasolina, Diesel, Híbrido) - Opcional</li>
+            <li><strong>Otro Especial:</strong> Información adicional especial - Opcional</li>
         </ul>
         <p><strong>Nota:</strong> Este vehículo se usará para determinar qué repuestos son compatibles, no es un vehículo de cliente del taller.</p>
     </div>
@@ -327,6 +362,80 @@
                 {% if form.carroceria.errors %}
                     <div class="text-danger mt-1">
                         {% for error in form.carroceria.errors %}
+                            <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Cilindrada y Número de Válvulas -->
+        <div class="form-row">
+            <div class="form-group">
+                <label for="{{ form.cilindrada.id_for_label }}" class="form-label">
+                    <i class="fas fa-tachometer-alt me-2"></i>{{ form.cilindrada.label }}
+                </label>
+                {{ form.cilindrada }}
+                {% if form.cilindrada.help_text %}
+                    <div class="form-text">{{ form.cilindrada.help_text }}</div>
+                {% endif %}
+                {% if form.cilindrada.errors %}
+                    <div class="text-danger mt-1">
+                        {% for error in form.cilindrada.errors %}
+                            <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.nro_valvulas.id_for_label }}" class="form-label">
+                    <i class="fas fa-sliders-h me-2"></i>{{ form.nro_valvulas.label }}
+                </label>
+                {{ form.nro_valvulas }}
+                {% if form.nro_valvulas.help_text %}
+                    <div class="form-text">{{ form.nro_valvulas.help_text }}</div>
+                {% endif %}
+                {% if form.nro_valvulas.errors %}
+                    <div class="text-danger mt-1">
+                        {% for error in form.nro_valvulas.errors %}
+                            <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Combustible y Otro Especial -->
+        <div class="form-row">
+            <div class="form-group">
+                <label for="{{ form.combustible.id_for_label }}" class="form-label">
+                    <i class="fas fa-gas-pump me-2"></i>{{ form.combustible.label }}
+                </label>
+                {{ form.combustible }}
+                {% if form.combustible.help_text %}
+                    <div class="form-text">{{ form.combustible.help_text }}</div>
+                {% endif %}
+                {% if form.combustible.errors %}
+                    <div class="text-danger mt-1">
+                        {% for error in form.combustible.errors %}
+                            <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.otro_especial.id_for_label }}" class="form-label">
+                    <i class="fas fa-info-circle me-2"></i>{{ form.otro_especial.label }}
+                </label>
+                {{ form.otro_especial }}
+                {% if form.otro_especial.help_text %}
+                    <div class="form-text">{{ form.otro_especial.help_text }}</div>
+                {% endif %}
+                {% if form.otro_especial.errors %}
+                    <div class="text-danger mt-1">
+                        {% for error in form.otro_especial.errors %}
                             <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
                         {% endfor %}
                     </div>

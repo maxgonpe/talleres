@@ -112,6 +112,7 @@ urlpatterns = [
     # === BONOS E INCENTIVOS PARA MECÁNICOS ===
     path("bonos/configuracion/", views_bonos.configuracion_bonos, name="configuracion_bonos"),
     path("bonos/configuracion/<int:pk>/editar/", views_bonos.editar_configuracion_bono, name="editar_configuracion_bono"),
+    path("bonos/configuracion/<int:pk>/eliminar/", views_bonos.eliminar_configuracion_bono, name="eliminar_configuracion_bono"),
     path("bonos/mecanicos/", views_bonos.lista_mecanicos_bonos, name="lista_mecanicos_bonos"),
     path("bonos/mecanico/<int:mecanico_id>/", views_bonos.cuenta_mecanico, name="cuenta_mecanico"),
     path("bonos/mecanico/<int:mecanico_id>/pago/", views_bonos.registrar_pago_mecanico, name="registrar_pago_mecanico"),

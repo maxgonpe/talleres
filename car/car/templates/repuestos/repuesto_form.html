@@ -138,6 +138,40 @@
     }
     
     /* ========================================
+       ESTILOS PARA CAMPOS DE COMPATIBILIDAD EN MODO CLARO
+       ======================================== */
+    
+    /* Campos de compatibilidad con fondo destacado en modo claro */
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_tipo_de_motor,
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_cilindrada,
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_nro_valvulas,
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_combustible,
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_otro_especial {
+        background-color: #f8f9fa !important;
+        border: 2px solid #dee2e6 !important;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_tipo_de_motor:focus,
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_cilindrada:focus,
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_nro_valvulas:focus,
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_combustible:focus,
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_otro_especial:focus {
+        background-color: #ffffff !important;
+        border-color: #4A90E2 !important;
+        box-shadow: 0 0 0 0.2rem rgba(74, 144, 226, 0.25), inset 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_tipo_de_motor:hover,
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_cilindrada:hover,
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_nro_valvulas:hover,
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_combustible:hover,
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_otro_especial:hover {
+        background-color: #e9ecef !important;
+        border-color: #adb5bd !important;
+    }
+    
+    /* ========================================
        ESTILOS ESPECÍFICOS PARA TEMAS OSCUROS
        ======================================== */
     
@@ -402,10 +436,45 @@
                     <div class="help-text">Ej: 1.6L, 2.0L Turbo, V6, etc.</div>
                 </div>
                 
-                <div class="form-group">
-                    <label class="form-label">Carrocería</label>
-                    {{ form.carroceria }}
-                    <div class="help-text">Ej: Sedán, Hatchback, SUV, Pickup, etc.</div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Carrocería</label>
+                            {{ form.carroceria }}
+                            <div class="help-text">Ej: Sedán, Hatchback, SUV, Pickup, etc.</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Cilindrada</label>
+                            {{ form.cilindrada }}
+                            <div class="help-text">Ej: 1.6L, 2000cc, 2.4L</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Número de Válvulas</label>
+                            {{ form.nro_valvulas }}
+                            <div class="help-text">Ej: 8, 16, 24</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Combustible</label>
+                            {{ form.combustible }}
+                            <div class="help-text">Ej: Gasolina, Diesel, Híbrido, Eléctrico</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Otro Especial</label>
+                            {{ form.otro_especial }}
+                            <div class="help-text">Información adicional especial</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

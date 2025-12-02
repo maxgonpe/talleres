@@ -402,7 +402,7 @@
                     <input type="text" 
                            id="search-repuestos" 
                            class="form-control search-input" 
-                           placeholder="🔍 Buscar por nombre, SKU, código de barras, marca, OEM, origen, marca vehículo, tipo motor, carrocería..."
+                           placeholder="🔍 Buscar por nombre, SKU, código de barras, marca, OEM, origen, marca vehículo, tipo motor, carrocería, cilindrada, válvulas, combustible..."
                            autocomplete="off">
                 </div>
             </div>
@@ -446,7 +446,11 @@
                         data-codigo-proveedor="{{ repuesto.cod_prov|default:''|lower }}"
                         data-marca-vehiculo="{{ repuesto.marca_veh|default:''|lower }}"
                         data-tipo-motor="{{ repuesto.tipo_de_motor|default:''|lower }}"
-                        data-carroceria="{{ repuesto.carroceria|default:''|lower }}">
+                        data-carroceria="{{ repuesto.carroceria|default:''|lower }}"
+                        data-cilindrada="{{ repuesto.cilindrada|default:''|lower }}"
+                        data-nro-valvulas="{{ repuesto.nro_valvulas|default:'' }}"
+                        data-combustible="{{ repuesto.combustible|default:''|lower }}"
+                        data-otro-especial="{{ repuesto.otro_especial|default:''|lower }}">
                         <td>{{ repuesto.id }}</td>
                         <td>{{ repuesto.sku|default:"-" }}</td>
                         <td>{{ repuesto.nombre }}</td>
@@ -525,6 +529,11 @@ try {
             cod_prov: "{{ repuesto.cod_prov|default:'-'|escapejs }}",
             marca_veh: "{{ repuesto.marca_veh|default:'-'|escapejs }}",
             tipo_de_motor: "{{ repuesto.tipo_de_motor|default:'-'|escapejs }}",
+            carroceria: "{{ repuesto.carroceria|default:'-'|escapejs }}",
+            cilindrada: "{{ repuesto.cilindrada|default:'-'|escapejs }}",
+            nro_valvulas: {{ repuesto.nro_valvulas|default:"null" }},
+            combustible: "{{ repuesto.combustible|default:'-'|escapejs }}",
+            otro_especial: "{{ repuesto.otro_especial|default:'-'|escapejs }}",
             stock_total: {{ repuesto.stock_total|default:0 }},
             created: "{{ repuesto.created|date:'d/m/Y H:i'|escapejs }}"
         }{% if not forloop.last %},{% endif %}
@@ -669,6 +678,26 @@ function mostrarFicha(repuestoId) {
                 <div class="ficha-value ${repuesto.tipo_de_motor === '-' ? 'empty' : ''}">${repuesto.tipo_de_motor}</div>
             </div>
             <div class="ficha-field">
+                <div class="ficha-label">Carrocería</div>
+                <div class="ficha-value ${repuesto.carroceria === '-' ? 'empty' : ''}">${repuesto.carroceria}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Cilindrada</div>
+                <div class="ficha-value ${repuesto.cilindrada === '-' ? 'empty' : ''}">${repuesto.cilindrada}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Número de Válvulas</div>
+                <div class="ficha-value ${repuesto.nro_valvulas === null || repuesto.nro_valvulas === undefined ? 'empty' : ''}">${repuesto.nro_valvulas !== null && repuesto.nro_valvulas !== undefined ? repuesto.nro_valvulas : '-'}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Combustible</div>
+                <div class="ficha-value ${repuesto.combustible === '-' ? 'empty' : ''}">${repuesto.combustible}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Otro Especial</div>
+                <div class="ficha-value ${repuesto.otro_especial === '-' ? 'empty' : ''}">${repuesto.otro_especial}</div>
+            </div>
+            <div class="ficha-field">
                 <div class="ficha-label">Stock Total</div>
                 <div class="ficha-value">
                     <span class="badge ${repuesto.stock_total > 0 ? 'bg-success text-inverse' : 'bg-danger text-inverse'}">
@@ -742,6 +771,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         const marcaVehiculo = row.dataset.marcaVehiculo || '';
                         const tipoMotor = row.dataset.tipoMotor || '';
                         const carroceria = row.dataset.carroceria || '';
+                        const cilindrada = row.dataset.cilindrada || '';
+                        const nroValvulas = row.dataset.nroValvulas || '';
+                        const combustible = row.dataset.combustible || '';
+                        const otroEspecial = row.dataset.otroEspecial || '';
                         
                         // Búsqueda simple y directa (case-insensitive)
                         const coincide = (id && id.toLowerCase().includes(terminoLower)) || 
@@ -754,7 +787,11 @@ document.addEventListener('DOMContentLoaded', function() {
                                        (codigoProveedor && codigoProveedor.toLowerCase().includes(terminoLower)) ||
                                        (marcaVehiculo && marcaVehiculo.toLowerCase().includes(terminoLower)) ||
                                        (tipoMotor && tipoMotor.toLowerCase().includes(terminoLower)) ||
-                                       (carroceria && carroceria.toLowerCase().includes(terminoLower));
+                                       (carroceria && carroceria.toLowerCase().includes(terminoLower)) ||
+                                       (cilindrada && cilindrada.toLowerCase().includes(terminoLower)) ||
+                                       (nroValvulas && nroValvulas.includes(terminoLower)) ||
+                                       (combustible && combustible.toLowerCase().includes(terminoLower)) ||
+                                       (otroEspecial && otroEspecial.toLowerCase().includes(terminoLower));
                         
                         if (coincide) {
                             row.style.display = '';

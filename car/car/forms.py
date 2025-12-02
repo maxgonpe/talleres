@@ -242,7 +242,8 @@ class RepuestoForm(forms.ModelForm):
             "sku", "oem", "referencia", "nombre", "marca",
             "descripcion", "medida", "posicion", "unidad",
             "precio_costo", "precio_venta", "codigo_barra",
-            "stock", "origen_repuesto", "cod_prov", "marca_veh", "tipo_de_motor", "carroceria"
+            "stock", "origen_repuesto", "cod_prov", "marca_veh", "tipo_de_motor", "carroceria",
+            "cilindrada", "nro_valvulas", "combustible", "otro_especial"
         ]
         widgets = {
             "descripcion": forms.Textarea(attrs={"rows": 3, "class": "form-control"}),
@@ -251,6 +252,10 @@ class RepuestoForm(forms.ModelForm):
             "cod_prov": forms.TextInput(attrs={"placeholder": "Código del proveedor", "class": "form-control"}),
             "marca_veh": forms.TextInput(attrs={"placeholder": "Ej: Toyota, Honda, Ford", "class": "form-control"}),
             "carroceria": forms.TextInput(attrs={"placeholder": "Ej: Sedán, Hatchback, SUV, Pickup", "class": "form-control"}),
+            "cilindrada": forms.TextInput(attrs={"placeholder": "Ej: 1.6L, 2000cc, 2.4L", "class": "form-control"}),
+            "nro_valvulas": forms.NumberInput(attrs={"placeholder": "Ej: 8, 16, 24", "class": "form-control", "min": "0"}),
+            "combustible": forms.TextInput(attrs={"placeholder": "Ej: Gasolina, Diesel, Híbrido, Eléctrico", "class": "form-control"}),
+            "otro_especial": forms.TextInput(attrs={"placeholder": "Información adicional especial", "class": "form-control"}),
         }
 
 # ========================
@@ -479,7 +484,8 @@ class VehiculoVersionForm(forms.ModelForm):
     """Formulario para crear/editar versiones de vehículos"""
     class Meta:
         model = VehiculoVersion
-        fields = ['marca', 'modelo', 'anio_desde', 'anio_hasta', 'motor', 'carroceria']
+        fields = ['marca', 'modelo', 'anio_desde', 'anio_hasta', 'motor', 'carroceria', 
+                  'cilindrada', 'nro_valvulas', 'combustible', 'otro_especial']
         widgets = {
             'marca': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -508,5 +514,22 @@ class VehiculoVersionForm(forms.ModelForm):
             'carroceria': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Ej: Sedán, Hatchback, SUV'
+            }),
+            'cilindrada': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: 1.6L, 2000cc, 2.4L'
+            }),
+            'nro_valvulas': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': '0',
+                'placeholder': 'Ej: 8, 16, 24'
+            }),
+            'combustible': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ej: Gasolina, Diesel, Híbrido, Eléctrico'
+            }),
+            'otro_especial': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Información adicional especial'
             }),
         }
