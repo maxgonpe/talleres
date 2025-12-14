@@ -1470,6 +1470,14 @@ class AdministracionTaller(models.Model):
         default=True,
         help_text="Enviar notificaciones por email"
     )
+    ver_mensajes = models.BooleanField(
+        default=True,
+        help_text="Permitir visualización de mensajes"
+    )
+    ver_avisos = models.BooleanField(
+        default=True,
+        help_text="Permitir visualización de avisos"
+    )
     
     # Metadatos
     fecha_creacion = models.DateTimeField(auto_now_add=True)

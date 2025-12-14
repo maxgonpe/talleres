@@ -485,7 +485,8 @@ class AdministracionTallerAdmin(admin.ModelAdmin):
         }),
         ('Configuraciones del Sistema', {
             'fields': ('tema_por_defecto', 'mostrar_estadisticas_publicas', 
-                      'permitir_registro_usuarios', 'notificaciones_email')
+                      'permitir_registro_usuarios', 'notificaciones_email',
+                      'ver_mensajes', 'ver_avisos')
         }),
         ('Metadatos', {
             'fields': ('fecha_creacion', 'fecha_actualizacion', 'creado_por'),
