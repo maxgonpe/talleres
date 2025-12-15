@@ -108,6 +108,21 @@
         border: 1px solid var(--border-color);
     }
     
+    /* Card de búsqueda de insumos con mejor contraste */
+    .insumo-search-card {
+        background-color: rgba(0, 0, 0, 0.05);
+        padding: var(--spacing-md);
+        border-radius: var(--border-radius-md);
+        border: 2px solid rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Modo oscuro: fondo más claro para contraste */
+    html.theme-dark .insumo-search-card,
+    body.theme-dark .insumo-search-card {
+        background-color: rgba(255, 255, 255, 0.08);
+        border: 2px solid rgba(255, 255, 255, 0.15);
+    }
+    
     .info-row {
         display: flex;
         justify-content: space-between;
@@ -1033,7 +1048,7 @@
                 </div>
                 
                 <!-- Búsqueda de insumos -->
-                <div class="mb-3">
+                <div class="mb-3 insumo-search-card">
                     <label for="buscar-insumo" class="form-label">🔍 Buscar Insumo:</label>
                     <div class="input-group">
                         <input type="text" id="buscar-insumo" class="form-control" placeholder="Buscar por nombre, SKU, código... (escribe para filtrar)">
@@ -1566,23 +1581,35 @@ console.log('🚀 CARGANDO SCRIPT ACTUALIZADO - Versión con debug de showTab');
 function showTab(tabName) {
     console.log('🔧 showTab llamado con:', tabName);
     console.log('🔧 event:', event);
-    
+
     // Ocultar todas las pestañas
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
     });
-    
+
     // Remover clase active de todos los botones
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.remove('active');
     });
-    
+
     // Mostrar la pestaña seleccionada
     const tabElement = document.getElementById('tab-' + tabName);
     if (tabElement) {
         tabElement.classList.add('active');
     } else {
         console.error('❌ No se encontró el elemento tab-' + tabName);
+    }
+    
+    // Si es la pestaña de insumos, limpiar el campo de búsqueda
+    if (tabName === 'insumos') {
+        const buscarInput = document.getElementById('buscar-insumo');
+        if (buscarInput) {
+            buscarInput.value = '';
+        }
+        // Configurar búsqueda solo si no está configurada (evitar múltiples listeners)
+        if (!busquedaInsumosConfigurada) {
+            setTimeout(configurarBusquedaInsumos, 100);
+        }
     }
     
     // Activar el botón correspondiente
@@ -2408,9 +2435,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // ========================================
     // FUNCIONES PARA INSUMOS
     // ========================================
-    
+
     // Función para buscar insumos (con debounce para búsqueda en tiempo real)
     let buscarInsumosTimeout;
+    let buscarInsumosInputHandler = null; // Referencia para poder remover el listener
     window.buscarInsumos = async function() {
         console.log('🔍 buscarInsumos llamado');
         
@@ -2542,7 +2570,15 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (response.ok || response.status === 302) {
                 console.log('✅ Insumos agregados exitosamente');
+                {% if ver_mensajes %}
                 alert('✅ Insumos agregados exitosamente');
+                {% endif %}
+                
+                // Limpiar el campo de búsqueda antes de recargar
+                const buscarInput = document.getElementById('buscar-insumo');
+                if (buscarInput) {
+                    buscarInput.value = '';
+                }
                 
                 // Recargar la página manteniendo la pestaña de insumos activa
                 window.location.href = window.location.pathname + '?tab=insumos';
@@ -2558,73 +2594,55 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
     
-    // Configurar búsqueda en tiempo real para insumos
+    // Configurar búsqueda en tiempo real para insumos (con protección contra múltiples llamadas)
+    let busquedaInsumosConfigurada = false;
     function configurarBusquedaInsumos() {
+        // Evitar configurar múltiples veces
+        if (busquedaInsumosConfigurada) {
+            console.log('⚠️ Búsqueda de insumos ya configurada, omitiendo...');
+            return;
+        }
+        
         console.log('🔧 Configurando búsqueda de insumos...');
         const buscarInsumoInput = document.getElementById('buscar-insumo');
         
         if (buscarInsumoInput) {
             console.log('✅ Input de búsqueda encontrado');
             
-            // Remover event listeners existentes
-            buscarInsumoInput.removeEventListener('input', buscarInsumosDebounced);
-            
-            // Event listener para búsqueda en tiempo real
-            buscarInsumoInput.addEventListener('input', function(e) {
-                console.log('🔍 Input detectado:', e.target.value);
-                buscarInsumosDebounced();
-            });
-            
-            // Cargar insumos iniciales si estamos en la pestaña de insumos
-            if (window.location.search.includes('tab=insumos')) {
-                console.log('📦 Cargando insumos iniciales...');
-                buscarInsumoInput.value = 'xxxx zzzzzz';
-                buscarInsumos();
+            // Crear handler una sola vez y guardar referencia
+            if (!buscarInsumosInputHandler) {
+                buscarInsumosInputHandler = function(e) {
+                    console.log('🔍 Input detectado:', e.target.value);
+                    buscarInsumosDebounced();
+                };
             }
+            
+            // Remover event listener existente si hay uno
+            if (buscarInsumoInput.hasAttribute('data-listener-attached')) {
+                buscarInsumoInput.removeEventListener('input', buscarInsumosInputHandler);
+            }
+            
+            // Agregar event listener para búsqueda en tiempo real
+            buscarInsumoInput.addEventListener('input', buscarInsumosInputHandler);
+            buscarInsumoInput.setAttribute('data-listener-attached', 'true');
+            
+            busquedaInsumosConfigurada = true;
+            
+            // No cargar insumos iniciales automáticamente - dejar campo en blanco
+            // El usuario escribirá cuando necesite buscar
         } else {
             console.log('❌ Input de búsqueda no encontrado');
         }
     }
     
-    // Cargar cuando el DOM esté listo
-    document.addEventListener('DOMContentLoaded', configurarBusquedaInsumos);
-    
-    // También configurar cuando se cambie de pestaña
-    window.addEventListener('load', function() {
+    // Cargar cuando el DOM esté listo (solo una vez)
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(configurarBusquedaInsumos, 100);
+        });
+    } else {
+        // DOM ya está listo
         setTimeout(configurarBusquedaInsumos, 100);
-    });
-    
-    // Función para mostrar pestaña (modificar la función existente)
-    function showTab(tabName) {
-        // Ocultar todas las pestañas
-        document.querySelectorAll('.tab-content').forEach(tab => {
-            tab.classList.remove('active');
-        });
-        
-        // Remover clase active de todos los botones
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        
-        // Mostrar la pestaña seleccionada
-        const selectedTab = document.getElementById(`tab-${tabName}`);
-        if (selectedTab) {
-            selectedTab.classList.add('active');
-        }
-        
-        // Activar el botón correspondiente
-        const selectedBtn = document.querySelector(`.tab-btn[onclick="showTab('${tabName}')"]`);
-        if (selectedBtn) {
-            selectedBtn.classList.add('active');
-        }
-        
-        // Si es la pestaña de insumos, configurar búsqueda
-        if (tabName === 'insumos') {
-            console.log('📦 Cambiando a pestaña de insumos...');
-            setTimeout(() => {
-                configurarBusquedaInsumos();
-            }, 100);
-        }
     }
 
     // Función helper para escapar HTML

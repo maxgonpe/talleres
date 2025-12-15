@@ -4,7 +4,8 @@ from django.conf.urls.static import static
 from django.utils.timezone import now
 from django.shortcuts import redirect
 from .import views
-from .views_api import vehiculo_lookup
+from .views_api import vehiculo_lookup, openai_response
+from .views_ia import netgogo_console, netgogo_chat
 from .views import ClienteListView, ClienteTallerListView, ClienteTallerCreateView, ClienteTallerUpdateView, ClienteTallerDeleteView, cliente_taller_lookup, VehiculoListView,\
                    VehiculoCreateView,VehiculoUpdateView,\
                    VehiculoDeleteView,MecanicoListView,\
@@ -52,6 +53,9 @@ urlpatterns = [
     path('acciones-lookup/<int:componente_id>/', views.acciones_por_componente, name='acciones_por_componente'),
     path("vehiculo_lookup/", vehiculo_lookup, name="vehiculo_lookup"),
     path('api/vehiculos/<str:cliente_rut>/', views.vehiculos_por_cliente, name='vehiculos_por_cliente'),
+    path("api/openai/response/", openai_response, name="openai_response"),
+    path("netgogo/", netgogo_console, name="netgogo_console"),
+    path("api/netgogo/chat/", netgogo_chat, name="netgogo_chat"),
 
     # === Componente + Acción (precios) ===
     path('componente-acciones/', views.comp_accion_list, name='comp_accion_list'),

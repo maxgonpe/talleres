@@ -1,0 +1,106 @@
+PROGRESO DE CORRECCIÓN: Avisos y Mensajes Globalizados
+=======================================================
+Fecha inicio: 2025-12-14
+Estado: EN PROGRESO
+
+GRUPO 1 (Archivos 1-10): [COMPLETADO ✅]
+---------------------------------------
+1. views.py - Línea 971: messages.error sin ver_mensajes ✅ CORREGIDO
+2. views.py - Línea 990: messages.error sin ver_mensajes ✅ CORREGIDO
+3. views.py - Línea 1005: messages.error sin ver_mensajes ✅ CORREGIDO
+4. views.py - Línea 2499: messages.error sin ver_mensajes ✅ CORREGIDO
+5. views.py - Línea 2526: messages.error sin ver_mensajes ✅ CORREGIDO
+6. views.py - Línea 2558: messages.error sin ver_mensajes ✅ CORREGIDO
+7. views.py - Línea 2671: messages.error sin ver_mensajes ✅ CORREGIDO
+8. views.py - Línea 2751: messages.error sin ver_mensajes ✅ CORREGIDO
+9. views.py - Línea 2821: messages.error sin ver_mensajes ✅ CORREGIDO
+10. views.py - Línea 2824: messages.error sin ver_mensajes ✅ CORREGIDO
+
+GRUPO 2 (Archivos 11-20): [COMPLETADO ✅]
+---------------------------------------
+11. views.py - Línea 2691: messages.error sin ver_mensajes ✅ CORREGIDO
+12. views.py - Línea 2696: messages.error sin ver_mensajes ✅ CORREGIDO
+13. views.py - Línea 2770: messages.error sin ver_mensajes ✅ CORREGIDO
+14. views.py - Línea 2896: messages.error sin ver_mensajes ✅ CORREGIDO
+15. views.py - Línea 2899: messages.error sin ver_mensajes ✅ CORREGIDO
+16. views.py - Línea 2902: messages.error sin ver_mensajes ✅ CORREGIDO
+17. views_pos.py - Línea 265: messages.error sin ver_mensajes ✅ CORREGIDO
+18. views_pos.py - Línea 584: messages.error sin ver_mensajes ✅ CORREGIDO
+19. views_bonos.py - Línea 145: messages.error sin ver_mensajes ✅ CORREGIDO
+20. views_bonos.py - Línea 147: messages.error sin ver_mensajes ✅ CORREGIDO
+
+GRUPO 3 (Archivos 21-30): [COMPLETADO ✅]
+---------------------------------------
+21. views_bonos.py - Línea 267: messages.error sin ver_mensajes ✅ CORREGIDO
+22. views_bonos.py - Línea 366: messages.error sin ver_mensajes ✅ CORREGIDO
+23. views_bonos.py - Línea 400: messages.error sin ver_mensajes ✅ CORREGIDO
+24. views.py - Línea 435: messages.error sin ver_mensajes ✅ CORREGIDO
+25. views.py - Línea 438: messages.error sin ver_mensajes ✅ CORREGIDO
+26. views.py - Línea 991: messages.error sin ver_mensajes ✅ CORREGIDO
+27. views.py - Línea 2259: messages.error sin ver_mensajes ✅ CORREGIDO
+28. views.py - Línea 2326: messages.error sin ver_mensajes ✅ CORREGIDO
+29. views.py - Línea 2410: messages.error sin ver_mensajes ✅ CORREGIDO
+30. views.py - Línea 2418: messages.error sin ver_mensajes ✅ CORREGIDO
+31. views.py - Línea 2436: messages.error sin ver_mensajes ✅ CORREGIDO
+32. ingreso-movil.html - Línea 3703: confirm mal estructurado ✅ CORREGIDO
+33. ingreso.html - Línea 3703: confirm mal estructurado ✅ CORREGIDO
+
+NOTAS:
+- Todos los mensajes de error también deben respetar ver_mensajes
+- Los confirm() deben usar la estructura: {% if ver_avisos %}...{% else %}return true;{% endif %}
+- Después de cada grupo de 10, reportar y esperar autorización
+
+GRUPO 4 (Archivos 34-43): [COMPLETADO ✅]
+---------------------------------------
+34. views.py - Línea 601: messages.error sin ver_mensajes ✅ CORREGIDO
+35. views.py - Línea 715: messages.error sin ver_mensajes ✅ CORREGIDO
+36. views.py - Línea 717: messages.error sin ver_mensajes ✅ CORREGIDO
+37. views.py - Línea 793: messages.error sin ver_mensajes ✅ CORREGIDO
+38. views.py - Línea 796: messages.error sin ver_mensajes ✅ CORREGIDO
+39. views.py - Línea 819: messages.error sin ver_mensajes ✅ CORREGIDO
+40. views.py - Línea 854: messages.error sin ver_mensajes ✅ CORREGIDO
+41. views.py - Línea 856: messages.error sin ver_mensajes ✅ CORREGIDO
+42. views.py - Línea 906: messages.error sin ver_mensajes ✅ CORREGIDO
+43. views.py - Línea 908: messages.error sin ver_mensajes ✅ CORREGIDO
+44. views.py - Línea 957: messages.error sin ver_mensajes ✅ CORREGIDO
+45. views.py - Línea 959: messages.error sin ver_mensajes ✅ CORREGIDO
+46. views.py - Línea 2466: messages.error sin ver_mensajes ✅ CORREGIDO
+47. views.py - Línea 2482: messages.error sin ver_mensajes ✅ CORREGIDO
+48. views.py - Línea 2500: messages.error sin ver_mensajes ✅ CORREGIDO
+49. views.py - Línea 2513: messages.error sin ver_mensajes ✅ CORREGIDO
+50. views.py - Línea 2573: messages.error sin ver_mensajes ✅ CORREGIDO
+51. views.py - Línea 2957: messages.error sin ver_mensajes ✅ CORREGIDO
+
+GRUPO 5 (Archivos 52-67): [COMPLETADO ✅]
+---------------------------------------
+52. views.py - Línea 3087: messages.error sin ver_mensajes ✅ CORREGIDO
+53. views.py - Línea 3104: messages.error sin ver_mensajes ✅ CORREGIDO
+54. views.py - Línea 3106: messages.error sin ver_mensajes ✅ CORREGIDO
+55. views.py - Línea 3122: messages.error sin ver_mensajes ✅ CORREGIDO
+56. views.py - Línea 3124: messages.error sin ver_mensajes ✅ CORREGIDO
+57. views.py - Línea 3140: messages.error sin ver_mensajes ✅ CORREGIDO
+58. views.py - Línea 3144: messages.error sin ver_mensajes ✅ CORREGIDO
+59. views.py - Línea 3159: messages.error sin ver_mensajes ✅ CORREGIDO
+60. views.py - Línea 3160: messages.error sin ver_mensajes ✅ CORREGIDO
+61. views.py - Línea 3187: messages.error sin ver_mensajes ✅ CORREGIDO
+62. views.py - Línea 3189: messages.error sin ver_mensajes ✅ CORREGIDO
+63. views.py - Línea 3454: messages.error sin ver_mensajes ✅ CORREGIDO
+64. views.py - Línea 3557: messages.error sin ver_mensajes ✅ CORREGIDO
+65. views.py - Línea 3559: messages.error sin ver_mensajes ✅ CORREGIDO
+66. views.py - Línea 4557: messages.error sin ver_mensajes ✅ CORREGIDO
+67. views.py - Línea 4600: messages.error sin ver_mensajes ✅ CORREGIDO
+68. views.py - Línea 4611: messages.error sin ver_mensajes ✅ CORREGIDO
+69. views.py - Línea 4612: messages.error sin ver_mensajes ✅ CORREGIDO
+70. views.py - Línea 4620: messages.error sin ver_mensajes ✅ CORREGIDO
+71. views.py - Línea 4635: messages.error sin ver_mensajes ✅ CORREGIDO
+72. views.py - Línea 4651: messages.error sin ver_mensajes ✅ CORREGIDO
+73. views.py - Línea 4660: messages.error sin ver_mensajes ✅ CORREGIDO
+74. views.py - Línea 4667: messages.error sin ver_mensajes ✅ CORREGIDO
+75. views.py - Línea 4962: messages.error sin ver_mensajes ✅ CORREGIDO
+76. views.py - Línea 4990: messages.error sin ver_mensajes ✅ CORREGIDO
+
+ÚLTIMA POSICIÓN: Grupo 5, Archivo 76 ✅ COMPLETADO
+TODOS LOS CASOS CORREGIDOS ✅
+
+
+

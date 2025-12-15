@@ -1,0 +1,437 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Netgogo - Consola de IA{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+<style>
+    .netgogo-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: var(--spacing-lg);
+        height: calc(100vh - 120px);
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .netgogo-header {
+        background: linear-gradient(135deg, var(--accent) 0%, var(--primary-600) 100%);
+        color: var(--text-inverse);
+        padding: var(--spacing-md);
+        border-radius: var(--border-radius-lg);
+        margin-bottom: var(--spacing-md);
+        text-align: center;
+    }
+    
+    .netgogo-header h1 {
+        margin: 0;
+        font-size: 1.8rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+    
+    .console-wrapper {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: var(--card-bg);
+        border-radius: var(--border-radius-xl);
+        box-shadow: var(--shadow-lg);
+        overflow: hidden;
+    }
+    
+    .messages-container {
+        flex: 1;
+        overflow-y: auto;
+        padding: var(--spacing-lg);
+        background: var(--bg);
+    }
+    
+    .message {
+        margin-bottom: var(--spacing-md);
+        padding: var(--spacing-md);
+        border-radius: var(--border-radius-md);
+        max-width: 80%;
+        word-wrap: break-word;
+    }
+    
+    .message.user {
+        background: var(--accent);
+        color: var(--text-inverse);
+        margin-left: auto;
+        text-align: right;
+    }
+    
+    .message.assistant {
+        background: var(--hover-bg);
+        color: var(--text-primary);
+        border-left: 4px solid var(--btn-bg);
+    }
+    
+    .message.system {
+        background: var(--muted);
+        color: var(--text-inverse);
+        text-align: center;
+        max-width: 100%;
+        font-size: 0.9rem;
+        font-style: italic;
+    }
+    
+    .message.tool {
+        background: var(--primary-100);
+        color: var(--text-primary);
+        border-left: 4px solid var(--primary-600);
+        font-family: monospace;
+        font-size: 0.9rem;
+    }
+    
+    .message-header {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        font-size: 0.85rem;
+        opacity: 0.8;
+    }
+    
+    .message-content {
+        line-height: 1.6;
+    }
+    
+    .input-container {
+        padding: var(--spacing-md);
+        background: var(--card-bg);
+        border-top: 2px solid var(--border-color);
+        display: flex;
+        gap: var(--spacing-sm);
+    }
+    
+    .input-container input {
+        flex: 1;
+        padding: var(--spacing-md);
+        border: 2px solid var(--border-color);
+        border-radius: var(--border-radius-md);
+        font-size: 1rem;
+        background: var(--bg);
+        color: var(--text-primary);
+    }
+    
+    .input-container input:focus {
+        outline: none;
+        border-color: var(--btn-bg);
+    }
+    
+    .input-container button {
+        padding: var(--spacing-md) var(--spacing-lg);
+        background: var(--btn-bg);
+        color: var(--text-inverse);
+        border: none;
+        border-radius: var(--border-radius-md);
+        cursor: pointer;
+        font-weight: 600;
+        transition: var(--transition);
+    }
+    
+    .input-container button:hover:not(:disabled) {
+        background: var(--btn-hover);
+        transform: translateY(-2px);
+    }
+    
+    .input-container button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    
+    .loading {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid var(--muted);
+        border-top-color: var(--btn-bg);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    .tool-info {
+        background: var(--primary-50);
+        padding: var(--spacing-sm);
+        border-radius: var(--border-radius-sm);
+        margin-top: 0.5rem;
+        font-size: 0.85rem;
+    }
+    
+    .tool-info strong {
+        color: var(--primary-600);
+    }
+    
+    .error-message {
+        background: #fee;
+        color: #c33;
+        border-left: 4px solid #c33;
+    }
+    
+    .clear-btn {
+        background: var(--muted);
+        margin-left: auto;
+        font-size: 0.9rem;
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="netgogo-container">
+    <div class="netgogo-header">
+        <h1>
+            <span>🤖</span>
+            <span>Netgogo</span>
+            <span>- Consola de IA</span>
+        </h1>
+        <p style="margin: 0.5rem 0 0 0; opacity: 0.9;">Asistente inteligente con herramientas de archivos</p>
+    </div>
+    
+    <div class="console-wrapper">
+        <div class="messages-container" id="messagesContainer">
+            <div class="message system">
+                <div class="message-content">
+                    👋 Bienvenido a Netgogo. Puedo ayudarte con tareas relacionadas con archivos del proyecto.
+                    <br>Escribe "salir" o "exit" para terminar la sesión.
+                </div>
+            </div>
+        </div>
+        
+        <div class="input-container">
+            <input 
+                type="text" 
+                id="userInput" 
+                placeholder="Escribe tu mensaje aquí..."
+                autocomplete="off"
+            >
+            <button id="sendBtn" onclick="sendMessage()">Enviar</button>
+            <button class="clear-btn" onclick="clearChat()">Limpiar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const messagesContainer = document.getElementById('messagesContainer');
+const userInput = document.getElementById('userInput');
+const sendBtn = document.getElementById('sendBtn');
+
+// Permitir Enter para enviar
+userInput.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    }
+});
+
+function addMessage(role, content, toolInfo = null) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${role}`;
+    
+    let header = '';
+    if (role === 'user') {
+        header = '<div class="message-header">Tú</div>';
+    } else if (role === 'assistant') {
+        header = '<div class="message-header">Asistente</div>';
+    } else if (role === 'tool') {
+        header = '<div class="message-header">⚙️ Herramienta</div>';
+    }
+    
+    let toolSection = '';
+    if (toolInfo) {
+        toolSection = `
+            <div class="tool-info">
+                <strong>Herramienta:</strong> ${toolInfo.name}<br>
+                <strong>Argumentos:</strong> ${JSON.stringify(toolInfo.arguments, null, 2)}<br>
+                <strong>Resultado:</strong> ${JSON.stringify(toolInfo.result, null, 2)}
+            </div>
+        `;
+    }
+    
+    messageDiv.innerHTML = `
+        ${header}
+        <div class="message-content">${content}</div>
+        ${toolSection}
+    `;
+    
+    messagesContainer.appendChild(messageDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+function addLoadingMessage() {
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'message assistant';
+    loadingDiv.id = 'loadingMessage';
+    loadingDiv.innerHTML = `
+        <div class="message-header">Asistente</div>
+        <div class="message-content">
+            <span class="loading"></span> Procesando...
+        </div>
+    `;
+    messagesContainer.appendChild(loadingDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
+
+function removeLoadingMessage() {
+    const loadingMsg = document.getElementById('loadingMessage');
+    if (loadingMsg) {
+        loadingMsg.remove();
+    }
+}
+
+async function sendMessage() {
+    const input = userInput.value.trim();
+    if (!input) return;
+    
+    // Validar comandos de salida
+    if (input.toLowerCase() in ['salir', 'exit', 'bye', 'sayonara']) {
+        addMessage('system', 'Sesión terminada. ¡Hasta luego!');
+        setTimeout(() => {
+            window.location.href = "{% url 'panel_principal' %}";
+        }, 1500);
+        return;
+    }
+    
+    // Agregar mensaje del usuario
+    addMessage('user', input);
+    userInput.value = '';
+    
+    // Deshabilitar input y botón
+    userInput.disabled = true;
+    sendBtn.disabled = true;
+    addLoadingMessage();
+    
+    try {
+        const response = await fetch("{% url 'netgogo_chat' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                input: input
+            })
+        });
+        
+        const data = await response.json();
+        removeLoadingMessage();
+        
+        if (data.error) {
+            addMessage('error', `Error: ${data.error}`);
+        } else {
+            // Mostrar mensaje del asistente
+            if (data.message) {
+                addMessage('assistant', data.message);
+            }
+            
+            // Si se llamó una herramienta, mostrar información
+            if (data.tool_called && data.tool) {
+                addMessage('tool', `Herramienta "${data.tool.name}" ejecutada`, data.tool);
+                
+                // Si necesita continuación, hacer otra llamada automáticamente
+                if (data.needs_continuation) {
+                    setTimeout(() => {
+                        continueConversation();
+                    }, 1000);
+                }
+            }
+        }
+    } catch (error) {
+        removeLoadingMessage();
+        addMessage('error', `Error de conexión: ${error.message}`);
+    } finally {
+        userInput.disabled = false;
+        sendBtn.disabled = false;
+        userInput.focus();
+    }
+}
+
+async function continueConversation() {
+    addLoadingMessage();
+    userInput.disabled = true;
+    sendBtn.disabled = true;
+    
+    try {
+        const response = await fetch("{% url 'netgogo_chat' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                input: "Continúa con la respuesta final"
+            })
+        });
+        
+        const data = await response.json();
+        removeLoadingMessage();
+        
+        if (data.error) {
+            addMessage('error', `Error: ${data.error}`);
+        } else if (data.message) {
+            addMessage('assistant', data.message);
+        }
+    } catch (error) {
+        removeLoadingMessage();
+        addMessage('error', `Error: ${error.message}`);
+    } finally {
+        userInput.disabled = false;
+        sendBtn.disabled = false;
+    }
+}
+
+function clearChat() {
+    if (confirm('¿Deseas limpiar el chat y comenzar una nueva sesión?')) {
+        fetch("{% url 'netgogo_chat' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                reset: true,
+                input: ""
+            })
+        }).then(() => {
+            messagesContainer.innerHTML = `
+                <div class="message system">
+                    <div class="message-content">
+                        👋 Sesión reiniciada. ¿En qué puedo ayudarte?
+                    </div>
+                </div>
+            `;
+        });
+    }
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Focus en el input al cargar
+userInput.focus();
+</script>
+{% endblock %}
+
+
+
+
+

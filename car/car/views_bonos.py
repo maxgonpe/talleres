@@ -142,9 +142,15 @@ def configuracion_bonos(request):
             return redirect('configuracion_bonos')
             
         except Mecanico.DoesNotExist:
-            messages.error(request, "Mecánico no encontrado")
+            from .models import AdministracionTaller
+            config_taller = AdministracionTaller.get_configuracion_activa()
+            if config_taller.ver_mensajes:
+                messages.error(request, "Mecánico no encontrado")
         except Exception as e:
-            messages.error(request, f"Error al guardar configuración: {str(e)}")
+            from .models import AdministracionTaller
+            config_taller = AdministracionTaller.get_configuracion_activa()
+            if config_taller.ver_mensajes:
+                messages.error(request, f"Error al guardar configuración: {str(e)}")
     
     context = {
         'configuraciones': configuraciones,
@@ -258,7 +264,10 @@ def registrar_pago_mecanico(request, mecanico_id):
         notas = request.POST.get('notas', '')
         
         if monto <= 0:
-            messages.error(request, "El monto debe ser mayor a cero")
+            from .models import AdministracionTaller
+            config_taller = AdministracionTaller.get_configuracion_activa()
+            if config_taller.ver_mensajes:
+                messages.error(request, "El monto debe ser mayor a cero")
             return redirect('registrar_pago_mecanico', mecanico_id=mecanico_id)
         
         if monto > saldo_pendiente:
@@ -357,7 +366,10 @@ def excepcion_bono_trabajo(request, trabajo_id):
         motivo = request.POST.get('motivo', '')
         
         if not motivo:
-            messages.error(request, "Debe proporcionar un motivo para la excepción")
+            from .models import AdministracionTaller
+            config_taller = AdministracionTaller.get_configuracion_activa()
+            if config_taller.ver_mensajes:
+                messages.error(request, "Debe proporcionar un motivo para la excepción")
             return redirect('excepcion_bono_trabajo', trabajo_id=trabajo_id)
         
         ExcepcionBonoTrabajo.objects.create(
@@ -391,7 +403,10 @@ def eliminar_excepcion_bono(request, trabajo_id):
         if config_taller.ver_mensajes:
             messages.success(request, f"Excepción de bono eliminada para el Trabajo #{trabajo.id}")
     except ExcepcionBonoTrabajo.DoesNotExist:
-        messages.error(request, "No existe excepción para este trabajo")
+        from .models import AdministracionTaller
+        config_taller = AdministracionTaller.get_configuracion_activa()
+        if config_taller.ver_mensajes:
+            messages.error(request, "No existe excepción para este trabajo")
     
     return redirect('trabajo_detalle', pk=trabajo.id)
 

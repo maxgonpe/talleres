@@ -3699,11 +3699,7 @@ function wizardGoToStep(step) {
 // Omitir repuestos/insumos y guardar directamente
 function skipRepuestosAndSubmit() {
   {% if ver_avisos %}
-  {% if ver_avisos %}
   if (confirm('¿Estás seguro de guardar el diagnóstico sin agregar repuestos ni insumos?\n\nPuedes agregarlos después desde el detalle del diagnóstico.')) {
-  {% else %}
-  if (true) {
-  {% endif %}
   {% else %}
   if (true) {
   {% endif %}

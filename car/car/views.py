@@ -432,10 +432,14 @@ def componente_create(request):
             except (ValidationError, IntegrityError) as e:
                 # Muestra el error en el form sin 500
                 #form.add_error(None, getattr(e, 'message', str(e)))
-                messages.error(request, 'El componente ya existe. Por favor, use un nombre o código diferente.')
+                config = AdministracionTaller.get_configuracion_activa()
+                if config.ver_mensajes:
+                    messages.error(request, 'El componente ya existe. Por favor, use un nombre o código diferente.')
         else:
             # Manejar errores de validación del formulario
-            messages.error(request, 'Por favor, corrija los errores en el formulario.')
+            config = AdministracionTaller.get_configuracion_activa()
+            if config.ver_mensajes:
+                messages.error(request, 'Por favor, corrija los errores en el formulario.')
 
     else:
         form = ComponenteForm()
@@ -594,7 +598,9 @@ def lista_diagnosticos(request):
             if config.ver_mensajes:
                 messages.success(request, f"Diagnóstico #{diagnostico.id} ocultado del listado.")
         except Diagnostico.DoesNotExist:
-            messages.error(request, "Diagnóstico no encontrado.")
+            config = AdministracionTaller.get_configuracion_activa()
+            if config.ver_mensajes:
+                messages.error(request, "Diagnóstico no encontrado.")
         return redirect('lista_diagnosticos')
     
     # 🔹 Filtrar solo diagnósticos visibles (visible=True)
@@ -708,9 +714,13 @@ def editar_diagnostico(request, pk):
                         if config.ver_mensajes:
                             messages.warning(request, "Esta acción ya está agregada para este componente.")
                 except (Componente.DoesNotExist, Accion.DoesNotExist):
-                    messages.error(request, "Componente o acción no válidos.")
+                    config = AdministracionTaller.get_configuracion_activa()
+                    if config.ver_mensajes:
+                        messages.error(request, "Componente o acción no válidos.")
             else:
-                messages.error(request, "Debe seleccionar componente y acción.")
+                config = AdministracionTaller.get_configuracion_activa()
+                if config.ver_mensajes:
+                    messages.error(request, "Debe seleccionar componente y acción.")
             
             return redirect_with_tab("acciones")
         
@@ -786,10 +796,14 @@ def editar_diagnostico(request, pk):
                         
                 except json.JSONDecodeError as e:
                     logger.error(f"❌ Error parseando JSON: {e}")
-                    messages.error(request, "Error al procesar las acciones.")
+                    config = AdministracionTaller.get_configuracion_activa()
+                    if config.ver_mensajes:
+                        messages.error(request, "Error al procesar las acciones.")
             else:
                 logger.error("❌ Faltan datos: acciones_json o componente_id")
-                messages.error(request, "No se recibieron acciones o componente para agregar.")
+                config = AdministracionTaller.get_configuracion_activa()
+                if config.ver_mensajes:
+                    messages.error(request, "No se recibieron acciones o componente para agregar.")
             
             return redirect_with_tab("acciones")
         
@@ -847,9 +861,13 @@ def editar_diagnostico(request, pk):
                         if config.ver_mensajes:
                             messages.warning(request, "Este repuesto ya está agregado.")
                 except Repuesto.DoesNotExist:
-                    messages.error(request, "Repuesto no válido.")
+                    config = AdministracionTaller.get_configuracion_activa()
+                    if config.ver_mensajes:
+                        messages.error(request, "Repuesto no válido.")
             else:
-                messages.error(request, "Debe seleccionar un repuesto.")
+                config = AdministracionTaller.get_configuracion_activa()
+                if config.ver_mensajes:
+                    messages.error(request, "Debe seleccionar un repuesto.")
             
             return redirect_with_tab("repuestos")
         
@@ -950,9 +968,13 @@ def editar_diagnostico(request, pk):
                             messages.info(request, "No se agregaron insumos nuevos (posiblemente ya existían).")
                         
                 except json.JSONDecodeError:
-                    messages.error(request, "Error al procesar los insumos.")
+                    config = AdministracionTaller.get_configuracion_activa()
+                    if config.ver_mensajes:
+                        messages.error(request, "Error al procesar los insumos.")
             else:
-                messages.error(request, "No se recibieron insumos para agregar.")
+                config = AdministracionTaller.get_configuracion_activa()
+                if config.ver_mensajes:
+                    messages.error(request, "No se recibieron insumos para agregar.")
             
             return redirect_with_tab("insumos")
         
@@ -968,7 +990,8 @@ def editar_diagnostico(request, pk):
                 if config.ver_mensajes:
                     messages.success(request, f"Repuesto '{rep_nombre}' quitado del diagnóstico.")
             except DiagnosticoRepuesto.DoesNotExist:
-                messages.error(request, "Repuesto no encontrado.")
+                if config.ver_mensajes:
+                    messages.error(request, "Repuesto no encontrado.")
             
             return redirect_with_tab("repuestos")
         
@@ -987,7 +1010,8 @@ def editar_diagnostico(request, pk):
                 if config.ver_mensajes:
                     messages.success(request, f"Cantidad de '{dca.accion.nombre}' actualizada a {cantidad_int}.")
             except (DiagnosticoComponenteAccion.DoesNotExist, ValueError):
-                messages.error(request, "Error al actualizar la cantidad.")
+                if config.ver_mensajes:
+                    messages.error(request, "Error al actualizar la cantidad.")
             
             return redirect_with_tab("acciones")
         
@@ -1002,7 +1026,8 @@ def editar_diagnostico(request, pk):
                 if config.ver_mensajes:
                     messages.success(request, f"Acción '{accion_nombre}' quitada del diagnóstico.")
             except DiagnosticoComponenteAccion.DoesNotExist:
-                messages.error(request, "Acción no encontrada.")
+                if config.ver_mensajes:
+                    messages.error(request, "Acción no encontrada.")
             
             return redirect_with_tab("acciones")
     
@@ -2321,7 +2346,8 @@ def trabajo_detalle(request, pk):
                     if config.ver_mensajes:
                         messages.success(request, "Acción agregada al trabajo.")
                 except (Componente.DoesNotExist, Accion.DoesNotExist):
-                    messages.error(request, "Error al agregar la acción.")
+                    if config.ver_mensajes:
+                        messages.error(request, "Error al agregar la acción.")
             return redirect_with_tab("acciones")
 
         # 🔹 Agregar múltiples acciones (nuevo método)
@@ -2405,7 +2431,9 @@ def trabajo_detalle(request, pk):
                             "ok": False,
                             "error": f"Error al procesar las acciones: {str(e)}"
                         }, status=400)
-                    messages.error(request, f"Error al procesar las acciones: {str(e)}")
+                    config = AdministracionTaller.get_configuracion_activa()
+                    if config.ver_mensajes:
+                        messages.error(request, f"Error al procesar las acciones: {str(e)}")
                 except Exception as e:
                     print(f"DEBUG: Error general: {str(e)}")
                     if is_ajax:
@@ -2413,7 +2441,9 @@ def trabajo_detalle(request, pk):
                             "ok": False,
                             "error": f"Error al agregar las acciones: {str(e)}"
                         }, status=500)
-                    messages.error(request, f"Error al agregar las acciones: {str(e)}")
+                    config = AdministracionTaller.get_configuracion_activa()
+                    if config.ver_mensajes:
+                        messages.error(request, f"Error al agregar las acciones: {str(e)}")
                 else:
                     if is_ajax:
                         detalle = ""
@@ -2431,7 +2461,9 @@ def trabajo_detalle(request, pk):
                         "ok": False,
                         "error": "No se recibieron acciones para agregar."
                     }, status=400)
-                messages.error(request, "No se recibieron acciones para agregar.")
+                config = AdministracionTaller.get_configuracion_activa()
+                if config.ver_mensajes:
+                    messages.error(request, "No se recibieron acciones para agregar.")
             
             if not is_ajax:
                 return redirect_with_tab("acciones")
@@ -2449,7 +2481,9 @@ def trabajo_detalle(request, pk):
                 if config.ver_mensajes:
                     messages.success(request, f"Acción marcada como {'completada' if accion.completado else 'pendiente'}.")
             except TrabajoAccion.DoesNotExist:
-                messages.error(request, "Acción no encontrada.")
+                config = AdministracionTaller.get_configuracion_activa()
+                if config.ver_mensajes:
+                    messages.error(request, "Acción no encontrada.")
             return redirect_with_tab("acciones")
 
         # 🔹 Editar cantidad de acción
@@ -2465,7 +2499,8 @@ def trabajo_detalle(request, pk):
                 if config.ver_mensajes:
                     messages.success(request, f"Cantidad actualizada a {cantidad_int}.")
             except (TrabajoAccion.DoesNotExist, ValueError):
-                messages.error(request, "Error al actualizar la cantidad.")
+                if config.ver_mensajes:
+                    messages.error(request, "Error al actualizar la cantidad.")
             return redirect_with_tab("acciones")
 
         # 🔹 Editar precio de acción
@@ -2483,7 +2518,8 @@ def trabajo_detalle(request, pk):
                 if config.ver_mensajes:
                     messages.success(request, f"Precio actualizado a ${precio_decimal:,.0f}.")
             except (TrabajoAccion.DoesNotExist, InvalidOperation, ValueError) as e:
-                messages.error(request, f"Error al actualizar el precio: {str(e)}")
+                if config.ver_mensajes:
+                    messages.error(request, f"Error al actualizar el precio: {str(e)}")
             return redirect_with_tab("acciones")
 
         # 🔹 Eliminar acción
@@ -2496,7 +2532,8 @@ def trabajo_detalle(request, pk):
                 if config.ver_mensajes:
                     messages.success(request, "Acción eliminada.")
             except TrabajoAccion.DoesNotExist:
-                messages.error(request, "Acción no encontrada.")
+                if config.ver_mensajes:
+                    messages.error(request, "Acción no encontrada.")
             return redirect_with_tab("acciones")
 
         # 🔹 Agregar repuesto
@@ -2523,7 +2560,8 @@ def trabajo_detalle(request, pk):
                     if config.ver_mensajes:
                         messages.success(request, "Repuesto agregado al trabajo.")
                 except Repuesto.DoesNotExist:
-                    messages.error(request, "Repuesto no encontrado.")
+                    if config.ver_mensajes:
+                        messages.error(request, "Repuesto no encontrado.")
             return redirect_with_tab("repuestos")
 
         # 🔹 Agregar repuesto externo
@@ -2555,7 +2593,8 @@ def trabajo_detalle(request, pk):
                     if config.ver_mensajes:
                         messages.success(request, f"🌐 Repuesto externo agregado: {repuesto_externo.nombre}")
                 except RepuestoExterno.DoesNotExist:
-                    messages.error(request, "Repuesto externo no encontrado.")
+                    if config.ver_mensajes:
+                        messages.error(request, "Repuesto externo no encontrado.")
             return redirect_with_tab("repuestos")
 
         # 🔹 Toggle repuesto completado / pendiente (CON ACTUALIZACIÓN DE STOCK)
@@ -2668,7 +2707,9 @@ def trabajo_detalle(request, pk):
                         print(f"❌ ERROR actualizando stock: {str(e)}")
                         import traceback
                         print(traceback.format_exc())
-                        messages.error(request, f"❌ Error actualizando stock: {str(e)}")
+                        config = AdministracionTaller.get_configuracion_activa()
+                        if config.ver_mensajes:
+                            messages.error(request, f"❌ Error actualizando stock: {str(e)}")
                 else:
                     # Es un repuesto externo, solo cambiar estado
                     print(f"🌐 Repuesto externo detectado: {repuesto_trabajo.repuesto_externo}")
@@ -2683,12 +2724,16 @@ def trabajo_detalle(request, pk):
                     
             except TrabajoRepuesto.DoesNotExist:
                 print(f"❌ TrabajoRepuesto NO ENCONTRADO: ID {repuesto_id}")
-                messages.error(request, "Repuesto no encontrado.")
+                config = AdministracionTaller.get_configuracion_activa()
+                if config.ver_mensajes:
+                    messages.error(request, "Repuesto no encontrado.")
             except Exception as e:
                 print(f"❌ ERROR GENERAL en toggle_repuesto: {str(e)}")
                 import traceback
                 print(traceback.format_exc())
-                messages.error(request, f"❌ Error: {str(e)}")
+                config = AdministracionTaller.get_configuracion_activa()
+                if config.ver_mensajes:
+                    messages.error(request, f"❌ Error: {str(e)}")
             return redirect_with_tab("repuestos")
 
         # 🔹 Eliminar repuesto (CON DEVOLUCIÓN DE STOCK SI ESTABA COMPLETADO)
@@ -2748,7 +2793,8 @@ def trabajo_detalle(request, pk):
                         print(f"❌ Error devolviendo stock: {str(e)}")
                         import traceback
                         print(traceback.format_exc())
-                        messages.error(request, f"Error devolviendo stock: {str(e)}")
+                        if config.ver_mensajes:
+                            messages.error(request, f"Error devolviendo stock: {str(e)}")
                         # Aún así eliminar el repuesto
                 else:
                     print(f"ℹ️ Repuesto NO estaba completado o es externo, no hay stock que devolver")
@@ -2761,7 +2807,9 @@ def trabajo_detalle(request, pk):
                 
             except TrabajoRepuesto.DoesNotExist:
                 print(f"❌ TrabajoRepuesto NO ENCONTRADO: ID {repuesto_id}")
-                messages.error(request, "Repuesto no encontrado.")
+                config = AdministracionTaller.get_configuracion_activa()
+                if config.ver_mensajes:
+                    messages.error(request, "Repuesto no encontrado.")
             return redirect_with_tab("repuestos")
 
         # 🔹 Agregar múltiples repuestos (nuevo método)
@@ -2818,13 +2866,17 @@ def trabajo_detalle(request, pk):
                         
                 except json.JSONDecodeError as e:
                     print(f"DEBUG: Error JSON: {str(e)}")
-                    messages.error(request, f"Error al procesar los repuestos: {str(e)}")
+                    if config.ver_mensajes:
+                        messages.error(request, f"Error al procesar los repuestos: {str(e)}")
                 except Exception as e:
                     print(f"DEBUG: Error general: {str(e)}")
-                    messages.error(request, f"Error al agregar los repuestos: {str(e)}")
+                    if config.ver_mensajes:
+                        messages.error(request, f"Error al agregar los repuestos: {str(e)}")
             else:
                 print("DEBUG: No se recibió repuestos_json")
-                messages.error(request, "No se recibieron repuestos para agregar.")
+                config = AdministracionTaller.get_configuracion_activa()
+                if config.ver_mensajes:
+                    messages.error(request, "No se recibieron repuestos para agregar.")
             
             return redirect_with_tab("repuestos")
 
@@ -2883,13 +2935,19 @@ def trabajo_detalle(request, pk):
                         
                 except json.JSONDecodeError as e:
                     print(f"DEBUG: Error JSON: {str(e)}")
-                    messages.error(request, f"Error al procesar los insumos: {str(e)}")
+                    config = AdministracionTaller.get_configuracion_activa()
+                    if config.ver_mensajes:
+                        messages.error(request, f"Error al procesar los insumos: {str(e)}")
                 except Exception as e:
                     print(f"DEBUG: Error general: {str(e)}")
-                    messages.error(request, f"Error al agregar los insumos: {str(e)}")
+                    config = AdministracionTaller.get_configuracion_activa()
+                    if config.ver_mensajes:
+                        messages.error(request, f"Error al agregar los insumos: {str(e)}")
             else:
                 print("DEBUG: No se recibió insumos_json")
-                messages.error(request, "No se recibieron insumos para agregar.")
+                config = AdministracionTaller.get_configuracion_activa()
+                if config.ver_mensajes:
+                    messages.error(request, "No se recibieron insumos para agregar.")
             
             return redirect_with_tab("insumos")
 
@@ -2920,7 +2978,8 @@ def trabajo_detalle(request, pk):
                 if config.ver_mensajes:
                     messages.success(request, "Foto eliminada.")
             except TrabajoFoto.DoesNotExist:
-                messages.error(request, "Foto no encontrada.")
+                if config.ver_mensajes:
+                    messages.error(request, "Foto no encontrada.")
             return redirect_with_tab("fotos")
 
         # 🔹 Cambiar estado del trabajo
@@ -3025,7 +3084,9 @@ def trabajo_detalle(request, pk):
             try:
                 monto_decimal = Decimal(monto)
                 if monto_decimal <= 0:
-                    messages.error(request, "❌ El monto del abono debe ser mayor a cero.")
+                    config = AdministracionTaller.get_configuracion_activa()
+                    if config.ver_mensajes:
+                        messages.error(request, "❌ El monto del abono debe ser mayor a cero.")
                 else:
                     abono = TrabajoAbono.objects.create(
                         trabajo=trabajo,
@@ -3060,9 +3121,11 @@ def trabajo_detalle(request, pk):
                 if config.ver_mensajes:
                     messages.success(request, f"✅ Abono de ${monto:,.0f} eliminado exitosamente.")
             except TrabajoAbono.DoesNotExist:
-                messages.error(request, "❌ Abono no encontrado.")
+                if config.ver_mensajes:
+                    messages.error(request, "❌ Abono no encontrado.")
             except Exception as e:
-                messages.error(request, f"❌ Error al eliminar el abono: {str(e)}")
+                if config.ver_mensajes:
+                    messages.error(request, f"❌ Error al eliminar el abono: {str(e)}")
             
             return redirect_with_tab("abonos")
 
@@ -3082,7 +3145,9 @@ def trabajo_detalle(request, pk):
                 else:
                     monto_decimal = Decimal(monto)
                     if monto_decimal <= 0:
-                        messages.error(request, "❌ El monto del concepto adicional debe ser mayor a cero.")
+                        config = AdministracionTaller.get_configuracion_activa()
+                        if config.ver_mensajes:
+                            messages.error(request, "❌ El monto del concepto adicional debe ser mayor a cero.")
                     else:
                         adicional = TrabajoAdicional.objects.create(
                             trabajo=trabajo,
@@ -3097,9 +3162,13 @@ def trabajo_detalle(request, pk):
                         if config.ver_mensajes:
                             messages.success(request, f"✅ {tipo.capitalize()} de ${monto_decimal:,.0f} registrado exitosamente.")
             except (ValueError, TypeError):
-                messages.error(request, "❌ El monto ingresado no es válido.")
+                config = AdministracionTaller.get_configuracion_activa()
+                if config.ver_mensajes:
+                    messages.error(request, "❌ El monto ingresado no es válido.")
             except Exception as e:
-                messages.error(request, f"❌ Error al registrar el concepto adicional: {str(e)}")
+                config = AdministracionTaller.get_configuracion_activa()
+                if config.ver_mensajes:
+                    messages.error(request, f"❌ Error al registrar el concepto adicional: {str(e)}")
             
             return redirect_with_tab("adicionales")
         
@@ -3115,9 +3184,11 @@ def trabajo_detalle(request, pk):
                 if config.ver_mensajes:
                     messages.success(request, f"✅ Concepto adicional de ${monto:,.0f} eliminado exitosamente.")
             except TrabajoAdicional.DoesNotExist:
-                messages.error(request, "❌ Concepto adicional no encontrado.")
+                if config.ver_mensajes:
+                    messages.error(request, "❌ Concepto adicional no encontrado.")
             except Exception as e:
-                messages.error(request, f"❌ Error al eliminar el concepto adicional: {str(e)}")
+                if config.ver_mensajes:
+                    messages.error(request, f"❌ Error al eliminar el concepto adicional: {str(e)}")
             
             return redirect_with_tab("adicionales")
 
@@ -3485,9 +3556,13 @@ def venta_crear(request):
             cart = []
         # Validación mínima del cart
         if not cart:
-            messages.error(request, "No hay productos en la venta.")
+            config = AdministracionTaller.get_configuracion_activa()
+            if config.ver_mensajes:
+                messages.error(request, "No hay productos en la venta.")
         elif not form.is_valid():
-            messages.error(request, "Corrige los datos del formulario.")
+            config = AdministracionTaller.get_configuracion_activa()
+            if config.ver_mensajes:
+                messages.error(request, "Corrige los datos del formulario.")
         else:
             # Guardar la venta + items
             with transaction.atomic():
@@ -4530,7 +4605,9 @@ def gestion_usuarios(request):
                 if config.ver_mensajes:
                     messages.success(request, f"✅ Información de '{user.username}' actualizada exitosamente")
             except User.DoesNotExist:
-                messages.error(request, "❌ Usuario no encontrado")
+                config = AdministracionTaller.get_configuracion_activa()
+                if config.ver_mensajes:
+                    messages.error(request, "❌ Usuario no encontrado")
         
         elif action == 'cambiar_password':
             user_id = request.POST.get('user_id')
@@ -4550,7 +4627,9 @@ def gestion_usuarios(request):
                     if config.ver_mensajes:
                         messages.success(request, f"✅ Contraseña de '{user.username}' cambiada exitosamente. Nueva contraseña: {new_password}")
             except User.DoesNotExist:
-                messages.error(request, "❌ Usuario no encontrado")
+                config = AdministracionTaller.get_configuracion_activa()
+                if config.ver_mensajes:
+                    messages.error(request, "❌ Usuario no encontrado")
         
         elif action == 'cambiar_rol':
             user_id = request.POST.get('user_id')
@@ -4565,7 +4644,9 @@ def gestion_usuarios(request):
                 if config.ver_mensajes:
                     messages.success(request, f"✅ Rol de {user.username} cambiado a {mecanico.get_rol_display()}")
             except User.DoesNotExist:
-                messages.error(request, "❌ Usuario no encontrado")
+                config = AdministracionTaller.get_configuracion_activa()
+                if config.ver_mensajes:
+                    messages.error(request, "❌ Usuario no encontrado")
         
         elif action == 'toggle_permiso':
             user_id = request.POST.get('user_id')
@@ -4581,7 +4662,9 @@ def gestion_usuarios(request):
                 if config.ver_mensajes:
                     messages.success(request, f"✅ Permiso '{permiso}' {'activado' if activo else 'desactivado'} para {user.username}")
             except User.DoesNotExist:
-                messages.error(request, "❌ Usuario no encontrado")
+                config = AdministracionTaller.get_configuracion_activa()
+                if config.ver_mensajes:
+                    messages.error(request, "❌ Usuario no encontrado")
         
         elif action == 'eliminar_usuario':
             config = AdministracionTaller.get_configuracion_activa()
@@ -4590,14 +4673,16 @@ def gestion_usuarios(request):
             try:
                 user = User.objects.get(id=user_id)
                 if user == request.user:
-                    messages.error(request, "❌ No puedes eliminar tu propio usuario")
+                    if config.ver_mensajes:
+                        messages.error(request, "❌ No puedes eliminar tu propio usuario")
                 else:
                     username = user.username
                     user.delete()
                     if config.ver_mensajes:
                         messages.success(request, f"✅ Usuario '{username}' eliminado exitosamente")
             except User.DoesNotExist:
-                messages.error(request, "❌ Usuario no encontrado")
+                if config.ver_mensajes:
+                    messages.error(request, "❌ Usuario no encontrado")
         
         return redirect('gestion_usuarios')
     
@@ -4920,7 +5005,9 @@ def agregar_repuesto_externo_rapido(request):
             return redirect('panel_principal')
             
         except Exception as e:
-            messages.error(request, f'Error al guardar: {str(e)}')
+            config = AdministracionTaller.get_configuracion_activa()
+            if config.ver_mensajes:
+                messages.error(request, f'Error al guardar: {str(e)}')
     
     return render(request, 'car/agregar_repuesto_externo_rapido.html', {'datos': datos_bookmarklet})
 

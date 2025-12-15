@@ -262,7 +262,10 @@ def procesar_venta(request):
     ).first()
     
     if not sesion or not sesion.carrito_items.exists():
-        messages.error(request, 'No hay items en el carrito')
+        from .models import AdministracionTaller
+        config = AdministracionTaller.get_configuracion_activa()
+        if config.ver_mensajes:
+            messages.error(request, 'No hay items en el carrito')
         return redirect('pos_principal')
     
     if request.method == 'POST':
@@ -581,7 +584,10 @@ def procesar_cotizacion(request):
     ).first()
     
     if not sesion or not sesion.carrito_items.exists():
-        messages.error(request, 'No hay items en el carrito')
+        from .models import AdministracionTaller
+        config = AdministracionTaller.get_configuracion_activa()
+        if config.ver_mensajes:
+            messages.error(request, 'No hay items en el carrito')
         return redirect('pos_principal')
     
     if request.method == 'POST':

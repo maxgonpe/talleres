@@ -1430,7 +1430,9 @@ window.agregarInsumos = async function() {
         });
         
         if (response.ok) {
+            {% if ver_mensajes %}
             alert('✅ Insumos agregados exitosamente');
+            {% endif %}
             // Recargar la página manteniendo la pestaña de insumos activa
             window.location.href = window.location.pathname + '?tab=insumos';
         } else {
