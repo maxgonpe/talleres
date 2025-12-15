@@ -314,14 +314,25 @@ def listado_trabajos_data(estado="todos", limite=20):
 
 @login_required
 def netgogo_console(request):
-    """Vista para renderizar la consola de IA Netgogo"""
+    """Vista para renderizar la consola de IA Netgogo - Solo accesible para maxgonpe temporalmente"""
+    # Restricción temporal: solo el usuario maxgonpe puede acceder
+    if request.user.username != 'maxgonpe':
+        from django.contrib import messages
+        from django.shortcuts import redirect
+        messages.error(request, "Acceso restringido. Esta funcionalidad está en desarrollo.")
+        return redirect('panel_principal')
+    
     return render(request, "car/netgogo_console.html")
 
 
 @csrf_exempt
 @login_required
 def netgogo_chat(request):
-    """Vista para manejar las peticiones del chat de Netgogo"""
+    """Vista para manejar las peticiones del chat de Netgogo - Solo accesible para maxgonpe temporalmente"""
+    # Restricción temporal: solo el usuario maxgonpe puede acceder
+    if request.user.username != 'maxgonpe':
+        return JsonResponse({"error": "Acceso restringido. Esta funcionalidad está en desarrollo."}, status=403)
+    
     if request.method != 'POST':
         return JsonResponse({"error": "Método no permitido. Use POST."}, status=405)
     
