@@ -391,7 +391,11 @@ function cargarHistorial() {
 }
 
 function limpiarHistorial() {
+    {% if ver_avisos %}
     if (confirm('¿Estás seguro de que quieres limpiar el historial?')) {
+    {% else %}
+    if (true) {
+    {% endif %}
         localStorage.removeItem('historialBusquedaRepuestos');
         document.getElementById('historialContainer').style.display = 'none';
         mostrarAlerta('🗑️ Historial limpiado', 'info');

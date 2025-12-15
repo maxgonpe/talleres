@@ -655,7 +655,7 @@
                         {% endif %}
                     </div>
                     <!-- Formulario para editar cantidad -->
-                    <form method="post" style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.5rem; margin-bottom: 0.5rem;" onsubmit="return confirm('¿Actualizar cantidad?')">
+                    <form method="post" style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.5rem; margin-bottom: 0.5rem;" onsubmit="{% if ver_avisos %}return confirm('¿Actualizar cantidad?');{% else %}return true;{% endif %}">
                         {% csrf_token %}
                         <input type="hidden" name="accion_id" value="{{ accion.id }}">
                         <label style="font-size: 0.85rem; color: var(--muted); white-space: nowrap;">Cantidad:</label>
@@ -671,7 +671,7 @@
                         </button>
                     </form>
                     <!-- Formulario para editar precio -->
-                    <form method="post" style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.5rem; margin-bottom: 0.5rem;" onsubmit="return confirm('¿Actualizar precio? Este cambio solo afectará a este trabajo.')">
+                    <form method="post" style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.5rem; margin-bottom: 0.5rem;" onsubmit="{% if ver_avisos %}return confirm('¿Actualizar precio? Este cambio solo afectará a este trabajo.');{% else %}return true;{% endif %}">
                         {% csrf_token %}
                         <input type="hidden" name="accion_id" value="{{ accion.id }}">
                         <label style="font-size: 0.85rem; color: var(--muted); white-space: nowrap;">Precio:</label>
@@ -698,7 +698,7 @@
                             {% csrf_token %}
                             <input type="hidden" name="eliminar_accion" value="{{ accion.id }}">
                             <button type="submit" class="btn-action-movil btn btn-danger" 
-                                    onclick="return confirm('¿Eliminar esta acción?')">
+                                    onclick="{% if ver_avisos %}return confirm('¿Eliminar esta acción?');{% else %}return true;{% endif %}">
                                 🗑️ Eliminar
                             </button>
                         </form>
@@ -777,7 +777,7 @@
                             {% csrf_token %}
                             <input type="hidden" name="eliminar_repuesto" value="{{ repuesto.id }}">
                             <button type="submit" class="btn-action-movil btn btn-danger" 
-                                    onclick="return confirm('¿Eliminar este repuesto?')">
+                                    onclick="{% if ver_avisos %}return confirm('¿Eliminar este repuesto?');{% else %}return true;{% endif %}">
                                 🗑️ Eliminar
                             </button>
                         </form>
@@ -925,7 +925,7 @@
                                     <div class="item-title-movil">
                                         <strong>{{ adicional.concepto }}</strong>
                                     </div>
-                                    <form method="post" class="d-inline" onsubmit="return confirm('¿Eliminar este concepto adicional?')">
+                                    <form method="post" class="d-inline" onsubmit="{% if ver_avisos %}return confirm('¿Eliminar este concepto adicional?');{% else %}return true;{% endif %}">
                                         {% csrf_token %}
                                         <input type="hidden" name="adicional_id" value="{{ adicional.id }}">
                                         <button type="submit" name="eliminar_adicional" class="btn btn-outline-danger btn-sm" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
@@ -961,7 +961,7 @@
                                     <div class="item-title-movil">
                                         <strong>{{ adicional.concepto }}</strong>
                                     </div>
-                                    <form method="post" class="d-inline" onsubmit="return confirm('¿Eliminar este descuento?')">
+                                    <form method="post" class="d-inline" onsubmit="{% if ver_avisos %}return confirm('¿Eliminar este descuento?');{% else %}return true;{% endif %}">
                                         {% csrf_token %}
                                         <input type="hidden" name="adicional_id" value="{{ adicional.id }}">
                                         <button type="submit" name="eliminar_adicional" class="btn btn-outline-danger btn-sm" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
@@ -1011,7 +1011,7 @@
                             <form method="post" style="position: absolute; top: 2px; right: 2px;">
                                 {% csrf_token %}
                                 <input type="hidden" name="eliminar_foto" value="{{ foto.id }}">
-                                <button type="submit" onclick="return confirm('¿Eliminar esta foto?')"
+                                <button type="submit" onclick="{% if ver_avisos %}return confirm('¿Eliminar esta foto?');{% else %}return true;{% endif %}"
                                         style="background: rgba(220,53,69,0.9); color: white; border: none; 
                                                border-radius: 50%; width: 30px; height: 30px; font-size: 0.9rem;">
                                     🗑️
@@ -1090,7 +1090,7 @@
                             {% csrf_token %}
                             <input type="hidden" name="abono_id" value="{{ abono.id }}">
                             <button type="submit" name="eliminar_abono" 
-                                    onclick="return confirm('¿Eliminar este abono?')"
+                                    onclick="{% if ver_avisos %}return confirm('¿Eliminar este abono?');{% else %}return true;{% endif %}"
                                     style="background: #dc3545; color: white; border: none; 
                                            border-radius: 0.5rem; padding: 0.5rem; font-size: 0.9rem;">
                                 🗑️

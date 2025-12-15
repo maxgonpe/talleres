@@ -47,7 +47,10 @@ def compra_create(request):
             compra = form.save(commit=False)
             compra.creado_por = request.user
             compra.save()
-            messages.success(request, f'Compra #{compra.numero_compra} creada exitosamente.')
+            from .models import AdministracionTaller
+            config = AdministracionTaller.get_configuracion_activa()
+            if config.ver_mensajes:
+                messages.success(request, f'Compra #{compra.numero_compra} creada exitosamente.')
             return redirect('compra_detail', pk=compra.pk)
     else:
         form = CompraForm()
@@ -102,17 +105,23 @@ def compra_detail(request, pk):
             
             if item_existente:
                 # Si ya existe, actualizar la cantidad y precio
+                from .models import AdministracionTaller
+                config = AdministracionTaller.get_configuracion_activa()
                 item_existente.cantidad += form.cleaned_data['cantidad']
                 item_existente.precio_unitario = form.cleaned_data['precio_unitario']
                 item_existente.save()
-                messages.success(request, f'Cantidad actualizada para {repuesto.nombre}.')
+                if config.ver_mensajes:
+                    messages.success(request, f'Cantidad actualizada para {repuesto.nombre}.')
                 return redirect(f'/car/compras/{compra.pk}/?item_agregado=true')
             else:
                 # Si no existe, crear nuevo item
                 item = form.save(commit=False)
                 item.compra = compra
                 item.save()
-                messages.success(request, f'Item "{repuesto.nombre}" agregado a la compra. Cantidad: {form.cleaned_data["cantidad"]}, Precio: ${form.cleaned_data["precio_unitario"]}')
+                from .models import AdministracionTaller
+                config = AdministracionTaller.get_configuracion_activa()
+                if config.ver_mensajes:
+                    messages.success(request, f'Item "{repuesto.nombre}" agregado a la compra. Cantidad: {form.cleaned_data["cantidad"]}, Precio: ${form.cleaned_data["precio_unitario"]}')
                 return redirect(f'/car/compras/{compra.pk}/?item_agregado=true')
     else:
         form = CompraItemForm()
@@ -134,7 +143,10 @@ def compra_edit(request, pk):
         form = CompraForm(request.POST, instance=compra)
         if form.is_valid():
             form.save()
-            messages.success(request, f'Compra #{compra.numero_compra} actualizada exitosamente.')
+            from .models import AdministracionTaller
+            config = AdministracionTaller.get_configuracion_activa()
+            if config.ver_mensajes:
+                messages.success(request, f'Compra #{compra.numero_compra} actualizada exitosamente.')
             return redirect('compra_detail', pk=compra.pk)
     else:
         form = CompraForm(instance=compra)
@@ -149,17 +161,29 @@ def compra_edit(request, pk):
 @login_required
 def compra_item_delete(request, pk):
     """Eliminar item de compra"""
+    from .models import AdministracionTaller
+    
     item = get_object_or_404(CompraItem, pk=pk)
     compra = item.compra
+    config = AdministracionTaller.get_configuracion_activa()
+    
+    # Si ver_avisos = False, eliminar directamente sin mostrar confirmación
+    if not config.ver_avisos:
+        item.delete()
+        if config.ver_mensajes:
+            messages.success(request, 'Item eliminado de la compra.')
+        return redirect('compra_detail', pk=compra.pk)
     
     if request.method == 'POST':
         item.delete()
-        messages.success(request, 'Item eliminado de la compra.')
+        if config.ver_mensajes:
+            messages.success(request, 'Item eliminado de la compra.')
         return redirect('compra_detail', pk=compra.pk)
     
     return render(request, 'car/compras/compra_item_confirm_delete.html', {
         'item': item,
-        'compra': compra
+        'compra': compra,
+        'config': config
     })
 
 
@@ -173,7 +197,10 @@ def compra_item_edit(request, pk):
         form = CompraItemForm(request.POST, instance=item)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Item actualizado exitosamente.')
+            from .models import AdministracionTaller
+            config = AdministracionTaller.get_configuracion_activa()
+            if config.ver_mensajes:
+                messages.success(request, 'Item actualizado exitosamente.')
             return redirect('compra_detail', pk=compra.pk)
     else:
         form = CompraItemForm(instance=item)
@@ -206,10 +233,15 @@ def compra_recibir(request, pk):
                 compra.estado = 'recibida'
                 compra.fecha_recibida = timezone.now().date()
                 compra.save()
-                
-                messages.success(request, f'{items_recibidos} items recibidos y stock actualizado.')
+                from .models import AdministracionTaller
+                config = AdministracionTaller.get_configuracion_activa()
+                if config.ver_mensajes:
+                    messages.success(request, f'{items_recibidos} items recibidos y stock actualizado.')
             else:
-                messages.info(request, 'No hay items pendientes de recibir.')
+                from .models import AdministracionTaller
+                config = AdministracionTaller.get_configuracion_activa()
+                if config.ver_mensajes:
+                    messages.info(request, 'No hay items pendientes de recibir.')
         
         return redirect('compra_detail', pk=compra.pk)
     
@@ -228,9 +260,15 @@ def compra_item_recibir(request, pk):
         if not item.recibido:
             with transaction.atomic():
                 item.recibir_item(usuario=request.user)
-                messages.success(request, f'Item "{item.repuesto.nombre}" recibido y stock actualizado.')
+                from .models import AdministracionTaller
+                config = AdministracionTaller.get_configuracion_activa()
+                if config.ver_mensajes:
+                    messages.success(request, f'Item "{item.repuesto.nombre}" recibido y stock actualizado.')
         else:
-            messages.warning(request, 'Este item ya fue recibido.')
+            from .models import AdministracionTaller
+            config = AdministracionTaller.get_configuracion_activa()
+            if config.ver_mensajes:
+                messages.warning(request, 'Este item ya fue recibido.')
         
         return redirect('compra_detail', pk=compra.pk)
     
@@ -246,9 +284,12 @@ def compra_confirmar(request, pk):
     compra = get_object_or_404(Compra, pk=pk)
     
     if request.method == 'POST':
+        from .models import AdministracionTaller
+        config = AdministracionTaller.get_configuracion_activa()
         compra.estado = 'confirmada'
         compra.save()
-        messages.success(request, f'Compra #{compra.numero_compra} confirmada.')
+        if config.ver_mensajes:
+            messages.success(request, f'Compra #{compra.numero_compra} confirmada.')
         return redirect('compra_detail', pk=compra.pk)
     
     return render(request, 'car/compras/compra_confirmar.html', {
@@ -264,7 +305,10 @@ def compra_cancelar(request, pk):
     if request.method == 'POST':
         compra.estado = 'cancelada'
         compra.save()
-        messages.success(request, f'Compra #{compra.numero_compra} cancelada.')
+        from .models import AdministracionTaller
+        config = AdministracionTaller.get_configuracion_activa()
+        if config.ver_mensajes:
+            messages.success(request, f'Compra #{compra.numero_compra} cancelada.')
         return redirect('compra_detail', pk=compra.pk)
     
     return render(request, 'car/compras/compra_cancelar.html', {

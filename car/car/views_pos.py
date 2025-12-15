@@ -243,9 +243,13 @@ def limpiar_carrito(request):
         activa=True
     ).first()
     
+    from .models import AdministracionTaller
+    config = AdministracionTaller.get_configuracion_activa()
+    
     if sesion:
         sesion.carrito_items.all().delete()
-        messages.success(request, 'Carrito limpiado')
+        if config.ver_mensajes:
+            messages.success(request, 'Carrito limpiado')
     
     return redirect('pos_principal')
 
@@ -339,7 +343,10 @@ def procesar_venta(request):
                 sesion.numero_ventas += 1
                 sesion.save()
                 
-                messages.success(request, f'Venta procesada exitosamente. Total: ${venta.total}')
+                from .models import AdministracionTaller
+                config = AdministracionTaller.get_configuracion_activa()
+                if config.ver_mensajes:
+                    messages.success(request, f'Venta procesada exitosamente. Total: ${venta.total}')
                 
                 # Redirigir a detalle de venta o imprimir ticket
                 return redirect('pos_venta_detalle', venta_id=venta.id)
@@ -429,9 +436,12 @@ def pos_configuracion(request):
     
     if request.method == 'POST':
         form = ConfiguracionPOSForm(request.POST, instance=config)
+        from .models import AdministracionTaller
+        config = AdministracionTaller.get_configuracion_activa()
         if form.is_valid():
             form.save()
-            messages.success(request, 'Configuración actualizada')
+            if config.ver_mensajes:
+                messages.success(request, 'Configuración actualizada')
             return redirect('pos_configuracion')
     else:
         form = ConfiguracionPOSForm(instance=config)
@@ -482,7 +492,10 @@ def cerrar_sesion_pos(request):
         sesion.fecha_fin = timezone.now()
         sesion.save()
         
-        messages.success(request, 'Sesión de venta cerrada')
+        from .models import AdministracionTaller
+        config = AdministracionTaller.get_configuracion_activa()
+        if config.ver_mensajes:
+            messages.success(request, 'Sesión de venta cerrada')
     
     return redirect('pos_principal')
 
@@ -513,7 +526,11 @@ def limpiar_sesiones_pos(request):
     for sesion in sesiones_antiguas:
         sesion.carrito_items.all().delete()
     
-    messages.success(request, 'Sesiones limpiadas. Nueva sesión iniciada.')
+    from .models import AdministracionTaller
+    config = AdministracionTaller.get_configuracion_activa()
+    
+    if config.ver_mensajes:
+        messages.success(request, 'Sesiones limpiadas. Nueva sesión iniciada.')
     return redirect('pos_principal')
 
 @login_required
@@ -596,8 +613,10 @@ def procesar_cotizacion(request):
                 
                 # Limpiar carrito
                 sesion.carrito_items.all().delete()
-                
-                messages.success(request, f'Cotización generada exitosamente. Total: ${cotizacion.total}')
+                from .models import AdministracionTaller
+                config = AdministracionTaller.get_configuracion_activa()
+                if config.ver_mensajes:
+                    messages.success(request, f'Cotización generada exitosamente. Total: ${cotizacion.total}')
                 
                 # Redirigir a detalle de cotización
                 return redirect('pos_cotizacion_detalle', cotizacion_id=cotizacion.id)
@@ -775,7 +794,10 @@ def convertir_cotizacion_a_venta(request, cotizacion_id):
             sesion.numero_ventas += 1
             sesion.save()
             
-            messages.success(request, f'Cotización convertida a venta exitosamente. Venta #{venta.id}')
+            from .models import AdministracionTaller
+            config = AdministracionTaller.get_configuracion_activa()
+            if config.ver_mensajes:
+                messages.success(request, f'Cotización convertida a venta exitosamente. Venta #{venta.id}')
             return redirect('pos_venta_detalle', venta_id=venta.id)
     
     context = {

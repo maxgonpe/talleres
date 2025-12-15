@@ -1786,6 +1786,14 @@ body[data-bs-theme="dark"] .accordion-body .form-check-label {
 
 <!-- ---------------- SCRIPTS (TODO integrado aquí) ---------------- -->
 <script src="{% static 'js/ingreso.js' %}"></script>
+<script>
+  // Variable global para controlar avisos
+  window.ver_avisos = {% if ver_avisos %}true{% else %}false{% endif %};
+</script>
+<script>
+  // Variable global para ver_avisos (disponible para scripts externos)
+  window.ver_avisos = {% if ver_avisos %}true{% else %}false{% endif %};
+</script>
 <script src="{% static 'js/plano-interactivo.js' %}"></script>
 <script>
 // ---------------------- BUSCAR VEHICULO POR PLACA ----------------------
@@ -2265,7 +2273,8 @@ function actualizarCantidadExterna(index, nuevaCantidad) {
 
 // Eliminar repuesto externo
 function eliminarRepuestoExterno(index) {
-  if (confirm('¿Eliminar esta referencia externa?')) {
+  const verAvisos = (typeof window.ver_avisos !== 'undefined' && window.ver_avisos);
+  if (verAvisos ? confirm('¿Eliminar esta referencia externa?') : true) {
     window.repuestosExternos.splice(index, 1);
     actualizarTablaRepuestosExternos();
     mostrarNotificacion('🗑️ Referencia eliminada', 'info');
@@ -2879,7 +2888,8 @@ window.actualizarCantidadRepuesto = function(index, nuevaCantidad) {
 
 // Función para eliminar un repuesto/insumo de la tabla
 window.eliminarRepuestoItem = function(index) {
-  if (!confirm('¿Eliminar este item?')) return;
+  const verAvisos = (typeof window.ver_avisos !== 'undefined' && window.ver_avisos);
+  if (verAvisos && !confirm('¿Eliminar este item?')) return;
   
   const repuestosJson = document.getElementById('repuestos-json');
   if (!repuestosJson) return;
@@ -3018,7 +3028,8 @@ window.actualizarCantidadInsumo = function(insumoId, nuevaCantidad) {
 
 // Eliminar insumo
 window.eliminarInsumo = function(insumoId) {
-  if (!confirm('¿Eliminar este insumo?')) return;
+  const verAvisos = (typeof window.ver_avisos !== 'undefined' && window.ver_avisos);
+  if (verAvisos && !confirm('¿Eliminar este insumo?')) return;
   
   const insumosJson = document.getElementById('insumos-json');
   if (!insumosJson) return;

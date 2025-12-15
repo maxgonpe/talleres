@@ -108,7 +108,7 @@
           </div>
           <div class="btn-group btn-group-sm">
             <a href="{% url 'componente_update' componente.id %}" class="btn btn-outline-primary">Editar</a>
-            <a href="{% url 'componente_delete' componente.id %}" class="btn btn-outline-danger">Eliminar</a>
+            <a href="{% url 'componente_delete' componente.id %}" class="btn btn-outline-danger" onclick="{% if ver_avisos %}return confirm('¿Estás seguro de eliminar este componente?');{% else %}return true;{% endif %}">Eliminar</a>
           </div>
         </summary>
 

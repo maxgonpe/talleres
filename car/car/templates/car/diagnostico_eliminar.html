@@ -8,9 +8,18 @@
 <h2>Eliminar Diagnostico</h2>
 <p>¿Estás seguro de que deseas eliminar el diagnostico <strong>{{ diagnostico.vehiculo }}</strong>?</p>
 
-<form method="post">
+<form method="post" id="deleteForm">
     {% csrf_token %}
     <button type="submit" class="btn btn-danger">Eliminar</button>
     <a href="{% url 'lista_diagnosticos' %}" class="btn btn-secondary">Cancelar</a>
 </form>
+
+<script>
+  // Si ver_avisos = False, auto-enviar el formulario
+  {% if not ver_avisos %}
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('deleteForm').submit();
+    });
+  {% endif %}
+</script>
 {% endblock %}

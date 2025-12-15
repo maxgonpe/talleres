@@ -632,7 +632,7 @@ html.theme-piedra .total-presupuesto-card .total-valor-principal {
     <a href="{% url 'editar_diagnostico' diagnostico.pk %}" class="btn btn-sm btn-primary mt-2">
         <i class="fas fa-edit"></i> Editar
     </a>
-    <a href="{% url 'eliminar_diagnostico' diagnostico.pk %}" class="btn btn-sm btn-danger mt-2">Eliminar</a>
+    <a href="{% url 'eliminar_diagnostico' diagnostico.pk %}" class="btn btn-sm btn-danger mt-2" onclick="{% if ver_avisos %}return confirm('¿Estás seguro de eliminar este diagnóstico?');{% else %}return true;{% endif %}">Eliminar</a>
     <a href="{% url 'panel_principal' %}" class="btn btn-sm btn-warning mt-2">Regresar</a>
 
     <!-- ==== Botón Aceptar / Estado ==== -->
@@ -643,7 +643,7 @@ html.theme-piedra .total-presupuesto-card .total-valor-principal {
     {% elif diagnostico.estado == "aprobado" %}
       <div class="d-flex justify-content-between align-items-center mt-3">
         <span class="badge badge-aprobado-grande">✅ Presupuesto Aprobado</span>
-        <form method="post" style="display: inline;" onsubmit="return confirm('¿Quitar este diagnóstico del listado? Se ocultará pero no se eliminará.');">
+        <form method="post" style="display: inline;" onsubmit="{% if ver_avisos %}return confirm('¿Quitar este diagnóstico del listado? Se ocultará pero no se eliminará.');{% else %}return true;{% endif %}">
           {% csrf_token %}
           <input type="hidden" name="diagnostico_id" value="{{ diagnostico.id }}">
           <button type="submit" name="ocultar_diagnostico" class="btn btn-sm btn-outline-secondary">

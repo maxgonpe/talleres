@@ -338,7 +338,7 @@
         <a href="{% url 'vehiculo_compatibilidad_update' vehiculo.pk %}" class="btn btn-warning btn-action">
             <i class="fas fa-edit me-2"></i>Editar Vehículo Compatible
         </a>
-        <a href="{% url 'vehiculo_compatibilidad_delete' vehiculo.pk %}" class="btn btn-danger btn-action">
+        <a href="{% url 'vehiculo_compatibilidad_delete' vehiculo.pk %}" class="btn btn-danger btn-action" onclick="{% if ver_avisos %}return confirm('¿Estás seguro de eliminar este vehículo compatible?');{% else %}return true;{% endif %}">
             <i class="fas fa-trash me-2"></i>Eliminar Vehículo Compatible
         </a>
         <a href="{% url 'vehiculo_compatibilidad_list' %}" class="btn btn-secondary btn-action">

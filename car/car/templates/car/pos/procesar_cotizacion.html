@@ -325,7 +325,11 @@ document.getElementById('cotizacion-form').addEventListener('submit', function(e
     }
     
     // Confirmar cotización
+    {% if ver_avisos %}
     if (!confirm('¿Generar esta cotización?')) {
+    {% else %}
+    if (false) {
+    {% endif %}
         e.preventDefault();
         return false;
     }

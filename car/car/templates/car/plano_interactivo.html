@@ -23,6 +23,18 @@
     const partsData = {{ parts_data|safe }};
   </script>
 
+  <script>
+    // Variable global para controlar avisos
+    window.ver_avisos = {% if ver_avisos %}true{% else %}false{% endif %};
+  </script>
+  <script>
+    // Variable global para ver_avisos (disponible para scripts externos)
+    window.ver_avisos = {% if ver_avisos %}true{% else %}false{% endif %};
+  </script>
+  <script>
+    // Variable global para ver_avisos (disponible para scripts externos)
+    window.ver_avisos = {% if ver_avisos %}true{% else %}false{% endif %};
+  </script>
   <script src="{% static 'js/plano-interactivo.js' %}"></script>
 {% endblock %}
 

@@ -561,7 +561,7 @@
                                             </div>
                                         </div>
                                         <!-- Formulario para editar cantidad -->
-                                        <form method="post" style="display: inline-flex; gap: 0.25rem; align-items: center;" onsubmit="return confirm('¿Actualizar cantidad de esta acción?')">
+                                        <form method="post" style="display: inline-flex; gap: 0.25rem; align-items: center;" onsubmit="{% if ver_avisos %}return confirm('¿Actualizar cantidad de esta acción?');{% else %}return true;{% endif %}">
                                             {% csrf_token %}
                                             <input type="hidden" name="dca_id" value="{{ dca.id }}">
                                             <input type="number" 
@@ -579,7 +579,7 @@
                                             {% csrf_token %}
                                             <button type="submit" name="quitar_accion" value="{{ dca.id }}" 
                                                     class="btn btn-sm btn-outline-danger"
-                                                    onclick="return confirm('¿Quitar esta acción del diagnóstico?')">
+                                                    onclick="{% if ver_avisos %}return confirm('¿Quitar esta acción del diagnóstico?');{% else %}return true;{% endif %}">
                                                 🗑️ Quitar
                                             </button>
                                         </form>
@@ -676,7 +676,7 @@
                                         {% csrf_token %}
                                         <button type="submit" name="quitar_repuesto" value="{{ dr.id }}" 
                                                 class="btn btn-sm btn-outline-danger"
-                                                onclick="return confirm('¿Quitar este repuesto del diagnóstico?')">
+                                                onclick="{% if ver_avisos %}return confirm('¿Quitar este repuesto del diagnóstico?');{% else %}return true;{% endif %}">
                                             🗑️ Quitar
                                         </button>
                                     </form>

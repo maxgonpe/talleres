@@ -21,3 +21,5 @@ class Migration(migrations.Migration):
             field=models.BooleanField(default=True, help_text='Permitir visualización de avisos'),
         ),
     ]
+
+

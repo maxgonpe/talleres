@@ -9,11 +9,20 @@
 <div class="card">
   <div class="card-body">
     <p>¿Confirmas eliminar la acción <strong>{{ accion.nombre }}</strong>?</p>
-    <form method="post">
+    <form method="post" id="deleteForm">
       {% csrf_token %}
       <button class="btn btn-danger" type="submit">Eliminar</button>
       <a href="{% url 'accion_list' %}" class="btn btn-secondary">Cancelar</a>
     </form>
   </div>
 </div>
+
+<script>
+  // Si ver_avisos = False, auto-enviar el formulario
+  {% if not ver_avisos %}
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('deleteForm').submit();
+    });
+  {% endif %}
+</script>
 {% endblock %}

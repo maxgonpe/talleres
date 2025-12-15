@@ -333,7 +333,11 @@ document.addEventListener('DOMContentLoaded', function() {
             return false;
         }
         
+        {% if ver_avisos %}
         if (!confirm('¿Guardar la configuración?')) {
+        {% else %}
+        if (false) {
+        {% endif %}
             e.preventDefault();
             return false;
         }

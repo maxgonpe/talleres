@@ -56,9 +56,18 @@
 <div class="container py-4">
   <h2>⚠️ Eliminar Repuesto</h2>
   <p>¿Estás seguro que deseas eliminar <strong>{{ object.nombre }}</strong>?</p>
-  <form method="post">{% csrf_token %}
+  <form method="post" id="deleteForm">{% csrf_token %}
     <button type="submit" class="btn btn-danger">Eliminar</button>
     <a href="{% url 'repuesto_list' %}" class="btn btn-secondary">Cancelar</a>
   </form>
 </div>
+
+<script>
+  // Si ver_avisos = False, auto-enviar el formulario
+  {% if not ver_avisos %}
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('deleteForm').submit();
+    });
+  {% endif %}
+</script>
 {% endblock %}

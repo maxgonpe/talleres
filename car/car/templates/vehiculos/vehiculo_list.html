@@ -547,7 +547,7 @@
                             <i class="fas fa-eye"></i>
                         </a>
                         <a href="{% url 'vehiculo_compatibilidad_delete' vehiculo.pk %}" 
-                           class="btn-action btn-danger" title="Eliminar">
+                           class="btn-action btn-danger" title="Eliminar" onclick="{% if ver_avisos %}return confirm('¿Estás seguro de eliminar este vehículo compatible?');{% else %}return true;{% endif %}">
                             <i class="fas fa-trash"></i>
                         </a>
                     </div>

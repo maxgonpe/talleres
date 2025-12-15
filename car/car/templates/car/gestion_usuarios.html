@@ -697,7 +697,7 @@
                                 🔑
                             </button>
                             {% if usuario != request.user %}
-                            <form method="post" class="d-inline" onsubmit="return confirm('¿Estás seguro de eliminar este usuario?')">
+                            <form method="post" class="d-inline" onsubmit="{% if ver_avisos %}return confirm('¿Estás seguro de eliminar este usuario?');{% else %}return true;{% endif %}">
                                 {% csrf_token %}
                                 <input type="hidden" name="action" value="eliminar_usuario">
                                 <input type="hidden" name="user_id" value="{{ usuario.id }}">

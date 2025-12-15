@@ -131,7 +131,7 @@
                         <p><strong>Esta acción NO se puede deshacer.</strong></p>
                     </div>
                     
-                    <form method="post">
+                    <form method="post" id="deleteForm">
                         {% csrf_token %}
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-danger">
@@ -142,6 +142,15 @@
                             </a>
                         </div>
                     </form>
+
+<script>
+  // Si ver_avisos = False, auto-enviar el formulario
+  {% if not ver_avisos %}
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('deleteForm').submit();
+    });
+  {% endif %}
+</script>
                 </div>
             </div>
         </div>

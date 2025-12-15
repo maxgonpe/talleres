@@ -263,7 +263,11 @@ document.getElementById('venta-form').addEventListener('submit', function(e) {
     }
     
     // Confirmar venta
+    {% if ver_avisos %}
     if (!confirm('¿Confirmar esta venta?')) {
+    {% else %}
+    if (false) {
+    {% endif %}
         e.preventDefault();
         return false;
     }

@@ -31,7 +31,7 @@
         <div class="fw-bold">${{ it.precio_mano_obra|floatformat:0|intcomma }}</div>
         <div class="mt-1">
           <a href="{% url 'comp_accion_update' it.pk %}" class="btn btn-sm btn-secondary">Editar</a>
-          <a href="{% url 'comp_accion_delete' it.pk %}" class="btn btn-sm btn-danger">Eliminar</a>
+          <a href="{% url 'comp_accion_delete' it.pk %}" class="btn btn-sm btn-danger" onclick="{% if ver_avisos %}return confirm('¿Estás seguro de eliminar este registro?');{% else %}return true;{% endif %}">Eliminar</a>
         </div>
       </div>
     </div>

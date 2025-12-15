@@ -129,7 +129,8 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 } else {
   // ✅ Seleccionable (leaf) → NO cambiar imagen
-  const confirmAdd = confirm(`✅ Componente: ${data.parent.nombre}\n¿Desea agregarlo al diagnóstico?`);
+  const verAvisos = window.ver_avisos !== undefined ? window.ver_avisos : true; // Default true si no está definido
+  const confirmAdd = verAvisos ? confirm(`✅ Componente: ${data.parent.nombre}\n¿Desea agregarlo al diagnóstico?`) : true;
   if (confirmAdd) {
     const checkbox = document.querySelector(
       `input[name="componentes_seleccionados"][value="${data.parent.id}"]`

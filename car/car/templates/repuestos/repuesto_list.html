@@ -473,7 +473,7 @@
                                 <a href="{% url 'repuesto_compatibilidad' repuesto.pk %}" class="btn btn-success btn-action" title="Compatibilidad">
                                     <i class="fas fa-link"></i>
                                 </a>
-                                <a href="{% url 'repuesto_delete' repuesto.pk %}" class="btn btn-danger btn-action" title="Eliminar">
+                                <a href="{% url 'repuesto_delete' repuesto.pk %}" class="btn btn-danger btn-action" title="Eliminar" onclick="{% if ver_avisos %}return confirm('¿Estás seguro de eliminar este repuesto?');{% else %}return true;{% endif %}">
                                     <i class="fas fa-trash"></i>
                                 </a>
                             </div>

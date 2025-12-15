@@ -87,7 +87,9 @@ def vehiculo_create(request):
         form = VehiculoVersionForm(request.POST)
         if form.is_valid():
             vehiculo = form.save()
-            messages.success(request, f'✅ Vehículo "{vehiculo.marca} {vehiculo.modelo}" creado exitosamente.')
+            config = AdministracionTaller.get_configuracion_activa()
+            if config.ver_mensajes:
+                messages.success(request, f'✅ Vehículo "{vehiculo.marca} {vehiculo.modelo}" creado exitosamente.')
             return redirect('vehiculo_compatibilidad_list')
     else:
         form = VehiculoVersionForm()
@@ -109,7 +111,9 @@ def vehiculo_update(request, pk):
         form = VehiculoVersionForm(request.POST, instance=vehiculo)
         if form.is_valid():
             vehiculo = form.save()
-            messages.success(request, f'✅ Vehículo "{vehiculo.marca} {vehiculo.modelo}" actualizado exitosamente.')
+            config = AdministracionTaller.get_configuracion_activa()
+            if config.ver_mensajes:
+                messages.success(request, f'✅ Vehículo "{vehiculo.marca} {vehiculo.modelo}" actualizado exitosamente.')
             return redirect('vehiculo_compatibilidad_list')
     else:
         form = VehiculoVersionForm(instance=vehiculo)
@@ -127,15 +131,26 @@ def vehiculo_update(request, pk):
 def vehiculo_delete(request, pk):
     """Eliminar un vehículo"""
     vehiculo = get_object_or_404(VehiculoVersion, pk=pk)
+    config = AdministracionTaller.get_configuracion_activa()
+    
+    # Si ver_avisos = False, eliminar directamente sin mostrar confirmación
+    if not config.ver_avisos:
+        marca_modelo = f"{vehiculo.marca} {vehiculo.modelo}"
+        vehiculo.delete()
+        if config.ver_mensajes:
+            messages.success(request, f'✅ Vehículo "{marca_modelo}" eliminado exitosamente.')
+        return redirect('vehiculo_list')
     
     if request.method == 'POST':
         marca_modelo = f"{vehiculo.marca} {vehiculo.modelo}"
         vehiculo.delete()
-        messages.success(request, f'✅ Vehículo "{marca_modelo}" eliminado exitosamente.')
+        if config.ver_mensajes:
+            messages.success(request, f'✅ Vehículo "{marca_modelo}" eliminado exitosamente.')
         return redirect('vehiculo_list')
     
     context = {
         'vehiculo': vehiculo,
+        'config': config,
     }
     
     return render(request, 'vehiculos/vehiculo_confirm_delete.html', context)

@@ -129,9 +129,15 @@ def configuracion_bonos(request):
             )
             
             if created:
-                messages.success(request, f"Configuración de bono creada para {mecanico}")
+                from .models import AdministracionTaller
+                config_taller = AdministracionTaller.get_configuracion_activa()
+                if config_taller.ver_mensajes:
+                    messages.success(request, f"Configuración de bono creada para {mecanico}")
             else:
-                messages.success(request, f"Configuración de bono actualizada para {mecanico}")
+                from .models import AdministracionTaller
+                config_taller = AdministracionTaller.get_configuracion_activa()
+                if config_taller.ver_mensajes:
+                    messages.success(request, f"Configuración de bono actualizada para {mecanico}")
             
             return redirect('configuracion_bonos')
             
@@ -170,7 +176,10 @@ def editar_configuracion_bono(request, pk):
         config.notas = request.POST.get('notas', '')
         config.save()
         
-        messages.success(request, f"Configuración actualizada para {config.mecanico}")
+        from .models import AdministracionTaller
+        config_taller = AdministracionTaller.get_configuracion_activa()
+        if config_taller.ver_mensajes:
+            messages.success(request, f"Configuración actualizada para {config.mecanico}")
         return redirect('configuracion_bonos')
     
     return render(request, 'car/bonos/editar_configuracion_bono.html', {'config': config})
@@ -253,7 +262,10 @@ def registrar_pago_mecanico(request, mecanico_id):
             return redirect('registrar_pago_mecanico', mecanico_id=mecanico_id)
         
         if monto > saldo_pendiente:
-            messages.warning(request, f"El monto excede el saldo pendiente (${saldo_pendiente})")
+            from .models import AdministracionTaller
+            config_taller = AdministracionTaller.get_configuracion_activa()
+            if config_taller.ver_mensajes:
+                messages.warning(request, f"El monto excede el saldo pendiente (${saldo_pendiente})")
         
         # Crear el pago
         pago = PagoMecanico.objects.create(
@@ -278,8 +290,10 @@ def registrar_pago_mecanico(request, mecanico_id):
                 bono.pagado = True
                 bono.fecha_pago = pago.fecha_pago
                 bono.save()
-        
-        messages.success(request, f"Pago de ${monto} registrado para {mecanico}")
+        from .models import AdministracionTaller
+        config_taller = AdministracionTaller.get_configuracion_activa()
+        if config_taller.ver_mensajes:
+            messages.success(request, f"Pago de ${monto} registrado para {mecanico}")
         return redirect('cuenta_mecanico', mecanico_id=mecanico_id)
     
     context = {
@@ -331,7 +345,10 @@ def excepcion_bono_trabajo(request, trabajo_id):
     # Verificar si ya existe excepción
     try:
         excepcion = ExcepcionBonoTrabajo.objects.get(trabajo=trabajo)
-        messages.info(request, "Este trabajo ya tiene una excepción de bono")
+        from .models import AdministracionTaller
+        config_taller = AdministracionTaller.get_configuracion_activa()
+        if config_taller.ver_mensajes:
+            messages.info(request, "Este trabajo ya tiene una excepción de bono")
         return redirect('trabajo_detalle', pk=trabajo.id)
     except ExcepcionBonoTrabajo.DoesNotExist:
         pass
@@ -349,7 +366,10 @@ def excepcion_bono_trabajo(request, trabajo_id):
             creado_por=request.user
         )
         
-        messages.success(request, f"Excepción de bono creada para el Trabajo #{trabajo.id}")
+        from .models import AdministracionTaller
+        config_taller = AdministracionTaller.get_configuracion_activa()
+        if config_taller.ver_mensajes:
+            messages.success(request, f"Excepción de bono creada para el Trabajo #{trabajo.id}")
         return redirect('trabajo_detalle', pk=trabajo.id)
     
     return render(request, 'car/bonos/excepcion_bono_trabajo.html', {'trabajo': trabajo})
@@ -366,7 +386,10 @@ def eliminar_excepcion_bono(request, trabajo_id):
     try:
         excepcion = ExcepcionBonoTrabajo.objects.get(trabajo=trabajo)
         excepcion.delete()
-        messages.success(request, f"Excepción de bono eliminada para el Trabajo #{trabajo.id}")
+        from .models import AdministracionTaller
+        config_taller = AdministracionTaller.get_configuracion_activa()
+        if config_taller.ver_mensajes:
+            messages.success(request, f"Excepción de bono eliminada para el Trabajo #{trabajo.id}")
     except ExcepcionBonoTrabajo.DoesNotExist:
         messages.error(request, "No existe excepción para este trabajo")
     
@@ -384,6 +407,9 @@ def eliminar_configuracion_bono(request, pk):
     mecanico_nombre = str(config.mecanico)
     
     if request.method == 'POST':
+        from .models import AdministracionTaller
+        config_taller = AdministracionTaller.get_configuracion_activa()
+        
         # Verificar si hay bonos pendientes (opcional, solo informativo)
         bonos_pendientes = BonoGenerado.objects.filter(
             mecanico=config.mecanico,
@@ -393,14 +419,17 @@ def eliminar_configuracion_bono(request, pk):
         # Eliminar la configuración
         config.delete()
         
-        if bonos_pendientes > 0:
-            messages.success(
-                request, 
-                f"Configuración de bono eliminada para {mecanico_nombre}. "
-                f"Nota: Este mecánico tiene {bonos_pendientes} bono(s) pendiente(s) que no se verán afectados."
-            )
-        else:
-            messages.success(request, f"Configuración de bono eliminada para {mecanico_nombre}")
+        if config_taller.ver_mensajes:
+            if bonos_pendientes > 0:
+                if config_taller.ver_mensajes:
+                    messages.success(
+                        request, 
+                        f"Configuración de bono eliminada para {mecanico_nombre}. "
+                        f"Nota: Este mecánico tiene {bonos_pendientes} bono(s) pendiente(s) que no se verán afectados."
+                    )
+            else:
+                if config_taller.ver_mensajes:
+                    messages.success(request, f"Configuración de bono eliminada para {mecanico_nombre}")
         
         return redirect('configuracion_bonos')
     

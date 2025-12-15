@@ -700,7 +700,7 @@
                                 </div>
                             </div>
                             <div class="mt-2 text-end">
-                                <form method="post" style="display: inline;">
+                                <form method="post" style="display: inline;" onsubmit="{% if ver_avisos %}return confirm('¿Ocultar este trabajo del listado?');{% else %}return true;{% endif %}">
                                     {% csrf_token %}
                                     <input type="hidden" name="trabajo_id" value="{{ trabajo.id }}">
                                     <button type="submit" name="ocultar_trabajo" class="btn btn-sm btn-outline-secondary">

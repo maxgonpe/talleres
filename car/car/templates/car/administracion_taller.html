@@ -161,6 +161,20 @@
                                 {{ form.notificaciones_email|as_crispy_field }}
                             </div>
                         </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                {{ form.ver_avisos|as_crispy_field }}
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle"></i> Controla si se muestran las confirmaciones antes de eliminar elementos (avisos de advertencia).
+                                </small>
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.ver_mensajes|as_crispy_field }}
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle"></i> Controla si se muestran los mensajes de éxito después de realizar acciones (notificaciones temporales).
+                                </small>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

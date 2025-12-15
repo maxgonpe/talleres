@@ -187,7 +187,7 @@
             <a href="{% url 'cliente_taller_update' cliente.rut %}" 
                class="btn btn-sm btn-warning">✏️ Editar</a>
             <a href="{% url 'cliente_taller_delete' cliente.rut %}" 
-               class="btn btn-sm btn-danger">🗑️ Eliminar</a>
+               class="btn btn-sm btn-danger" onclick="{% if ver_avisos %}return confirm('¿Estás seguro de eliminar este cliente?');{% else %}return true;{% endif %}">🗑️ Eliminar</a>
           </td>
         </tr>
         {% empty %}

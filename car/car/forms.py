@@ -407,7 +407,8 @@ class AdministracionTallerForm(forms.ModelForm):
             'requiere_cambio_password', 'dias_validez_password',
             # Configuraciones
             'tema_por_defecto', 'mostrar_estadisticas_publicas', 
-            'permitir_registro_usuarios', 'notificaciones_email'
+            'permitir_registro_usuarios', 'notificaciones_email',
+            'ver_avisos', 'ver_mensajes'
         ]
         widgets = {
             'direccion': forms.Textarea(attrs={'rows': 3}),

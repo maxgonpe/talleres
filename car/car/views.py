@@ -333,7 +333,9 @@ def ingreso_view(request):
             # desde el frontend, por lo que ya fueron procesados arriba ⬆️
             # ====================================================
 
-            messages.success(request, "Ingreso guardado correctamente.")
+            config = AdministracionTaller.get_configuracion_activa()
+            if config.ver_mensajes:
+                messages.success(request, "Ingreso guardado correctamente.")
             return redirect('panel_principal')
 
         # else → si hay errores, sigue abajo y vuelve a renderizar
@@ -397,8 +399,11 @@ def ingreso_exitoso_view(request):
 
 @login_required
 def eliminar_diagnostico(request, pk):
+    config = AdministracionTaller.get_configuracion_activa()
     diag = get_object_or_404(Diagnostico, pk=pk)
     diag.delete()
+    if config.ver_mensajes:
+        messages.success(request, "Diagnóstico eliminado.")
     return redirect('ingreso')
 
 @login_required
@@ -419,8 +424,10 @@ def componente_create(request):
         form = ComponenteForm(request.POST)
         if form.is_valid():
             try:
+                config = AdministracionTaller.get_configuracion_activa()
                 form.save()
-                messages.success(request, 'Componente creado correctamente.')
+                if config.ver_mensajes:
+                    messages.success(request, 'Componente creado correctamente.')
                 return redirect('componente_list')
             except (ValidationError, IntegrityError) as e:
                 # Muestra el error en el form sin 500
@@ -445,7 +452,9 @@ def componente_update(request, pk):
         form = ComponenteForm(request.POST, instance=componente)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Componente actualizado.')
+            config = AdministracionTaller.get_configuracion_activa()
+            if config.ver_mensajes:
+                messages.success(request, 'Componente actualizado.')
             return redirect('componente_list')
     else:
         form = ComponenteForm(instance=componente)
@@ -458,12 +467,25 @@ def componente_update(request, pk):
 @login_required
 def componente_delete(request, pk):
     componente = get_object_or_404(Componente, pk=pk)
+    # Obtener configuración del taller
+    config = AdministracionTaller.get_configuracion_activa()
+    
+    # Si ver_avisos = False, eliminar directamente sin mostrar confirmación
+    if not config.ver_avisos:
+        componente.delete()
+        if config.ver_mensajes:
+            messages.success(request, 'Componente eliminado.')
+        return redirect('componente_list')
+    
     if request.method == 'POST':
         componente.delete()
-        messages.success(request, 'Componente eliminado.')
+        if config.ver_mensajes:
+            messages.success(request, 'Componente eliminado.')
         return redirect('componente_list')
+    
     return render(request, 'car/componentes_confirm_delete.html', {
-        'componente': componente
+        'componente': componente,
+        'config': config
     })
 
 
@@ -567,8 +589,10 @@ def lista_diagnosticos(request):
         try:
             diagnostico = Diagnostico.objects.get(id=diagnostico_id)
             diagnostico.visible = False
+            config = AdministracionTaller.get_configuracion_activa()
             diagnostico.save()
-            messages.success(request, f"Diagnóstico #{diagnostico.id} ocultado del listado.")
+            if config.ver_mensajes:
+                messages.success(request, f"Diagnóstico #{diagnostico.id} ocultado del listado.")
         except Diagnostico.DoesNotExist:
             messages.error(request, "Diagnóstico no encontrado.")
         return redirect('lista_diagnosticos')
@@ -646,8 +670,10 @@ def editar_diagnostico(request, pk):
         if "actualizar_descripcion" in request.POST:
             diagnostico_form = DiagnosticoForm(request.POST, instance=diagnostico)
             if diagnostico_form.is_valid():
+                config = AdministracionTaller.get_configuracion_activa()
                 diagnostico_form.save()
-                messages.success(request, "Descripción del diagnóstico actualizada.")
+                if config.ver_mensajes:
+                    messages.success(request, "Descripción del diagnóstico actualizada.")
                 return redirect_with_tab("acciones")
         
         # 🔹 Agregar acción al diagnóstico
@@ -674,9 +700,13 @@ def editar_diagnostico(request, pk):
                             accion=accion,
                             precio_mano_obra=float(precio_mano_obra) if precio_mano_obra else 0
                         )
-                        messages.success(request, f"Acción '{accion.nombre}' agregada a '{componente.nombre}'.")
+                        config = AdministracionTaller.get_configuracion_activa()
+                        if config.ver_mensajes:
+                            messages.success(request, f"Acción '{accion.nombre}' agregada a '{componente.nombre}'.")
                     else:
-                        messages.warning(request, "Esta acción ya está agregada para este componente.")
+                        config = AdministracionTaller.get_configuracion_activa()
+                        if config.ver_mensajes:
+                            messages.warning(request, "Esta acción ya está agregada para este componente.")
                 except (Componente.DoesNotExist, Accion.DoesNotExist):
                     messages.error(request, "Componente o acción no válidos.")
             else:
@@ -743,10 +773,16 @@ def editar_diagnostico(request, pk):
                     
                     logger.info(f"📊 Total acciones creadas: {acciones_creadas}")
                     
+                    config = AdministracionTaller.get_configuracion_activa()
                     if acciones_creadas > 0:
-                        messages.success(request, f"{acciones_creadas} acción(es) agregada(s) al diagnóstico.")
+                        if config.ver_mensajes:
+                            config = AdministracionTaller.get_configuracion_activa()
+                            if config.ver_mensajes:
+                                messages.success(request, f"{acciones_creadas} acción(es) agregada(s) al diagnóstico.")
                     else:
-                        messages.info(request, "No se agregaron acciones nuevas (posiblemente ya existían).")
+                        config = AdministracionTaller.get_configuracion_activa()
+                        if config.ver_mensajes:
+                            messages.info(request, "No se agregaron acciones nuevas (posiblemente ya existían).")
                         
                 except json.JSONDecodeError as e:
                     logger.error(f"❌ Error parseando JSON: {e}")
@@ -766,7 +802,15 @@ def editar_diagnostico(request, pk):
                 dca.completado = not dca.completado
                 dca.fecha = timezone.now() if dca.completado else None
                 dca.save()
-                messages.success(request, f"Acción '{dca.accion.nombre}' actualizada.")
+                config = AdministracionTaller.get_configuracion_activa()
+                if config.ver_mensajes:
+                    config = AdministracionTaller.get_configuracion_activa()
+                    if config.ver_mensajes:
+                        config = AdministracionTaller.get_configuracion_activa()
+                        if config.ver_mensajes:
+                            config = AdministracionTaller.get_configuracion_activa()
+                            if config.ver_mensajes:
+                                messages.success(request, f"Acción '{dca.accion.nombre}' actualizada.")
             except DiagnosticoComponenteAccion.DoesNotExist:
                 messages.error(request, "Acción no encontrada.")
             
@@ -795,9 +839,13 @@ def editar_diagnostico(request, pk):
                             precio_unitario=float(precio_unitario) if precio_unitario else 0,
                             subtotal=int(cantidad) * (float(precio_unitario) if precio_unitario else 0)
                         )
-                        messages.success(request, f"Repuesto '{repuesto.nombre}' agregado.")
+                        config = AdministracionTaller.get_configuracion_activa()
+                        if config.ver_mensajes:
+                            messages.success(request, f"Repuesto '{repuesto.nombre}' agregado.")
                     else:
-                        messages.warning(request, "Este repuesto ya está agregado.")
+                        config = AdministracionTaller.get_configuracion_activa()
+                        if config.ver_mensajes:
+                            messages.warning(request, "Este repuesto ya está agregado.")
                 except Repuesto.DoesNotExist:
                     messages.error(request, "Repuesto no válido.")
             else:
@@ -842,9 +890,13 @@ def editar_diagnostico(request, pk):
                             continue
                     
                     if repuestos_creados > 0:
-                        messages.success(request, f"{repuestos_creados} repuesto(s) agregado(s) al diagnóstico.")
+                        config = AdministracionTaller.get_configuracion_activa()
+                        if config.ver_mensajes:
+                            messages.success(request, f"{repuestos_creados} repuesto(s) agregado(s) al diagnóstico.")
                     else:
-                        messages.info(request, "No se agregaron repuestos nuevos (posiblemente ya existían).")
+                        config = AdministracionTaller.get_configuracion_activa()
+                        if config.ver_mensajes:
+                            messages.info(request, "No se agregaron repuestos nuevos (posiblemente ya existían).")
                         
                 except json.JSONDecodeError:
                     messages.error(request, "Error al procesar los repuestos.")
@@ -889,10 +941,13 @@ def editar_diagnostico(request, pk):
                         except (ValueError, Repuesto.DoesNotExist):
                             continue
                     
+                    config = AdministracionTaller.get_configuracion_activa()
                     if insumos_creados > 0:
-                        messages.success(request, f"{insumos_creados} insumo(s) agregado(s) al diagnóstico.")
+                        if config.ver_mensajes:
+                            messages.success(request, f"{insumos_creados} insumo(s) agregado(s) al diagnóstico.")
                     else:
-                        messages.info(request, "No se agregaron insumos nuevos (posiblemente ya existían).")
+                        if config.ver_mensajes:
+                            messages.info(request, "No se agregaron insumos nuevos (posiblemente ya existían).")
                         
                 except json.JSONDecodeError:
                     messages.error(request, "Error al procesar los insumos.")
@@ -903,13 +958,15 @@ def editar_diagnostico(request, pk):
         
         # 🔹 Quitar repuesto del diagnóstico
         elif "quitar_repuesto" in request.POST:
+            config = AdministracionTaller.get_configuracion_activa()
             rep_id = request.POST.get("quitar_repuesto")
             try:
                 from .models import DiagnosticoRepuesto
                 rep = DiagnosticoRepuesto.objects.get(id=rep_id, diagnostico=diagnostico)
                 rep_nombre = rep.repuesto.nombre
                 rep.delete()
-                messages.success(request, f"Repuesto '{rep_nombre}' quitado del diagnóstico.")
+                if config.ver_mensajes:
+                    messages.success(request, f"Repuesto '{rep_nombre}' quitado del diagnóstico.")
             except DiagnosticoRepuesto.DoesNotExist:
                 messages.error(request, "Repuesto no encontrado.")
             
@@ -924,22 +981,26 @@ def editar_diagnostico(request, pk):
                 from .models import DiagnosticoComponenteAccion
                 dca = DiagnosticoComponenteAccion.objects.get(id=dca_id, diagnostico=diagnostico)
                 cantidad_int = int(cantidad) if cantidad and int(cantidad) > 0 else 1
+                config = AdministracionTaller.get_configuracion_activa()
                 dca.cantidad = cantidad_int
                 dca.save()
-                messages.success(request, f"Cantidad de '{dca.accion.nombre}' actualizada a {cantidad_int}.")
+                if config.ver_mensajes:
+                    messages.success(request, f"Cantidad de '{dca.accion.nombre}' actualizada a {cantidad_int}.")
             except (DiagnosticoComponenteAccion.DoesNotExist, ValueError):
                 messages.error(request, "Error al actualizar la cantidad.")
             
             return redirect_with_tab("acciones")
         
         elif "quitar_accion" in request.POST:
+            config = AdministracionTaller.get_configuracion_activa()
             accion_id = request.POST.get("quitar_accion")
             try:
                 from .models import DiagnosticoComponenteAccion
                 accion = DiagnosticoComponenteAccion.objects.get(id=accion_id, diagnostico=diagnostico)
                 accion_nombre = f"{accion.componente.nombre} — {accion.accion.nombre}"
                 accion.delete()
-                messages.success(request, f"Acción '{accion_nombre}' quitada del diagnóstico.")
+                if config.ver_mensajes:
+                    messages.success(request, f"Acción '{accion_nombre}' quitada del diagnóstico.")
             except DiagnosticoComponenteAccion.DoesNotExist:
                 messages.error(request, "Acción no encontrada.")
             
@@ -960,13 +1021,21 @@ def editar_diagnostico(request, pk):
 @login_required
 def eliminar_diagnostico(request, pk):
     diagnostico = get_object_or_404(Diagnostico, pk=pk)
-    if request.method == 'POST':
-
-        diagnostico.delete()
-        
-        return redirect('lista_diagnosticos')
     # Obtener configuración del taller
     config = AdministracionTaller.get_configuracion_activa()
+    
+    # Si ver_avisos = False, eliminar directamente sin mostrar confirmación
+    if not config.ver_avisos:
+        diagnostico.delete()
+        if config.ver_mensajes:
+            messages.success(request, "Diagnóstico eliminado.")
+        return redirect('lista_diagnosticos')
+    
+    if request.method == 'POST':
+        diagnostico.delete()
+        if config.ver_mensajes:
+            messages.success(request, "Diagnóstico eliminado.")
+        return redirect('lista_diagnosticos')
     
     return render(request, 'car/diagnostico_eliminar.html', {'diagnostico': diagnostico, 'config': config})
 
@@ -1063,8 +1132,10 @@ def accion_create(request):
     if request.method == "POST":
         form = AccionForm(request.POST)
         if form.is_valid():
+            config = AdministracionTaller.get_configuracion_activa()
             form.save()
-            messages.success(request, "Acción creada correctamente.")
+            if config.ver_mensajes:
+                messages.success(request, "Acción creada correctamente.")
             return redirect("accion_list")
     else:
         form = AccionForm()
@@ -1080,7 +1151,9 @@ def accion_update(request, pk):
         form = AccionForm(request.POST, instance=accion)
         if form.is_valid():
             form.save()
-            messages.success(request, "Acción actualizada.")
+            config = AdministracionTaller.get_configuracion_activa()
+            if config.ver_mensajes:
+                messages.success(request, "Acción actualizada.")
             return redirect("accion_list")
     else:
         form = AccionForm(instance=accion)
@@ -1092,12 +1165,21 @@ def accion_update(request, pk):
 @login_required
 def accion_delete(request, pk):
     accion = get_object_or_404(Accion, pk=pk)
-    if request.method == "POST":
-        accion.delete()
-        messages.success(request, "Acción eliminada.")
-        return redirect("accion_list")
     # Obtener configuración del taller
     config = AdministracionTaller.get_configuracion_activa()
+    
+    # Si ver_avisos = False, eliminar directamente sin mostrar confirmación
+    if not config.ver_avisos:
+        accion.delete()
+        if config.ver_mensajes:
+            messages.success(request, "Acción eliminada.")
+        return redirect("accion_list")
+    
+    if request.method == "POST":
+        accion.delete()
+        if config.ver_mensajes:
+            messages.success(request, "Acción eliminada.")
+        return redirect("accion_list")
     
     return render(request, "car/accion_confirm_delete.html", {"accion": accion, "config": config})
 
@@ -1120,9 +1202,11 @@ def comp_accion_list(request):
 def comp_accion_create(request):
     if request.method == "POST":
         form = ComponenteAccionForm(request.POST)
+        config = AdministracionTaller.get_configuracion_activa()
         if form.is_valid():
             form.save()
-            messages.success(request, "Precio de mano de obra registrado.")
+            if config.ver_mensajes:
+                messages.success(request, "Precio de mano de obra registrado.")
             return redirect("comp_accion_list")
     else:
         form = ComponenteAccionForm()
@@ -1138,7 +1222,9 @@ def comp_accion_update(request, pk):
         form = ComponenteAccionForm(request.POST, instance=obj)
         if form.is_valid():
             form.save()
-            messages.success(request, "Precio de mano de obra actualizado.")
+            config = AdministracionTaller.get_configuracion_activa()
+            if config.ver_mensajes:
+                messages.success(request, "Precio de mano de obra actualizado.")
             return redirect("comp_accion_list")
     else:
         form = ComponenteAccionForm(instance=obj)
@@ -1150,12 +1236,21 @@ def comp_accion_update(request, pk):
 @login_required
 def comp_accion_delete(request, pk):
     obj = get_object_or_404(ComponenteAccion, pk=pk)
-    if request.method == "POST":
-        obj.delete()
-        messages.success(request, "Registro eliminado.")
-        return redirect("comp_accion_list")
     # Obtener configuración del taller
     config = AdministracionTaller.get_configuracion_activa()
+    
+    # Si ver_avisos = False, eliminar directamente sin mostrar confirmación
+    if not config.ver_avisos:
+        obj.delete()
+        if config.ver_mensajes:
+            messages.success(request, "Registro eliminado.")
+        return redirect("comp_accion_list")
+    
+    if request.method == "POST":
+        obj.delete()
+        if config.ver_mensajes:
+            messages.success(request, "Registro eliminado.")
+        return redirect("comp_accion_list")
     
     return render(request, "car/comp_accion_confirm_delete.html", {"obj": obj, "config": config})
 
@@ -1864,7 +1959,27 @@ class VehiculoDeleteView(DeleteView):
     model = Vehiculo
     template_name = "car/vehiculo_confirm_delete.html"
     success_url = reverse_lazy("vehiculo_list")
-    
+
+    def get(self, request, *args, **kwargs):
+        """Si ver_avisos = False, eliminar directamente sin mostrar confirmación"""
+        config = AdministracionTaller.get_configuracion_activa()
+        if not config.ver_avisos:
+            self.object = self.get_object()
+            self.object.delete()
+            if config.ver_mensajes:
+                messages.success(request, "Vehículo eliminado exitosamente.")
+            return redirect(self.success_url)
+        return super().get(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        """Sobrescribir delete para controlar mensajes"""
+        config = AdministracionTaller.get_configuracion_activa()
+        self.object = self.get_object()
+        self.object.delete()
+        if config.ver_mensajes:
+            messages.success(request, "Vehículo eliminado exitosamente.")
+        return redirect(self.success_url)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # Obtener configuración del taller
@@ -1915,7 +2030,27 @@ class MecanicoDeleteView(DeleteView):
     model = Mecanico
     template_name = "car/mecanico_confirm_delete.html"
     success_url = reverse_lazy("mecanico_list")
-    
+
+    def get(self, request, *args, **kwargs):
+        """Si ver_avisos = False, eliminar directamente sin mostrar confirmación"""
+        config = AdministracionTaller.get_configuracion_activa()
+        if not config.ver_avisos:
+            self.object = self.get_object()
+            self.object.delete()
+            if config.ver_mensajes:
+                messages.success(request, "Mecánico eliminado exitosamente.")
+            return redirect(self.success_url)
+        return super().get(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        """Sobrescribir delete para controlar mensajes"""
+        config = AdministracionTaller.get_configuracion_activa()
+        self.object = self.get_object()
+        self.object.delete()
+        if config.ver_mensajes:
+            messages.success(request, "Mecánico eliminado exitosamente.")
+        return redirect(self.success_url)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # Obtener configuración del taller
@@ -1928,7 +2063,27 @@ class TrabajoDeleteView(DeleteView):
     model = Trabajo
     template_name = "car/trabajo_confirm_delete.html"
     success_url = reverse_lazy("lista_trabajos")
-    
+
+    def get(self, request, *args, **kwargs):
+        """Si ver_avisos = False, eliminar directamente sin mostrar confirmación"""
+        config = AdministracionTaller.get_configuracion_activa()
+        if not config.ver_avisos:
+            self.object = self.get_object()
+            self.object.delete()
+            if config.ver_mensajes:
+                messages.success(request, "Trabajo eliminado exitosamente.")
+            return redirect(self.success_url)
+        return super().get(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        """Sobrescribir delete para controlar mensajes"""
+        config = AdministracionTaller.get_configuracion_activa()
+        self.object = self.get_object()
+        self.object.delete()
+        if config.ver_mensajes:
+            messages.success(request, "Trabajo eliminado exitosamente.")
+        return redirect(self.success_url)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # Obtener configuración del taller
@@ -1948,10 +2103,13 @@ def aprobar_diagnostico(request, pk):
         
         # Registrar evento de ingreso
         registrar_ingreso(trabajo, request=request)
-        
-        messages.success(request, f"✅ Diagnóstico aprobado y trabajo #{trabajo.id} creado.")
+        config = AdministracionTaller.get_configuracion_activa()
+        if config.ver_mensajes:
+            messages.success(request, f"✅ Diagnóstico aprobado y trabajo #{trabajo.id} creado.")
     else:
-        messages.info(request, "ℹ️ Este diagnóstico ya estaba aprobado.")
+        config = AdministracionTaller.get_configuracion_activa()
+        if config.ver_mensajes:
+            messages.info(request, "ℹ️ Este diagnóstico ya estaba aprobado.")
 
     return redirect("lista_diagnosticos")
 
@@ -2079,7 +2237,9 @@ def trabajo_detalle(request, pk):
         if "guardar_observaciones" in request.POST:
             trabajo.observaciones = request.POST.get("observaciones", "")
             trabajo.save()
-            messages.success(request, "Observaciones guardadas.")
+            config = AdministracionTaller.get_configuracion_activa()
+            if config.ver_mensajes:
+                messages.success(request, "Observaciones guardadas.")
             # Mantener la pestaña activa después de guardar
             return redirect_with_tab("info")
 
@@ -2088,15 +2248,19 @@ def trabajo_detalle(request, pk):
             kilometraje = request.POST.get("lectura_kilometraje_actual", "")
             if kilometraje and kilometraje.strip():
                 try:
+                    config = AdministracionTaller.get_configuracion_activa()
                     trabajo.lectura_kilometraje_actual = int(kilometraje)
                     trabajo.save()
-                    messages.success(request, f"Kilometraje guardado: {kilometraje} km")
+                    if config.ver_mensajes:
+                        messages.success(request, f"Kilometraje guardado: {kilometraje} km")
                 except ValueError:
                     messages.error(request, "El kilometraje debe ser un número válido.")
             else:
                 trabajo.lectura_kilometraje_actual = None
                 trabajo.save()
-                messages.success(request, "Kilometraje eliminado.")
+                config = AdministracionTaller.get_configuracion_activa()
+                if config.ver_mensajes:
+                    messages.success(request, "Kilometraje eliminado.")
             return redirect("trabajo_detalle", pk=trabajo.pk)
 
         # 🔹 Asignar mecánicos
@@ -2129,7 +2293,9 @@ def trabajo_detalle(request, pk):
                 for mecanico in mecanicos_removidos:
                     registrar_mecanico_removido(trabajo, mecanico, request=request)
                 
-                messages.success(request, "Mecánicos asignados y trabajo iniciado.")
+                config = AdministracionTaller.get_configuracion_activa()
+                if config.ver_mensajes:
+                    messages.success(request, "Mecánicos asignados y trabajo iniciado.")
                 return redirect("trabajo_detalle", pk=trabajo.pk)
 
         # 🔹 Agregar acción (método tradicional)
@@ -2151,7 +2317,9 @@ def trabajo_detalle(request, pk):
                         precio_mano_obra=precio_mano_obra or 0,
                         cantidad=int(cantidad) if cantidad else 1
                     )
-                    messages.success(request, "Acción agregada al trabajo.")
+                    config = AdministracionTaller.get_configuracion_activa()
+                    if config.ver_mensajes:
+                        messages.success(request, "Acción agregada al trabajo.")
                 except (Componente.DoesNotExist, Accion.DoesNotExist):
                     messages.error(request, "Error al agregar la acción.")
             return redirect_with_tab("acciones")
@@ -2219,10 +2387,16 @@ def trabajo_detalle(request, pk):
                     
                     if acciones_creadas > 0:
                         if not is_ajax:
-                            messages.success(request, f"{acciones_creadas} acción(es) agregada(s) al trabajo.")
+                            config = AdministracionTaller.get_configuracion_activa()
+                            if config.ver_mensajes:
+                                messages.success(request, f"{acciones_creadas} acción(es) agregada(s) al trabajo.")
                     else:
                         if not is_ajax:
-                            messages.warning(request, "No se agregaron acciones. Verifica la selección.")
+                            config = AdministracionTaller.get_configuracion_activa()
+                            if config.ver_mensajes:
+                                config = AdministracionTaller.get_configuracion_activa()
+                                if config.ver_mensajes:
+                                    messages.warning(request, "No se agregaron acciones. Verifica la selección.")
                         
                 except json.JSONDecodeError as e:
                     print(f"DEBUG: Error JSON: {str(e)}")
@@ -2269,9 +2443,11 @@ def trabajo_detalle(request, pk):
             accion_id = request.POST.get("accion_id")
             try:
                 accion = TrabajoAccion.objects.get(id=accion_id, trabajo=trabajo)
+                config = AdministracionTaller.get_configuracion_activa()
                 accion.completado = not accion.completado
                 accion.save()
-                messages.success(request, f"Acción marcada como {'completada' if accion.completado else 'pendiente'}.")
+                if config.ver_mensajes:
+                    messages.success(request, f"Acción marcada como {'completada' if accion.completado else 'pendiente'}.")
             except TrabajoAccion.DoesNotExist:
                 messages.error(request, "Acción no encontrada.")
             return redirect_with_tab("acciones")
@@ -2285,7 +2461,9 @@ def trabajo_detalle(request, pk):
                 cantidad_int = int(cantidad) if cantidad and int(cantidad) > 0 else 1
                 accion.cantidad = cantidad_int
                 accion.save()
-                messages.success(request, f"Cantidad actualizada a {cantidad_int}.")
+                config = AdministracionTaller.get_configuracion_activa()
+                if config.ver_mensajes:
+                    messages.success(request, f"Cantidad actualizada a {cantidad_int}.")
             except (TrabajoAccion.DoesNotExist, ValueError):
                 messages.error(request, "Error al actualizar la cantidad.")
             return redirect_with_tab("acciones")
@@ -2299,20 +2477,24 @@ def trabajo_detalle(request, pk):
                 precio_decimal = Decimal(precio_str) if precio_str else Decimal('0')
                 if precio_decimal < 0:
                     precio_decimal = Decimal('0')
+                config = AdministracionTaller.get_configuracion_activa()
                 accion.precio_mano_obra = precio_decimal
                 accion.save()
-                messages.success(request, f"Precio actualizado a ${precio_decimal:,.0f}.")
+                if config.ver_mensajes:
+                    messages.success(request, f"Precio actualizado a ${precio_decimal:,.0f}.")
             except (TrabajoAccion.DoesNotExist, InvalidOperation, ValueError) as e:
                 messages.error(request, f"Error al actualizar el precio: {str(e)}")
             return redirect_with_tab("acciones")
 
         # 🔹 Eliminar acción
         elif "eliminar_accion" in request.POST:
+            config = AdministracionTaller.get_configuracion_activa()
             accion_id = request.POST.get("accion_id")
             try:
                 accion = TrabajoAccion.objects.get(id=accion_id, trabajo=trabajo)
                 accion.delete()
-                messages.success(request, "Acción eliminada.")
+                if config.ver_mensajes:
+                    messages.success(request, "Acción eliminada.")
             except TrabajoAccion.DoesNotExist:
                 messages.error(request, "Acción no encontrada.")
             return redirect_with_tab("acciones")
@@ -2337,7 +2519,9 @@ def trabajo_detalle(request, pk):
                         precio_unitario=precio_final,
                         subtotal=subtotal
                     )
-                    messages.success(request, "Repuesto agregado al trabajo.")
+                    config = AdministracionTaller.get_configuracion_activa()
+                    if config.ver_mensajes:
+                        messages.success(request, "Repuesto agregado al trabajo.")
                 except Repuesto.DoesNotExist:
                     messages.error(request, "Repuesto no encontrado.")
             return redirect_with_tab("repuestos")
@@ -2367,8 +2551,9 @@ def trabajo_detalle(request, pk):
                     
                     # Incrementar contador de uso
                     repuesto_externo.incrementar_uso()
-                    
-                    messages.success(request, f"🌐 Repuesto externo agregado: {repuesto_externo.nombre}")
+                    config = AdministracionTaller.get_configuracion_activa()
+                    if config.ver_mensajes:
+                        messages.success(request, f"🌐 Repuesto externo agregado: {repuesto_externo.nombre}")
                 except RepuestoExterno.DoesNotExist:
                     messages.error(request, "Repuesto externo no encontrado.")
             return redirect_with_tab("repuestos")
@@ -2437,10 +2622,12 @@ def trabajo_detalle(request, pk):
                                 print(f"➖ DESCUENTO APLICADO en RepuestoEnStock: {stock_anterior} - {cantidad} = {stock_item.stock}")
                                 print(f"➖ DESCUENTO APLICADO en Repuesto: {repuesto_stock_anterior} - {cantidad} = {repuesto_obj.stock}")
                                 print(f"✅ Stock actualizado en AMBAS tablas (RepuestoEnStock Y Repuesto)")
-                                messages.success(
-                                    request, 
-                                    f"✅ Repuesto completado. Stock descontado: {stock_item.repuesto.nombre} (Stock anterior: {repuesto_stock_anterior}, Stock actual: {repuesto_obj.stock})"
-                                )
+                                config = AdministracionTaller.get_configuracion_activa()
+                                if config.ver_mensajes:
+                                    messages.success(
+                                        request, 
+                                        f"✅ Repuesto completado. Stock descontado: {stock_item.repuesto.nombre} (Stock anterior: {repuesto_stock_anterior}, Stock actual: {repuesto_obj.stock})"
+                                    )
                             elif not repuesto_trabajo.completado and estado_anterior:
                                 # Se desmarcó: DEVOLVER al stock
                                 stock_item.stock = (stock_item.stock or 0) + cantidad
@@ -2454,23 +2641,29 @@ def trabajo_detalle(request, pk):
                                 print(f"➕ DEVOLUCIÓN APLICADA en RepuestoEnStock: {stock_anterior} + {cantidad} = {stock_item.stock}")
                                 print(f"➕ DEVOLUCIÓN APLICADA en Repuesto: {repuesto_stock_anterior} + {cantidad} = {repuesto_obj.stock}")
                                 print(f"✅ Stock restaurado en AMBAS tablas (RepuestoEnStock Y Repuesto)")
-                                messages.success(
-                                    request, 
-                                    f"↩️ Repuesto desmarcado. Stock restaurado: {stock_item.repuesto.nombre} (Stock anterior: {repuesto_stock_anterior}, Stock actual: {repuesto_obj.stock})"
-                                )
+                                config = AdministracionTaller.get_configuracion_activa()
+                                if config.ver_mensajes:
+                                    messages.success(
+                                        request, 
+                                        f"↩️ Repuesto desmarcado. Stock restaurado: {stock_item.repuesto.nombre} (Stock anterior: {repuesto_stock_anterior}, Stock actual: {repuesto_obj.stock})"
+                                    )
                             else:
                                 print(f"⚠️ No se requiere cambio de stock (estado no cambió de pendiente→completado o viceversa)")
-                                messages.info(
-                                    request, 
-                                    f"Estado del repuesto actualizado."
-                                )
+                                config = AdministracionTaller.get_configuracion_activa()
+                                if config.ver_mensajes:
+                                    messages.info(
+                                        request, 
+                                        f"Estado del repuesto actualizado."
+                                    )
                         else:
                             # No hay stock registrado, solo cambiar estado sin actualizar inventario
                             print(f"⚠️ NO SE ENCONTRÓ STOCK para repuesto ID: {repuesto_trabajo.repuesto.id}")
-                            messages.warning(
-                                request, 
-                                f"⚠️ Estado cambiado a {'completado' if repuesto_trabajo.completado else 'pendiente'}. No se encontró stock del repuesto '{repuesto_trabajo.repuesto.nombre}' en RepuestoEnStock."
-                            )
+                            config = AdministracionTaller.get_configuracion_activa()
+                            if config.ver_mensajes:
+                                messages.warning(
+                                    request, 
+                                    f"⚠️ Estado cambiado a {'completado' if repuesto_trabajo.completado else 'pendiente'}. No se encontró stock del repuesto '{repuesto_trabajo.repuesto.nombre}' en RepuestoEnStock."
+                                )
                     except Exception as e:
                         print(f"❌ ERROR actualizando stock: {str(e)}")
                         import traceback
@@ -2479,10 +2672,12 @@ def trabajo_detalle(request, pk):
                 else:
                     # Es un repuesto externo, solo cambiar estado
                     print(f"🌐 Repuesto externo detectado: {repuesto_trabajo.repuesto_externo}")
-                    messages.success(
-                        request, 
-                        f"🌐 Repuesto externo marcado como {'completado' if repuesto_trabajo.completado else 'pendiente'}: {repuesto_trabajo.repuesto_externo.nombre if repuesto_trabajo.repuesto_externo else 'Sin nombre'}"
-                    )
+                    config = AdministracionTaller.get_configuracion_activa()
+                    if config.ver_mensajes:
+                        messages.success(
+                            request,
+                            f"🌐 Repuesto externo marcado como {'completado' if repuesto_trabajo.completado else 'pendiente'}: {repuesto_trabajo.repuesto_externo.nombre if repuesto_trabajo.repuesto_externo else 'Sin nombre'}"
+                        )
                 
                 print(f"{'='*80}\n")
                     
@@ -2498,6 +2693,7 @@ def trabajo_detalle(request, pk):
 
         # 🔹 Eliminar repuesto (CON DEVOLUCIÓN DE STOCK SI ESTABA COMPLETADO)
         elif "eliminar_repuesto" in request.POST:
+            config = AdministracionTaller.get_configuracion_activa()
             repuesto_id = request.POST.get("repuesto_id")
             print(f"\n{'='*80}")
             print(f"🗑️ ELIMINAR REPUESTO - ID: {repuesto_id}")
@@ -2539,13 +2735,15 @@ def trabajo_detalle(request, pk):
                             print(f"➕ Stock devuelto en Repuesto: {stock_anterior_repuesto} + {cantidad} = {repuesto_obj.stock}")
                             print(f"✅ Stock restaurado en AMBAS tablas")
                             
-                            messages.success(
-                                request, 
-                                f"🗑️ Repuesto eliminado. Stock devuelto: {stock_item.repuesto.nombre} (Stock: {repuesto_obj.stock})"
-                            )
+                            if config.ver_mensajes:
+                                messages.success(
+                                    request, 
+                                    f"🗑️ Repuesto eliminado. Stock devuelto: {stock_item.repuesto.nombre} (Stock: {repuesto_obj.stock})"
+                                )
                         else:
                             print(f"⚠️ No se encontró stock para devolver")
-                            messages.success(request, "🗑️ Repuesto eliminado (sin stock para devolver).")
+                            if config.ver_mensajes:
+                                messages.success(request, "🗑️ Repuesto eliminado (sin stock para devolver).")
                     except Exception as e:
                         print(f"❌ Error devolviendo stock: {str(e)}")
                         import traceback
@@ -2554,7 +2752,8 @@ def trabajo_detalle(request, pk):
                         # Aún así eliminar el repuesto
                 else:
                     print(f"ℹ️ Repuesto NO estaba completado o es externo, no hay stock que devolver")
-                    messages.success(request, "🗑️ Repuesto eliminado.")
+                    if config.ver_mensajes:
+                        messages.success(request, "🗑️ Repuesto eliminado.")
                 
                 repuesto_trabajo.delete()
                 print(f"✅ Repuesto eliminado de la base de datos")
@@ -2609,10 +2808,13 @@ def trabajo_detalle(request, pk):
                             print(f"DEBUG: Error en repuesto individual: {str(e)}")
                             continue
                     
+                    config = AdministracionTaller.get_configuracion_activa()
                     if repuestos_creados > 0:
-                        messages.success(request, f"{repuestos_creados} repuesto(s) agregado(s) al trabajo.")
+                        if config.ver_mensajes:
+                            messages.success(request, f"{repuestos_creados} repuesto(s) agregado(s) al trabajo.")
                     else:
-                        messages.info(request, "No se agregaron repuestos nuevos (posiblemente ya existían).")
+                        if config.ver_mensajes:
+                            messages.info(request, "No se agregaron repuestos nuevos (posiblemente ya existían).")
                         
                 except json.JSONDecodeError as e:
                     print(f"DEBUG: Error JSON: {str(e)}")
@@ -2671,9 +2873,13 @@ def trabajo_detalle(request, pk):
                             continue
                     
                     if insumos_creados > 0:
-                        messages.success(request, f"{insumos_creados} insumo(s) agregado(s) al trabajo.")
+                        config = AdministracionTaller.get_configuracion_activa()
+                        if config.ver_mensajes:
+                            messages.success(request, f"{insumos_creados} insumo(s) agregado(s) al trabajo.")
                     else:
-                        messages.info(request, "No se agregaron insumos nuevos (posiblemente ya existían).")
+                        config = AdministracionTaller.get_configuracion_activa()
+                        if config.ver_mensajes:
+                            messages.info(request, "No se agregaron insumos nuevos (posiblemente ya existían).")
                         
                 except json.JSONDecodeError as e:
                     print(f"DEBUG: Error JSON: {str(e)}")
@@ -2699,16 +2905,20 @@ def trabajo_detalle(request, pk):
                 # Registrar evento de auditoría
                 registrar_foto_agregada(trabajo, request=request, descripcion=foto.descripcion)
                 
-                messages.success(request, "Foto subida con éxito.")
+                config = AdministracionTaller.get_configuracion_activa()
+                if config.ver_mensajes:
+                    messages.success(request, "Foto subida con éxito.")
                 return redirect_with_tab("fotos")
 
         # 🔹 Eliminar foto
         elif "eliminar_foto" in request.POST:
+            config = AdministracionTaller.get_configuracion_activa()
             foto_id = request.POST.get("eliminar_foto")
             try:
                 foto = TrabajoFoto.objects.get(id=foto_id, trabajo=trabajo)
                 foto.delete()
-                messages.success(request, "Foto eliminada.")
+                if config.ver_mensajes:
+                    messages.success(request, "Foto eliminada.")
             except TrabajoFoto.DoesNotExist:
                 messages.error(request, "Foto no encontrada.")
             return redirect_with_tab("fotos")
@@ -2737,20 +2947,28 @@ def trabajo_detalle(request, pk):
                     try:
                         from .views_bonos import generar_bonos_trabajo_entregado
                         bonos_generados = generar_bonos_trabajo_entregado(trabajo)
+                        config = AdministracionTaller.get_configuracion_activa()
                         if bonos_generados:
                             total_bonos = sum(b.monto for b in bonos_generados)
-                            messages.success(
-                                request, 
-                                f"Trabajo actualizado a {trabajo.get_estado_display()}. "
-                                f"Bonos generados: ${total_bonos} para {len(bonos_generados)} mecánico(s)."
-                            )
+                            if config.ver_mensajes:
+                                messages.success(
+                                    request, 
+                                    f"Trabajo actualizado a {trabajo.get_estado_display()}. "
+                                    f"Bonos generados: ${total_bonos} para {len(bonos_generados)} mecánico(s)."
+                                )
                         else:
-                            messages.success(request, f"Trabajo actualizado a {trabajo.get_estado_display()}.")
+                            config = AdministracionTaller.get_configuracion_activa()
+                            if config.ver_mensajes:
+                                messages.success(request, f"Trabajo actualizado a {trabajo.get_estado_display()}.")
                     except Exception as e:
                         # Si hay error generando bonos, no fallar el cambio de estado
-                        messages.warning(request, f"Trabajo actualizado, pero hubo un error al generar bonos: {str(e)}")
+                        config = AdministracionTaller.get_configuracion_activa()
+                        if config.ver_mensajes:
+                            messages.warning(request, f"Trabajo actualizado, pero hubo un error al generar bonos: {str(e)}")
                 else:
-                    messages.success(request, f"Trabajo actualizado a {trabajo.get_estado_display()}.")
+                    config = AdministracionTaller.get_configuracion_activa()
+                    if config.ver_mensajes:
+                        messages.success(request, f"Trabajo actualizado a {trabajo.get_estado_display()}.")
             return redirect_with_tab("estado")
 
         # 🔹 Toggle acción completada / pendiente (método anterior)
@@ -2768,7 +2986,9 @@ def trabajo_detalle(request, pk):
             else:
                 registrar_accion_pendiente(trabajo, accion, request=request)
             
-            messages.success(request, f"Acción '{accion.accion.nombre}' actualizada.")
+            config = AdministracionTaller.get_configuracion_activa()
+            if config.ver_mensajes:
+                messages.success(request, f"Acción '{accion.accion.nombre}' actualizada.")
             return redirect("trabajo_detalle", pk=trabajo.pk)
 
         # 🔹 Toggle repuesto instalado / pendiente
@@ -2786,8 +3006,10 @@ def trabajo_detalle(request, pk):
             else:
                 registrar_repuesto_pendiente(trabajo, rep, request=request)
             
+            config = AdministracionTaller.get_configuracion_activa()
             repuesto_nombre = rep.repuesto.nombre if rep.repuesto else (rep.repuesto_externo.nombre if rep.repuesto_externo else "Repuesto")
-            messages.success(request, f"Repuesto '{repuesto_nombre}' actualizado.")
+            if config.ver_mensajes:
+                messages.success(request, f"Repuesto '{repuesto_nombre}' actualizado.")
             return redirect("trabajo_detalle", pk=trabajo.pk)
 
         # ========================
@@ -2816,7 +3038,9 @@ def trabajo_detalle(request, pk):
                     # Registrar evento de auditoría
                     registrar_abono(trabajo, abono, request=request)
                     
-                    messages.success(request, f"✅ Abono de ${monto_decimal:,.0f} registrado exitosamente.")
+                    config = AdministracionTaller.get_configuracion_activa()
+                    if config.ver_mensajes:
+                        messages.success(request, f"✅ Abono de ${monto_decimal:,.0f} registrado exitosamente.")
             except (ValueError, TypeError):
                 messages.error(request, "❌ El monto ingresado no es válido.")
             except Exception as e:
@@ -2826,13 +3050,15 @@ def trabajo_detalle(request, pk):
         
         elif "eliminar_abono" in request.POST:
             from .models import TrabajoAbono
+            config = AdministracionTaller.get_configuracion_activa()
             
             abono_id = request.POST.get("abono_id")
             try:
                 abono = TrabajoAbono.objects.get(id=abono_id, trabajo=trabajo)
                 monto = abono.monto
                 abono.delete()
-                messages.success(request, f"✅ Abono de ${monto:,.0f} eliminado exitosamente.")
+                if config.ver_mensajes:
+                    messages.success(request, f"✅ Abono de ${monto:,.0f} eliminado exitosamente.")
             except TrabajoAbono.DoesNotExist:
                 messages.error(request, "❌ Abono no encontrado.")
             except Exception as e:
@@ -2866,8 +3092,10 @@ def trabajo_detalle(request, pk):
                             usuario=request.user
                         )
                         
+                        config = AdministracionTaller.get_configuracion_activa()
                         tipo = "descuento" if descuento else "concepto adicional"
-                        messages.success(request, f"✅ {tipo.capitalize()} de ${monto_decimal:,.0f} registrado exitosamente.")
+                        if config.ver_mensajes:
+                            messages.success(request, f"✅ {tipo.capitalize()} de ${monto_decimal:,.0f} registrado exitosamente.")
             except (ValueError, TypeError):
                 messages.error(request, "❌ El monto ingresado no es válido.")
             except Exception as e:
@@ -2877,13 +3105,15 @@ def trabajo_detalle(request, pk):
         
         elif "eliminar_adicional" in request.POST:
             from .models import TrabajoAdicional
+            config = AdministracionTaller.get_configuracion_activa()
             
             adicional_id = request.POST.get("adicional_id")
             try:
                 adicional = TrabajoAdicional.objects.get(id=adicional_id, trabajo=trabajo)
                 monto = adicional.monto
                 adicional.delete()
-                messages.success(request, f"✅ Concepto adicional de ${monto:,.0f} eliminado exitosamente.")
+                if config.ver_mensajes:
+                    messages.success(request, f"✅ Concepto adicional de ${monto:,.0f} eliminado exitosamente.")
             except TrabajoAdicional.DoesNotExist:
                 messages.error(request, "❌ Concepto adicional no encontrado.")
             except Exception as e:
@@ -3148,7 +3378,9 @@ def panel_principal(request):
             trabajo = Trabajo.objects.get(id=trabajo_id)
             trabajo.visible = False
             trabajo.save()
-            messages.success(request, f"Trabajo #{trabajo.id} ocultado del listado.")
+            config = AdministracionTaller.get_configuracion_activa()
+            if config.ver_mensajes:
+                messages.success(request, f"Trabajo #{trabajo.id} ocultado del listado.")
         except Trabajo.DoesNotExist:
             messages.error(request, "Trabajo no encontrado.")
         return redirect('panel_principal')
@@ -3307,7 +3539,9 @@ def venta_crear(request):
                 venta.pagado = True
                 venta.save(update_fields=["total", "pagado"])
 
-            messages.success(request, f"Venta #{venta.id} creada (Total: {total})")
+            config = AdministracionTaller.get_configuracion_activa()
+            if config.ver_mensajes:
+                messages.success(request, f"Venta #{venta.id} creada (Total: {total})")
             return redirect("venta_detalle", pk=venta.pk)
 
     else:
@@ -3560,7 +3794,27 @@ class RepuestoDeleteView(DeleteView):
     model = Repuesto
     template_name = "repuestos/repuesto_confirm_delete.html"
     success_url = reverse_lazy("repuesto_list")
-    
+
+    def get(self, request, *args, **kwargs):
+        """Si ver_avisos = False, eliminar directamente sin mostrar confirmación"""
+        config = AdministracionTaller.get_configuracion_activa()
+        if not config.ver_avisos:
+            self.object = self.get_object()
+            self.object.delete()
+            if config.ver_mensajes:
+                messages.success(request, "Repuesto eliminado exitosamente.")
+            return redirect(self.success_url)
+        return super().get(request, *args, **kwargs)
+
+    def delete(self, request, *args, **kwargs):
+        """Sobrescribir delete para controlar mensajes"""
+        config = AdministracionTaller.get_configuracion_activa()
+        self.object = self.get_object()
+        self.object.delete()
+        if config.ver_mensajes:
+            messages.success(request, "Repuesto eliminado exitosamente.")
+        return redirect(self.success_url)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # Obtener configuración del taller
@@ -3709,7 +3963,8 @@ def administracion_taller(request):
             config = form.save(commit=False)
             config.creado_por = request.user
             config.save()
-            messages.success(request, "Configuración del taller actualizada correctamente.")
+            if config.ver_mensajes:
+                messages.success(request, "Configuración del taller actualizada correctamente.")
             return redirect('administracion_taller')
     else:
         form = AdministracionTallerForm(instance=config)
@@ -3768,7 +4023,9 @@ class ClienteTallerCreateView(CreateView):
     def form_valid(self, form):
         # Asegurar que el cliente esté activo por defecto
         form.instance.activo = True
-        messages.success(self.request, f"Cliente {form.instance.nombre} creado correctamente.")
+        config = AdministracionTaller.get_configuracion_activa()
+        if config.ver_mensajes:
+            messages.success(self.request, f"Cliente {form.instance.nombre} creado correctamente.")
         return super().form_valid(form)
 
 
@@ -3787,7 +4044,10 @@ class ClienteTallerUpdateView(UpdateView):
         return context
 
     def form_valid(self, form):
-        messages.success(self.request, f"Cliente {form.instance.nombre} actualizado correctamente.")
+        from .models import AdministracionTaller
+        config = AdministracionTaller.get_configuracion_activa()
+        if config.ver_mensajes:
+            messages.success(self.request, f"Cliente {form.instance.nombre} actualizado correctamente.")
         return super().form_valid(form)
 
 
@@ -3797,6 +4057,18 @@ class ClienteTallerDeleteView(DeleteView):
     template_name = "car/cliente_taller_confirm_delete.html"
     success_url = reverse_lazy("cliente_taller_list")
 
+    def get(self, request, *args, **kwargs):
+        """Si ver_avisos = False, eliminar directamente sin mostrar confirmación"""
+        config = AdministracionTaller.get_configuracion_activa()
+        if not config.ver_avisos:
+            cliente = self.get_object()
+            cliente.activo = False
+            cliente.save()
+            if config.ver_mensajes:
+                messages.success(request, f"Cliente {cliente.nombre} desactivado correctamente.")
+            return redirect(self.success_url)
+        return super().get(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # Obtener configuración del taller
@@ -3805,10 +4077,12 @@ class ClienteTallerDeleteView(DeleteView):
         return context
 
     def delete(self, request, *args, **kwargs):
+        config = AdministracionTaller.get_configuracion_activa()
         cliente = self.get_object()
         cliente.activo = False
         cliente.save()
-        messages.success(request, f"Cliente {cliente.nombre} desactivado correctamente.")
+        if config.ver_mensajes:
+            messages.success(request, f"Cliente {cliente.nombre} desactivado correctamente.")
         return redirect(self.success_url)
 
 
@@ -4171,7 +4445,9 @@ def repuesto_compatibilidad(request, pk):
             except VehiculoVersion.DoesNotExist:
                 continue
         
-        messages.success(request, f"Compatibilidad actualizada para {repuesto.nombre}")
+        config = AdministracionTaller.get_configuracion_activa()
+        if config.ver_mensajes:
+            messages.success(request, f"Compatibilidad actualizada para {repuesto.nombre}")
         return redirect("repuesto_compatibilidad", pk=repuesto.pk)
     
     context = {
@@ -4225,7 +4501,9 @@ def gestion_usuarios(request):
                     rol=rol,
                     especialidad=especialidad
                 )
-                messages.success(request, f"✅ Usuario '{username}' creado como {mecanico.get_rol_display()}")
+                config = AdministracionTaller.get_configuracion_activa()
+                if config.ver_mensajes:
+                    messages.success(request, f"✅ Usuario '{username}' creado como {mecanico.get_rol_display()}")
         
         elif action == 'editar_usuario':
             user_id = request.POST.get('user_id')
@@ -4248,7 +4526,9 @@ def gestion_usuarios(request):
                     user.mecanico.especialidad = especialidad
                     user.mecanico.save()
                 
-                messages.success(request, f"✅ Información de '{user.username}' actualizada exitosamente")
+                config = AdministracionTaller.get_configuracion_activa()
+                if config.ver_mensajes:
+                    messages.success(request, f"✅ Información de '{user.username}' actualizada exitosamente")
             except User.DoesNotExist:
                 messages.error(request, "❌ Usuario no encontrado")
         
@@ -4266,7 +4546,9 @@ def gestion_usuarios(request):
                     user = User.objects.get(id=user_id)
                     user.set_password(new_password)
                     user.save()
-                    messages.success(request, f"✅ Contraseña de '{user.username}' cambiada exitosamente. Nueva contraseña: {new_password}")
+                    config = AdministracionTaller.get_configuracion_activa()
+                    if config.ver_mensajes:
+                        messages.success(request, f"✅ Contraseña de '{user.username}' cambiada exitosamente. Nueva contraseña: {new_password}")
             except User.DoesNotExist:
                 messages.error(request, "❌ Usuario no encontrado")
         
@@ -4279,7 +4561,9 @@ def gestion_usuarios(request):
                 mecanico = user.mecanico
                 mecanico.rol = nuevo_rol
                 mecanico.save()
-                messages.success(request, f"✅ Rol de {user.username} cambiado a {mecanico.get_rol_display()}")
+                config = AdministracionTaller.get_configuracion_activa()
+                if config.ver_mensajes:
+                    messages.success(request, f"✅ Rol de {user.username} cambiado a {mecanico.get_rol_display()}")
             except User.DoesNotExist:
                 messages.error(request, "❌ Usuario no encontrado")
         
@@ -4293,11 +4577,14 @@ def gestion_usuarios(request):
                 mecanico = user.mecanico
                 setattr(mecanico, permiso, activo)
                 mecanico.save()
-                messages.success(request, f"✅ Permiso '{permiso}' {'activado' if activo else 'desactivado'} para {user.username}")
+                config = AdministracionTaller.get_configuracion_activa()
+                if config.ver_mensajes:
+                    messages.success(request, f"✅ Permiso '{permiso}' {'activado' if activo else 'desactivado'} para {user.username}")
             except User.DoesNotExist:
                 messages.error(request, "❌ Usuario no encontrado")
         
         elif action == 'eliminar_usuario':
+            config = AdministracionTaller.get_configuracion_activa()
             user_id = request.POST.get('user_id')
             
             try:
@@ -4307,7 +4594,8 @@ def gestion_usuarios(request):
                 else:
                     username = user.username
                     user.delete()
-                    messages.success(request, f"✅ Usuario '{username}' eliminado exitosamente")
+                    if config.ver_mensajes:
+                        messages.success(request, f"✅ Usuario '{username}' eliminado exitosamente")
             except User.DoesNotExist:
                 messages.error(request, "❌ Usuario no encontrado")
         
@@ -4626,7 +4914,9 @@ def agregar_repuesto_externo_rapido(request):
                 creado_por=request.user
             )
             
-            messages.success(request, f'✅ Referencia guardada: {repuesto.nombre}')
+            config = AdministracionTaller.get_configuracion_activa()
+            if config.ver_mensajes:
+                messages.success(request, f'✅ Referencia guardada: {repuesto.nombre}')
             return redirect('panel_principal')
             
         except Exception as e:

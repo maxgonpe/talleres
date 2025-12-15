@@ -128,7 +128,7 @@
       <div><strong>{{ a.nombre }}</strong></div>
       <div>
         <a href="{% url 'accion_update' a.pk %}" class="btn btn-sm btn-secondary">Editar</a>
-        <a href="{% url 'accion_delete' a.pk %}" class="btn btn-sm btn-danger">Eliminar</a>
+        <a href="{% url 'accion_delete' a.pk %}" class="btn btn-sm btn-danger" onclick="{% if ver_avisos %}return confirm('¿Estás seguro de eliminar esta acción?');{% else %}return true;{% endif %}">Eliminar</a>
       </div>
     </div>
   </div>

@@ -816,7 +816,9 @@ function actualizarItem(itemId, campo, valor) {
 }
 
 function eliminarItem(itemId) {
+    {% if ver_avisos %}
     if (!confirm('¿Eliminar este item del carrito?')) return;
+    {% endif %}
     
     fetch(`{% url "pos_eliminar_carrito" 0 %}`.replace('0', itemId), {
         method: 'POST',
@@ -840,7 +842,9 @@ function eliminarItem(itemId) {
 }
 
 function limpiarCarrito() {
+    {% if ver_avisos %}
     if (!confirm('¿Limpiar todo el carrito?')) return;
+    {% endif %}
     
     fetch('{% url "pos_limpiar_carrito" %}', {
         method: 'POST',
@@ -861,7 +865,9 @@ function limpiarCarrito() {
 }
 
 function limpiarSesiones() {
+    {% if ver_avisos %}
     if (!confirm('¿Limpiar todas las sesiones y comenzar desde cero?\n\nEsto cerrará todas las sesiones activas y limpiará carritos antiguos.')) return;
+    {% endif %}
     
     window.location.href = '{% url "pos_limpiar_sesiones" %}';
 }

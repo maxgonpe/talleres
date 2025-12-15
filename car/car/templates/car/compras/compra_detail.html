@@ -159,7 +159,7 @@
                                                         <i class="fas fa-check"></i>
                                                     </a>
                                                 {% endif %}
-                                                <a href="{% url 'compra_item_delete' item.pk %}" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                                <a href="{% url 'compra_item_delete' item.pk %}" class="btn btn-sm btn-outline-danger" title="Eliminar" onclick="{% if ver_avisos %}return confirm('¿Estás seguro de eliminar este item de la compra?');{% else %}return true;{% endif %}">
                                                     <i class="fas fa-trash"></i>
                                                 </a>
                                             </div>

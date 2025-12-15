@@ -92,7 +92,7 @@
         <td>{{ mecanico.activo }}</td>
         <td>
           <a href="{% url 'mecanico_update' mecanico.pk %}" class="btn btn-sm btn-warning">✏️ Editar</a>
-          <a href="{% url 'mecanico_delete' mecanico.pk %}" class="btn btn-sm btn-danger">🗑️ Eliminar</a>
+          <a href="{% url 'mecanico_delete' mecanico.pk %}" class="btn btn-sm btn-danger" onclick="{% if ver_avisos %}return confirm('¿Estás seguro de eliminar este mecánico?');{% else %}return true;{% endif %}">🗑️ Eliminar</a>
         </td>
       </tr>
       {% empty %}

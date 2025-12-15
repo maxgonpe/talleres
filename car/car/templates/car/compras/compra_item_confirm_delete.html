@@ -6,20 +6,18 @@
 
 {% block content %}
 <div class="container py-4">
+  <h2>Eliminar Item de Compra</h2>
   <div class="alert alert-warning">
-    <h5 class="mb-2">¿Eliminar componente?</h5>
-    <p class="mb-0"><strong>{{ componente.nombre }}</strong></p>
-    <p class="small text-secondary">Código: {{ componente.codigo|default:"—" }}</p>
-    {% if componente.padre %}
-      <p class="small text-secondary">Padre: {{ componente.padre.nombre }}</p>
-    {% endif %}
-    <p class="small text-secondary">Activo: {{ componente.activo|yesno:"Sí,No" }}</p>
+    <p>¿Estás seguro de que deseas eliminar este item de la compra?</p>
+    <p><strong>Repuesto:</strong> {{ item.repuesto.nombre }}</p>
+    <p><strong>Cantidad:</strong> {{ item.cantidad }}</p>
+    <p><strong>Precio Unitario:</strong> ${{ item.precio_unitario|floatformat:0 }}</p>
   </div>
-
-  <form method="post" class="d-grid gap-2" id="deleteForm">
+  
+  <form method="post" id="deleteForm">
     {% csrf_token %}
     <button type="submit" class="btn btn-danger">Sí, eliminar</button>
-    <a href="{% url 'componente_list' %}" class="btn btn-secondary">Cancelar</a>
+    <a href="{% url 'compra_detail' compra.pk %}" class="btn btn-secondary">Cancelar</a>
   </form>
 </div>
 
@@ -32,3 +30,5 @@
   {% endif %}
 </script>
 {% endblock %}
+
+

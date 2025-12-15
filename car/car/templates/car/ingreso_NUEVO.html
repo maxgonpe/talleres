@@ -699,6 +699,14 @@
      SCRIPTS EXISTENTES
      ======================================== -->
 <script src="{% static 'js/ingreso.js' %}"></script>
+<script>
+  // Variable global para controlar avisos
+  window.ver_avisos = {% if ver_avisos %}true{% else %}false{% endif %};
+</script>
+<script>
+  // Variable global para ver_avisos (disponible para scripts externos)
+  window.ver_avisos = {% if ver_avisos %}true{% else %}false{% endif %};
+</script>
 <script src="{% static 'js/plano-interactivo.js' %}"></script>
 
 <script>
@@ -1087,7 +1095,8 @@ function actualizarTablaInsumosEnRepuestos() {
 
 // Función para eliminar insumo
 window.eliminarInsumo = function(insumoId) {
-  if (!confirm('¿Eliminar este insumo?')) return;
+  const verAvisos = (typeof window.ver_avisos !== 'undefined' && window.ver_avisos);
+  if (verAvisos && !confirm('¿Eliminar este insumo?')) return;
   
   const insumosJson = document.getElementById('insumos-json');
   if (!insumosJson) return;
@@ -1385,7 +1394,8 @@ function actualizarCantidadExterna(index, nuevaCantidad) {
 }
 
 function eliminarRepuestoExterno(index) {
-  if (confirm('¿Eliminar esta referencia externa?')) {
+  const verAvisos = (typeof window.ver_avisos !== 'undefined' && window.ver_avisos);
+  if (verAvisos ? confirm('¿Eliminar esta referencia externa?') : true) {
     window.repuestosExternos.splice(index, 1);
     actualizarTablaRepuestosExternos();
     mostrarNotificacion('🗑️ Referencia eliminada', 'info');

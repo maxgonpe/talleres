@@ -874,7 +874,7 @@
                         </div>
                         <div style="display: flex; gap: 0.5rem; align-items: center; flex-direction: column;">
                             <!-- Formulario para editar cantidad -->
-                            <form method="post" style="display: inline-flex; gap: 0.25rem; align-items: center;" onsubmit="return confirm('¿Actualizar cantidad de esta acción?')">
+                            <form method="post" style="display: inline-flex; gap: 0.25rem; align-items: center;" onsubmit="{% if ver_avisos %}return confirm('¿Actualizar cantidad de esta acción?');{% else %}return true;{% endif %}">
                                 {% csrf_token %}
                                 <input type="hidden" name="accion_id" value="{{ accion.id }}">
                                 <input type="number" 
@@ -889,7 +889,7 @@
                                 </button>
                             </form>
                             <!-- Formulario para editar precio -->
-                            <form method="post" style="display: inline-flex; gap: 0.25rem; align-items: center;" onsubmit="return confirm('¿Actualizar precio de esta acción? Este cambio solo afectará a este trabajo.')">
+                            <form method="post" style="display: inline-flex; gap: 0.25rem; align-items: center;" onsubmit="{% if ver_avisos %}return confirm('¿Actualizar precio de esta acción? Este cambio solo afectará a este trabajo.');{% else %}return true;{% endif %}">
                                 {% csrf_token %}
                                 <input type="hidden" name="accion_id" value="{{ accion.id }}">
                                 <div style="display: flex; flex-direction: column; gap: 0.1rem; align-items: center;">
@@ -920,7 +920,7 @@
                                     {% csrf_token %}
                                     <input type="hidden" name="accion_id" value="{{ accion.id }}">
                                     <button type="submit" name="eliminar_accion" class="btn btn-danger btn-sm" 
-                                            onclick="return confirm('¿Eliminar esta acción?')"
+                                            onclick="{% if ver_avisos %}return confirm('¿Eliminar esta acción?');{% else %}return true;{% endif %}"
                                             title="Eliminar acción">
                                         🗑️
                                     </button>
@@ -1003,7 +1003,7 @@
                                     {% csrf_token %}
                                     <input type="hidden" name="repuesto_id" value="{{ repuesto.id }}">
                                     <button type="submit" name="eliminar_repuesto" class="btn btn-danger btn-sm" 
-                                            onclick="return confirm('¿Eliminar este repuesto?')">
+                                            onclick="{% if ver_avisos %}return confirm('¿Eliminar este repuesto?');{% else %}return true;{% endif %}">
                                         🗑️
                                     </button>
                                 </form>
@@ -1158,7 +1158,7 @@
                                         </td>
                                         <td>{{ adicional.usuario.username|default:"Sistema" }}</td>
                                         <td>
-                                            <form method="post" class="d-inline" onsubmit="return confirm('¿Eliminar este concepto adicional?')">
+                                            <form method="post" class="d-inline" onsubmit="{% if ver_avisos %}return confirm('¿Eliminar este concepto adicional?');{% else %}return true;{% endif %}">
                                                 {% csrf_token %}
                                                 <input type="hidden" name="adicional_id" value="{{ adicional.id }}">
                                                 <button type="submit" name="eliminar_adicional" class="btn btn-outline-danger btn-sm">
@@ -1206,7 +1206,7 @@
                                         </td>
                                         <td>{{ adicional.usuario.username|default:"Sistema" }}</td>
                                         <td>
-                                            <form method="post" class="d-inline" onsubmit="return confirm('¿Eliminar este descuento?')">
+                                            <form method="post" class="d-inline" onsubmit="{% if ver_avisos %}return confirm('¿Eliminar este descuento?');{% else %}return true;{% endif %}">
                                                 {% csrf_token %}
                                                 <input type="hidden" name="adicional_id" value="{{ adicional.id }}">
                                                 <button type="submit" name="eliminar_adicional" class="btn btn-outline-danger btn-sm">
@@ -1471,7 +1471,7 @@
                                     <td>{{ abono.descripcion|default:"-" }}</td>
                                     <td>{{ abono.usuario.username|default:"Sistema" }}</td>
                                     <td>
-                                        <form method="post" class="d-inline" onsubmit="return confirm('¿Eliminar este abono?')">
+                                        <form method="post" class="d-inline" onsubmit="{% if ver_avisos %}return confirm('¿Eliminar este abono?');{% else %}return true;{% endif %}">
                                             {% csrf_token %}
                                             <input type="hidden" name="abono_id" value="{{ abono.id }}">
                                             <button type="submit" name="eliminar_abono" class="btn btn-outline-danger btn-sm">
@@ -1619,7 +1619,14 @@ function toggleAddForm(type) {
 
 // Función para eliminar foto
 function eliminarFoto(fotoId) {
+    {% if ver_avisos %}
     if (confirm('¿Eliminar esta foto?')) {
+    {% else %}
+    if (true) {
+    {% endif %}
+    {% else %}
+    if (true) {
+    {% endif %}
         const form = document.createElement('form');
         form.method = 'POST';
         form.innerHTML = `
@@ -3000,7 +3007,11 @@ async function buscarRepuestosExternosTrabajo() {
 
 // Agregar repuesto externo al trabajo via POST
 async function agregarRepuestoExternoAlTrabajo(repuestoExternoId, nombre, precio) {
+  {% if ver_avisos %}
   if (!confirm(`¿Agregar "${nombre}" al trabajo?`)) {
+  {% else %}
+  if (false) {
+  {% endif %}
     return;
   }
   
