@@ -447,6 +447,26 @@
                 🏠 Inicio
             </button>
         </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="pizarra-tab" data-bs-toggle="tab" data-bs-target="#pizarra" type="button" role="tab" aria-controls="pizarra" aria-selected="false">
+                📊 Pizarra
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="taller-tab" data-bs-toggle="tab" data-bs-target="#taller" type="button" role="tab" aria-controls="taller" aria-selected="false">
+                🔧 Taller
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="pos-tab" data-bs-toggle="tab" data-bs-target="#pos" type="button" role="tab" aria-controls="pos" aria-selected="false">
+                🛒 POS
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="administracion-tab" data-bs-toggle="tab" data-bs-target="#administracion" type="button" role="tab" aria-controls="administracion" aria-selected="false">
+                ⚙️ Admin
+            </button>
+        </li>
     </ul>
 
     <!-- Contenido de los Tabs -->
@@ -477,22 +497,10 @@
             <!-- Acciones principales -->
             <div class="actions-grid">
                 {% if request.permisos.diagnosticos %}
-                <a href="{% url 'ingreso' %}" class="action-card">
-                    <span class="action-icon">🔧</span>
-                    <div class="action-title">Nuevo Diagnóstico</div>
-                    <div class="action-description">Crear nuevo diagnóstico de vehículo</div>
-                </a>
-
                 <a href="{% url 'ingreso_rapido' %}" class="action-card">
                     <span class="action-icon">⚡</span>
                     <div class="action-title">Nuevo Diagnóstico Rápido</div>
                     <div class="action-description">Flujo fusionado en 3 pasos</div>
-                </a>
-
-                <a href="{% url 'ingreso_voz' %}" class="action-card">
-                    <span class="action-icon">🎤</span>
-                    <div class="action-title">Ingreso por Voz</div>
-                    <div class="action-description">Diagnóstico con control por voz</div>
                 </a>
                 
                 <a href="{% url 'lista_diagnosticos' %}" class="action-card">
@@ -508,13 +516,11 @@
                     <div class="action-title">Ver Trabajos</div>
                     <div class="action-description">Lista completa de trabajos activos</div>
                 </a>
-                {% endif %}
                 
-                {% if request.permisos.inventario %}
-                <a href="{% url 'repuesto_list' %}" class="action-card">
-                    <span class="action-icon">📦</span>
-                    <div class="action-title">Inventario</div>
-                    <div class="action-description">Gestionar repuestos y stock</div>
+                <a href="{% url 'estadisticas_trabajos' %}" class="action-card">
+                    <span class="action-icon">📊</span>
+                    <div class="action-title">Estadísticas</div>
+                    <div class="action-description">Ver estadísticas de trabajos</div>
                 </a>
                 {% endif %}
                 
@@ -533,14 +539,6 @@
                     <div class="action-description">Gestiona compras de repuestos</div>
                 </a>
                 {% endif %}
-                
-                {% if request.permisos.administracion %}
-                <a href="{% url 'gestion_usuarios' %}" class="action-card">
-                    <span class="action-icon">👥</span>
-                    <div class="action-title">Gestión de Usuarios</div>
-                    <div class="action-description">Administrar usuarios y permisos</div>
-                </a>
-                {% endif %}
 
                 {% if user.username == 'maxgonpe' %}
                 <a href="{% url 'netgogo_console' %}" class="action-card">
@@ -550,46 +548,15 @@
                 </a>
                 {% endif %}
             </div>
+        </div>
 
-            <!-- Sección de Administración -->
-            <div class="pizarra-section" style="margin-top: 2rem;">
-                <div class="pizarra-header">
-                    <span class="action-icon">⚙️</span>
-                    <h2 class="pizarra-title">Administración</h2>
-                </div>
-                
-                <div class="actions-grid">
-                    {% if request.permisos.trabajos %}
-                    <a href="{% url 'configuracion_bonos' %}" class="action-card">
-                        <span class="action-icon">💰</span>
-                        <div class="action-title">Bonos de Mecánicos</div>
-                        <div class="action-description">Configurar y gestionar bonos e incentivos</div>
-                    </a>
-                    {% endif %}
-                    
-                    {% if request.permisos.administracion %}
-                    <a href="{% url 'administracion_taller' %}" class="action-card">
-                        <span class="action-icon">🏢</span>
-                        <div class="action-title">Configurar Taller</div>
-                        <div class="action-description">Ajustes generales del taller</div>
-                    </a>
-                    {% endif %}
-                    
-                    {% if request.permisos.trabajos %}
-                    <a href="{% url 'estadisticas_trabajos' %}" class="action-card">
-                        <span class="action-icon">📊</span>
-                        <div class="action-title">Estadísticas</div>
-                        <div class="action-description">Ver estadísticas de trabajos</div>
-                    </a>
-                    {% endif %}
-                </div>
-            </div>
-
+        <!-- TAB PIZARRA -->
+        <div class="tab-pane fade" id="pizarra" role="tabpanel" aria-labelledby="pizarra-tab">
             <!-- Pizarra de trabajos -->
             <div class="pizarra-section">
                 <div class="pizarra-header">
                     <span class="action-icon">📊</span>
-                    <h2 class="pizarra-title">Pizarra de Trabajos</h2>
+                    <h2 class="pizarra-title">Pizarra</h2>
                 </div>
                 
                 <div class="pizarra-grid">
@@ -725,6 +692,174 @@
             </div>
         </div>
 
+        <!-- TAB TALLER -->
+        <div class="tab-pane fade" id="taller" role="tabpanel" aria-labelledby="taller-tab">
+            <div class="pizarra-section">
+                <div class="pizarra-header">
+                    <span class="action-icon">🔧</span>
+                    <h2 class="pizarra-title">Taller</h2>
+                </div>
+                
+                <div class="actions-grid">
+                    <a href="{% url 'cliente_taller_list' %}" class="action-card">
+                        <span class="action-icon">👥</span>
+                        <div class="action-title">Clientes del Taller</div>
+                        <div class="action-description">Gestionar clientes del taller</div>
+                    </a>
+                    
+                    <a href="{% url 'vehiculo_list' %}" class="action-card">
+                        <span class="action-icon">🚗</span>
+                        <div class="action-title">Vehículos</div>
+                        <div class="action-description">Gestionar vehículos</div>
+                    </a>
+                    
+                    <a href="{% url 'componente_list' %}" class="action-card">
+                        <span class="action-icon">⚙️</span>
+                        <div class="action-title">Componentes</div>
+                        <div class="action-description">Gestionar componentes</div>
+                    </a>
+                    
+                    <a href="{% url 'accion_list' %}" class="action-card">
+                        <span class="action-icon">🔨</span>
+                        <div class="action-title">Acciones</div>
+                        <div class="action-description">Gestionar acciones de reparación</div>
+                    </a>
+                    
+                    <a href="{% url 'mecanico_list' %}" class="action-card">
+                        <span class="action-icon">👷</span>
+                        <div class="action-title">Mecánicos</div>
+                        <div class="action-description">Gestionar mecánicos</div>
+                    </a>
+                    
+                    {% if request.permisos.trabajos %}
+                    <a href="{% url 'lista_mecanicos_bonos' %}" class="action-card">
+                        <span class="action-icon">💰</span>
+                        <div class="action-title">Bonos de Mecánicos</div>
+                        <div class="action-description">Resumen de bonos - Mecánicos</div>
+                    </a>
+                    {% endif %}
+                    
+                    {% if request.permisos.diagnosticos %}
+                    <a href="{% url 'ingreso' %}" class="action-card">
+                        <span class="action-icon">🔧</span>
+                        <div class="action-title">Nuevo Diagnóstico</div>
+                        <div class="action-description">Crear nuevo diagnóstico de vehículo</div>
+                    </a>
+
+                    <a href="{% url 'ingreso_rapido' %}" class="action-card">
+                        <span class="action-icon">⚡</span>
+                        <div class="action-title">Nuevo Diagnóstico Rápido</div>
+                        <div class="action-description">Flujo fusionado en 3 pasos</div>
+                    </a>
+
+                    <a href="{% url 'ingreso_voz' %}" class="action-card">
+                        <span class="action-icon">🎤</span>
+                        <div class="action-title">Ingreso por Voz</div>
+                        <div class="action-description">Diagnóstico con control por voz</div>
+                    </a>
+                    
+                    <a href="{% url 'lista_diagnosticos' %}" class="action-card">
+                        <span class="action-icon">📋</span>
+                        <div class="action-title">Diagnósticos</div>
+                        <div class="action-description">Lista de diagnósticos</div>
+                    </a>
+                    {% endif %}
+                    
+                    {% if request.permisos.trabajos %}
+                    <a href="{% url 'lista_trabajos' %}" class="action-card">
+                        <span class="action-icon">🚗</span>
+                        <div class="action-title">Trabajos</div>
+                        <div class="action-description">Lista completa de trabajos</div>
+                    </a>
+                    
+                    <a href="{% url 'historial_trabajos' %}" class="action-card">
+                        <span class="action-icon">📜</span>
+                        <div class="action-title">Historial de Trabajos</div>
+                        <div class="action-description">Ver historial de trabajos realizados</div>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB ADMINISTRACIÓN -->
+        <div class="tab-pane fade" id="administracion" role="tabpanel" aria-labelledby="administracion-tab">
+            <!-- Sección de Administración -->
+            <div class="pizarra-section">
+                <div class="pizarra-header">
+                    <span class="action-icon">⚙️</span>
+                    <h2 class="pizarra-title">Administración</h2>
+                </div>
+                
+                <div class="actions-grid">
+                    {% if request.permisos.trabajos %}
+                    <a href="{% url 'configuracion_bonos' %}" class="action-card">
+                        <span class="action-icon">💰</span>
+                        <div class="action-title">Bonos de Mecánicos</div>
+                        <div class="action-description">Configurar y gestionar bonos e incentivos</div>
+                    </a>
+                    {% endif %}
+                    
+                    {% if request.permisos.administracion %}
+                    <a href="{% url 'administracion_taller' %}" class="action-card">
+                        <span class="action-icon">🏢</span>
+                        <div class="action-title">Configurar Taller</div>
+                        <div class="action-description">Ajustes generales del taller</div>
+                    </a>
+                    {% endif %}
+                    
+                    {% if request.permisos.administracion %}
+                    <a href="{% url 'gestion_usuarios' %}" class="action-card">
+                        <span class="action-icon">👥</span>
+                        <div class="action-title">Gestión de Usuarios</div>
+                        <div class="action-description">Administrar usuarios y permisos</div>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB POS -->
+        <div class="tab-pane fade" id="pos" role="tabpanel" aria-labelledby="pos-tab">
+            <div class="pizarra-section">
+                <div class="pizarra-header">
+                    <span class="action-icon">🛒</span>
+                    <h2 class="pizarra-title">Punto de Venta</h2>
+                </div>
+                
+                <div class="actions-grid">
+                    {% if request.permisos.pos %}
+                    <a href="{% url 'pos_principal' %}" class="action-card">
+                        <span class="action-icon">🛒</span>
+                        <div class="action-title">Punto de Venta</div>
+                        <div class="action-description">Sistema de ventas y cotizaciones</div>
+                    </a>
+                    {% endif %}
+                    
+                    {% if request.permisos.inventario %}
+                    <a href="{% url 'repuesto_list' %}" class="action-card">
+                        <span class="action-icon">📦</span>
+                        <div class="action-title">Inventario</div>
+                        <div class="action-description">Gestionar repuestos y stock</div>
+                    </a>
+                    {% endif %}
+                    
+                    <a href="{% url 'vehiculo_compatibilidad_list' %}" class="action-card">
+                        <span class="action-icon">🚗</span>
+                        <div class="action-title">Compatibilidad de Vehículos</div>
+                        <div class="action-description">Gestionar vehículos y compatibilidad</div>
+                    </a>
+                    
+                    {% if request.permisos.compras %}
+                    <a href="{% url 'compra_dashboard' %}" class="action-card">
+                        <span class="action-icon">📥</span>
+                        <div class="action-title">Compras</div>
+                        <div class="action-description">Gestionar compras de repuestos</div>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
 
     </div>
 </div>

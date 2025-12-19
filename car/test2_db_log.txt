@@ -1,0 +1,48 @@
+[2025-12-15 19:36:42] === INICIO test2_function_call_data ===
+[2025-12-15 19:36:42] Verificando conexión a la base de datos...
+[2025-12-15 19:36:42] Conexión establecida. Base de datos: /home/maxgonpe/talleres/car/db.sqlite3
+[2025-12-15 19:36:42] Intentando consulta: Mecanico.objects.all()
+[2025-12-15 19:36:42] Query ejecutado. Tipo: <class 'django.db.models.query.QuerySet'>
+[2025-12-15 19:36:42] Contando resultados...
+[2025-12-15 19:36:42] Total de mecánicos encontrados: 5
+[2025-12-15 19:36:42] Obteniendo nombres de mecánicos...
+[2025-12-15 19:36:42] Mecánico 1: ID=1, Nombre=Camilo Condell
+[2025-12-15 19:36:42] Mecánico 2: ID=2, Nombre=Sebastian Ramirez
+[2025-12-15 19:36:42] Mecánico 3: ID=3, Nombre=Juan Gomez
+[2025-12-15 19:36:42] Mecánico 4: ID=9, Nombre=Max Gonzalez
+[2025-12-15 19:36:42] Mecánico 5: ID=10, Nombre=Pedro Ferrari
+[2025-12-15 19:36:42] Total de nombres obtenidos: 5
+[2025-12-15 19:36:42] Info BD: {'engine': 'django.db.backends.sqlite3', 'name': PosixPath('/home/maxgonpe/talleres/car/db.sqlite3'), 'host': '', 'port': '', 'user': ''}
+
+[2025-12-15 19:37:29] === INICIO test2_function_call_data ===
+[2025-12-15 19:37:29] Verificando conexión a la base de datos...
+[2025-12-15 19:37:29] Conexión establecida. Base de datos: /home/maxgonpe/talleres/car/db.sqlite3
+[2025-12-15 19:37:29] Intentando consulta: Mecanico.objects.all()
+[2025-12-15 19:37:29] Query ejecutado. Tipo: <class 'django.db.models.query.QuerySet'>
+[2025-12-15 19:37:29] Contando resultados...
+[2025-12-15 19:37:29] Total de mecánicos encontrados: 5
+[2025-12-15 19:37:29] Obteniendo nombres de mecánicos...
+[2025-12-15 19:37:29] Mecánico 1: ID=1, Nombre=Camilo Condell
+[2025-12-15 19:37:29] Mecánico 2: ID=2, Nombre=Sebastian Ramirez
+[2025-12-15 19:37:29] Mecánico 3: ID=3, Nombre=Juan Gomez
+[2025-12-15 19:37:29] Mecánico 4: ID=9, Nombre=Max Gonzalez
+[2025-12-15 19:37:29] Mecánico 5: ID=10, Nombre=Pedro Ferrari
+[2025-12-15 19:37:29] Total de nombres obtenidos: 5
+[2025-12-15 19:37:29] Info BD: {'engine': 'django.db.backends.sqlite3', 'name': PosixPath('/home/maxgonpe/talleres/car/db.sqlite3'), 'host': '', 'port': '', 'user': ''}
+
+[2025-12-15 19:40:01] === INICIO test2_function_call_data ===
+[2025-12-15 19:40:01] Verificando conexión a la base de datos...
+[2025-12-15 19:40:01] Conexión establecida. Base de datos: /home/maxgonpe/talleres/car/db.sqlite3
+[2025-12-15 19:40:01] Intentando consulta: Mecanico.objects.all()
+[2025-12-15 19:40:01] Query ejecutado. Tipo: <class 'django.db.models.query.QuerySet'>
+[2025-12-15 19:40:01] Contando resultados...
+[2025-12-15 19:40:01] Total de mecánicos encontrados: 5
+[2025-12-15 19:40:01] Obteniendo nombres de mecánicos...
+[2025-12-15 19:40:01] Mecánico 1: ID=1, Nombre=Camilo Condell
+[2025-12-15 19:40:01] Mecánico 2: ID=2, Nombre=Sebastian Ramirez
+[2025-12-15 19:40:01] Mecánico 3: ID=3, Nombre=Juan Gomez
+[2025-12-15 19:40:01] Mecánico 4: ID=9, Nombre=Max Gonzalez
+[2025-12-15 19:40:01] Mecánico 5: ID=10, Nombre=Pedro Ferrari
+[2025-12-15 19:40:01] Total de nombres obtenidos: 5
+[2025-12-15 19:40:01] Info BD: {'engine': 'django.db.backends.sqlite3', 'name': '/home/maxgonpe/talleres/car/db.sqlite3', 'host': '', 'port': 'N/A', 'user': ''}
+

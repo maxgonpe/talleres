@@ -313,15 +313,30 @@ async function sendMessage() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
+                'X-CSRFToken': getCookie('csrftoken'),
+                'X-Requested-With': 'XMLHttpRequest'
             },
             body: JSON.stringify({
                 input: input
             })
         });
         
+        // Verificar Content-Type antes de parsear JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            removeLoadingMessage();
+            addMessage('error', `Error del servidor (${response.status}): La respuesta no es JSON. ${text.substring(0, 200)}`);
+            return;
+        }
+        
         const data = await response.json();
         removeLoadingMessage();
+        
+        if (!response.ok) {
+            addMessage('error', `Error (${response.status}): ${data.error || 'Error desconocido'}`);
+            return;
+        }
         
         if (data.error) {
             addMessage('error', `Error: ${data.error}`);
@@ -345,7 +360,11 @@ async function sendMessage() {
         }
     } catch (error) {
         removeLoadingMessage();
-        addMessage('error', `Error de conexión: ${error.message}`);
+        let errorMsg = `Error de conexión: ${error.message}`;
+        if (error.message.includes('JSON')) {
+            errorMsg += '. El servidor devolvió HTML en lugar de JSON. Verifica tu sesión.';
+        }
+        addMessage('error', errorMsg);
     } finally {
         userInput.disabled = false;
         sendBtn.disabled = false;
@@ -363,15 +382,30 @@ async function continueConversation() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')
+                'X-CSRFToken': getCookie('csrftoken'),
+                'X-Requested-With': 'XMLHttpRequest'
             },
             body: JSON.stringify({
                 input: "Continúa con la respuesta final"
             })
         });
         
+        // Verificar Content-Type antes de parsear JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            removeLoadingMessage();
+            addMessage('error', `Error del servidor (${response.status}): La respuesta no es JSON.`);
+            return;
+        }
+        
         const data = await response.json();
         removeLoadingMessage();
+        
+        if (!response.ok) {
+            addMessage('error', `Error (${response.status}): ${data.error || 'Error desconocido'}`);
+            return;
+        }
         
         if (data.error) {
             addMessage('error', `Error: ${data.error}`);
@@ -380,7 +414,11 @@ async function continueConversation() {
         }
     } catch (error) {
         removeLoadingMessage();
-        addMessage('error', `Error: ${error.message}`);
+        let errorMsg = `Error: ${error.message}`;
+        if (error.message.includes('JSON')) {
+            errorMsg += '. El servidor devolvió HTML en lugar de JSON.';
+        }
+        addMessage('error', errorMsg);
     } finally {
         userInput.disabled = false;
         sendBtn.disabled = false;
@@ -430,6 +468,9 @@ function getCookie(name) {
 userInput.focus();
 </script>
 {% endblock %}
+
+
+
 
 
 

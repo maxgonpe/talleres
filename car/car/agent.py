@@ -107,6 +107,45 @@ class Agent:
                     },
                     "required": []
                 }
+            },
+            {
+                "type": "function",
+                "name": "listado_mecanicos",
+                "description": "Lista todos los mecánicos del taller mecánico con todos sus campos y detalles. Úsala cuando el usuario pida: 'muéstrame los mecánicos', 'búscame mecánicos', 'listado de mecánicos', 'mecánicos del taller', 'ver mecánicos', o cualquier variación de estas frases.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "activo": {
+                            "type": "boolean",
+                            "description": "Filtro por estado activo: true para solo activos, false para solo inactivos, null/omitir para todos"
+                        },
+                        "limite": {
+                            "type": "integer",
+                            "description": "Número máximo de mecánicos a listar (default: 50, máximo recomendado: 100)"
+                        }
+                    },
+                    "required": []
+                }
+            },
+            {
+                "type": "function",
+                "name": "test_function_call",
+                "description": "Función de test simple para diagnosticar problemas con function_calls. No requiere parámetros. Úsala cuando quieras probar si las function_calls funcionan correctamente.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {},
+                    "required": []
+                }
+            },
+            {
+                "type": "function",
+                "name": "test2",
+                "description": "Función de test para diagnosticar problemas de conexión a la base de datos. Se conecta a la tabla Mecanico y lista los nombres. Genera logs detallados. No requiere parámetros.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {},
+                    "required": []
+                }
             }
         ]
         
@@ -259,6 +298,8 @@ class Agent:
                         final_message = str(content)
         
         return called_tool, tool_info, final_message
+
+
 
 
 

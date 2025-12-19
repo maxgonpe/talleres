@@ -4,10 +4,35 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from django.db.models import Q, Count, Sum
+from django.conf import settings
 import requests
 import json
+import logging
+from functools import wraps
 from .agent import Agent
-from .models import Trabajo, Cliente_Taller, Vehiculo, Repuesto, Diagnostico, TrabajoAccion, TrabajoRepuesto, TrabajoAbono
+from .models import Trabajo, Cliente_Taller, Vehiculo, Repuesto, Diagnostico, TrabajoAccion, TrabajoRepuesto, TrabajoAbono, Mecanico, BonoGenerado, PagoMecanico, ConfiguracionBonoMecanico
+
+# Configurar logging
+logger = logging.getLogger(__name__)
+
+def ajax_login_required(view_func):
+    """Decorador que devuelve JSON en lugar de redirigir a login para peticiones AJAX"""
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            # Detectar si es petición AJAX o JSON
+            is_ajax = (
+                request.headers.get('X-Requested-With') == 'XMLHttpRequest' or
+                request.content_type == 'application/json' or
+                'application/json' in request.headers.get('Accept', '')
+            )
+            if is_ajax:
+                return JsonResponse({"error": "No autenticado. Por favor inicia sesión."}, status=401)
+            # Si no es AJAX, usar el comportamiento normal de login_required
+            from django.contrib.auth.decorators import login_required
+            return login_required(view_func)(request, *args, **kwargs)
+        return view_func(request, *args, **kwargs)
+    return wrapper
 
 
 def query_sistema_data(tipo, filtro=None, detalle=False):
@@ -23,6 +48,9 @@ def query_sistema_data(tipo, filtro=None, detalle=False):
         dict: Información consultada del sistema
     """
     try:
+        from django.db import connection
+        # Verificar conexión a la base de datos
+        connection.ensure_connection()
         if tipo == "trabajo":
             trabajos = Trabajo.objects.filter(visible=True)
             
@@ -186,7 +214,14 @@ def query_sistema_data(tipo, filtro=None, detalle=False):
             return {"error": f"Tipo de consulta no válido: {tipo}"}
     
     except Exception as e:
-            return {"error": f"Error al consultar sistema: {str(e)}"}
+        error_msg = str(e)
+        error_type = type(e).__name__
+        logger.error(f"Error en query_sistema_data: {error_type}: {error_msg}", exc_info=True)
+        return {
+            "error": f"Error al consultar sistema: {error_msg}",
+            "error_type": error_type,
+            "success": False
+        }
 
 
 def listado_trabajos_data(estado="todos", limite=20):
@@ -201,6 +236,9 @@ def listado_trabajos_data(estado="todos", limite=20):
         dict: Lista de trabajos con todos sus campos
     """
     try:
+        from django.db import connection
+        # Verificar conexión a la base de datos
+        connection.ensure_connection()
         trabajos = Trabajo.objects.filter(visible=True)
         
         # Aplicar filtro por estado
@@ -215,92 +253,160 @@ def listado_trabajos_data(estado="todos", limite=20):
         # Construir lista con todos los campos
         lista_trabajos = []
         for t in trabajos:
-            # Obtener información del vehículo
-            vehiculo = t.vehiculo
-            cliente = vehiculo.cliente
+            try:
+                # Obtener información del vehículo (verificar que existe)
+                vehiculo = t.vehiculo
+                if not vehiculo:
+                    logger.warning(f"Trabajo {t.id} no tiene vehículo asociado")
+                    continue
+                
+                # Obtener información del cliente (verificar que existe)
+                try:
+                    cliente = vehiculo.cliente
+                    if not cliente:
+                        logger.warning(f"Vehículo {vehiculo.id} no tiene cliente asociado")
+                        cliente_data = {
+                            "rut": "N/A",
+                            "nombre": "Cliente no encontrado",
+                            "telefono": "N/A",
+                            "email": "N/A"
+                        }
+                    else:
+                        cliente_data = {
+                            "rut": cliente.rut or "N/A",
+                            "nombre": cliente.nombre or "N/A",
+                            "telefono": cliente.telefono or "N/A",
+                            "email": cliente.email or "N/A"
+                        }
+                except Exception as e_cliente:
+                    logger.warning(f"Error obteniendo cliente para vehículo {vehiculo.id}: {str(e_cliente)}")
+                    cliente_data = {
+                        "rut": "N/A",
+                        "nombre": "Error al obtener cliente",
+                        "telefono": "N/A",
+                        "email": "N/A"
+                    }
             
-            # Obtener mecánicos asignados
-            mecanicos = [{"id": m.id, "nombre": str(m)} for m in t.mecanicos.all()]
+                # Obtener mecánicos asignados
+                mecanicos = []
+                try:
+                    for m in t.mecanicos.all():
+                        try:
+                            if hasattr(m, 'user') and m.user:
+                                nombre = m.user.get_full_name() or m.user.username
+                            else:
+                                nombre = f"Mecanico-{m.id}"
+                            mecanicos.append({"id": m.id, "nombre": nombre})
+                        except Exception as e_mec:
+                            logger.warning(f"Error procesando mecánico {m.id if hasattr(m, 'id') else 'N/A'}: {str(e_mec)}")
+                            mecanicos.append({"id": m.id if hasattr(m, 'id') else 0, "nombre": f"Mecanico-{m.id if hasattr(m, 'id') else 'N/A'}"})
+                except Exception as e_mecanicos:
+                    logger.warning(f"Error obteniendo mecánicos para trabajo {t.id}: {str(e_mecanicos)}")
+                    mecanicos = []
             
-            # Obtener acciones del trabajo
-            acciones = []
-            for accion in t.acciones.all():
-                acciones.append({
-                    "id": accion.id,
-                    "componente": accion.componente.nombre if accion.componente else "N/A",
-                    "accion": accion.accion.nombre if accion.accion else "N/A",
-                    "cantidad": float(accion.cantidad),
-                    "precio_unitario": float(accion.precio_mano_obra),
-                    "subtotal": float(accion.subtotal),
-                    "completado": accion.completado
-                })
+                # Obtener acciones del trabajo
+                acciones = []
+                try:
+                    for accion in t.acciones.all():
+                        try:
+                            acciones.append({
+                                "id": accion.id,
+                                "componente": accion.componente.nombre if accion.componente else "N/A",
+                                "accion": accion.accion.nombre if accion.accion else "N/A",
+                                "cantidad": float(accion.cantidad) if accion.cantidad else 0.0,
+                                "precio_unitario": float(accion.precio_mano_obra) if accion.precio_mano_obra else 0.0,
+                                "subtotal": float(accion.subtotal) if accion.subtotal else 0.0,
+                                "completado": accion.completado if hasattr(accion, 'completado') else False
+                            })
+                        except Exception as e_acc:
+                            logger.warning(f"Error procesando acción {accion.id if hasattr(accion, 'id') else 'N/A'}: {str(e_acc)}")
+                            continue
+                except Exception as e_acciones:
+                    logger.warning(f"Error obteniendo acciones para trabajo {t.id}: {str(e_acciones)}")
+                    acciones = []
             
-            # Obtener repuestos del trabajo
-            repuestos = []
-            for repuesto in t.repuestos.all():
-                repuestos.append({
-                    "id": repuesto.id,
-                    "repuesto": repuesto.repuesto.nombre if repuesto.repuesto else "N/A",
-                    "cantidad": float(repuesto.cantidad),
-                    "precio_unitario": float(repuesto.precio_unitario or 0),
-                    "subtotal": float(repuesto.subtotal or 0),
-                    "completado": repuesto.completado
-                })
+                # Obtener repuestos del trabajo
+                repuestos = []
+                try:
+                    for repuesto in t.repuestos.all():
+                        try:
+                            repuestos.append({
+                                "id": repuesto.id,
+                                "repuesto": repuesto.repuesto.nombre if repuesto.repuesto else "N/A",
+                                "cantidad": float(repuesto.cantidad) if repuesto.cantidad else 0.0,
+                                "precio_unitario": float(repuesto.precio_unitario) if repuesto.precio_unitario else 0.0,
+                                "subtotal": float(repuesto.subtotal) if repuesto.subtotal else 0.0,
+                                "completado": repuesto.completado if hasattr(repuesto, 'completado') else False
+                            })
+                        except Exception as e_rep:
+                            logger.warning(f"Error procesando repuesto {repuesto.id if hasattr(repuesto, 'id') else 'N/A'}: {str(e_rep)}")
+                            continue
+                except Exception as e_repuestos:
+                    logger.warning(f"Error obteniendo repuestos para trabajo {t.id}: {str(e_repuestos)}")
+                    repuestos = []
             
-            # Obtener abonos
-            abonos = []
-            for abono in t.abonos.all():
-                abonos.append({
-                    "id": abono.id,
-                    "fecha": abono.fecha.strftime("%Y-%m-%d") if abono.fecha else None,
-                    "monto": float(abono.monto),
-                    "observaciones": abono.observaciones or ""
-                })
+                # Obtener abonos
+                abonos = []
+                try:
+                    for abono in t.abonos.all():
+                        try:
+                            abonos.append({
+                                "id": abono.id,
+                                "fecha": abono.fecha.strftime("%Y-%m-%d") if abono.fecha else None,
+                                "monto": float(abono.monto) if abono.monto else 0.0,
+                                "descripcion": abono.descripcion or "",
+                                "metodo_pago": abono.metodo_pago if hasattr(abono, 'metodo_pago') else "N/A",
+                                "metodo_pago_display": abono.get_metodo_pago_display() if hasattr(abono, 'get_metodo_pago_display') else "N/A"
+                            })
+                        except Exception as e_abono:
+                            logger.warning(f"Error procesando abono {abono.id if hasattr(abono, 'id') else 'N/A'}: {str(e_abono)}")
+                            continue
+                except Exception as e_abonos:
+                    logger.warning(f"Error obteniendo abonos para trabajo {t.id}: {str(e_abonos)}")
+                    abonos = []
             
-            trabajo_data = {
-                "id": t.id,
-                "vehiculo": {
-                    "placa": vehiculo.placa,
-                    "marca": vehiculo.marca,
-                    "modelo": vehiculo.modelo,
-                    "anio": vehiculo.anio,
-                    "vin": vehiculo.vin or "N/A",
-                    "descripcion_motor": vehiculo.descripcion_motor or "N/A"
-                },
-                "cliente": {
-                    "rut": cliente.rut,
-                    "nombre": cliente.nombre,
-                    "telefono": cliente.telefono or "N/A",
-                    "email": cliente.email or "N/A"
-                },
-                "fecha_inicio": t.fecha_inicio.strftime("%Y-%m-%d %H:%M:%S") if t.fecha_inicio else None,
-                "fecha_fin": t.fecha_fin.strftime("%Y-%m-%d %H:%M:%S") if t.fecha_fin else None,
-                "estado": t.estado,
-                "estado_display": t.get_estado_display(),
-                "observaciones": t.observaciones or "",
-                "kilometraje_actual": t.lectura_kilometraje_actual,
-                "mecanicos": mecanicos,
-                "totales": {
-                    "total_mano_obra": float(t.total_mano_obra),
-                    "total_repuestos": float(t.total_repuestos),
-                    "total_adicionales": float(t.total_adicionales),
-                    "total_descuentos": float(t.total_descuentos),
-                    "total_presupuestado": float(t.total_general),
-                    "total_realizado_mano_obra": float(t.total_realizado_mano_obra),
-                    "total_realizado_repuestos": float(t.total_realizado_repuestos),
-                    "total_realizado": float(t.total_realizado),
-                    "total_abonos": float(t.total_abonos),
-                    "saldo_pendiente": float(t.total_general - t.total_abonos)
-                },
-                "acciones": acciones,
-                "repuestos": repuestos,
-                "abonos": abonos,
-                "cantidad_acciones": len(acciones),
-                "cantidad_repuestos": len(repuestos),
-                "cantidad_abonos": len(abonos)
-            }
-            
-            lista_trabajos.append(trabajo_data)
+                trabajo_data = {
+                    "id": t.id,
+                    "vehiculo": {
+                        "placa": vehiculo.placa or "N/A",
+                        "marca": vehiculo.marca or "N/A",
+                        "modelo": vehiculo.modelo or "N/A",
+                        "anio": vehiculo.anio or "N/A",
+                        "vin": vehiculo.vin or "N/A",
+                        "descripcion_motor": vehiculo.descripcion_motor or "N/A"
+                    },
+                    "cliente": cliente_data,
+                    "fecha_inicio": t.fecha_inicio.strftime("%Y-%m-%d %H:%M:%S") if t.fecha_inicio else None,
+                    "fecha_fin": t.fecha_fin.strftime("%Y-%m-%d %H:%M:%S") if t.fecha_fin else None,
+                    "estado": t.estado,
+                    "estado_display": t.get_estado_display() if hasattr(t, 'get_estado_display') else str(t.estado),
+                    "observaciones": t.observaciones or "" if hasattr(t, 'observaciones') else "",
+                    "kilometraje_actual": t.lectura_kilometraje_actual if hasattr(t, 'lectura_kilometraje_actual') else None,
+                    "mecanicos": mecanicos,
+                    "totales": {
+                        "total_mano_obra": float(t.total_mano_obra) if hasattr(t, 'total_mano_obra') and t.total_mano_obra else 0.0,
+                        "total_repuestos": float(t.total_repuestos) if hasattr(t, 'total_repuestos') and t.total_repuestos else 0.0,
+                        "total_adicionales": float(t.total_adicionales) if hasattr(t, 'total_adicionales') and t.total_adicionales else 0.0,
+                        "total_descuentos": float(t.total_descuentos) if hasattr(t, 'total_descuentos') and t.total_descuentos else 0.0,
+                        "total_presupuestado": float(t.total_general) if hasattr(t, 'total_general') and t.total_general else 0.0,
+                        "total_realizado_mano_obra": float(t.total_realizado_mano_obra) if hasattr(t, 'total_realizado_mano_obra') and t.total_realizado_mano_obra else 0.0,
+                        "total_realizado_repuestos": float(t.total_realizado_repuestos) if hasattr(t, 'total_realizado_repuestos') and t.total_realizado_repuestos else 0.0,
+                        "total_realizado": float(t.total_realizado) if hasattr(t, 'total_realizado') and t.total_realizado else 0.0,
+                        "total_abonos": float(t.total_abonos) if hasattr(t, 'total_abonos') and t.total_abonos else 0.0,
+                        "saldo_pendiente": float((t.total_general or 0) - (t.total_abonos or 0))
+                    },
+                    "acciones": acciones,
+                    "repuestos": repuestos,
+                    "abonos": abonos,
+                    "cantidad_acciones": len(acciones),
+                    "cantidad_repuestos": len(repuestos),
+                    "cantidad_abonos": len(abonos)
+                }
+                
+                lista_trabajos.append(trabajo_data)
+            except Exception as e_trabajo:
+                logger.error(f"Error procesando trabajo {t.id if hasattr(t, 'id') else 'N/A'}: {str(e_trabajo)}", exc_info=True)
+                continue
         
         return {
             "total_encontrados": len(lista_trabajos),
@@ -309,7 +415,358 @@ def listado_trabajos_data(estado="todos", limite=20):
         }
     
     except Exception as e:
-        return {"error": f"Error al listar trabajos: {str(e)}"}
+        error_msg = str(e)
+        error_type = type(e).__name__
+        logger.error(f"Error en listado_trabajos_data: {error_type}: {error_msg}", exc_info=True)
+        return {
+            "error": f"Error al listar trabajos: {error_msg}",
+            "error_type": error_type,
+            "success": False
+        }
+
+
+def listado_mecanicos_data(activo=None, limite=50):
+    """
+    Lista todos los mecánicos del taller con todos sus campos y detalles
+    
+    Args:
+        activo: Filtro por estado activo (True, False, None para todos)
+        limite: Número máximo de mecánicos a listar
+    
+    Returns:
+        dict: Lista de mecánicos con todos sus campos
+    """
+    try:
+        from django.db import connection
+        # Verificar conexión a la base de datos
+        connection.ensure_connection()
+        mecanicos = Mecanico.objects.all()
+        
+        # Aplicar filtro por estado activo
+        if activo is not None:
+            mecanicos = mecanicos.filter(activo=activo)
+        
+        # Ordenar por fecha de ingreso y limitar
+        mecanicos = mecanicos.order_by('-fecha_ingreso')[:limite]
+        
+        # Construir lista con todos los campos
+        lista_mecanicos = []
+        for m in mecanicos:
+            # Obtener información del usuario (verificar que existe)
+            try:
+                user = m.user
+                if not user:
+                    # Si no hay usuario, crear datos básicos
+                    usuario_data = {
+                        "username": f"mecanico_{m.id}",
+                        "first_name": "",
+                        "last_name": "",
+                        "email": "N/A",
+                        "is_active": False,
+                        "date_joined": None
+                    }
+                    user = None  # Marcar como None para usar datos básicos
+                else:
+                    usuario_data = {
+                        "username": user.username,
+                        "first_name": user.first_name or "",
+                        "last_name": user.last_name or "",
+                        "email": user.email or "N/A",
+                        "is_active": user.is_active,
+                        "date_joined": user.date_joined.strftime("%Y-%m-%d %H:%M:%S") if user.date_joined else None
+                    }
+            except Exception as e_user:
+                logger.warning(f"Error obteniendo usuario para mecánico {m.id}: {str(e_user)}")
+                usuario_data = {
+                    "username": f"mecanico_{m.id}",
+                    "first_name": "",
+                    "last_name": "",
+                    "email": "N/A",
+                    "is_active": False,
+                    "date_joined": None
+                }
+                user = None
+            
+            # Obtener configuración de bono si existe
+            config_bono = None
+            try:
+                config = m.configuracion_bono
+                config_bono = {
+                    "activo": config.activo,
+                    "tipo_bono": config.tipo_bono,
+                    "tipo_bono_display": config.get_tipo_bono_display(),
+                    "porcentaje_mano_obra": float(config.porcentaje_mano_obra) if config.porcentaje_mano_obra else None,
+                    "cantidad_fija": float(config.cantidad_fija) if config.cantidad_fija else None
+                }
+            except ConfiguracionBonoMecanico.DoesNotExist:
+                pass
+            
+            # Obtener bonos generados
+            bonos = BonoGenerado.objects.filter(mecanico=m).order_by('-fecha_generacion')[:10]
+            bonos_lista = []
+            for bono in bonos:
+                bonos_lista.append({
+                    "id": bono.id,
+                    "trabajo_id": bono.trabajo.id if bono.trabajo else None,
+                    "monto": float(bono.monto),
+                    "fecha_generacion": bono.fecha_generacion.strftime("%Y-%m-%d %H:%M:%S") if bono.fecha_generacion else None,
+                    "pagado": bono.pagado,
+                    "fecha_pago": bono.fecha_pago.strftime("%Y-%m-%d %H:%M:%S") if bono.fecha_pago else None
+                })
+            
+            # Obtener pagos realizados
+            pagos = PagoMecanico.objects.filter(mecanico=m).order_by('-fecha_pago')[:10]
+            pagos_lista = []
+            for pago in pagos:
+                pagos_lista.append({
+                    "id": pago.id,
+                    "monto": float(pago.monto),
+                    "metodo_pago": pago.metodo_pago,
+                    "metodo_pago_display": pago.get_metodo_pago_display(),
+                    "fecha_pago": pago.fecha_pago.strftime("%Y-%m-%d %H:%M:%S") if pago.fecha_pago else None,
+                    "notas": pago.notas or ""
+                })
+            
+            # Obtener trabajos asignados (últimos 10)
+            try:
+                trabajos_asignados = Trabajo.objects.filter(mecanicos=m, visible=True).order_by('-fecha_inicio')[:10]
+                trabajos_lista = []
+                for trabajo in trabajos_asignados:
+                    try:
+                        trabajos_lista.append({
+                            "id": trabajo.id,
+                            "vehiculo": str(trabajo.vehiculo) if trabajo.vehiculo else "N/A",
+                            "estado": trabajo.estado,
+                            "estado_display": trabajo.get_estado_display(),
+                            "fecha_inicio": trabajo.fecha_inicio.strftime("%Y-%m-%d %H:%M:%S") if trabajo.fecha_inicio else None,
+                            "total_presupuestado": float(trabajo.total_general) if trabajo.total_general else 0.0
+                        })
+                    except Exception as e_trab:
+                        logger.warning(f"Error procesando trabajo {trabajo.id if hasattr(trabajo, 'id') else 'N/A'} para mecánico {m.id}: {str(e_trab)}")
+                        continue
+            except Exception as e_trabajos:
+                logger.warning(f"Error obteniendo trabajos para mecánico {m.id}: {str(e_trabajos)}")
+                trabajos_asignados = []
+                trabajos_lista = []
+            
+            # Calcular estadísticas (con manejo de errores)
+            try:
+                total_bonos = float(m.saldo_bonos_total) if hasattr(m, 'saldo_bonos_total') and m.saldo_bonos_total else 0.0
+            except:
+                total_bonos = 0.0
+            try:
+                bonos_pendientes = float(m.saldo_bonos_pendiente) if hasattr(m, 'saldo_bonos_pendiente') and m.saldo_bonos_pendiente else 0.0
+            except:
+                bonos_pendientes = 0.0
+            try:
+                total_pagado = sum([float(pago.monto) for pago in pagos])
+            except:
+                total_pagado = 0.0
+            saldo_actual = bonos_pendientes - total_pagado
+            
+            mecanico_data = {
+                "id": m.id,
+                "usuario": usuario_data,
+                "especialidad": m.especialidad or "N/A",
+                "fecha_ingreso": m.fecha_ingreso.strftime("%Y-%m-%d") if m.fecha_ingreso else None,
+                "activo": m.activo,
+                "rol": m.rol,
+                "rol_display": m.get_rol_display(),
+                "permisos": {
+                    "puede_ver_diagnosticos": m.puede_ver_diagnosticos,
+                    "puede_ver_trabajos": m.puede_ver_trabajos,
+                    "puede_ver_pos": m.puede_ver_pos,
+                    "puede_ver_compras": m.puede_ver_compras,
+                    "puede_ver_inventario": m.puede_ver_inventario,
+                    "puede_ver_administracion": m.puede_ver_administracion,
+                    "crear_clientes": m.crear_clientes,
+                    "crear_vehiculos": m.crear_vehiculos,
+                    "aprobar_diagnosticos": m.aprobar_diagnosticos,
+                    "gestionar_usuarios": m.gestionar_usuarios
+                },
+                "configuracion_bono": config_bono,
+                "estadisticas": {
+                    "total_bonos_generados": total_bonos,
+                    "bonos_pendientes": bonos_pendientes,
+                    "total_pagado": total_pagado,
+                    "saldo_actual": saldo_actual,
+                    "cantidad_trabajos_asignados": len(trabajos_lista),
+                    "cantidad_bonos": len(bonos_lista),
+                    "cantidad_pagos": len(pagos_lista)
+                },
+                "bonos": bonos_lista,
+                "pagos": pagos_lista,
+                "trabajos_asignados": trabajos_lista
+            }
+            
+            lista_mecanicos.append(mecanico_data)
+        
+        return {
+            "total_encontrados": len(lista_mecanicos),
+            "filtro_activo": activo,
+            "mecanicos": lista_mecanicos
+        }
+    
+    except Exception as e:
+        error_msg = str(e)
+        error_type = type(e).__name__
+        logger.error(f"Error en listado_mecanicos_data: {error_type}: {error_msg}", exc_info=True)
+        return {
+            "error": f"Error al listar mecánicos: {error_msg}",
+            "error_type": error_type,
+            "success": False
+        }
+
+
+def test_function_call_data():
+    """
+    Función de test muy simple para diagnosticar problemas con function_calls.
+    No accede a la base de datos ni hace operaciones complejas.
+    Solo devuelve un mensaje fijo para verificar que las function_calls funcionan.
+    """
+    try:
+        import datetime
+        return {
+            "success": True,
+            "message": "Función de test ejecutada correctamente",
+            "timestamp": datetime.datetime.now().isoformat(),
+            "test_data": {
+                "status": "ok",
+                "function": "test_function_call",
+                "description": "Esta es una función de test simple para diagnosticar problemas"
+            }
+        }
+    except Exception as e:
+        return {"error": f"Error en función de test: {str(e)}"}
+
+
+def test2_function_call_data():
+    """
+    Función de test para diagnosticar problemas de conexión a la base de datos.
+    Se conecta directamente a la tabla Mecanico y lista solo los nombres.
+    Genera logs detallados en un archivo para análisis.
+    """
+    import os
+    import datetime
+    from pathlib import Path
+    from django.db import connection
+    from django.conf import settings
+    
+    # Determinar ruta del archivo de log (siempre convertir a string)
+    if isinstance(settings.BASE_DIR, Path):
+        log_file_path = str(settings.BASE_DIR / 'test2_db_log.txt')
+    else:
+        log_file_path = str(os.path.join(settings.BASE_DIR, 'test2_db_log.txt'))
+    log_entries = []
+    
+    def log_entry(message):
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        log_msg = f"[{timestamp}] {message}"
+        log_entries.append(log_msg)
+        logger.info(log_msg)
+    
+    try:
+        log_entry("=== INICIO test2_function_call_data ===")
+        
+        # Verificar conexión
+        log_entry("Verificando conexión a la base de datos...")
+        connection.ensure_connection()
+        log_entry(f"Conexión establecida. Base de datos: {connection.settings_dict.get('NAME', 'N/A')}")
+        
+        # Intentar consulta simple
+        log_entry("Intentando consulta: Mecanico.objects.all()")
+        mecanicos = Mecanico.objects.all()
+        log_entry(f"Query ejecutado. Tipo: {type(mecanicos)}")
+        
+        # Contar resultados
+        log_entry("Contando resultados...")
+        count = mecanicos.count()
+        log_entry(f"Total de mecánicos encontrados: {count}")
+        
+        # Obtener nombres
+        log_entry("Obteniendo nombres de mecánicos...")
+        nombres = []
+        for i, mecanico in enumerate(mecanicos[:50]):  # Limitar a 50 para no sobrecargar
+            try:
+                # Intentar obtener el nombre del usuario asociado
+                if hasattr(mecanico, 'user') and mecanico.user:
+                    nombre = mecanico.user.get_full_name() or mecanico.user.username
+                else:
+                    nombre = f"Mecanico-{mecanico.id}"
+                
+                nombres.append({
+                    "id": mecanico.id,
+                    "nombre": nombre,
+                    "activo": getattr(mecanico, 'activo', None)
+                })
+                log_entry(f"Mecánico {i+1}: ID={mecanico.id}, Nombre={nombre}")
+            except Exception as e_mec:
+                log_entry(f"Error procesando mecánico {i+1}: {str(e_mec)}")
+                nombres.append({
+                    "id": mecanico.id if hasattr(mecanico, 'id') else 'N/A',
+                    "nombre": f"Error: {str(e_mec)}",
+                    "activo": None
+                })
+        
+        log_entry(f"Total de nombres obtenidos: {len(nombres)}")
+        
+        # Información de la conexión (asegurar que todos los valores sean strings)
+        db_name = connection.settings_dict.get('NAME', 'N/A')
+        if db_name and not isinstance(db_name, str):
+            db_name = str(db_name)
+        
+        db_info = {
+            "engine": str(connection.settings_dict.get('ENGINE', 'N/A')),
+            "name": db_name,
+            "host": str(connection.settings_dict.get('HOST', 'N/A')),
+            "port": str(connection.settings_dict.get('PORT', 'N/A')) if connection.settings_dict.get('PORT') else 'N/A',
+            "user": str(connection.settings_dict.get('USER', 'N/A')),
+        }
+        log_entry(f"Info BD: {db_info}")
+        
+        # Escribir log a archivo
+        try:
+            with open(log_file_path, 'a', encoding='utf-8') as f:
+                f.write('\n'.join(log_entries))
+                f.write('\n\n')
+            log_entry(f"Log guardado en: {log_file_path}")
+        except Exception as e_log:
+            log_entry(f"Error escribiendo log a archivo: {str(e_log)}")
+        
+        return {
+            "success": True,
+            "message": "Función test2 ejecutada correctamente",
+            "timestamp": datetime.datetime.now().isoformat(),
+            "total_mecanicos": count,
+            "nombres_obtenidos": len(nombres),
+            "nombres": nombres,
+            "db_info": db_info,
+            "log_file": log_file_path,
+            "log_entries_count": len(log_entries)
+        }
+        
+    except Exception as e:
+        error_msg = str(e)
+        error_type = type(e).__name__
+        log_entry(f"ERROR: {error_type}: {error_msg}")
+        
+        # Intentar escribir el error al log
+        try:
+            with open(log_file_path, 'a', encoding='utf-8') as f:
+                f.write('\n'.join(log_entries))
+                f.write(f'\nERROR FINAL: {error_type}: {error_msg}\n\n')
+        except:
+            pass
+        
+        logger.error(f"Error en test2_function_call_data: {error_type}: {error_msg}", exc_info=True)
+        
+        return {
+            "error": f"Error en función test2: {error_msg}",
+            "error_type": error_type,
+            "success": False,
+            "log_file": log_file_path,
+            "log_entries": log_entries[-10:]  # Últimas 10 entradas del log
+        }
 
 
 @login_required
@@ -326,126 +783,130 @@ def netgogo_console(request):
 
 
 @csrf_exempt
-@login_required
+@ajax_login_required
 def netgogo_chat(request):
     """Vista para manejar las peticiones del chat de Netgogo - Solo accesible para maxgonpe temporalmente"""
-    # Restricción temporal: solo el usuario maxgonpe puede acceder
-    if request.user.username != 'maxgonpe':
-        return JsonResponse({"error": "Acceso restringido. Esta funcionalidad está en desarrollo."}, status=403)
-    
-    if request.method != 'POST':
-        return JsonResponse({"error": "Método no permitido. Use POST."}, status=405)
-    
-    # Obtener datos del request
-    if request.content_type == 'application/json':
-        try:
-            data = json.loads(request.body)
-        except json.JSONDecodeError:
-            return JsonResponse({"error": "JSON inválido"}, status=400)
-    else:
-        data = request.POST
-    
-    user_input = data.get("input", "").strip()
-    reset_session = data.get("reset", False)
-    
-    if not user_input:
-        return JsonResponse({"error": "Falta parámetro 'input'"}, status=400)
-    
-    # Validar comandos de salida
-    if user_input.lower() in ("salir", "exit", "bye", "sayonara"):
-        return JsonResponse({
-            "message": "Hasta luego!",
-            "reset": True
-        })
-    
-    # Obtener o crear agente en la sesión
-    if reset_session or 'netgogo_agent' not in request.session:
-        agent = Agent()
-        request.session['netgogo_agent'] = {
-            'messages': agent.messages.copy()
-        }
-    else:
-        agent = Agent()
-        agent.messages = request.session['netgogo_agent']['messages'].copy()
-    
-    # Agregar mensaje del usuario al historial
-    agent.messages.append({"role": "user", "content": user_input})
-    
-    # Importar función de conexión a la API desde views_api
-    from .views_api import call_openai_api
-    
-    # Preparar mensajes para la API
-    # La API espera mensajes en formato estándar: {role, content}
-    # Limpiar y filtrar mensajes para formato compatible
-    messages_for_api = []
-    for msg in agent.messages:
-        if isinstance(msg, dict):
-            # Solo incluir mensajes con role y content (formato estándar)
-            if 'role' in msg and 'content' in msg:
-                # Asegurar que content sea string
-                content = msg['content']
-                if not isinstance(content, str):
-                    content = str(content)
-                
-                # Crear mensaje limpio solo con role y content
-                clean_msg = {
-                    "role": msg['role'],
-                    "content": content
-                }
-                messages_for_api.append(clean_msg)
-            
-            # Convertir function_call_output a formato de mensaje function
-            elif msg.get('type') == 'function_call_output':
-                # Convertir output de función a formato compatible
-                output_content = msg.get('output', '')
-                if isinstance(output_content, str):
-                    try:
-                        # Intentar parsear JSON si es string JSON
-                        output_content = json.loads(output_content)
-                    except:
-                        pass
-                
-                # Formato para mensaje de función
-                function_msg = {
-                    "role": "function",
-                    "name": "function_output",
-                    "content": json.dumps(output_content) if not isinstance(output_content, str) else output_content
-                }
-                messages_for_api.append(function_msg)
-    
-    # Si no hay mensajes válidos, usar solo el último mensaje del usuario
-    if not messages_for_api:
-        messages_for_api = [{"role": "user", "content": user_input}]
-    
-    # Validar que todos los mensajes tengan el formato correcto
-    validated_messages = []
-    for msg in messages_for_api:
-        if isinstance(msg, dict) and 'role' in msg and 'content' in msg:
-            # Asegurar que content sea string
-            if not isinstance(msg['content'], str):
-                msg['content'] = str(msg['content'])
-            validated_messages.append({
-                "role": msg['role'],
-                "content": msg['content']
-            })
-        elif isinstance(msg, dict) and msg.get('role') == 'function':
-            # Mensaje de función con name
-            validated_messages.append({
-                "role": "function",
-                "name": msg.get('name', 'function_output'),
-                "content": str(msg.get('content', ''))
-            })
-    
-    messages_for_api = validated_messages if validated_messages else [{"role": "user", "content": user_input}]
-    
-    # Construir el historial completo para mantener contexto
-    # Intentar primero con lista de mensajes (formato estándar de chat)
-    # Si la API no lo acepta, construiremos un string con el contexto
-    input_for_api = messages_for_api  # Intentar con lista completa primero
-    
-    # Llamar a la API usando la función de conexión
-    # ACTIVAR herramientas para que la IA pueda usar function_calls
     try:
+        # Restricción temporal: solo el usuario maxgonpe puede acceder
+        if not request.user.is_authenticated:
+            return JsonResponse({"error": "No autenticado. Por favor inicia sesión."}, status=401)
+        
+        if request.user.username != 'maxgonpe':
+            return JsonResponse({"error": "Acceso restringido. Esta funcionalidad está en desarrollo."}, status=403)
+        
+        if request.method != 'POST':
+            return JsonResponse({"error": "Método no permitido. Use POST."}, status=405)
+        
+        # Obtener datos del request
+        if request.content_type == 'application/json':
+            try:
+                data = json.loads(request.body)
+            except json.JSONDecodeError as e:
+                logger.error(f"Error parseando JSON en netgogo_chat: {str(e)}")
+                return JsonResponse({"error": "JSON inválido"}, status=400)
+        else:
+            data = request.POST
+        
+        user_input = data.get("input", "").strip()
+        reset_session = data.get("reset", False)
+        
+        if not user_input and not reset_session:
+            return JsonResponse({"error": "Falta parámetro 'input'"}, status=400)
+        
+        # Validar comandos de salida
+        if user_input.lower() in ("salir", "exit", "bye", "sayonara"):
+            return JsonResponse({
+                "message": "Hasta luego!",
+                "reset": True
+            })
+        
+        # Obtener o crear agente en la sesión
+        if reset_session or 'netgogo_agent' not in request.session:
+            agent = Agent()
+            request.session['netgogo_agent'] = {
+                'messages': agent.messages.copy()
+            }
+        else:
+            agent = Agent()
+            agent.messages = request.session['netgogo_agent']['messages'].copy()
+        
+        # Agregar mensaje del usuario al historial
+        agent.messages.append({"role": "user", "content": user_input})
+    
+        # Importar función de conexión a la API desde views_api
+        from .views_api import call_openai_api
+        
+        # Preparar mensajes para la API
+        # La API espera mensajes en formato estándar: {role, content}
+        # Limpiar y filtrar mensajes para formato compatible
+        messages_for_api = []
+        for msg in agent.messages:
+            if isinstance(msg, dict):
+                # Solo incluir mensajes con role y content (formato estándar)
+                if 'role' in msg and 'content' in msg:
+                    # Asegurar que content sea string
+                    content = msg['content']
+                    if not isinstance(content, str):
+                        content = str(content)
+                    
+                    # Crear mensaje limpio solo con role y content
+                    clean_msg = {
+                        "role": msg['role'],
+                        "content": content
+                    }
+                    messages_for_api.append(clean_msg)
+                
+                # Convertir function_call_output a formato de mensaje function
+                elif msg.get('type') == 'function_call_output':
+                    # Convertir output de función a formato compatible
+                    output_content = msg.get('output', '')
+                    if isinstance(output_content, str):
+                        try:
+                            # Intentar parsear JSON si es string JSON
+                            output_content = json.loads(output_content)
+                        except:
+                            pass
+                    
+                    # Formato para mensaje de función
+                    function_msg = {
+                        "role": "function",
+                        "name": "function_output",
+                        "content": json.dumps(output_content) if not isinstance(output_content, str) else output_content
+                    }
+                    messages_for_api.append(function_msg)
+        
+        # Si no hay mensajes válidos, usar solo el último mensaje del usuario
+        if not messages_for_api:
+            messages_for_api = [{"role": "user", "content": user_input}]
+        
+        # Validar que todos los mensajes tengan el formato correcto
+        validated_messages = []
+        for msg in messages_for_api:
+            if isinstance(msg, dict) and 'role' in msg and 'content' in msg:
+                # Asegurar que content sea string
+                if not isinstance(msg['content'], str):
+                    msg['content'] = str(msg['content'])
+                validated_messages.append({
+                    "role": msg['role'],
+                    "content": msg['content']
+                })
+            elif isinstance(msg, dict) and msg.get('role') == 'function':
+                # Mensaje de función con name
+                validated_messages.append({
+                    "role": "function",
+                    "name": msg.get('name', 'function_output'),
+                    "content": str(msg.get('content', ''))
+                })
+        
+        messages_for_api = validated_messages if validated_messages else [{"role": "user", "content": user_input}]
+        
+        # Construir el historial completo para mantener contexto
+        # Intentar primero con lista de mensajes (formato estándar de chat)
+        # Si la API no lo acepta, construiremos un string con el contexto
+        input_for_api = messages_for_api  # Intentar con lista completa primero
+        
+        # Llamar a la API usando la función de conexión
+        # ACTIVAR herramientas para que la IA pueda usar function_calls
         response_data = call_openai_api(
             input_data=input_for_api,  # Enviar historial completo como lista
             model="gpt-5-nano",
@@ -485,24 +946,47 @@ def netgogo_chat(request):
                         }
                         
                         # Ejecutar la función correspondiente
-                        if fn_name == 'listado_trabajos':
-                            estado = args.get('estado', 'todos')
-                            limite = args.get('limite', 20)
-                            result = listado_trabajos_data(estado=estado, limite=limite)
-                        elif fn_name == 'query_sistema':
-                            result = query_sistema_data(
-                                tipo=args.get('tipo'),
-                                filtro=args.get('filtro'),
-                                detalle=args.get('detalle', False)
-                            )
-                        elif fn_name == 'list_files_in_dir':
-                            result = agent.list_files_in_dir(**args)
-                        elif fn_name == 'read_file':
-                            result = agent.read_file(**args)
-                        elif fn_name == 'edit_file':
-                            result = agent.edit_file(**args)
-                        else:
-                            result = {"error": f"Función desconocida: {fn_name}"}
+                        try:
+                            if fn_name == 'listado_trabajos':
+                                estado = args.get('estado', 'todos')
+                                limite = args.get('limite', 20)
+                                result = listado_trabajos_data(estado=estado, limite=limite)
+                            elif fn_name == 'listado_mecanicos':
+                                activo = args.get('activo')
+                                limite = args.get('limite', 50)
+                                result = listado_mecanicos_data(activo=activo, limite=limite)
+                            elif fn_name == 'query_sistema':
+                                result = query_sistema_data(
+                                    tipo=args.get('tipo'),
+                                    filtro=args.get('filtro'),
+                                    detalle=args.get('detalle', False)
+                                )
+                            elif fn_name == 'list_files_in_dir':
+                                result = agent.list_files_in_dir(**args)
+                            elif fn_name == 'read_file':
+                                result = agent.read_file(**args)
+                            elif fn_name == 'edit_file':
+                                result = agent.edit_file(**args)
+                            elif fn_name == 'test_function_call':
+                                result = test_function_call_data()
+                            elif fn_name == 'test2':
+                                result = test2_function_call_data()
+                            else:
+                                result = {"error": f"Función desconocida: {fn_name}", "success": False}
+                            
+                            # Asegurar que result siempre sea un dict
+                            if not isinstance(result, dict):
+                                result = {"result": result, "success": True}
+                                
+                        except Exception as func_error:
+                            error_msg = str(func_error)
+                            error_type = type(func_error).__name__
+                            logger.error(f"Error ejecutando función {fn_name}: {error_type}: {error_msg}", exc_info=True)
+                            result = {
+                                "error": f"Error ejecutando {fn_name}: {error_msg}",
+                                "error_type": error_type,
+                                "success": False
+                            }
                         
                         tool_info['result'] = result
                         
@@ -633,8 +1117,17 @@ def netgogo_chat(request):
             if tool_name == 'listado_trabajos':
                 result["message"] = f"📋 Listando trabajos del taller..."
                 result["needs_continuation"] = False  # Ya se procesó la continuación arriba
+            elif tool_name == 'listado_mecanicos':
+                result["message"] = f"👷 Listando mecánicos del taller..."
+                result["needs_continuation"] = False  # Ya se procesó la continuación arriba
             elif tool_name == 'query_sistema':
                 result["message"] = f"📊 Consultando información del sistema: {tool_info.get('arguments', {}).get('tipo', 'desconocido')}..."
+                result["needs_continuation"] = False  # Ya se procesó la continuación arriba
+            elif tool_name == 'test_function_call':
+                result["message"] = f"🧪 Función de test ejecutada correctamente. Verificando respuesta..."
+                result["needs_continuation"] = False  # Ya se procesó la continuación arriba
+            elif tool_name == 'test2':
+                result["message"] = f"🔍 Test2 ejecutado. Revisando conexión a base de datos..."
                 result["needs_continuation"] = False  # Ya se procesó la continuación arriba
             else:
                 result["message"] = f"⚙️ Herramienta '{tool_name}' ejecutada. Continuando..."
@@ -643,12 +1136,35 @@ def netgogo_chat(request):
             result["needs_continuation"] = False
         
         return JsonResponse(result)
-    
+        
     except Exception as e:
-        print("Error en netgogo_chat:", str(e))
+        # Log detallado del error
+        error_msg = str(e)
+        error_type = type(e).__name__
+        logger.error(f"Error en netgogo_chat: {error_type}: {error_msg}", exc_info=True)
         import traceback
-        traceback.print_exc()
-        return JsonResponse({"error": f"Error: {str(e)}"}, status=500)
+        error_trace = traceback.format_exc()
+        logger.error(f"Traceback completo: {error_trace}")
+        
+        # Verificar si es un error de base de datos
+        is_db_error = any(db_error in error_type.lower() for db_error in [
+            'database', 'connection', 'operational', 'integrity', 'doesnotexist'
+        ]) or 'database' in error_msg.lower() or 'connection' in error_msg.lower()
+        
+        # Siempre devolver JSON, nunca HTML
+        error_response = {
+            "error": f"Error interno del servidor: {error_msg}",
+            "error_type": error_type,
+            "is_db_error": is_db_error,
+            "success": False
+        }
+        
+        if settings.DEBUG:
+            error_response["details"] = error_trace
+        
+        return JsonResponse(error_response, status=500)
+
+
 
 
 
