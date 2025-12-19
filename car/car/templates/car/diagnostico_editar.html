@@ -107,6 +107,108 @@
         color: var(--text-primary);
     }
     
+    /* Estilos específicos para el input de búsqueda de insumos - Mejor contraste */
+    #buscar-insumo {
+        background-color: var(--bg-card) !important;
+        border: 2px solid var(--border-color) !important;
+        color: var(--text-primary) !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    #buscar-insumo:focus {
+        background-color: var(--bg-card) !important;
+        border-color: var(--accent) !important;
+        box-shadow: 0 0 0 0.2rem var(--accent-200), 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+        color: var(--text-primary) !important;
+    }
+    
+    /* Ajustes para modo oscuro */
+    .theme-oscuro #buscar-insumo,
+    .theme-piedra #buscar-insumo,
+    .theme-charcoal #buscar-insumo,
+    .theme-forest #buscar-insumo,
+    .theme-plum #buscar-insumo {
+        background-color: rgba(255, 255, 255, 0.08) !important;
+        border-color: rgba(255, 255, 255, 0.2) !important;
+    }
+    
+    .theme-oscuro #buscar-insumo:focus,
+    .theme-piedra #buscar-insumo:focus,
+    .theme-charcoal #buscar-insumo:focus,
+    .theme-forest #buscar-insumo:focus,
+    .theme-plum #buscar-insumo:focus {
+        background-color: rgba(255, 255, 255, 0.12) !important;
+        border-color: var(--accent) !important;
+    }
+    
+    /* Ajustes para modo claro */
+    .theme-sand #buscar-insumo,
+    .theme-cyan #buscar-insumo,
+    .theme-sage #buscar-insumo,
+    .theme-sky #buscar-insumo {
+        background-color: rgba(0, 0, 0, 0.03) !important;
+        border-color: rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    .theme-sand #buscar-insumo:focus,
+    .theme-cyan #buscar-insumo:focus,
+    .theme-sage #buscar-insumo:focus,
+    .theme-sky #buscar-insumo:focus {
+        background-color: rgba(0, 0, 0, 0.05) !important;
+        border-color: var(--accent) !important;
+    }
+    
+    /* Estilos específicos para el input de búsqueda de repuestos - Mejor contraste */
+    #buscar-repuesto {
+        background-color: var(--bg-card) !important;
+        border: 2px solid var(--border-color) !important;
+        color: var(--text-primary) !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    #buscar-repuesto:focus {
+        background-color: var(--bg-card) !important;
+        border-color: var(--accent) !important;
+        box-shadow: 0 0 0 0.2rem var(--accent-200), 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+        color: var(--text-primary) !important;
+    }
+    
+    /* Ajustes para modo oscuro */
+    .theme-oscuro #buscar-repuesto,
+    .theme-piedra #buscar-repuesto,
+    .theme-charcoal #buscar-repuesto,
+    .theme-forest #buscar-repuesto,
+    .theme-plum #buscar-repuesto {
+        background-color: rgba(255, 255, 255, 0.08) !important;
+        border-color: rgba(255, 255, 255, 0.2) !important;
+    }
+    
+    .theme-oscuro #buscar-repuesto:focus,
+    .theme-piedra #buscar-repuesto:focus,
+    .theme-charcoal #buscar-repuesto:focus,
+    .theme-forest #buscar-repuesto:focus,
+    .theme-plum #buscar-repuesto:focus {
+        background-color: rgba(255, 255, 255, 0.12) !important;
+        border-color: var(--accent) !important;
+    }
+    
+    /* Ajustes para modo claro */
+    .theme-sand #buscar-repuesto,
+    .theme-cyan #buscar-repuesto,
+    .theme-sage #buscar-repuesto,
+    .theme-sky #buscar-repuesto {
+        background-color: rgba(0, 0, 0, 0.03) !important;
+        border-color: rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    .theme-sand #buscar-repuesto:focus,
+    .theme-cyan #buscar-repuesto:focus,
+    .theme-sage #buscar-repuesto:focus,
+    .theme-sky #buscar-repuesto:focus {
+        background-color: rgba(0, 0, 0, 0.05) !important;
+        border-color: var(--accent) !important;
+    }
+    
     .btn {
         border-radius: var(--border-radius-sm);
         padding: var(--spacing-sm) var(--spacing-md);
@@ -614,7 +716,7 @@
                 <div class="mb-3">
                     <label for="buscar-repuesto" class="form-label">🔍 Buscar Repuesto:</label>
                     <div class="input-group">
-                        <input type="text" id="buscar-repuesto" class="form-control" placeholder="Buscar por nombre, SKU, marca... (escribe para filtrar)">
+                        <input type="text" id="buscar-repuesto" class="form-control" placeholder="Buscar por nombre, SKU, marca... (escribe para filtrar)" autocomplete="off">
                         <button class="btn btn-outline-primary" type="button" onclick="buscarRepuestos()">
                             <i class="fas fa-search"></i>
                         </button>
@@ -709,7 +811,7 @@
                 <div class="mb-3">
                     <label for="buscar-insumo" class="form-label">🔍 Buscar Insumo:</label>
                     <div class="input-group">
-                        <input type="text" id="buscar-insumo" class="form-control" placeholder="Buscar por nombre, SKU, código... (escribe para filtrar)">
+                        <input type="text" id="buscar-insumo" class="form-control" placeholder="Buscar por nombre, SKU, código... (escribe para filtrar)" autocomplete="off">
                         <button class="btn btn-outline-primary" type="button" onclick="buscarInsumos()">
                             <i class="fas fa-search"></i>
                         </button>
@@ -800,15 +902,23 @@ function showTab(tabName) {
         selectedBtn.classList.add('active');
     }
     
-    // Si es la pestaña de insumos, configurar búsqueda
+    // Si es la pestaña de insumos, configurar búsqueda y limpiar campo
     if (tabName === 'insumos') {
+        const buscarInsumoInput = document.getElementById('buscar-insumo');
+        if (buscarInsumoInput) {
+            buscarInsumoInput.value = ''; // Limpiar el campo inmediatamente
+        }
         setTimeout(() => {
             configurarBusquedaInsumos();
         }, 100);
     }
     
-    // Si es la pestaña de repuestos, configurar búsqueda
+    // Si es la pestaña de repuestos, configurar búsqueda y limpiar campo
     if (tabName === 'repuestos') {
+        const buscarRepuestoInput = document.getElementById('buscar-repuesto');
+        if (buscarRepuestoInput) {
+            buscarRepuestoInput.value = ''; // Limpiar el campo inmediatamente
+        }
         setTimeout(() => {
             configurarBusquedaRepuestos();
         }, 100);
@@ -983,6 +1093,9 @@ function configurarBusquedaInsumos() {
     if (buscarInsumoInput) {
         console.log('✅ Input de búsqueda encontrado');
         
+        // Limpiar el campo siempre que se configure (por si el navegador restauró el valor)
+        buscarInsumoInput.value = '';
+        
         // Remover event listeners existentes
         buscarInsumoInput.removeEventListener('input', buscarInsumosDebounced);
         
@@ -992,11 +1105,15 @@ function configurarBusquedaInsumos() {
             buscarInsumosDebounced();
         });
         
-        // Cargar insumos iniciales si estamos en la pestaña de insumos
-        if (window.location.search.includes('tab=insumos')) {
-            console.log('📦 Cargando insumos iniciales...');
-            buscarInsumoInput.value = 'xxxx zzzzzz';
-            buscarInsumos();
+        // Hacer focus en el input si estamos en la pestaña de insumos
+        const tabInsumos = document.getElementById('tab-insumos');
+        if (tabInsumos && tabInsumos.classList.contains('active')) {
+            console.log('📦 Pestaña de insumos activa, enfocando input...');
+            // Asegurar que el campo esté limpio y hacer focus
+            buscarInsumoInput.value = '';
+            setTimeout(() => {
+                buscarInsumoInput.focus();
+            }, 150);
         }
     } else {
         console.log('❌ Input de búsqueda no encontrado');
@@ -1151,18 +1268,24 @@ window.agregarRepuestos = async function() {
         
         if (response.ok || response.status === 302) {
             console.log('✅ Repuestos agregados exitosamente');
+            {% if ver_mensajes %}
             alert('✅ Repuestos agregados exitosamente');
+            {% endif %}
             
             // Recargar la página manteniendo la pestaña de repuestos activa
             window.location.href = window.location.pathname + '?tab=repuestos';
         } else {
             console.error('❌ Error al agregar repuestos:', response.status);
+            {% if ver_mensajes %}
             alert('❌ Error al agregar los repuestos');
+            {% endif %}
         }
         
     } catch (error) {
         console.error('❌ Error en la petición:', error);
+        {% if ver_mensajes %}
         alert('❌ Error al agregar los repuestos');
+        {% endif %}
     }
 };
 
@@ -1174,6 +1297,9 @@ function configurarBusquedaRepuestos() {
     if (buscarRepuestoInput) {
         console.log('✅ Input de búsqueda encontrado');
         
+        // Limpiar el campo siempre que se configure (por si el navegador restauró el valor)
+        buscarRepuestoInput.value = '';
+        
         // Remover event listeners existentes
         buscarRepuestoInput.removeEventListener('input', buscarRepuestosDebounced);
         
@@ -1183,11 +1309,15 @@ function configurarBusquedaRepuestos() {
             buscarRepuestosDebounced();
         });
         
-        // Cargar repuestos iniciales si estamos en la pestaña de repuestos
-        if (window.location.search.includes('tab=repuestos')) {
-            console.log('🔧 Cargando repuestos iniciales...');
-            buscarRepuestoInput.value = 'filtro';
-            buscarRepuestos();
+        // Hacer focus en el input si estamos en la pestaña de repuestos
+        const tabRepuestos = document.getElementById('tab-repuestos');
+        if (tabRepuestos && tabRepuestos.classList.contains('active')) {
+            console.log('🔧 Pestaña de repuestos activa, enfocando input...');
+            // Asegurar que el campo esté limpio y hacer focus
+            buscarRepuestoInput.value = '';
+            setTimeout(() => {
+                buscarRepuestoInput.focus();
+            }, 150);
         }
     } else {
         console.log('❌ Input de búsqueda no encontrado');
@@ -1445,8 +1575,28 @@ function debugAcciones() {
     alert(`Debug:\nComponente: ${document.getElementById('componente-seleccionado').value}\nAcciones seleccionadas: ${accionesSeleccionadas.length}`);
 }
 
+// Función para limpiar el campo de búsqueda de insumos
+function limpiarCampoBuscarInsumo() {
+    const buscarInsumoInput = document.getElementById('buscar-insumo');
+    if (buscarInsumoInput) {
+        buscarInsumoInput.value = '';
+    }
+}
+
+// Función para limpiar el campo de búsqueda de repuestos
+function limpiarCampoBuscarRepuesto() {
+    const buscarRepuestoInput = document.getElementById('buscar-repuesto');
+    if (buscarRepuestoInput) {
+        buscarRepuestoInput.value = '';
+    }
+}
+
 // Cargar cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', function() {
+    // Limpiar campos de búsqueda inmediatamente al cargar
+    limpiarCampoBuscarInsumo();
+    limpiarCampoBuscarRepuesto();
+    
     // Configurar acordeón de componentes
     configurarAcordeonComponentes();
     
@@ -1458,6 +1608,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Configurar búsqueda de repuestos si estamos en la pestaña correspondiente
     if (window.location.search.includes('tab=repuestos')) {
         setTimeout(configurarBusquedaRepuestos, 100);
+    }
+});
+
+// Limpiar campos cuando la página se restaura desde el cache del navegador
+window.addEventListener('pageshow', function(event) {
+    if (event.persisted) {
+        // La página fue cargada desde el cache
+        limpiarCampoBuscarInsumo();
+        limpiarCampoBuscarRepuesto();
     }
 });
 </script>
