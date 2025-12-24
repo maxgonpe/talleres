@@ -26,3 +26,6 @@ def configuracion_taller(request):
 
 
 
+
+
+

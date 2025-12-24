@@ -151,3 +151,6 @@ echo -e "${GREEN}Restauración completada${NC}"
 echo -e "${BLUE}========================================${NC}"
 
 
+
+
+

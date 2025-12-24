@@ -10,7 +10,7 @@ import json
 import logging
 from functools import wraps
 from .agent import Agent
-from .models import Trabajo, Cliente_Taller, Vehiculo, Repuesto, Diagnostico, TrabajoAccion, TrabajoRepuesto, TrabajoAbono, Mecanico, BonoGenerado, PagoMecanico, ConfiguracionBonoMecanico
+from .models import Trabajo, Cliente_Taller, Vehiculo, Repuesto, Diagnostico, TrabajoAccion, TrabajoRepuesto, TrabajoAbono, Mecanico, BonoGenerado, PagoMecanico, ConfiguracionBonoMecanico, Componente, Accion, ComponenteAccion, Compra, CompraItem, VehiculoVersion, RepuestoAplicacion, RepuestoEnStock
 
 # Configurar logging
 logger = logging.getLogger(__name__)
@@ -153,34 +153,28 @@ def query_sistema_data(tipo, filtro=None, detalle=False):
             return {"tipo": "vehiculo", "datos": datos}
         
         elif tipo == "repuesto":
-            repuestos = Repuesto.objects.all()
+            # Solo contar registros - sin filtros ni procesamiento adicional
+            total_real = Repuesto.objects.all().count()
             
+            # Si hay filtro, aplicar filtro y contar
             if filtro:
-                repuestos = repuestos.filter(
-                    Q(nombre__icontains=filtro) | Q(codigo__icontains=filtro) | Q(sku__icontains=filtro)
+                repuestos_filtrados = Repuesto.objects.filter(
+                    Q(nombre__icontains=filtro) | 
+                    Q(codigo_barra__icontains=filtro) | 
+                    Q(sku__icontains=filtro) |
+                    Q(marca__icontains=filtro) |
+                    Q(referencia__icontains=filtro) |
+                    Q(descripcion__icontains=filtro)
                 )
+                total_real = repuestos_filtrados.count()
             
-            repuestos = repuestos.order_by('nombre')[:20]
-            
-            if detalle:
-                datos = []
-                for r in repuestos:
-                    stock_total = r.stock_actual if hasattr(r, 'stock_actual') else 0
-                    datos.append({
-                        "id": r.id,
-                        "nombre": r.nombre,
-                        "codigo": r.codigo or "N/A",
-                        "sku": r.sku or "N/A",
-                        "precio_venta": float(r.precio_venta) if r.precio_venta else 0,
-                        "stock": stock_total
-                    })
-            else:
-                datos = {
-                    "total": repuestos.count(),
-                    "lista": [{"nombre": r.nombre, "codigo": r.codigo or "N/A", "precio": float(r.precio_venta) if r.precio_venta else 0} for r in repuestos[:10]]
+            # Solo devolver el count total
+            return {
+                "tipo": "repuesto", 
+                "datos": {
+                    "total": total_real
                 }
-            
-            return {"tipo": "repuesto", "datos": datos}
+            }
         
         elif tipo == "estadisticas":
             ahora = timezone.now()
@@ -618,6 +612,684 @@ def listado_mecanicos_data(activo=None, limite=50):
         }
 
 
+def listado_clientes_data(activo=None, limite=50, filtro=None):
+    """
+    Lista todos los clientes del taller con todos sus campos y detalles
+    
+    Args:
+        activo: Filtro por estado activo (True, False, None para todos)
+        limite: Número máximo de clientes a listar
+        filtro: Filtro de búsqueda por RUT o nombre
+    
+    Returns:
+        dict: Lista de clientes con todos sus campos
+    """
+    try:
+        from django.db import connection
+        connection.ensure_connection()
+        clientes = Cliente_Taller.objects.all()
+        
+        if activo is not None:
+            clientes = clientes.filter(activo=activo)
+        
+        if filtro:
+            clientes = clientes.filter(
+                Q(rut__icontains=filtro) | Q(nombre__icontains=filtro)
+            )
+        
+        clientes = clientes.order_by('nombre')[:limite]
+        
+        lista_clientes = []
+        for c in clientes:
+            try:
+                vehiculos_count = Vehiculo.objects.filter(cliente=c).count()
+                trabajos_count = Trabajo.objects.filter(vehiculo__cliente=c, visible=True).count()
+                
+                cliente_data = {
+                    "rut": c.rut or "N/A",
+                    "nombre": c.nombre or "N/A",
+                    "telefono": c.telefono or "N/A",
+                    "email": c.email or "N/A",
+                    "direccion": c.direccion or "N/A",
+                    "fecha_registro": c.fecha_registro.strftime("%Y-%m-%d %H:%M:%S") if c.fecha_registro else None,
+                    "activo": c.activo,
+                    "estadisticas": {
+                        "vehiculos": vehiculos_count,
+                        "trabajos": trabajos_count
+                    }
+                }
+                lista_clientes.append(cliente_data)
+            except Exception as e_cliente:
+                logger.warning(f"Error procesando cliente {c.rut if hasattr(c, 'rut') else 'N/A'}: {str(e_cliente)}")
+                continue
+        
+        return {
+            "total_encontrados": len(lista_clientes),
+            "filtro_activo": activo,
+            "clientes": lista_clientes
+        }
+    
+    except Exception as e:
+        error_msg = str(e)
+        error_type = type(e).__name__
+        logger.error(f"Error en listado_clientes_data: {error_type}: {error_msg}", exc_info=True)
+        return {
+            "error": f"Error al listar clientes: {error_msg}",
+            "error_type": error_type,
+            "success": False
+        }
+
+
+def listado_vehiculos_data(limite=50, filtro=None):
+    """
+    Lista todos los vehículos del taller con todos sus campos y detalles
+    
+    Args:
+        limite: Número máximo de vehículos a listar
+        filtro: Filtro de búsqueda por placa, marca, modelo o cliente
+    
+    Returns:
+        dict: Lista de vehículos con todos sus campos
+    """
+    try:
+        from django.db import connection
+        connection.ensure_connection()
+        vehiculos = Vehiculo.objects.all()
+        
+        if filtro:
+            vehiculos = vehiculos.filter(
+                Q(placa__icontains=filtro) | 
+                Q(marca__icontains=filtro) | 
+                Q(modelo__icontains=filtro) |
+                Q(cliente__nombre__icontains=filtro) |
+                Q(cliente__rut__icontains=filtro)
+            )
+        
+        vehiculos = vehiculos.order_by('-id')[:limite]
+        
+        lista_vehiculos = []
+        for v in vehiculos:
+            try:
+                trabajos_count = Trabajo.objects.filter(vehiculo=v, visible=True).count()
+                diagnosticos_count = Diagnostico.objects.filter(vehiculo=v, visible=True).count()
+                
+                vehiculo_data = {
+                    "id": v.id,
+                    "placa": v.placa or "N/A",
+                    "marca": v.marca or "N/A",
+                    "modelo": v.modelo or "N/A",
+                    "anio": v.anio or "N/A",
+                    "vin": v.vin or "N/A",
+                    "descripcion_motor": v.descripcion_motor or "N/A",
+                    "cliente": {
+                        "rut": v.cliente.rut if v.cliente else "N/A",
+                        "nombre": v.cliente.nombre if v.cliente else "N/A"
+                    },
+                    "estadisticas": {
+                        "trabajos": trabajos_count,
+                        "diagnosticos": diagnosticos_count
+                    }
+                }
+                lista_vehiculos.append(vehiculo_data)
+            except Exception as e_vehiculo:
+                logger.warning(f"Error procesando vehículo {v.id if hasattr(v, 'id') else 'N/A'}: {str(e_vehiculo)}")
+                continue
+        
+        return {
+            "total_encontrados": len(lista_vehiculos),
+            "vehiculos": lista_vehiculos
+        }
+    
+    except Exception as e:
+        error_msg = str(e)
+        error_type = type(e).__name__
+        logger.error(f"Error en listado_vehiculos_data: {error_type}: {error_msg}", exc_info=True)
+        return {
+            "error": f"Error al listar vehículos: {error_msg}",
+            "error_type": error_type,
+            "success": False
+        }
+
+
+def listado_componentes_data(activo=None, limite=100, filtro=None):
+    """
+    Lista todos los componentes del sistema con todos sus campos y detalles
+    
+    Args:
+        activo: Filtro por estado activo (True, False, None para todos)
+        limite: Número máximo de componentes a listar
+        filtro: Filtro de búsqueda por nombre o código
+    
+    Returns:
+        dict: Lista de componentes con todos sus campos
+    """
+    try:
+        from django.db import connection
+        connection.ensure_connection()
+        componentes = Componente.objects.all()
+        
+        if activo is not None:
+            componentes = componentes.filter(activo=activo)
+        
+        if filtro:
+            componentes = componentes.filter(
+                Q(nombre__icontains=filtro) | Q(codigo__icontains=filtro)
+            )
+        
+        componentes = componentes.order_by('nombre')[:limite]
+        
+        lista_componentes = []
+        for c in componentes:
+            try:
+                hijos_count = c.hijos.count() if hasattr(c, 'hijos') else 0
+                
+                componente_data = {
+                    "id": c.id,
+                    "nombre": c.nombre or "N/A",
+                    "codigo": c.codigo or "N/A",
+                    "activo": c.activo,
+                    "padre": c.padre.nombre if c.padre else None,
+                    "padre_codigo": c.padre.codigo if c.padre else None,
+                    "hijos_count": hijos_count
+                }
+                lista_componentes.append(componente_data)
+            except Exception as e_comp:
+                logger.warning(f"Error procesando componente {c.id if hasattr(c, 'id') else 'N/A'}: {str(e_comp)}")
+                continue
+        
+        return {
+            "total_encontrados": len(lista_componentes),
+            "filtro_activo": activo,
+            "componentes": lista_componentes
+        }
+    
+    except Exception as e:
+        error_msg = str(e)
+        error_type = type(e).__name__
+        logger.error(f"Error en listado_componentes_data: {error_type}: {error_msg}", exc_info=True)
+        return {
+            "error": f"Error al listar componentes: {error_msg}",
+            "error_type": error_type,
+            "success": False
+        }
+
+
+def listado_acciones_data(limite=100, filtro=None):
+    """
+    Lista todas las acciones disponibles en el sistema
+    
+    Args:
+        limite: Número máximo de acciones a listar
+        filtro: Filtro de búsqueda por nombre
+    
+    Returns:
+        dict: Lista de acciones con todos sus campos
+    """
+    try:
+        from django.db import connection
+        connection.ensure_connection()
+        acciones = Accion.objects.all()
+        
+        if filtro:
+            acciones = acciones.filter(nombre__icontains=filtro)
+        
+        acciones = acciones.order_by('nombre')[:limite]
+        
+        lista_acciones = []
+        for a in acciones:
+            try:
+                # Contar cuántas veces se usa esta acción
+                uso_count = ComponenteAccion.objects.filter(accion=a).count()
+                
+                accion_data = {
+                    "id": a.id,
+                    "nombre": a.nombre or "N/A",
+                    "uso_count": uso_count
+                }
+                lista_acciones.append(accion_data)
+            except Exception as e_acc:
+                logger.warning(f"Error procesando acción {a.id if hasattr(a, 'id') else 'N/A'}: {str(e_acc)}")
+                continue
+        
+        return {
+            "total_encontrados": len(lista_acciones),
+            "acciones": lista_acciones
+        }
+    
+    except Exception as e:
+        error_msg = str(e)
+        error_type = type(e).__name__
+        logger.error(f"Error en listado_acciones_data: {error_type}: {error_msg}", exc_info=True)
+        return {
+            "error": f"Error al listar acciones: {error_msg}",
+            "error_type": error_type,
+            "success": False
+        }
+
+
+def listado_diagnosticos_data(estado=None, limite=50, filtro=None):
+    """
+    Lista todos los diagnósticos del sistema con todos sus campos y detalles
+    
+    Args:
+        estado: Filtro por estado (pendiente, aprobado, rechazado, None para todos)
+        limite: Número máximo de diagnósticos a listar
+        filtro: Filtro de búsqueda por placa del vehículo
+    
+    Returns:
+        dict: Lista de diagnósticos con todos sus campos
+    """
+    try:
+        from django.db import connection
+        connection.ensure_connection()
+        diagnosticos = Diagnostico.objects.filter(visible=True)
+        
+        if estado:
+            diagnosticos = diagnosticos.filter(estado=estado)
+        
+        if filtro:
+            diagnosticos = diagnosticos.filter(
+                Q(vehiculo__placa__icontains=filtro) |
+                Q(vehiculo__marca__icontains=filtro) |
+                Q(vehiculo__modelo__icontains=filtro)
+            )
+        
+        diagnosticos = diagnosticos.order_by('-fecha')[:limite]
+        
+        lista_diagnosticos = []
+        for d in diagnosticos:
+            try:
+                vehiculo = d.vehiculo
+                acciones_count = d.acciones_componentes.count() if hasattr(d, 'acciones_componentes') else 0
+                repuestos_count = d.repuestos.count() if hasattr(d, 'repuestos') else 0
+                
+                diagnostico_data = {
+                    "id": d.id,
+                    "vehiculo": {
+                        "placa": vehiculo.placa if vehiculo else "N/A",
+                        "marca": vehiculo.marca if vehiculo else "N/A",
+                        "modelo": vehiculo.modelo if vehiculo else "N/A",
+                        "anio": vehiculo.anio if vehiculo else "N/A"
+                    },
+                    "cliente": {
+                        "rut": vehiculo.cliente.rut if vehiculo and vehiculo.cliente else "N/A",
+                        "nombre": vehiculo.cliente.nombre if vehiculo and vehiculo.cliente else "N/A"
+                    },
+                    "descripcion_problema": d.descripcion_problema or "",
+                    "fecha": d.fecha.strftime("%Y-%m-%d %H:%M:%S") if d.fecha else None,
+                    "estado": d.estado,
+                    "estado_display": d.get_estado_display() if hasattr(d, 'get_estado_display') else str(d.estado),
+                    "total_mano_obra": float(d.total_mano_obra) if hasattr(d, 'total_mano_obra') else 0.0,
+                    "total_repuestos": float(d.total_repuestos) if hasattr(d, 'total_repuestos') else 0.0,
+                    "total_presupuesto": float(d.total_presupuesto) if hasattr(d, 'total_presupuesto') else 0.0,
+                    "acciones_count": acciones_count,
+                    "repuestos_count": repuestos_count
+                }
+                lista_diagnosticos.append(diagnostico_data)
+            except Exception as e_diag:
+                logger.warning(f"Error procesando diagnóstico {d.id if hasattr(d, 'id') else 'N/A'}: {str(e_diag)}")
+                continue
+        
+        return {
+            "total_encontrados": len(lista_diagnosticos),
+            "estado_filtro": estado,
+            "diagnosticos": lista_diagnosticos
+        }
+    
+    except Exception as e:
+        error_msg = str(e)
+        error_type = type(e).__name__
+        logger.error(f"Error en listado_diagnosticos_data: {error_type}: {error_msg}", exc_info=True)
+        return {
+            "error": f"Error al listar diagnósticos: {error_msg}",
+            "error_type": error_type,
+            "success": False
+        }
+
+
+def listado_compatibilidad_data(repuesto_id=None, vehiculo_id=None, limite=50):
+    """
+    Lista información de compatibilidad entre repuestos y vehículos
+    
+    Args:
+        repuesto_id: ID del repuesto para buscar vehículos compatibles
+        vehiculo_id: ID del vehículo para buscar repuestos compatibles
+        limite: Número máximo de resultados a listar
+    
+    Returns:
+        dict: Lista de compatibilidades
+    """
+    try:
+        from django.db import connection
+        connection.ensure_connection()
+        
+        if repuesto_id:
+            # Buscar vehículos compatibles para un repuesto
+            try:
+                repuesto = Repuesto.objects.get(id=repuesto_id)
+                aplicaciones = RepuestoAplicacion.objects.filter(repuesto=repuesto)[:limite]
+                
+                compatibilidades = []
+                for app in aplicaciones:
+                    compatibilidades.append({
+                        "repuesto": {
+                            "id": repuesto.id,
+                            "nombre": repuesto.nombre,
+                            "sku": repuesto.sku or "N/A"
+                        },
+                        "vehiculo": {
+                            "marca": app.version.marca,
+                            "modelo": app.version.modelo,
+                            "anio_desde": app.version.anio_desde,
+                            "anio_hasta": app.version.anio_hasta,
+                            "motor": app.motor or app.version.motor or "N/A",
+                            "carroceria": app.carroceria or app.version.carroceria or "N/A"
+                        },
+                        "posicion": app.posicion or "N/A"
+                    })
+                
+                return {
+                    "total_encontrados": len(compatibilidades),
+                    "tipo": "repuesto_a_vehiculos",
+                    "compatibilidades": compatibilidades
+                }
+            except Repuesto.DoesNotExist:
+                return {"error": f"Repuesto con ID {repuesto_id} no encontrado", "success": False}
+        
+        elif vehiculo_id:
+            # Buscar repuestos compatibles para un vehículo
+            try:
+                vehiculo = Vehiculo.objects.get(id=vehiculo_id)
+                # Buscar versiones que coincidan con el vehículo
+                versiones = VehiculoVersion.objects.filter(
+                    marca=vehiculo.marca,
+                    modelo=vehiculo.modelo,
+                    anio_desde__lte=vehiculo.anio,
+                    anio_hasta__gte=vehiculo.anio
+                )[:limite]
+                
+                compatibilidades = []
+                for version in versiones:
+                    aplicaciones = RepuestoAplicacion.objects.filter(version=version)[:10]
+                    for app in aplicaciones:
+                        compatibilidades.append({
+                            "repuesto": {
+                                "id": app.repuesto.id,
+                                "nombre": app.repuesto.nombre,
+                                "sku": app.repuesto.sku or "N/A"
+                            },
+                            "vehiculo": {
+                                "marca": version.marca,
+                                "modelo": version.modelo,
+                                "anio_desde": version.anio_desde,
+                                "anio_hasta": version.anio_hasta
+                            }
+                        })
+                
+                return {
+                    "total_encontrados": len(compatibilidades),
+                    "tipo": "vehiculo_a_repuestos",
+                    "compatibilidades": compatibilidades
+                }
+            except Vehiculo.DoesNotExist:
+                return {"error": f"Vehículo con ID {vehiculo_id} no encontrado", "success": False}
+        
+        else:
+            # Listar todas las compatibilidades
+            aplicaciones = RepuestoAplicacion.objects.all()[:limite]
+            compatibilidades = []
+            for app in aplicaciones:
+                compatibilidades.append({
+                    "repuesto": {
+                        "id": app.repuesto.id,
+                        "nombre": app.repuesto.nombre
+                    },
+                    "vehiculo": {
+                        "marca": app.version.marca,
+                        "modelo": app.version.modelo,
+                        "anio_desde": app.version.anio_desde,
+                        "anio_hasta": app.version.anio_hasta
+                    }
+                })
+            
+            return {
+                "total_encontrados": len(compatibilidades),
+                "tipo": "todas",
+                "compatibilidades": compatibilidades
+            }
+    
+    except Exception as e:
+        error_msg = str(e)
+        error_type = type(e).__name__
+        logger.error(f"Error en listado_compatibilidad_data: {error_type}: {error_msg}", exc_info=True)
+        return {
+            "error": f"Error al listar compatibilidades: {error_msg}",
+            "error_type": error_type,
+            "success": False
+        }
+
+
+def listado_compras_data(estado=None, limite=50, filtro=None):
+    """
+    Lista todas las compras del sistema con todos sus campos y detalles
+    
+    Args:
+        estado: Filtro por estado (borrador, confirmada, recibida, cancelada, None para todos)
+        limite: Número máximo de compras a listar
+        filtro: Filtro de búsqueda por número de compra o proveedor
+    
+    Returns:
+        dict: Lista de compras con todos sus campos
+    """
+    try:
+        from django.db import connection
+        connection.ensure_connection()
+        compras = Compra.objects.all()
+        
+        if estado:
+            compras = compras.filter(estado=estado)
+        
+        if filtro:
+            compras = compras.filter(
+                Q(numero_compra__icontains=filtro) | Q(proveedor__icontains=filtro)
+            )
+        
+        compras = compras.order_by('-fecha_compra', '-creado_en')[:limite]
+        
+        lista_compras = []
+        for c in compras:
+            try:
+                items_count = c.items.count() if hasattr(c, 'items') else 0
+                
+                compra_data = {
+                    "id": c.id,
+                    "numero_compra": c.numero_compra or "N/A",
+                    "proveedor": c.proveedor or "N/A",
+                    "fecha_compra": c.fecha_compra.strftime("%Y-%m-%d") if c.fecha_compra else None,
+                    "fecha_recibida": c.fecha_recibida.strftime("%Y-%m-%d") if c.fecha_recibida else None,
+                    "estado": c.estado,
+                    "estado_display": c.get_estado_display() if hasattr(c, 'get_estado_display') else str(c.estado),
+                    "total": float(c.total) if c.total else 0.0,
+                    "observaciones": c.observaciones or "",
+                    "items_count": items_count,
+                    "creado_en": c.creado_en.strftime("%Y-%m-%d %H:%M:%S") if c.creado_en else None
+                }
+                lista_compras.append(compra_data)
+            except Exception as e_compra:
+                logger.warning(f"Error procesando compra {c.id if hasattr(c, 'id') else 'N/A'}: {str(e_compra)}")
+                continue
+        
+        return {
+            "total_encontrados": len(lista_compras),
+            "estado_filtro": estado,
+            "compras": lista_compras
+        }
+    
+    except Exception as e:
+        error_msg = str(e)
+        error_type = type(e).__name__
+        logger.error(f"Error en listado_compras_data: {error_type}: {error_msg}", exc_info=True)
+        return {
+            "error": f"Error al listar compras: {error_msg}",
+            "error_type": error_type,
+            "success": False
+        }
+
+
+def listado_inventario_data(limite=200, filtro=None, stock_minimo=None):
+    """
+    Lista el inventario de repuestos con información de stock
+    
+    Args:
+        limite: Número máximo de repuestos a listar (default: 200 para cubrir todos los registros)
+        filtro: Filtro de búsqueda por nombre, SKU, código o marca
+        stock_minimo: Filtrar solo repuestos con stock menor o igual a este valor
+    
+    Returns:
+        dict: Lista de repuestos con información de inventario
+    """
+    try:
+        from django.db import connection
+        connection.ensure_connection()
+        repuestos = Repuesto.objects.all()
+        
+        if filtro:
+            # Búsqueda más amplia: nombre, SKU, código de barras, marca, referencia, descripción
+            repuestos = repuestos.filter(
+                Q(nombre__icontains=filtro) | 
+                Q(sku__icontains=filtro) | 
+                Q(codigo_barra__icontains=filtro) |
+                Q(marca__icontains=filtro) |
+                Q(referencia__icontains=filtro) |
+                Q(descripcion__icontains=filtro)
+            )
+        
+        # Obtener el total REAL de registros ANTES de aplicar límite
+        total_real_registros = repuestos.count()
+        
+        # Asegurar que el límite cubra TODOS los registros si no hay filtro
+        if not filtro:
+            # Usar el total real + margen para asegurar que se procesen todos
+            limite = max(limite, total_real_registros + 100)  # +100 para margen de seguridad
+        elif limite < 200:
+            limite = 200
+        
+        # Ordenar correctamente: primero por nombre, luego por id como desempate
+        repuestos_ordenados = repuestos.order_by('nombre', 'id')[:limite]
+        
+        # Forzar evaluación del queryset ANTES de convertirlo a lista
+        # Usar iterator() para procesar en lotes y evitar problemas de memoria
+        repuestos_lista = list(repuestos_ordenados)
+        
+        logger.info(f"listado_inventario_data: total_real={total_real_registros}, limite={limite}, repuestos_en_lista={len(repuestos_lista)}")
+        
+        lista_inventario = []
+        errores_procesamiento = 0
+        procesados = 0
+        
+        # Optimizar: Pre-cargar todos los stocks de una vez usando prefetch_related
+        from django.db.models import Sum, Q as Q_stock
+        repuestos_con_stock = RepuestoEnStock.objects.values('repuesto').annotate(
+            stock_total=Sum('stock'),
+            stock_reservado=Sum('reservado')
+        )
+        
+        # Crear un diccionario para acceso rápido: {repuesto_id: {stock_total, stock_reservado}}
+        stock_dict = {}
+        for item in repuestos_con_stock:
+            rep_id = item['repuesto']
+            stock_dict[rep_id] = {
+                'total': item['stock_total'] or 0,
+                'reservado': item['stock_reservado'] or 0,
+                'disponible': (item['stock_total'] or 0) - (item['stock_reservado'] or 0)
+            }
+        
+        # Procesar TODOS los repuestos de la lista de forma optimizada
+        for r in repuestos_lista:
+            procesados += 1
+            try:
+                # Obtener stock del diccionario pre-calculado (mucho más rápido)
+                stock_info = stock_dict.get(r.id, {'total': 0, 'reservado': 0, 'disponible': 0})
+                stock_total = stock_info['total']
+                stock_reservado = stock_info['reservado']
+                stock_disponible = stock_info['disponible']
+                
+                # Si se especifica stock_minimo Y hay un filtro de búsqueda, aplicar filtro de stock
+                # Si NO hay filtro de búsqueda, mostrar TODOS los repuestos sin filtrar por stock
+                # (porque el usuario pidió "todos los registros")
+                if stock_minimo is not None and filtro:
+                    if stock_total > stock_minimo:
+                        continue  # Saltar este repuesto si tiene más stock que el mínimo especificado
+                # Si no hay filtro de búsqueda, agregar TODOS los repuestos sin importar el stock
+                
+                # Agregar TODOS los repuestos que pasen el filtro (o todos si no hay filtro)
+                inventario_data = {
+                    "id": r.id,
+                    "nombre": r.nombre or "N/A",
+                    "sku": r.sku or "N/A",
+                    "codigo_barra": r.codigo_barra or "N/A",
+                    "marca": r.marca or "N/A",
+                    "precio_costo": float(r.precio_costo) if r.precio_costo else 0.0,
+                    "precio_venta": float(r.precio_venta) if r.precio_venta else 0.0,
+                    "stock": {
+                        "total": stock_total,
+                        "reservado": stock_reservado,
+                        "disponible": stock_disponible
+                    },
+                    "unidad": r.unidad or "pieza"
+                }
+                lista_inventario.append(inventario_data)
+            except Exception as e_inv:
+                errores_procesamiento += 1
+                logger.warning(f"Error procesando inventario para repuesto {r.id if hasattr(r, 'id') else 'N/A'}: {str(e_inv)}", exc_info=True)
+                # Agregar información básica incluso si hay error
+                try:
+                    inventario_data = {
+                        "id": r.id,
+                        "nombre": r.nombre or "N/A",
+                        "sku": r.sku or "N/A",
+                        "codigo_barra": r.codigo_barra or "N/A",
+                        "marca": r.marca or "N/A",
+                        "precio_costo": float(r.precio_costo) if r.precio_costo else 0.0,
+                        "precio_venta": float(r.precio_venta) if r.precio_venta else 0.0,
+                        "stock": {
+                            "total": 0,
+                            "reservado": 0,
+                            "disponible": 0
+                        },
+                        "unidad": r.unidad or "pieza",
+                        "error_stock": "Error al obtener stock"
+                    }
+                    lista_inventario.append(inventario_data)
+                except Exception as e2:
+                    logger.error(f"Error crítico procesando repuesto {r.id if hasattr(r, 'id') else 'N/A'}: {str(e2)}", exc_info=True)
+                    continue
+        
+        logger.info(f"listado_inventario_data: procesados={procesados}, agregados={len(lista_inventario)}, errores={errores_procesamiento}, stock_minimo={stock_minimo}")
+        
+        # Si no se agregaron todos los registros esperados y no hay filtro, hay un problema
+        if len(lista_inventario) < total_real_registros and not filtro and stock_minimo is None:
+            logger.warning(f"ADVERTENCIA: Se procesaron {procesados} repuestos pero solo se agregaron {len(lista_inventario)}. Esperados: {total_real_registros}")
+        
+        return {
+            "total_real_registros": total_real_registros,  # Total real en la tabla
+            "total_encontrados": len(lista_inventario),  # Total procesados exitosamente
+            "total_procesados": procesados,  # Total de repuestos procesados en el loop
+            "errores_procesamiento": errores_procesamiento,
+            "inventario": lista_inventario
+        }
+    
+    except Exception as e:
+        error_msg = str(e)
+        error_type = type(e).__name__
+        logger.error(f"Error en listado_inventario_data: {error_type}: {error_msg}", exc_info=True)
+        return {
+            "error": f"Error al listar inventario: {error_msg}",
+            "error_type": error_type,
+            "success": False
+        }
+
+
 def test_function_call_data():
     """
     Función de test muy simple para diagnosticar problemas con function_calls.
@@ -971,6 +1643,46 @@ def netgogo_chat(request):
                                 result = test_function_call_data()
                             elif fn_name == 'test2':
                                 result = test2_function_call_data()
+                            elif fn_name == 'netgogo':
+                                result = agent.activate_netgogo_mode()
+                            elif fn_name == 'listado_clientes':
+                                activo = args.get('activo')
+                                limite = args.get('limite', 50)
+                                filtro = args.get('filtro')
+                                result = listado_clientes_data(activo=activo, limite=limite, filtro=filtro)
+                            elif fn_name == 'listado_vehiculos':
+                                limite = args.get('limite', 50)
+                                filtro = args.get('filtro')
+                                result = listado_vehiculos_data(limite=limite, filtro=filtro)
+                            elif fn_name == 'listado_componentes':
+                                activo = args.get('activo')
+                                limite = args.get('limite', 100)
+                                filtro = args.get('filtro')
+                                result = listado_componentes_data(activo=activo, limite=limite, filtro=filtro)
+                            elif fn_name == 'listado_acciones':
+                                limite = args.get('limite', 100)
+                                filtro = args.get('filtro')
+                                result = listado_acciones_data(limite=limite, filtro=filtro)
+                            elif fn_name == 'listado_diagnosticos':
+                                estado = args.get('estado')
+                                limite = args.get('limite', 50)
+                                filtro = args.get('filtro')
+                                result = listado_diagnosticos_data(estado=estado, limite=limite, filtro=filtro)
+                            elif fn_name == 'listado_compatibilidad':
+                                repuesto_id = args.get('repuesto_id')
+                                vehiculo_id = args.get('vehiculo_id')
+                                limite = args.get('limite', 50)
+                                result = listado_compatibilidad_data(repuesto_id=repuesto_id, vehiculo_id=vehiculo_id, limite=limite)
+                            elif fn_name == 'listado_compras':
+                                estado = args.get('estado')
+                                limite = args.get('limite', 50)
+                                filtro = args.get('filtro')
+                                result = listado_compras_data(estado=estado, limite=limite, filtro=filtro)
+                            elif fn_name == 'listado_inventario':
+                                limite = args.get('limite', 200)
+                                filtro = args.get('filtro')
+                                stock_minimo = args.get('stock_minimo')
+                                result = listado_inventario_data(limite=limite, filtro=filtro, stock_minimo=stock_minimo)
                             else:
                                 result = {"error": f"Función desconocida: {fn_name}", "success": False}
                             
@@ -1017,10 +1729,21 @@ def netgogo_chat(request):
                                             "content": output_content if isinstance(output_content, str) else json.dumps(output_content)
                                         })
                             
+                            # Agregar mensaje explícito pidiendo que procese el resultado
+                            continuation_messages.append({
+                                "role": "user",
+                                "content": (
+                                    f"Procesa el resultado de la función '{fn_name}' que acabas de ejecutar. "
+                                    f"Responde al usuario de forma clara y amigable, extrayendo la información relevante del resultado. "
+                                    f"NO muestres el JSON crudo, sino presenta los datos de manera legible. "
+                                    f"Si el usuario pidió información específica, extrae solo esos campos."
+                                )
+                            })
+                            
                             continuation_response = call_openai_api(
                                 input_data=continuation_messages,
                                 model="gpt-5-nano",
-                                tools=agent.tools,
+                                tools=None,  # No necesitamos herramientas en la continuación
                                 store=True,
                                 timeout=60
                             )
@@ -1043,6 +1766,28 @@ def netgogo_chat(request):
                                             final_message = content
                                         break
                             
+                            # Si no se obtuvo mensaje de la continuación, crear uno básico desde el resultado
+                            if not final_message:
+                                # Intentar extraer información básica del resultado para crear un mensaje
+                                if isinstance(result, dict) and 'error' not in result:
+                                    try:
+                                        if 'compras' in result:
+                                            final_message = f"Se encontraron {result.get('total_encontrados', 0)} compras."
+                                        elif 'clientes' in result:
+                                            final_message = f"Se encontraron {result.get('total_encontrados', 0)} clientes."
+                                        elif 'vehiculos' in result:
+                                            final_message = f"Se encontraron {result.get('total_encontrados', 0)} vehículos."
+                                        elif 'trabajos' in result:
+                                            final_message = f"Se encontraron {result.get('total_encontrados', 0)} trabajos."
+                                        elif 'mecanicos' in result:
+                                            final_message = f"Se encontraron {result.get('total_encontrados', 0)} mecánicos."
+                                        else:
+                                            final_message = "Datos obtenidos correctamente."
+                                    except:
+                                        final_message = "Datos obtenidos correctamente."
+                                else:
+                                    final_message = "Datos obtenidos correctamente."
+                            
                             # Agregar respuesta al historial
                             if final_message:
                                 agent.messages.append({
@@ -1050,11 +1795,15 @@ def netgogo_chat(request):
                                     "content": final_message
                                 })
                             
+                            # IMPORTANTE: Guardar el final_message para usarlo en la respuesta
+                            tool_info['final_message'] = final_message
+                            
                         except Exception as e:
                             print(f"Error en continuación después de {fn_name}: {str(e)}")
                             import traceback
                             traceback.print_exc()
                             final_message = f"Datos obtenidos. {json.dumps(result, indent=2, ensure_ascii=False)[:500]}..."
+                            tool_info['final_message'] = final_message
                     
                     # Si es message, extraer el texto
                     elif output_type == 'message':
@@ -1114,24 +1863,43 @@ def netgogo_chat(request):
             
             # Mensajes específicos según la herramienta
             tool_name = tool_info.get('name')
-            if tool_name == 'listado_trabajos':
+            
+            # Si hay un final_message de la continuación, usarlo como mensaje principal
+            if tool_info.get('final_message'):
+                result["message"] = tool_info.get('final_message')
+            elif tool_name == 'listado_trabajos':
                 result["message"] = f"📋 Listando trabajos del taller..."
-                result["needs_continuation"] = False  # Ya se procesó la continuación arriba
             elif tool_name == 'listado_mecanicos':
                 result["message"] = f"👷 Listando mecánicos del taller..."
-                result["needs_continuation"] = False  # Ya se procesó la continuación arriba
             elif tool_name == 'query_sistema':
                 result["message"] = f"📊 Consultando información del sistema: {tool_info.get('arguments', {}).get('tipo', 'desconocido')}..."
-                result["needs_continuation"] = False  # Ya se procesó la continuación arriba
             elif tool_name == 'test_function_call':
                 result["message"] = f"🧪 Función de test ejecutada correctamente. Verificando respuesta..."
-                result["needs_continuation"] = False  # Ya se procesó la continuación arriba
             elif tool_name == 'test2':
                 result["message"] = f"🔍 Test2 ejecutado. Revisando conexión a base de datos..."
-                result["needs_continuation"] = False  # Ya se procesó la continuación arriba
+            elif tool_name == 'netgogo':
+                # El mensaje ya viene completo en result, solo asegurar que no necesita continuación
+                pass
+            elif tool_name == 'listado_clientes':
+                result["message"] = f"👥 Listando clientes del taller..."
+            elif tool_name == 'listado_vehiculos':
+                result["message"] = f"🚗 Listando vehículos del taller..."
+            elif tool_name == 'listado_componentes':
+                result["message"] = f"🔧 Listando componentes del sistema..."
+            elif tool_name == 'listado_acciones':
+                result["message"] = f"⚙️ Listando acciones disponibles..."
+            elif tool_name == 'listado_diagnosticos':
+                result["message"] = f"📋 Listando diagnósticos (historial)..."
+            elif tool_name == 'listado_compatibilidad':
+                result["message"] = f"🔗 Consultando compatibilidad repuestos-vehículos..."
+            elif tool_name == 'listado_compras':
+                result["message"] = f"🛒 Listando compras del taller..."
+            elif tool_name == 'listado_inventario':
+                result["message"] = f"📦 Consultando inventario de repuestos..."
             else:
                 result["message"] = f"⚙️ Herramienta '{tool_name}' ejecutada. Continuando..."
-                result["needs_continuation"] = False  # Ya se procesó la continuación arriba
+            
+            result["needs_continuation"] = False  # Ya se procesó la continuación arriba
         else:
             result["needs_continuation"] = False
         

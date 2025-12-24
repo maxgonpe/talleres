@@ -15,3 +15,6 @@ python3 manage.py collectstatic --noinput || true
 # Ejecutar el comando que viene como argumento (gunicorn)
 echo "Iniciando servidor..."
 exec "$@"
+
+
+

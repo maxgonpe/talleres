@@ -260,3 +260,6 @@ echo -e "${GREEN}Análisis completado${NC}"
 echo -e "${BLUE}========================================${NC}"
 
 
+
+
+

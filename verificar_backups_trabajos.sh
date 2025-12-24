@@ -201,3 +201,6 @@ echo -e "${GREEN}Verificación completada${NC}"
 echo -e "${BLUE}========================================${NC}"
 
 
+
+
+

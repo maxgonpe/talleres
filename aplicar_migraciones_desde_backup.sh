@@ -141,3 +141,6 @@ echo "  2. Verifica que la aplicación funcione correctamente"
 echo ""
 
 
+
+
+

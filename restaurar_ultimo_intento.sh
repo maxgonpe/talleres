@@ -224,3 +224,6 @@ echo -e "${BLUE}========================================${NC}"
 rm -f /tmp/diagnosticos_individuales.sql /tmp/trabajos_individuales.sql 2>/dev/null || true
 
 
+
+
+

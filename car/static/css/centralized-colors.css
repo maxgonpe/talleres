@@ -359,6 +359,11 @@ body {
   font-weight: var(--font-weight-semibold);
 }
 
+/* EXCEPCIÓN: Las pestañas (nav-tabs) NO deben usar la regla general de nav-link */
+.nav-tabs .nav-link {
+  /* Esta regla será sobrescrita por las reglas específicas de tema más abajo */
+}
+
 .nav-link:hover {
   background-color: var(--hover-bg);
   color: var(--hover-text) !important;
@@ -1069,4 +1074,70 @@ strong, b, .fw-bold {
 .pizarra-cell .vehiculo-item .progress-bar {
   background-color: var(--accent);
   border-radius: var(--border-radius-sm);
+}
+
+/* ========================================
+   ESTILOS ESPECÍFICOS PARA PESTAÑAS (TABS)
+   ======================================== */
+
+/* MODO OSCURO (theme-piedra): Texto SIEMPRE blanco - MÁXIMA PRIORIDAD Y ESPECIFICIDAD */
+.theme-piedra .nav-tabs .nav-link,
+.theme-piedra .nav-tabs .nav-link:hover,
+.theme-piedra .nav-tabs .nav-link:focus,
+.theme-piedra .nav-tabs .nav-link.active,
+.theme-piedra ul.nav-tabs li.nav-item button.nav-link,
+.theme-piedra #panelTabs .nav-link,
+.theme-piedra #panelTabs button.nav-link,
+html.theme-piedra .nav-tabs .nav-link,
+body.theme-piedra .nav-tabs .nav-link,
+html body.theme-piedra .nav-tabs .nav-link,
+html body.theme-piedra ul.nav-tabs button.nav-link,
+html body.theme-piedra #panelTabs .nav-link {
+  color: #ffffff !important;
+}
+
+/* También para theme-oscuro y theme-dark */
+.theme-oscuro .nav-tabs .nav-link,
+.theme-oscuro .nav-tabs .nav-link:hover,
+.theme-oscuro .nav-tabs .nav-link:focus,
+.theme-oscuro .nav-tabs .nav-link.active,
+.theme-oscuro ul.nav-tabs li.nav-item button.nav-link,
+.theme-oscuro #panelTabs .nav-link,
+.theme-dark .nav-tabs .nav-link,
+.theme-dark .nav-tabs .nav-link:hover,
+.theme-dark .nav-tabs .nav-link:focus,
+.theme-dark .nav-tabs .nav-link.active,
+.theme-dark ul.nav-tabs li.nav-item button.nav-link,
+.theme-dark #panelTabs .nav-link {
+  color: #ffffff !important;
+}
+
+/* MODO CLARO: Texto SIEMPRE negro - todas las variantes de tema claro */
+.theme-sand .nav-tabs .nav-link,
+.theme-sand .nav-tabs .nav-link:hover,
+.theme-sand .nav-tabs .nav-link:focus,
+.theme-sand .nav-tabs .nav-link.active,
+.theme-sand ul.nav-tabs li.nav-item button.nav-link,
+.theme-sand #panelTabs .nav-link,
+.theme-claro .nav-tabs .nav-link,
+.theme-claro .nav-tabs .nav-link:hover,
+.theme-claro .nav-tabs .nav-link:focus,
+.theme-claro .nav-tabs .nav-link.active,
+.theme-claro ul.nav-tabs li.nav-item button.nav-link,
+.theme-claro #panelTabs .nav-link {
+  color: #000000 !important;
+}
+
+/* REGLA FINAL ABSOLUTA PARA THEME-PIEDRA - MÁXIMA ESPECIFICIDAD */
+/* Esta regla debe estar al final para sobrescribir cualquier otra regla */
+html body.theme-piedra ul#panelTabs li.nav-item button.nav-link,
+html body.theme-piedra #panelTabs button.nav-link,
+html body.theme-piedra .nav-tabs .nav-link,
+html.theme-piedra body .nav-tabs .nav-link,
+body.theme-piedra .nav-tabs .nav-link,
+.theme-piedra ul#panelTabs li button.nav-link,
+html.theme-piedra ul.nav-tabs li.nav-item button.nav-link[role="tab"],
+html.theme-piedra ul.nav-tabs li.nav-item button.nav-link[type="button"],
+html body.theme-piedra ul.nav.nav-tabs li button.nav-link {
+  color: #ffffff !important;
 }

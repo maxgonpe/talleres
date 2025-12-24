@@ -52,7 +52,8 @@ urlpatterns = [
     path('acciones/<int:pk>/eliminar/', views.accion_delete, name='accion_delete'),
     path('acciones-lookup/<int:componente_id>/', views.acciones_por_componente, name='acciones_por_componente'),
     path("vehiculo_lookup/", vehiculo_lookup, name="vehiculo_lookup"),
-    path('api/vehiculos/<str:cliente_rut>/', views.vehiculos_por_cliente, name='vehiculos_por_cliente'),
+    # COMENTADO: Esta ruta está duplicada. Se usa la de myproject/urls.py que tiene prioridad
+    # path('api/vehiculos/<str:cliente_rut>/', views.vehiculos_por_cliente, name='vehiculos_por_cliente'),
     path("api/openai/response/", openai_response, name="openai_response"),
     path("netgogo/", netgogo_console, name="netgogo_console"),
     path("api/netgogo/chat/", netgogo_chat, name="netgogo_chat"),

@@ -79,6 +79,12 @@ body {
   text-shadow: 0 1px 2px rgba(0,0,0,0.3) !important;
 }
 
+/* EXCEPCIÓN: Las pestañas (nav-tabs) NO usan la regla general de nav-link */
+.nav-tabs .nav-link {
+  /* Esta regla será sobrescrita por las reglas específicas de tema más abajo */
+  color: inherit !important;
+}
+
 .container, .card, .btn {
   background-color: var(--card-bg) !important;
   color: var(--fg) !important;
@@ -219,6 +225,55 @@ html body.theme-sand .navbar-nav .nav-link:focus {
   border-radius: 8px !important;
   transform: translateY(-1px) !important;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+}
+
+/* REGLA FINAL ABSOLUTA PARA THEME-PIEDRA - MÁXIMA ESPECIFICIDAD AL FINAL DEL ARCHIVO */
+html body.theme-piedra ul.nav-tabs li.nav-item button.nav-link,
+html body.theme-piedra .nav-tabs .nav-link,
+html.theme-piedra body .nav-tabs .nav-link,
+body.theme-piedra .nav-tabs .nav-link,
+.theme-piedra ul.nav-tabs li button.nav-link,
+html.theme-piedra ul#panelTabs li.nav-item button.nav-link[role="tab"],
+html.theme-piedra ul#panelTabs li.nav-item button.nav-link[type="button"] {
+  color: #ffffff !important;
+}
+
+/* Reglas específicas para pestañas en modo oscuro (theme-piedra) - MÁXIMA PRIORIDAD */
+.theme-piedra .nav-tabs .nav-link,
+.theme-piedra .nav-tabs .nav-link:hover,
+.theme-piedra .nav-tabs .nav-link:focus,
+.theme-piedra .nav-tabs .nav-link.active,
+.theme-piedra ul.nav-tabs button.nav-link,
+.theme-piedra ul.nav-tabs li.nav-item button.nav-link,
+.theme-piedra #panelTabs .nav-link,
+.theme-piedra #panelTabs button.nav-link,
+html.theme-piedra .nav-tabs .nav-link,
+body.theme-piedra .nav-tabs .nav-link,
+html body.theme-piedra .nav-tabs .nav-link {
+  color: #ffffff !important;
+}
+
+/* También para theme-oscuro si se usa */
+.theme-oscuro .nav-tabs .nav-link,
+.theme-oscuro .nav-tabs .nav-link:hover,
+.theme-oscuro .nav-tabs .nav-link:focus,
+.theme-oscuro .nav-tabs .nav-link.active,
+.theme-oscuro ul.nav-tabs button.nav-link {
+  color: #ffffff !important;
+}
+
+/* Reglas específicas para pestañas en modo claro (theme-sand y theme-claro) */
+.theme-sand .nav-tabs .nav-link,
+.theme-sand .nav-tabs .nav-link:hover,
+.theme-sand .nav-tabs .nav-link:focus,
+.theme-sand .nav-tabs .nav-link.active,
+.theme-sand ul.nav-tabs button.nav-link,
+.theme-claro .nav-tabs .nav-link,
+.theme-claro .nav-tabs .nav-link:hover,
+.theme-claro .nav-tabs .nav-link:focus,
+.theme-claro .nav-tabs .nav-link.active,
+.theme-claro ul.nav-tabs button.nav-link {
+  color: #000000 !important;
 }
 
 html body.theme-piedra .dropdown-item:hover,

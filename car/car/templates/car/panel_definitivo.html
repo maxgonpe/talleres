@@ -34,23 +34,179 @@
     
     .nav-tabs .nav-link {
         border: none;
-        background: transparent;
+        background: var(--hover-bg);
         color: var(--text-muted);
         font-weight: 600;
         padding: var(--spacing-sm) var(--spacing-lg);
         border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
         transition: var(--transition);
+        border-bottom: 3px solid transparent;
     }
     
     .nav-tabs .nav-link:hover {
         background: var(--hover-bg);
         color: var(--text-primary);
+        transform: translateY(-2px);
     }
     
     .nav-tabs .nav-link.active {
         background: var(--accent);
         color: var(--text-inverse);
         border: none;
+        border-bottom: 3px solid var(--accent);
+        box-shadow: 0 -2px 8px rgba(0,0,0,0.15);
+        font-weight: 700;
+    }
+    
+    /* MODO OSCURO: Forzar texto SIEMPRE blanco - máxima prioridad y especificidad */
+    .theme-oscuro .nav-tabs .nav-link,
+    .theme-oscuro .nav-tabs .nav-link:hover,
+    .theme-oscuro .nav-tabs .nav-link:focus,
+    .theme-oscuro .nav-tabs .nav-link.active,
+    .theme-oscuro ul.nav-tabs li.nav-item button.nav-link,
+    .theme-oscuro ul.nav-tabs li.nav-item button.nav-link:hover,
+    .theme-oscuro ul.nav-tabs li.nav-item button.nav-link.active {
+        color: #ffffff !important;
+    }
+    
+    /* MODO OSCURO: Texto SIEMPRE blanco - todas las variantes */
+    .theme-oscuro .nav-tabs .nav-link {
+        background: rgba(255, 255, 255, 0.12);
+        color: #ffffff !important; /* SIEMPRE blanco - inactiva */
+        border-bottom: 3px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    .theme-oscuro .nav-tabs .nav-link:hover {
+        background: rgba(255, 255, 255, 0.18);
+        color: #ffffff !important; /* SIEMPRE blanco - hover */
+        border-bottom-color: rgba(255, 255, 255, 0.3);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+    
+    .theme-oscuro .nav-tabs .nav-link.active {
+        background: var(--accent);
+        color: #ffffff !important; /* SIEMPRE blanco - activa */
+        border-bottom: 3px solid var(--accent);
+        box-shadow: 0 -2px 8px rgba(0,0,0,0.3), 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    /* MODO OSCURO: theme-piedra - Texto SIEMPRE blanco - máxima prioridad */
+    .theme-piedra .nav-tabs .nav-link,
+    .theme-piedra .nav-tabs .nav-link:hover,
+    .theme-piedra .nav-tabs .nav-link:focus,
+    .theme-piedra .nav-tabs .nav-link.active,
+    .theme-piedra ul.nav-tabs li.nav-item button.nav-link,
+    .theme-piedra ul.nav-tabs li.nav-item button.nav-link:hover,
+    .theme-piedra ul.nav-tabs li.nav-item button.nav-link.active {
+        color: #ffffff !important;
+    }
+    
+    /* MODO OSCURO: theme-piedra - Texto SIEMPRE blanco - todas las variantes */
+    .theme-piedra .nav-tabs .nav-link {
+        background: rgba(255, 255, 255, 0.12);
+        color: #ffffff !important; /* SIEMPRE blanco - inactiva */
+        border-bottom: 3px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    .theme-piedra .nav-tabs .nav-link:hover {
+        background: rgba(255, 255, 255, 0.18);
+        color: #ffffff !important; /* SIEMPRE blanco - hover */
+        border-bottom-color: rgba(255, 255, 255, 0.3);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+    
+    .theme-piedra .nav-tabs .nav-link.active {
+        background: var(--accent);
+        color: #ffffff !important; /* SIEMPRE blanco - activa */
+        border-bottom: 3px solid var(--accent);
+        box-shadow: 0 -2px 8px rgba(0,0,0,0.3), 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    /* MODO CLARO: theme-claro y theme-sand - Texto SIEMPRE negro cuando inactiva */
+    .theme-claro .nav-tabs .nav-link,
+    .theme-sand .nav-tabs .nav-link {
+        background: rgba(0, 0, 0, 0.08);
+        color: #000000 !important; /* Negro para mejor visibilidad en modo claro */
+        border-bottom: 3px solid rgba(0, 0, 0, 0.15);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .theme-claro .nav-tabs .nav-link:hover,
+    .theme-sand .nav-tabs .nav-link:hover {
+        background: rgba(0, 0, 0, 0.12);
+        color: #000000 !important; /* Negro también en hover */
+        border-bottom-color: rgba(0, 0, 0, 0.25);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
+    
+    .theme-claro .nav-tabs .nav-link.active,
+    .theme-sand .nav-tabs .nav-link.active {
+        background: var(--accent);
+        color: #ffffff !important; /* Blanco cuando está activa (background azul) */
+        border-bottom: 3px solid var(--accent);
+        box-shadow: 0 -2px 8px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    /* Regla final para modo oscuro (theme-piedra) - máxima especificidad al final */
+    .theme-piedra ul#panelTabs li.nav-item button.nav-link,
+    .theme-piedra #panelTabs .nav-link,
+    .theme-piedra #panelTabs button.nav-link,
+    .theme-oscuro ul#panelTabs li.nav-item button.nav-link,
+    .theme-oscuro #panelTabs .nav-link,
+    .theme-oscuro #panelTabs button.nav-link {
+        color: #ffffff !important;
+    }
+    
+    /* Forzar blanco en modo oscuro incluso si hay estilos inline o CSS externo */
+    body.theme-piedra .nav-tabs .nav-link,
+    body.theme-piedra #panelTabs .nav-link,
+    body.theme-piedra ul.nav-tabs button.nav-link,
+    html.theme-piedra .nav-tabs .nav-link,
+    html.theme-piedra #panelTabs .nav-link,
+    body.theme-oscuro .nav-tabs .nav-link,
+    body.theme-oscuro #panelTabs .nav-link,
+    body.theme-oscuro ul.nav-tabs button.nav-link,
+    html.theme-oscuro .nav-tabs .nav-link,
+    html.theme-oscuro #panelTabs .nav-link {
+        color: #ffffff !important;
+    }
+    
+    /* Regla adicional con máxima especificidad - debe estar al final */
+    .theme-piedra ul#panelTabs li.nav-item button.nav-link[role="tab"],
+    .theme-piedra ul#panelTabs li.nav-item button.nav-link[type="button"],
+    .theme-oscuro ul#panelTabs li.nav-item button.nav-link[role="tab"],
+    .theme-oscuro ul#panelTabs li.nav-item button.nav-link[type="button"] {
+        color: #ffffff !important;
+    }
+    
+    /* Estilos para el reloj */
+    .pizarra-clock {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--fg);
+        background: var(--card-bg);
+        padding: 0.5rem 1rem;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow-md);
+        border: 2px solid var(--border-color);
+    }
+    
+    .pizarra-clock-time {
+        font-family: 'Courier New', monospace;
+        font-size: 1.3rem;
+        color: var(--accent);
+        font-weight: bold;
+    }
+    
+    .pizarra-clock-date {
+        font-size: 0.9rem;
+        color: var(--text-muted);
     }
     
     .tab-content {
@@ -427,6 +583,15 @@
             min-height: 250px;
         }
     }
+    
+    /* REGLA FINAL ABSOLUTA PARA MODO OSCURO - MÁXIMA PRIORIDAD */
+    /* Esta regla debe estar al final para sobrescribir cualquier otro estilo */
+    .theme-oscuro #panelTabs button.nav-link,
+    .theme-oscuro #panelTabs .nav-link,
+    .theme-oscuro ul#panelTabs button,
+    .theme-oscuro ul#panelTabs .nav-link {
+        color: #ffffff !important;
+    }
 </style>
 {% endblock %}
 
@@ -443,13 +608,13 @@
     <!-- Navegación por Tabs -->
     <ul class="nav nav-tabs" id="panelTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="inicio-tab" data-bs-toggle="tab" data-bs-target="#inicio" type="button" role="tab" aria-controls="inicio" aria-selected="true">
-                🏠 Inicio
+            <button class="nav-link active" id="pizarra-tab" data-bs-toggle="tab" data-bs-target="#pizarra" type="button" role="tab" aria-controls="pizarra" aria-selected="true">
+                📊 Pizarra
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="pizarra-tab" data-bs-toggle="tab" data-bs-target="#pizarra" type="button" role="tab" aria-controls="pizarra" aria-selected="false">
-                📊 Pizarra
+            <button class="nav-link" id="inicio-tab" data-bs-toggle="tab" data-bs-target="#inicio" type="button" role="tab" aria-controls="inicio" aria-selected="false">
+                🏠 Inicio
             </button>
         </li>
         <li class="nav-item" role="presentation">
@@ -469,89 +634,18 @@
         </li>
     </ul>
 
+    <!-- Reloj y Fecha - Visible en todas las pestañas -->
+    <div class="panel-clock-container">
+        <div class="pizarra-clock">
+            <span class="pizarra-clock-time" id="clock-time">--:--:--</span>
+            <span class="pizarra-clock-date" id="clock-date">-- -- ----</span>
+        </div>
+    </div>
+
     <!-- Contenido de los Tabs -->
     <div class="tab-content" id="panelTabsContent">
-        <!-- TAB INICIO -->
-        <div class="tab-pane fade show active" id="inicio" role="tabpanel" aria-labelledby="inicio-tab">
-            <!-- Estadísticas rápidas -->
-            <div class="stats-row">
-                <div class="stat-card">
-                    <div class="stat-number">{{ diagnosticos_hoy|default:"0" }}</div>
-                    <div class="stat-label">Diagnósticos Hoy</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">{{ trabajos_activos|default:"0" }}</div>
-                    <div class="stat-label">Trabajos Activos</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">{{ ventas_hoy|default:"0" }}</div>
-                    <div class="stat-label">Ventas Hoy</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">{{ repuestos_total|default:"0" }}</div>
-                    <div class="stat-label">Total Repuestos</div>
-                </div>
-            </div>
-            
-
-            <!-- Acciones principales -->
-            <div class="actions-grid">
-                {% if request.permisos.diagnosticos %}
-                <a href="{% url 'ingreso_rapido' %}" class="action-card">
-                    <span class="action-icon">⚡</span>
-                    <div class="action-title">Nuevo Diagnóstico Rápido</div>
-                    <div class="action-description">Flujo fusionado en 3 pasos</div>
-                </a>
-                
-                <a href="{% url 'lista_diagnosticos' %}" class="action-card">
-                    <span class="action-icon">📋</span>
-                    <div class="action-title">Ver Diagnósticos</div>
-                    <div class="action-description">Lista de diagnósticos pendientes</div>
-                </a>
-                {% endif %}
-                
-                {% if request.permisos.trabajos %}
-                <a href="{% url 'lista_trabajos' %}" class="action-card">
-                    <span class="action-icon">🚗</span>
-                    <div class="action-title">Ver Trabajos</div>
-                    <div class="action-description">Lista completa de trabajos activos</div>
-                </a>
-                
-                <a href="{% url 'estadisticas_trabajos' %}" class="action-card">
-                    <span class="action-icon">📊</span>
-                    <div class="action-title">Estadísticas</div>
-                    <div class="action-description">Ver estadísticas de trabajos</div>
-                </a>
-                {% endif %}
-                
-                {% if request.permisos.pos %}
-                <a href="{% url 'pos_principal' %}" class="action-card">
-                    <span class="action-icon">🛒</span>
-                    <div class="action-title">Punto de Venta</div>
-                    <div class="action-description">Ventas y cotizaciones de repuestos</div>
-                </a>
-                {% endif %}
-                
-                {% if request.permisos.compras %}
-                <a href="{% url 'compra_dashboard' %}" class="action-card">
-                    <span class="action-icon">📥</span>
-                    <div class="action-title">Compras</div>
-                    <div class="action-description">Gestiona compras de repuestos</div>
-                </a>
-                {% endif %}
-
-                {% if user.username == 'maxgonpe' %}
-                <a href="{% url 'netgogo_console' %}" class="action-card">
-                    <span class="action-icon">🤖</span>
-                    <div class="action-title">Netgogo</div>
-                    <div class="action-description">Consola de IA con herramientas</div>
-                </a>
-                {% endif %}
-            </div>
-        </div>
-
         <!-- TAB PIZARRA -->
-        <div class="tab-pane fade" id="pizarra" role="tabpanel" aria-labelledby="pizarra-tab">
+        <div class="tab-pane fade show active" id="pizarra" role="tabpanel" aria-labelledby="pizarra-tab">
             <!-- Pizarra de trabajos -->
             <div class="pizarra-section">
                 <div class="pizarra-header">
@@ -689,6 +783,85 @@
                         {% endfor %}
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- TAB INICIO -->
+        <div class="tab-pane fade" id="inicio" role="tabpanel" aria-labelledby="inicio-tab">
+            <!-- Estadísticas rápidas -->
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-number">{{ diagnosticos_hoy|default:"0" }}</div>
+                    <div class="stat-label">Diagnósticos Hoy</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ trabajos_activos|default:"0" }}</div>
+                    <div class="stat-label">Trabajos Activos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ ventas_hoy|default:"0" }}</div>
+                    <div class="stat-label">Ventas Hoy</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ repuestos_total|default:"0" }}</div>
+                    <div class="stat-label">Total Repuestos</div>
+                </div>
+            </div>
+            
+
+            <!-- Acciones principales -->
+            <div class="actions-grid">
+                {% if request.permisos.diagnosticos %}
+                <a href="{% url 'ingreso_rapido' %}" class="action-card">
+                    <span class="action-icon">⚡</span>
+                    <div class="action-title">Nuevo Diagnóstico Rápido</div>
+                    <div class="action-description">Flujo fusionado en 3 pasos</div>
+                </a>
+                
+                <a href="{% url 'lista_diagnosticos' %}" class="action-card">
+                    <span class="action-icon">📋</span>
+                    <div class="action-title">Ver Diagnósticos</div>
+                    <div class="action-description">Lista de diagnósticos pendientes</div>
+                </a>
+                {% endif %}
+                
+                {% if request.permisos.trabajos %}
+                <a href="{% url 'lista_trabajos' %}" class="action-card">
+                    <span class="action-icon">🚗</span>
+                    <div class="action-title">Ver Trabajos</div>
+                    <div class="action-description">Lista completa de trabajos activos</div>
+                </a>
+                
+                <a href="{% url 'estadisticas_trabajos' %}" class="action-card">
+                    <span class="action-icon">📊</span>
+                    <div class="action-title">Estadísticas</div>
+                    <div class="action-description">Ver estadísticas de trabajos</div>
+                </a>
+                {% endif %}
+                
+                {% if request.permisos.pos %}
+                <a href="{% url 'pos_principal' %}" class="action-card">
+                    <span class="action-icon">🛒</span>
+                    <div class="action-title">Punto de Venta</div>
+                    <div class="action-description">Ventas y cotizaciones de repuestos</div>
+                </a>
+                {% endif %}
+                
+                {% if request.permisos.compras %}
+                <a href="{% url 'compra_dashboard' %}" class="action-card">
+                    <span class="action-icon">📥</span>
+                    <div class="action-title">Compras</div>
+                    <div class="action-description">Gestiona compras de repuestos</div>
+                </a>
+                {% endif %}
+
+                {% if user.username == 'maxgonpe' %}
+                <a href="{% url 'netgogo_console' %}" class="action-card">
+                    <span class="action-icon">🤖</span>
+                    <div class="action-title">Netgogo</div>
+                    <div class="action-description">Consola de IA con herramientas</div>
+                </a>
+                {% endif %}
             </div>
         </div>
 
@@ -900,6 +1073,42 @@ document.addEventListener('DOMContentLoaded', function() {
             label.style.position = 'relative';
         });
     }, 100);
+    
+    // Reloj en tiempo real para la pizarra
+    function updateClock() {
+        const now = new Date();
+        
+        // Formatear hora
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        const timeString = `${hours}:${minutes}:${seconds}`;
+        
+        // Formatear fecha
+        const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+        const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+                       'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        const dayName = days[now.getDay()];
+        const day = now.getDate();
+        const month = months[now.getMonth()];
+        const year = now.getFullYear();
+        const dateString = `${dayName}, ${day} de ${month} ${year}`;
+        
+        // Actualizar elementos
+        const timeElement = document.getElementById('clock-time');
+        const dateElement = document.getElementById('clock-date');
+        
+        if (timeElement) {
+            timeElement.textContent = timeString;
+        }
+        if (dateElement) {
+            dateElement.textContent = dateString;
+        }
+    }
+    
+    // Actualizar reloj inmediatamente y luego cada segundo
+    updateClock();
+    setInterval(updateClock, 1000);
 });
 </script>
 {% endblock %}

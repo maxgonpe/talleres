@@ -18,6 +18,7 @@ from django.db import transaction
 from django.http import HttpResponse
 from django.db.models import Sum
 from django.db.models import Q
+from urllib.parse import unquote
 
 # NUEVOS IMPORTS PARA PERMISOS
 from .decorators import (
@@ -141,6 +142,19 @@ def componente_list(request):
     })
 
 
+def normalizar_rut(rut):
+    """
+    Normaliza un RUT para búsquedas: convierte 'k' a minúscula y elimina espacios.
+    Esto permite encontrar RUTs independientemente de si tienen 'k' o 'K'.
+    """
+    if not rut:
+        return rut
+    rut = str(rut).strip()
+    # Si termina en 'k' o 'K', convertir a minúscula
+    if rut and rut[-1].lower() == 'k':
+        rut = rut[:-1] + 'k'
+    return rut
+
 @login_required
 @requiere_permiso('diagnosticos')
 @transaction.atomic
@@ -166,11 +180,22 @@ def ingreso_view(request):
         # --- Cliente ---
         cliente = None
         if cliente_id:
+            # Normalizar el RUT para búsqueda case-insensitive de 'k'
+            cliente_id_normalizado = normalizar_rut(cliente_id)
             try:
-                cliente = Cliente_Taller.objects.get(rut=cliente_id)
+                cliente = Cliente_Taller.objects.get(rut=cliente_id_normalizado)
                 selected_cliente = cliente.rut
             except Cliente_Taller.DoesNotExist:
-                cliente_form.add_error(None, "El cliente seleccionado no existe.")
+                # Si no se encuentra, intentar con 'K' mayúscula si el RUT termina en 'k'
+                if cliente_id_normalizado and cliente_id_normalizado[-1].lower() == 'k':
+                    try:
+                        rut_con_k_mayuscula = cliente_id_normalizado[:-1] + 'K'
+                        cliente = Cliente_Taller.objects.get(rut=rut_con_k_mayuscula)
+                        selected_cliente = cliente.rut
+                    except Cliente_Taller.DoesNotExist:
+                        cliente_form.add_error(None, "El cliente seleccionado no existe.")
+                else:
+                    cliente_form.add_error(None, "El cliente seleccionado no existe.")
         else:
             if cliente_form.is_valid():
                 cliente = cliente_form.save(commit=False)
@@ -568,7 +593,158 @@ def seleccionar_componente(request, codigo):
 
 @login_required
 def get_vehiculos_por_cliente(request, cliente_id):
-    vehiculos = Vehiculo.objects.filter(cliente__rut=cliente_id).order_by('placa')
+    """
+    Devuelve vehículos por cliente_id (RUT).
+    Busca intentando ambas variantes (k minúscula y K mayúscula) simultáneamente.
+    """
+    import logging
+    import sys
+    logger = logging.getLogger(__name__)
+    
+    # Forzar salida inmediata a stdout/stderr para Docker - PRIMERO QUE TODO
+    print(f"\n{'='*80}", file=sys.stderr, flush=True)
+    print(f"🚨 get_vehiculos_por_cliente - FUNCIÓN LLAMADA - RUT: '{cliente_id}'", file=sys.stderr, flush=True)
+    print(f"🚨 Request path: {request.path}", file=sys.stderr, flush=True)
+    print(f"🚨 Request method: {request.method}", file=sys.stderr, flush=True)
+    print(f"🚨 User authenticated: {request.user.is_authenticated}", file=sys.stderr, flush=True)
+    print(f"🚨 User: {request.user.username if request.user.is_authenticated else 'ANÓNIMO'}", file=sys.stderr, flush=True)
+    print(f"{'='*80}\n", file=sys.stderr, flush=True)
+    
+    # El decorador @login_required ya maneja la autenticación, pero mantenemos el logging
+    if not request.user.is_authenticated:
+        print(f"❌ USUARIO NO AUTENTICADO - Retornando 401", file=sys.stderr, flush=True)
+        return JsonResponse({'error': 'No autenticado. Por favor inicia sesión.'}, status=401)
+    
+    if not cliente_id:
+        logger.error("❌ get_vehiculos_por_cliente - cliente_id vacío")
+        return JsonResponse({'error': 'Parámetro cliente_id vacío'}, status=400)
+    
+    cliente_id = str(cliente_id).strip()
+    
+    # Logging a stderr para que aparezca en docker logs
+    print(f"🔍 RUT recibido: '{cliente_id}'", file=sys.stderr, flush=True)
+    print(f"🔍 Request path: {request.path}", file=sys.stderr, flush=True)
+    print(f"🔍 Request method: {request.method}", file=sys.stderr, flush=True)
+    print(f"🔍 User: {request.user.username if request.user.is_authenticated else 'Anónimo'}", file=sys.stderr, flush=True)
+    
+    logger.info(f"🔍 get_vehiculos_por_cliente - INICIO - RUT recibido: '{cliente_id}'")
+    logger.info(f"🔍 Request path: {request.path}")
+    logger.info(f"🔍 Request method: {request.method}")
+    logger.info(f"🔍 User: {request.user.username if request.user.is_authenticated else 'Anónimo'}")
+    
+    # Si el RUT termina en 'k' o 'K', buscar ambas variantes simultáneamente
+    if cliente_id and cliente_id[-1].lower() == 'k':
+        # Construir ambas variantes (mantener el formato original del RUT)
+        # Si viene "15056879k", buscar tanto "15056879k" como "15056879K"
+        rut_minuscula = cliente_id[:-1] + 'k'
+        rut_mayuscula = cliente_id[:-1] + 'K'
+        
+        print(f"🔍 RUT termina en k/K - Buscando variantes:", file=sys.stderr, flush=True)
+        print(f"   - Minúscula: '{rut_minuscula}'", file=sys.stderr, flush=True)
+        print(f"   - Mayúscula: '{rut_mayuscula}'", file=sys.stderr, flush=True)
+        
+        logger.info(f"🔍 RUT termina en k/K - Buscando variantes:")
+        logger.info(f"   - Minúscula: '{rut_minuscula}'")
+        logger.info(f"   - Mayúscula: '{rut_mayuscula}'")
+        
+        # Verificar qué RUTs existen en la BD antes de buscar
+        cliente_min_bd = Cliente_Taller.objects.filter(rut=rut_minuscula).first()
+        cliente_may_bd = Cliente_Taller.objects.filter(rut=rut_mayuscula).first()
+        
+        print(f"🔍 Verificación directa en BD:", file=sys.stderr, flush=True)
+        print(f"   - Cliente con '{rut_minuscula}': {'✅ EXISTE' if cliente_min_bd else '❌ NO EXISTE'}", file=sys.stderr, flush=True)
+        if cliente_min_bd:
+            print(f"      → Nombre: {cliente_min_bd.nombre}, RUT en BD: '{cliente_min_bd.rut}'", file=sys.stderr, flush=True)
+        print(f"   - Cliente con '{rut_mayuscula}': {'✅ EXISTE' if cliente_may_bd else '❌ NO EXISTE'}", file=sys.stderr, flush=True)
+        if cliente_may_bd:
+            print(f"      → Nombre: {cliente_may_bd.nombre}, RUT en BD: '{cliente_may_bd.rut}'", file=sys.stderr, flush=True)
+        
+        logger.info(f"🔍 Verificación directa en BD:")
+        logger.info(f"   - Cliente con '{rut_minuscula}': {'✅ EXISTE' if cliente_min_bd else '❌ NO EXISTE'}")
+        if cliente_min_bd:
+            logger.info(f"      → Nombre: {cliente_min_bd.nombre}, RUT en BD: '{cliente_min_bd.rut}'")
+        logger.info(f"   - Cliente con '{rut_mayuscula}': {'✅ EXISTE' if cliente_may_bd else '❌ NO EXISTE'}")
+        if cliente_may_bd:
+            logger.info(f"      → Nombre: {cliente_may_bd.nombre}, RUT en BD: '{cliente_may_bd.rut}'")
+        
+        # Buscar vehículos usando Q object para buscar ambas variantes
+        vehiculos = Vehiculo.objects.filter(
+            Q(cliente__rut=rut_minuscula) | Q(cliente__rut=rut_mayuscula)
+        ).order_by('placa')
+        
+        logger.info(f"🔍 Búsqueda con Q object - Vehículos encontrados: {vehiculos.count()}")
+        if vehiculos.exists():
+            for v in vehiculos:
+                logger.info(f"   → Vehículo: {v.placa} | Cliente RUT: '{v.cliente.rut}'")
+        
+        # Verificar si el cliente existe (para dar mejor mensaje de error)
+        cliente_existe = Cliente_Taller.objects.filter(
+            Q(rut=rut_minuscula) | Q(rut=rut_mayuscula)
+        ).exists()
+        
+        logger.info(f"🔍 Cliente existe (Q filter): {cliente_existe}")
+        
+        if cliente_existe:
+            cliente_encontrado = Cliente_Taller.objects.filter(
+                Q(rut=rut_minuscula) | Q(rut=rut_mayuscula)
+            ).first()
+            logger.info(f"✅ Cliente encontrado con RUT en BD: '{cliente_encontrado.rut if cliente_encontrado else 'N/A'}'")
+            logger.info(f"✅ Vehículos encontrados: {vehiculos.count()}")
+    else:
+        # Si no termina en k/K, buscar directamente
+        logger.info(f"🔍 RUT no termina en k/K - Búsqueda directa: '{cliente_id}'")
+        
+        cliente_directo = Cliente_Taller.objects.filter(rut=cliente_id).first()
+        logger.info(f"🔍 Cliente con RUT '{cliente_id}': {'✅ EXISTE' if cliente_directo else '❌ NO EXISTE'}")
+        if cliente_directo:
+            logger.info(f"   → Nombre: {cliente_directo.nombre}, RUT en BD: '{cliente_directo.rut}'")
+        
+        vehiculos = Vehiculo.objects.filter(cliente__rut=cliente_id).order_by('placa')
+        cliente_existe = Cliente_Taller.objects.filter(rut=cliente_id).exists()
+        logger.info(f"🔍 Buscando RUT directo: '{cliente_id}' - Existe: {cliente_existe}, Vehículos: {vehiculos.count()}")
+    
+    # Si no se encuentran vehículos, verificar si el cliente existe
+    if not vehiculos.exists():
+        if not cliente_existe:
+            # Construir mensaje de error con variantes intentadas
+            variantes_intentadas = [cliente_id]
+            if cliente_id and cliente_id[-1].lower() == 'k':
+                variantes_intentadas.extend([cliente_id[:-1] + 'k', cliente_id[:-1] + 'K'])
+            
+            # Debug: verificar qué RUTs existen en la BD que sean similares
+            rut_base = cliente_id[:-1] if cliente_id and cliente_id[-1].lower() == 'k' else cliente_id
+            rut_similares = Cliente_Taller.objects.filter(rut__startswith=rut_base).values_list('rut', flat=True)[:10]
+            
+            print(f"\n❌ ERROR - Cliente no encontrado", file=sys.stderr, flush=True)
+            print(f"   RUT recibido: '{cliente_id}'", file=sys.stderr, flush=True)
+            print(f"   Variantes intentadas: {variantes_intentadas}", file=sys.stderr, flush=True)
+            print(f"   RUTs similares en BD (primeros 10): {list(rut_similares)}", file=sys.stderr, flush=True)
+            
+            # Verificar todos los RUTs que terminan en k/K
+            todos_ruts_k = Cliente_Taller.objects.filter(
+                Q(rut__endswith='k') | Q(rut__endswith='K')
+            ).values_list('rut', flat=True)[:20]
+            print(f"   Todos los RUTs con k/K en BD (primeros 20): {list(todos_ruts_k)}", file=sys.stderr, flush=True)
+            print(f"{'='*80}\n", file=sys.stderr, flush=True)
+            
+            logger.error(f"❌ ERROR - Cliente no encontrado")
+            logger.error(f"   RUT recibido: '{cliente_id}'")
+            logger.error(f"   Variantes intentadas: {variantes_intentadas}")
+            logger.error(f"   RUTs similares en BD (primeros 10): {list(rut_similares)}")
+            logger.error(f"   Todos los RUTs con k/K en BD (primeros 20): {list(todos_ruts_k)}")
+            
+            return JsonResponse({
+                'error': f'Cliente no encontrado con RUT: {cliente_id}',
+                'variantes_intentadas': variantes_intentadas,
+                'rut_similares_en_bd': list(rut_similares) if rut_similares else []
+            }, status=404)
+        
+        # Si el cliente existe pero no tiene vehículos, retornar lista vacía
+        logger.info(f"✅ Cliente existe pero no tiene vehículos - RUT: '{cliente_id}'")
+        vehiculos = Vehiculo.objects.none()
+    else:
+        logger.info(f"✅ ÉXITO - Retornando {vehiculos.count()} vehículos para RUT: '{cliente_id}'")
+    
     data = [
         {
             "id": v.id,
@@ -579,6 +755,14 @@ def get_vehiculos_por_cliente(request, cliente_id):
         }
         for v in vehiculos
     ]
+    
+    print(f"✅ FINAL - Retornando {len(data)} vehículos en JSON para RUT: '{cliente_id}'", file=sys.stderr, flush=True)
+    print(f"✅ Datos: {data}", file=sys.stderr, flush=True)
+    print(f"{'='*80}\n", file=sys.stderr, flush=True)
+    
+    logger.info(f"✅ FINAL - Retornando {len(data)} vehículos en JSON para RUT: '{cliente_id}'")
+    logger.info(f"✅ Datos: {data}")
+    
     return JsonResponse(data, safe=False)
 
 @login_required
@@ -4197,12 +4381,40 @@ def vehiculos_por_cliente(request, cliente_rut):
     if not raw_rut:
         return JsonResponse({'error': 'Parámetro cliente_rut vacío'}, status=400)
 
-    clientes_qs = Cliente_Taller.objects.all()
-
-    try:
-        cliente = clientes_qs.get(rut=raw_rut)
-    except Cliente_Taller.DoesNotExist:
-        return JsonResponse({'error': 'Cliente no encontrado'}, status=404)
+    # Si el RUT termina en 'k' o 'K', buscar ambas variantes simultáneamente
+    if raw_rut and raw_rut[-1].lower() == 'k':
+        rut_minuscula = raw_rut[:-1] + 'k'
+        rut_mayuscula = raw_rut[:-1] + 'K'
+        
+        # Buscar cliente usando Q object para buscar ambas variantes
+        try:
+            cliente = Cliente_Taller.objects.get(
+                Q(rut=rut_minuscula) | Q(rut=rut_mayuscula)
+            )
+        except Cliente_Taller.DoesNotExist:
+            # También intentar con la versión normalizada si es diferente
+            rut_normalizado = normalizar_rut(raw_rut)
+            if rut_normalizado not in [rut_minuscula, rut_mayuscula]:
+                try:
+                    cliente = Cliente_Taller.objects.get(rut=rut_normalizado)
+                except Cliente_Taller.DoesNotExist:
+                    variantes_intentadas = [raw_rut, rut_minuscula, rut_mayuscula, rut_normalizado]
+                    return JsonResponse({
+                        'error': f'Cliente no encontrado con RUT: {raw_rut}',
+                        'variantes_intentadas': list(set(variantes_intentadas))
+                    }, status=404)
+            else:
+                variantes_intentadas = [raw_rut, rut_minuscula, rut_mayuscula]
+                return JsonResponse({
+                    'error': f'Cliente no encontrado con RUT: {raw_rut}',
+                    'variantes_intentadas': list(set(variantes_intentadas))
+                }, status=404)
+    else:
+        # Si no termina en k/K, buscar directamente
+        try:
+            cliente = Cliente_Taller.objects.get(rut=raw_rut)
+        except Cliente_Taller.DoesNotExist:
+            return JsonResponse({'error': f'Cliente no encontrado con RUT: {raw_rut}'}, status=404)
 
     vehiculos = (
         Vehiculo.objects

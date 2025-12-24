@@ -76,11 +76,25 @@ document.addEventListener("DOMContentLoaded", () => {
     nuevoClienteCampos.style.display = clienteSelect && clienteSelect.value ? "none" : "block";
   }
 
+  // Función para normalizar RUT: convertir 'k' final a MAYÚSCULA
+  // IMPORTANTE: En la BD siempre se guarda con 'K' mayúscula, por lo que
+  // debemos normalizar a mayúscula para que coincida con la BD
+  function normalizarRut(rut) {
+    if (!rut) return rut;
+    rut = String(rut).trim();
+    // Si termina en 'k' o 'K', convertir a MAYÚSCULA para que coincida con la BD
+    if (rut && rut.slice(-1).toLowerCase() === 'k') {
+      rut = rut.slice(0, -1) + 'K';
+    }
+    return rut;
+  }
+
   async function cargarVehiculos(clienteId, selectedVehiculoId = null) {
     if (!vehiculoSelect) return;
     vehiculoSelect.innerHTML = '<option value="">-- Nuevo vehículo --</option>';
 
-    const cleanedId = (clienteId || "").trim();
+    const cleanedId = normalizarRut((clienteId || "").trim());
+    console.log('🚗 cargarVehiculos - clienteId recibido:', clienteId, 'cleanedId:', cleanedId);
     if (!cleanedId) {
       toggleVehiculoCampos();
       return;
@@ -88,9 +102,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       const encodedId = encodeURIComponent(cleanedId);
-      const res = await fetch(`/api/vehiculos/${encodedId}/`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const url = `/api/vehiculos/${encodedId}/`;
+      console.log('📡 Fetching URL:', url);
+      const res = await fetch(url);
+      console.log('📡 Response status:', res.status, res.ok);
+      if (!res.ok) {
+        console.error('❌ Error en respuesta:', res.status, res.statusText);
+        throw new Error(`HTTP ${res.status}`);
+      }
       const data = await res.json();
+      console.log('✅ Vehículos recibidos:', data.length, 'vehículos');
       data.forEach(v => {
         const opt = document.createElement("option");
         opt.value = v.id;
@@ -105,7 +126,12 @@ document.addEventListener("DOMContentLoaded", () => {
         vehiculoSelect.appendChild(opt);
       });
     } catch (error) {
-      console.error("Error cargando vehículos:", error);
+      console.error("❌ Error cargando vehículos:", error);
+      console.error("Error details:", {
+        message: error.message,
+        clienteId: clienteId,
+        cleanedId: cleanedId
+      });
     }
     toggleVehiculoCampos();
   }
@@ -118,7 +144,11 @@ document.addEventListener("DOMContentLoaded", () => {
   if (clienteSelect) {
     clienteSelect.addEventListener("change", () => {
       toggleClienteCampos();
-      cargarVehiculos(clienteSelect.value);
+      // Normalizar el RUT antes de cargar vehículos (importante para RUTs con 'k')
+      const rutOriginal = clienteSelect.value;
+      const rutNormalizado = normalizarRut(rutOriginal);
+      console.log('🔍 Cliente seleccionado - RUT original:', rutOriginal, 'RUT normalizado:', rutNormalizado);
+      cargarVehiculos(rutNormalizado);
       if (vehiculoSelect) vehiculoSelect.value = "";
       toggleVehiculoCampos();
     });
@@ -130,7 +160,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (clienteSelect && clienteSelect.value) {
       const selectedAttr = vehiculoSelect.dataset.selected;
       const selectedVehiculoId = selectedAttr && selectedAttr !== "None" ? selectedAttr : null;
-      cargarVehiculos(clienteSelect.value, selectedVehiculoId);
+      // Normalizar el RUT antes de cargar vehículos (importante para RUTs con 'k')
+      const rutNormalizado = normalizarRut(clienteSelect.value);
+      cargarVehiculos(rutNormalizado, selectedVehiculoId);
     } else {
       toggleVehiculoCampos();
     }

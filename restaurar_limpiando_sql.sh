@@ -161,3 +161,6 @@ echo -e "${BLUE}========================================${NC}"
 rm -f "$TEMP_DIAG" "$TEMP_TRABAJO" 2>/dev/null || true
 
 
+
+
+

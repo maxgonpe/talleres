@@ -47,8 +47,21 @@ document.addEventListener('DOMContentLoaded', function () {
     vehiculoSelect.appendChild(option);
   }
 
+  // Función para normalizar RUT: convertir 'k' final a MAYÚSCULA
+  // IMPORTANTE: En la BD siempre se guarda con 'K' mayúscula, por lo que
+  // debemos normalizar a mayúscula para que coincida con la BD
+  function normalizarRut(rut) {
+    if (!rut) return rut;
+    rut = String(rut).trim();
+    // Si termina en 'k' o 'K', convertir a MAYÚSCULA para que coincida con la BD
+    if (rut && rut.slice(-1).toLowerCase() === 'k') {
+      rut = rut.slice(0, -1) + 'K';
+    }
+    return rut;
+  }
+
   clienteSelect.addEventListener('change', () => {
-    const rut = clienteSelect.value.trim();
+    const rut = normalizarRut(clienteSelect.value.trim());
     if (!rut) {
       resetVehiculos('-- Selecciona un cliente primero --');
       infoBox.style.display = 'none';
