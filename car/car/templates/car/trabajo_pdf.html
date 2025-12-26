@@ -403,6 +403,14 @@
                         </tr>
                     {% endfor %}
                 </tbody>
+                {% if trabajo.acciones.all %}
+                <tfoot>
+                    <tr style="background: #e7f9ef;">
+                        <td colspan="5"><strong>TOTAL MANO DE OBRA:</strong></td>
+                        <td style="text-align: right;"><strong>${{ trabajo.total_mano_obra|floatformat:0|intcomma }}</strong></td>
+                    </tr>
+                </tfoot>
+                {% endif %}
             </table>
         {% else %}
             <div class="no-data">No hay acciones registradas</div>
@@ -460,6 +468,15 @@
                         </tr>
                     {% endfor %}
                 </tbody>
+                {% if trabajo.repuestos.all %}
+                <tfoot>
+                    <tr style="background: #e7f9ef;">
+                        <td colspan="3"><strong>TOTAL DE REPUESTOS:</strong></td>
+                        <td style="text-align: right;"><strong>${{ trabajo.total_repuestos|floatformat:0|intcomma }}</strong></td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+                {% endif %}
             </table>
         {% else %}
             <div class="no-data">No hay repuestos registrados</div>
