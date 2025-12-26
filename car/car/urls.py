@@ -34,6 +34,7 @@ urlpatterns = [
     # === Ingreso / Diagnóstico ===
     path('ingreso/', views.ingreso_view, name='ingreso'),
     path('ingreso/rapido/', views.ingreso_view, name='ingreso_rapido'),
+    path('ingreso/rapido/guardar-aprobar-crear/', views.guardar_aprobar_y_crear_ot, name='guardar_aprobar_y_crear_ot'),
     path('ingreso/voz/', views.ingreso_view, name='ingreso_voz'),
     path('ingreso/exito/', views.ingreso_exitoso_view, name='ingreso_exitoso'),
     path('ingreso/editar/<int:pk>/', views.editar_diagnostico, name='editar_diagnostico'),

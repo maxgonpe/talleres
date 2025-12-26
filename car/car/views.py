@@ -2301,6 +2301,228 @@ class TrabajoDeleteView(DeleteView):
         return context
 
 @login_required
+@requiere_permiso('diagnosticos')
+@transaction.atomic
+def guardar_aprobar_y_crear_ot(request):
+    """
+    Guarda el diagnóstico, lo aprueba y crea la Orden de Trabajo en una sola acción.
+    Esta función combina la lógica de ingreso_view y aprobar_diagnostico.
+    """
+    # Obtener configuración del taller
+    config = AdministracionTaller.get_configuracion_activa()
+    
+    clientes_existentes = Cliente_Taller.objects.filter(activo=True).order_by('nombre')
+    
+    selected_cliente = None
+    selected_vehiculo = None
+    selected_componentes_ids = []
+    
+    if request.method == 'POST':
+        cliente_form = ClienteTallerForm(request.POST, prefix='cliente')
+        vehiculo_form = VehiculoForm(request.POST, prefix='vehiculo')
+        diagnostico_form = DiagnosticoForm(request.POST, prefix='diag')
+        
+        cliente_id = request.POST.get('cliente_existente')
+        vehiculo_id = request.POST.get('vehiculo_existente')
+        selected_componentes_ids = request.POST.getlist('componentes_seleccionados')
+        
+        # --- Cliente ---
+        cliente = None
+        if cliente_id:
+            cliente_id_normalizado = normalizar_rut(cliente_id)
+            try:
+                cliente = Cliente_Taller.objects.get(rut=cliente_id_normalizado)
+                selected_cliente = cliente.rut
+            except Cliente_Taller.DoesNotExist:
+                if cliente_id_normalizado and cliente_id_normalizado[-1].lower() == 'k':
+                    try:
+                        rut_con_k_mayuscula = cliente_id_normalizado[:-1] + 'K'
+                        cliente = Cliente_Taller.objects.get(rut=rut_con_k_mayuscula)
+                        selected_cliente = cliente.rut
+                    except Cliente_Taller.DoesNotExist:
+                        cliente_form.add_error(None, "El cliente seleccionado no existe.")
+                else:
+                    cliente_form.add_error(None, "El cliente seleccionado no existe.")
+        else:
+            if cliente_form.is_valid():
+                cliente = cliente_form.save(commit=False)
+                cliente.activo = True
+                cliente.save()
+                selected_cliente = cliente.rut
+        
+        # --- Vehículo ---
+        vehiculo = None
+        if vehiculo_id:
+            try:
+                vehiculo = Vehiculo.objects.get(pk=vehiculo_id, cliente=cliente)
+                selected_vehiculo = vehiculo.pk
+            except Vehiculo.DoesNotExist:
+                vehiculo_form.add_error(None, "El vehículo seleccionado no existe o no pertenece al cliente.")
+        else:
+            if vehiculo_form.is_valid() and cliente:
+                vehiculo = vehiculo_form.save(commit=False)
+                vehiculo.cliente = cliente
+                vehiculo.save()
+                selected_vehiculo = vehiculo.pk
+        
+        # --- Diagnóstico ---
+        if diagnostico_form.is_valid() and vehiculo:
+            diagnostico = diagnostico_form.save(commit=False)
+            diagnostico.vehiculo = vehiculo
+            diagnostico.save()
+            
+            # Registrar evento de diagnóstico creado
+            registrar_diagnostico_creado(diagnostico, request=request)
+            
+            # 🔹 Relación M2M con componentes
+            diagnostico.componentes.set(selected_componentes_ids)
+            
+            # ====================================================
+            # 🔹 Acciones por componente desde hidden JSON
+            acciones_json = (request.POST.get("acciones_componentes_json") or "").strip()
+            if acciones_json:
+                try:
+                    items = json.loads(acciones_json)
+                    for it in items:
+                        try:
+                            comp_id = int(it.get("componente_id"))
+                            acc_id = int(it.get("accion_id"))
+                        except (TypeError, ValueError):
+                            continue
+                        
+                        precio_mano_obra = (it.get("precio_mano_obra") or "").strip()
+                        cantidad = int(it.get("cantidad", 1)) if it.get("cantidad") else 1
+                        
+                        if not diagnostico.componentes.filter(id=comp_id).exists():
+                            continue
+                        
+                        dca = DiagnosticoComponenteAccion(
+                            diagnostico=diagnostico,
+                            componente_id=comp_id,
+                            accion_id=acc_id,
+                            cantidad=cantidad
+                        )
+                        if precio_mano_obra and precio_mano_obra not in ("0", "0.00"):
+                            dca.precio_mano_obra = precio_mano_obra
+                        dca.save()
+                except json.JSONDecodeError:
+                    pass
+            
+            # ====================================================
+            # 🔹 Repuestos seleccionados desde hidden JSON
+            # ====================================================
+            repuestos_json = (request.POST.get("repuestos_json") or "").strip()
+            if repuestos_json:
+                try:
+                    repuestos_data = json.loads(repuestos_json)
+                    for r in repuestos_data:
+                        try:
+                            repuesto_id = int(r.get("id"))
+                            repuesto = Repuesto.objects.get(pk=repuesto_id)
+                            
+                            stock_id_raw = r.get("repuesto_stock_id")
+                            repuesto_stock = None
+                            if stock_id_raw:
+                                try:
+                                    repuesto_stock = RepuestoEnStock.objects.get(pk=int(stock_id_raw))
+                                except (ValueError, RepuestoEnStock.DoesNotExist):
+                                    repuesto_stock = None
+                            
+                            cantidad = int(r.get("cantidad", 1))
+                            precio = float(r.get("precio_unitario", repuesto.precio_venta or 0))
+                            
+                            DiagnosticoRepuesto.objects.create(
+                                diagnostico=diagnostico,
+                                repuesto=repuesto,
+                                repuesto_stock=repuesto_stock,
+                                cantidad=cantidad,
+                                precio_unitario=precio,
+                                subtotal=cantidad * precio
+                            )
+                        except (ValueError, Repuesto.DoesNotExist, KeyError):
+                            continue
+                except json.JSONDecodeError:
+                    pass
+            
+            # ====================================================
+            # 🌐 Repuestos Externos (Referencias)
+            # ====================================================
+            repuestos_externos_json = (request.POST.get("repuestos_externos_json") or "").strip()
+            if repuestos_externos_json:
+                try:
+                    from .models import RepuestoExterno
+                    repuestos_externos_data = json.loads(repuestos_externos_json)
+                    for r_ext in repuestos_externos_data:
+                        try:
+                            repuesto_ext_id = int(r_ext.get("id"))
+                            repuesto_externo = RepuestoExterno.objects.get(pk=repuesto_ext_id)
+                            
+                            cantidad = int(r_ext.get("cantidad", 1))
+                            precio = float(r_ext.get("precio", repuesto_externo.precio_referencial))
+                            
+                            DiagnosticoRepuesto.objects.create(
+                                diagnostico=diagnostico,
+                                repuesto=None,
+                                repuesto_externo=repuesto_externo,
+                                repuesto_stock=None,
+                                cantidad=cantidad,
+                                precio_unitario=precio,
+                                subtotal=cantidad * precio
+                            )
+                            
+                            repuesto_externo.incrementar_uso()
+                        except (ValueError, RepuestoExterno.DoesNotExist, KeyError):
+                            continue
+                except json.JSONDecodeError:
+                    pass
+            
+            # ====================================================
+            # 🚀 APROBAR Y CREAR TRABAJO
+            # ====================================================
+            if diagnostico.estado != "aprobado":
+                trabajo = diagnostico.aprobar_y_clonar()
+                
+                # Registrar evento de diagnóstico aprobado
+                registrar_diagnostico_aprobado(diagnostico, trabajo, request=request)
+                
+                # Registrar evento de ingreso
+                registrar_ingreso(trabajo, request=request)
+                
+                if config.ver_mensajes:
+                    messages.success(request, f"✅ Diagnóstico guardado, aprobado y trabajo #{trabajo.id} creado.")
+                
+                # Redirigir al editor del trabajo
+                return redirect('trabajo_detalle', pk=trabajo.pk)
+            else:
+                if config.ver_mensajes:
+                    messages.info(request, "ℹ️ Este diagnóstico ya estaba aprobado.")
+                # Si ya estaba aprobado, buscar el trabajo asociado
+                try:
+                    trabajo = Trabajo.objects.get(diagnostico=diagnostico)
+                    return redirect('trabajo_detalle', pk=trabajo.pk)
+                except Trabajo.DoesNotExist:
+                    return redirect('panel_principal')
+    
+    # Si hay errores o es GET, renderizar el formulario nuevamente
+    else:
+        if request.method == 'GET':
+            cliente_form = ClienteTallerForm(prefix='cliente')
+            vehiculo_form = VehiculoForm(prefix='vehiculo')
+            diagnostico_form = DiagnosticoForm(prefix='diag')
+        # Si es POST pero hay errores, los formularios ya tienen los errores
+    
+    return render(request, 'car/ingreso_fusionado.html', {
+        'cliente_form': cliente_form,
+        'vehiculo_form': vehiculo_form,
+        'diagnostico_form': diagnostico_form,
+        'clientes_existentes': clientes_existentes,
+        'selected_cliente': selected_cliente,
+        'selected_vehiculo': selected_vehiculo,
+        'selected_componentes_ids': selected_componentes_ids,
+    })
+
+
+@login_required
 def aprobar_diagnostico(request, pk):
     diagnostico = get_object_or_404(Diagnostico, pk=pk)
 

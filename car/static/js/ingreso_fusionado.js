@@ -29,6 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnNext = document.getElementById("wizard-next");
   const btnSubmit = document.getElementById("wizard-submit");
   const btnSkip = document.getElementById("wizard-skip");
+  const btnSaveApproveCreate = document.getElementById("wizard-save-approve-create");
   let currentStep = 1;
   const totalSteps = panes.length;
 
@@ -52,6 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (btnNext) btnNext.style.display = currentStep < totalSteps ? "inline-flex" : "none";
     if (btnSubmit) btnSubmit.style.display = currentStep === totalSteps ? "inline-flex" : "none";
     if (btnSkip) btnSkip.style.display = currentStep === totalSteps ? "inline-flex" : "none";
+    if (btnSaveApproveCreate) btnSaveApproveCreate.style.display = currentStep === totalSteps ? "inline-flex" : "none";
   }
 
   function goToStep(targetStep) {
@@ -1091,6 +1093,61 @@ document.addEventListener("DOMContentLoaded", () => {
   window.skipRepuestosAndSubmit = function () {
     prepararRepuestosParaEnvio();
     document.getElementById("form-ingreso")?.submit();
+  };
+
+  // Función para guardar, aprobar y crear OT en una sola acción
+  window.guardarAprobarYCrearOT = function () {
+    console.log('🚀 guardarAprobarYCrearOT llamado');
+    
+    // Preparar todos los datos como lo hace el submit normal
+    prepararRepuestosParaEnvio();
+    updateHiddenPayloadAndResumen();
+    
+    // Obtener el formulario
+    const form = document.getElementById("form-ingreso");
+    if (!form) {
+      console.error('❌ No se encontró el formulario');
+      alert('❌ Error: No se encontró el formulario');
+      return;
+    }
+    
+    // Cambiar la acción del formulario a la nueva URL
+    const originalAction = form.action;
+    form.action = '/car/ingreso/rapido/guardar-aprobar-crear/';
+    
+    // Agregar un campo hidden para indicar la acción (aunque la URL ya lo indica)
+    let actionField = document.getElementById('guardar_aprobar_crear_field');
+    if (!actionField) {
+      actionField = document.createElement('input');
+      actionField.type = 'hidden';
+      actionField.name = 'guardar_aprobar_crear';
+      actionField.id = 'guardar_aprobar_crear_field';
+      actionField.value = 'true';
+      form.appendChild(actionField);
+    }
+    
+    // Mostrar indicador de carga
+    if (btnSaveApproveCreate) {
+      btnSaveApproveCreate.disabled = true;
+      const originalText = btnSaveApproveCreate.textContent;
+      btnSaveApproveCreate.textContent = '⏳ Procesando...';
+      
+      // Restaurar el botón después de un tiempo (por si hay error)
+      setTimeout(() => {
+        if (btnSaveApproveCreate) {
+          btnSaveApproveCreate.disabled = false;
+          btnSaveApproveCreate.textContent = originalText;
+        }
+        // Restaurar la acción original del formulario
+        if (form) {
+          form.action = originalAction;
+        }
+      }, 10000);
+    }
+    
+    // Enviar el formulario
+    console.log('📤 Enviando formulario a:', form.action);
+    form.submit();
   };
 
   const form = document.getElementById("form-ingreso");

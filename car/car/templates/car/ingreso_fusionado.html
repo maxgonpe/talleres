@@ -121,7 +121,7 @@
     </div>
   </div>
 
-  <form id="form-ingreso" method="post" novalidate>
+  <form id="form-ingreso" method="post" action="{% url 'ingreso_rapido' %}" novalidate>
     {% csrf_token %}
 
     <!-- Paso 1 -->
@@ -409,6 +409,10 @@
           <div class="d-flex gap-2">
             <button type="button" class="btn btn-primary" id="wizard-next">
               Siguiente →
+            </button>
+            <button type="button" class="btn btn-primary" id="wizard-save-approve-create" style="display:none;"
+                    onclick="guardarAprobarYCrearOT()">
+              ✅ Guardar Aprobar y Crear OT
             </button>
             <button type="submit" class="btn btn-success" id="wizard-submit" style="display:none;">
               💾 Guardar diagnóstico
