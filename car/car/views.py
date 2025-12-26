@@ -2602,8 +2602,53 @@ def historial_trabajos(request):
     ).prefetch_related(
         'acciones__accion',
         'acciones__componente',
-        'repuestos__repuesto'
+        'repuestos__repuesto',
+        'mecanicos__user'
     ).order_by('-fecha_inicio')
+    
+    # Búsqueda AJAX
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        busqueda = request.GET.get('q', '').strip()
+        if busqueda:
+            # Buscar por ID, cliente, placa, RUT, mecánico, estado
+            trabajos = trabajos.filter(
+                Q(id__icontains=busqueda) |
+                Q(vehiculo__cliente__nombre__icontains=busqueda) |
+                Q(vehiculo__cliente__rut__icontains=busqueda) |
+                Q(vehiculo__placa__icontains=busqueda) |
+                Q(vehiculo__marca__icontains=busqueda) |
+                Q(vehiculo__modelo__icontains=busqueda) |
+                Q(mecanicos__user__first_name__icontains=busqueda) |
+                Q(mecanicos__user__last_name__icontains=busqueda) |
+                Q(mecanicos__user__username__icontains=busqueda) |
+                Q(estado__icontains=busqueda) |
+                Q(observaciones__icontains=busqueda)
+            ).distinct()
+        
+        # Convertir a JSON
+        trabajos_data = []
+        for trabajo in trabajos:
+            mecanicos_nombres = [f"{mec.user.get_full_name() or mec.user.username}" for mec in trabajo.mecanicos.all()]
+            trabajos_data.append({
+                'id': trabajo.id,
+                'vehiculo': str(trabajo.vehiculo),
+                'cliente_nombre': trabajo.vehiculo.cliente.nombre,
+                'cliente_rut': trabajo.vehiculo.cliente.rut,
+                'placa': trabajo.vehiculo.placa or '',
+                'fecha_inicio': trabajo.fecha_inicio.strftime('%d/%m/%Y %H:%M') if trabajo.fecha_inicio else '',
+                'estado': trabajo.estado,
+                'estado_display': trabajo.get_estado_display(),
+                'total_general': float(trabajo.total_general or 0),
+                'total_abonos': float(trabajo.total_abonos or 0),
+                'saldo_pendiente': float(trabajo.saldo_pendiente or 0),
+                'mecanicos': mecanicos_nombres,
+                'url_detalle': f'/car/trabajos/{trabajo.id}/',
+            })
+        
+        return JsonResponse({
+            'trabajos': trabajos_data,
+            'total': len(trabajos_data)
+        })
 
     return render(request, 'car/trabajo_historial.html', {
         'trabajos': trabajos,
