@@ -2520,7 +2520,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                     ${insumo.oem ? 'OEM: ' + escapeHtml(insumo.oem) + ' | ' : ''}
                                     Precio: $${(insumo.precio || 0).toLocaleString()} | 
                                     Stock: ${insumo.stock || 0}
-                                    ${insumo.deposito ? ' | Depósito: ' + escapeHtml(insumo.deposito) : ''}
+                                    ${insumo.descripcion ? ' | Descripción: ' + escapeHtml(insumo.descripcion) : ''}
+                                    ${insumo.medida ? ' | Medida: ' + escapeHtml(insumo.medida) : ''}
                                 </small>
                             </label>
                         </div>

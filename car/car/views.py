@@ -3960,6 +3960,8 @@ def buscar_insumos(request):
                 'carroceria': repuesto.carroceria or '',
                 'deposito': stock_item.deposito or '',
                 'proveedor': stock_item.proveedor or '',
+                'descripcion': repuesto.descripcion or '',
+                'medida': repuesto.medida or '',
             })
         
         return JsonResponse({'insumos': insumos})
