@@ -1575,7 +1575,11 @@
 
 {% block extra_js %}
 <script>
+// Variable global para ver_mensajes (disponible para todos los scripts)
+window.ver_mensajes = {% if ver_mensajes %}true{% else %}false{% endif %};
+
 console.log('🚀 CARGANDO SCRIPT ACTUALIZADO - Versión con debug de showTab');
+console.log('🔧 ver_mensajes configurado:', window.ver_mensajes);
 
 // Funciones para las pestañas
 function showTab(tabName) {
@@ -1837,10 +1841,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log(`   - data.acciones:`, data.acciones);
                 
                 // Mostrar mensaje al usuario
-                if (data.mensaje) {
-                    alert(`⚠️ ${data.mensaje}`);
-                } else {
-                    alert(`⚠️ El componente "${componenteNombre}" no tiene acciones asociadas.`);
+                if (window.ver_mensajes) {
+                    if (data.mensaje) {
+                        alert(`⚠️ ${data.mensaje}`);
+                    } else {
+                        alert(`⚠️ El componente "${componenteNombre}" no tiene acciones asociadas.`);
+                    }
                 }
                 
                 // Remover el componente de la lista de seleccionados
@@ -2153,7 +2159,9 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('📋 Acciones seleccionadas (filtradas solo por seleccionado):', accionesSeleccionadas);
         
         if (accionesSeleccionadas.length === 0) {
-            alert('⚠️ No hay acciones seleccionadas para guardar');
+            if (window.ver_mensajes) {
+                alert('⚠️ No hay acciones seleccionadas para guardar');
+            }
             return;
         }
         
@@ -2193,7 +2201,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (!response.ok) {
                 console.error('❌ Error al guardar acciones:', response.status);
-                alert('❌ Error al guardar las acciones');
+                if (window.ver_mensajes) {
+                    alert('❌ Error al guardar las acciones');
+                }
                 return;
             }
 
@@ -2208,16 +2218,22 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             if (data.ok) {
-                alert(`✅ Acciones guardadas (${data.acciones_creadas} nuevas${data.detalle || ''})`);
+                if (window.ver_mensajes) {
+                    alert(`✅ Acciones guardadas (${data.acciones_creadas} nuevas${data.detalle || ''})`);
+                }
                 window.location.href = window.location.pathname + '?tab=acciones';
             } else {
                 console.error('❌ Error al guardar acciones (JSON):', data);
-                alert(data.error || '❌ Error al guardar las acciones');
+                if (window.ver_mensajes) {
+                    alert(data.error || '❌ Error al guardar las acciones');
+                }
             }
             
         } catch (error) {
             console.error('❌ Error en la petición:', error);
-            alert('❌ Error al guardar las acciones');
+            if (window.ver_mensajes) {
+                alert('❌ Error al guardar las acciones');
+            }
         }
     };
     
@@ -2417,13 +2433,17 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (response.ok || response.status === 302) {
                 console.log('✅ Repuestos guardados exitosamente');
-                alert('✅ Repuestos guardados exitosamente');
+                if (window.ver_mensajes) {
+                    alert('✅ Repuestos guardados exitosamente');
+                }
                 
                 // Recargar la página manteniendo la pestaña de repuestos activa
                 window.location.href = window.location.pathname + '?tab=repuestos';
             } else {
                 console.error('❌ Error al guardar repuestos:', response.status);
-                alert('❌ Error al guardar los repuestos');
+                if (window.ver_mensajes) {
+                    alert('❌ Error al guardar los repuestos');
+                }
             }
             
         } catch (error) {
@@ -2550,7 +2570,9 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('📦 Insumos seleccionados:', insumos);
         
         if (insumos.length === 0) {
-            alert('⚠️ No hay insumos seleccionados para agregar');
+            if (window.ver_mensajes) {
+                alert('⚠️ No hay insumos seleccionados para agregar');
+            }
             return;
         }
         
@@ -2570,9 +2592,9 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (response.ok || response.status === 302) {
                 console.log('✅ Insumos agregados exitosamente');
-                {% if ver_mensajes %}
-                alert('✅ Insumos agregados exitosamente');
-                {% endif %}
+                if (window.ver_mensajes) {
+                    alert('✅ Insumos agregados exitosamente');
+                }
                 
                 // Limpiar el campo de búsqueda antes de recargar
                 const buscarInput = document.getElementById('buscar-insumo');
@@ -2590,7 +2612,9 @@ document.addEventListener('DOMContentLoaded', function() {
             
         } catch (error) {
             console.error('❌ Error en la petición:', error);
-            alert('❌ Error al agregar los insumos');
+            if (window.ver_mensajes) {
+                alert('❌ Error al agregar los insumos');
+            }
         }
     };
     
@@ -3050,10 +3074,14 @@ async function agregarRepuestoExternoAlTrabajo(repuestoExternoId, nombre, precio
       // Recargar página
       window.location.href = window.location.pathname + '?tab=repuestos';
     } else {
-      alert('❌ Error al agregar el repuesto');
+      if (window.ver_mensajes) {
+        alert('❌ Error al agregar el repuesto');
+      }
     }
   } catch (error) {
-    alert('❌ Error: ' + error.message);
+    if (window.ver_mensajes) {
+      alert('❌ Error: ' + error.message);
+    }
   }
 }
 
@@ -3077,7 +3105,9 @@ function buscarEnAutoPlanetTrabajo() {
   const termino = document.getElementById('buscarRepuestoExternoTrabajo').value.trim();
   
   if (!termino) {
-    alert('❌ Por favor ingresa un término de búsqueda');
+    if (window.ver_mensajes) {
+      alert('❌ Por favor ingresa un término de búsqueda');
+    }
     document.getElementById('buscarRepuestoExternoTrabajo').focus();
     return;
   }

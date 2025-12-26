@@ -3395,6 +3395,8 @@ def trabajo_detalle(request, pk):
         "repuestos_disponibles": repuestos_disponibles,
         "active_tab": active_tab,
         "config": config,
+        "ver_mensajes": config.ver_mensajes if config else True,
+        "ver_avisos": config.ver_avisos if config else True,
     }
     # Detectar móvil y usar template apropiado
     if is_mobile_device(request):
