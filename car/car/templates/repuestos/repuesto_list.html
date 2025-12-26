@@ -148,6 +148,42 @@
     
     .table th:nth-child(8), .table td:nth-child(8) { /* Acciones */
         max-width: 200px;
+    }
+    
+    /* Cards informativas */
+    .stat-card {
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow-md);
+        transition: var(--transition);
+        border: none;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .stat-card .card-body {
+        padding: var(--spacing-md);
+    }
+    
+    /* Filtros de stock */
+    #custom-stock-filter {
+        padding: var(--spacing-sm);
+        background: var(--hover-bg);
+        border-radius: var(--border-radius-md);
+        border: 1px solid var(--border-color);
+    }
+    
+    #filtro-activo-indicador {
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    .btn.active {
+        transform: scale(1.05);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
         min-width: 180px;
     }
     
@@ -417,6 +453,91 @@
         </div>
     </div>
 
+    <!-- Cards Informativas -->
+    <div class="row mb-4" id="stats-cards">
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+                <div class="card-body text-center">
+                    <h5 class="card-title mb-2">📦 Total Repuestos</h5>
+                    <h2 class="mb-0" style="font-size: 2.5rem; font-weight: bold;">{{ stats.total_repuestos|default:0 }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border: none;">
+                <div class="card-body text-center">
+                    <h5 class="card-title mb-2">⚠️ Sin Stock</h5>
+                    <h2 class="mb-0" style="font-size: 2.5rem; font-weight: bold;">{{ stats.repuestos_stock_cero|default:0 }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; border: none;">
+                <div class="card-body text-center">
+                    <h5 class="card-title mb-2">🛒 Último Vendido</h5>
+                    {% if stats.ultimo_repuesto_vendido %}
+                        <p class="mb-1" style="font-size: 0.9rem; opacity: 0.9;">{{ stats.ultimo_repuesto_vendido.nombre|truncatewords:4 }}</p>
+                        <small style="opacity: 0.8;">{{ stats.ultimo_repuesto_vendido.fecha|date:"d/m/Y H:i" }}</small>
+                    {% else %}
+                        <p class="mb-0" style="opacity: 0.8;">N/A</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card stat-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; border: none;">
+                <div class="card-body text-center">
+                    <h5 class="card-title mb-2">📥 Último Ingresado</h5>
+                    {% if stats.ultimo_repuesto_ingresado %}
+                        <p class="mb-1" style="font-size: 0.9rem; opacity: 0.9;">{{ stats.ultimo_repuesto_ingresado.nombre|truncatewords:4 }}</p>
+                        <small style="opacity: 0.8;">{{ stats.ultimo_repuesto_ingresado.fecha|date:"d/m/Y H:i" }}</small>
+                    {% else %}
+                        <p class="mb-0" style="opacity: 0.8;">N/A</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros de Stock -->
+    <div class="search-container mb-3">
+        <div class="row align-items-center">
+            <div class="col-md-12">
+                <label class="form-label mb-2"><strong>🔽 Filtros de Stock:</strong></label>
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <button type="button" class="btn btn-outline-danger" id="filter-stock-zero" onclick="filtrarPorStock(0)">
+                        ⚠️ Stock = 0
+                    </button>
+                    <button type="button" class="btn btn-outline-warning" id="filter-stock-low" onclick="filtrarPorStock(5)">
+                        📉 Stock ≤ 5
+                    </button>
+                    <button type="button" class="btn btn-outline-info" id="filter-stock-custom" onclick="mostrarFiltroPersonalizado()">
+                        🔢 Stock ≤ [Personalizado]
+                    </button>
+                    <div id="custom-stock-filter" style="display: none;" class="d-flex align-items-center gap-2">
+                        <input type="number" 
+                               id="stock-custom-value" 
+                               class="form-control" 
+                               placeholder="Cantidad"
+                               min="0"
+                               style="width: 100px;"
+                               onkeypress="if(event.key === 'Enter') aplicarFiltroPersonalizado()">
+                        <button type="button" class="btn btn-primary btn-sm" onclick="aplicarFiltroPersonalizado()">
+                            Aplicar
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="ocultarFiltroPersonalizado()">
+                            Cancelar
+                        </button>
+                    </div>
+                    <button type="button" class="btn btn-outline-secondary" id="filter-stock-all" onclick="limpiarFiltroStock()">
+                        🔄 Mostrar Todos
+                    </button>
+                    <span class="ms-auto text-muted" id="filtro-activo-indicador"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Tabla de repuestos -->
     <div class="table-container">
         <div class="table-responsive">
@@ -450,7 +571,8 @@
                         data-cilindrada="{{ repuesto.cilindrada|default:''|lower }}"
                         data-nro-valvulas="{{ repuesto.nro_valvulas|default:'' }}"
                         data-combustible="{{ repuesto.combustible|default:''|lower }}"
-                        data-otro-especial="{{ repuesto.otro_especial|default:''|lower }}">
+                        data-otro-especial="{{ repuesto.otro_especial|default:''|lower }}"
+                        data-stock="{{ repuesto.stock_total|default:0 }}">
                         <td>{{ repuesto.id }}</td>
                         <td>{{ repuesto.sku|default:"-" }}</td>
                         <td>{{ repuesto.nombre }}</td>
@@ -830,13 +952,172 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // Event listener para la búsqueda con debounce
+        // ========================================
+        // FILTROS DE STOCK
+        // ========================================
+        let filtroStockActivo = null;
+        
+        // Función unificada para aplicar todos los filtros (texto + stock)
+        function aplicarTodosLosFiltros() {
+            const termino = searchInput.value.trim().toLowerCase();
+            let repuestosVisibles = 0;
+            
+            repuestosRows.forEach(row => {
+                // Verificar filtro de texto
+                let coincideTexto = true;
+                if (termino) {
+                    const id = row.dataset.id || '';
+                    const sku = row.dataset.sku || '';
+                    const nombre = row.dataset.nombre || '';
+                    const marca = row.dataset.marca || '';
+                    const oem = row.dataset.oem || '';
+                    const codigoBarra = row.dataset.codigoBarra || '';
+                    const origen = row.dataset.origen || '';
+                    const codigoProveedor = row.dataset.codigoProveedor || '';
+                    const marcaVehiculo = row.dataset.marcaVehiculo || '';
+                    const tipoMotor = row.dataset.tipoMotor || '';
+                    const carroceria = row.dataset.carroceria || '';
+                    const cilindrada = row.dataset.cilindrada || '';
+                    const nroValvulas = row.dataset.nroValvulas || '';
+                    const combustible = row.dataset.combustible || '';
+                    const otroEspecial = row.dataset.otroEspecial || '';
+                    
+                    coincideTexto = (id && id.toLowerCase().includes(termino)) || 
+                                   (sku && sku.toLowerCase().includes(termino)) || 
+                                   (nombre && nombre.toLowerCase().includes(termino)) || 
+                                   (marca && marca.toLowerCase().includes(termino)) ||
+                                   (oem && oem.toLowerCase().includes(termino)) ||
+                                   (codigoBarra && codigoBarra.toLowerCase().includes(termino)) ||
+                                   (origen && origen.toLowerCase().includes(termino)) ||
+                                   (codigoProveedor && codigoProveedor.toLowerCase().includes(termino)) ||
+                                   (marcaVehiculo && marcaVehiculo.toLowerCase().includes(termino)) ||
+                                   (tipoMotor && tipoMotor.toLowerCase().includes(termino)) ||
+                                   (carroceria && carroceria.toLowerCase().includes(termino)) ||
+                                   (cilindrada && cilindrada.toLowerCase().includes(termino)) ||
+                                   (nroValvulas && nroValvulas.includes(termino)) ||
+                                   (combustible && combustible.toLowerCase().includes(termino)) ||
+                                   (otroEspecial && otroEspecial.toLowerCase().includes(termino));
+                }
+                
+                // Verificar filtro de stock
+                let coincideStock = true;
+                if (filtroStockActivo !== null) {
+                    const stock = parseInt(row.dataset.stock) || 0;
+                    coincideStock = stock <= filtroStockActivo;
+                }
+                
+                // Mostrar solo si coincide con ambos filtros
+                if (coincideTexto && coincideStock) {
+                    row.style.display = '';
+                    repuestosVisibles++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            // Actualizar indicador de filtro activo
+            const indicador = document.getElementById('filtro-activo-indicador');
+            if (indicador) {
+                if (filtroStockActivo !== null) {
+                    indicador.textContent = `📊 Mostrando ${repuestosVisibles} repuestos${termino ? ' (filtrados)' : ''} con stock ≤ ${filtroStockActivo}`;
+                } else {
+                    indicador.textContent = '';
+                }
+            }
+            
+            // Mostrar mensaje si no hay resultados
+            const noResultsMessage = document.getElementById('no-results-message');
+            if (repuestosVisibles === 0 && (termino || filtroStockActivo !== null)) {
+                if (!noResultsMessage) {
+                    const noResultsRow = document.createElement('tr');
+                    noResultsRow.id = 'no-results-message';
+                    let mensaje = '🔍 No se encontraron repuestos';
+                    if (termino && filtroStockActivo !== null) {
+                        mensaje += ` que coincidan con "${termino.replace(/"/g, '&quot;')}" y tengan stock ≤ ${filtroStockActivo}`;
+                    } else if (termino) {
+                        mensaje += ` que coincidan con "${termino.replace(/"/g, '&quot;')}"`;
+                    } else if (filtroStockActivo !== null) {
+                        mensaje += ` con stock ≤ ${filtroStockActivo}`;
+                    }
+                    noResultsRow.innerHTML = `<td colspan="8" class="text-center text-secondary">${mensaje}</td>`;
+                    tbody.appendChild(noResultsRow);
+                }
+            } else {
+                if (noResultsMessage) {
+                    noResultsMessage.remove();
+                }
+            }
+        }
+        
+        // Función para filtrar por stock
+        window.filtrarPorStock = function(maxStock) {
+            filtroStockActivo = maxStock;
+            aplicarTodosLosFiltros();
+            
+            // Actualizar estado de botones
+            document.querySelectorAll('[id^="filter-stock"]').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            const btnActivo = document.getElementById(maxStock === 0 ? 'filter-stock-zero' : 
+                                                      maxStock === 5 ? 'filter-stock-low' : 
+                                                      'filter-stock-custom');
+            if (btnActivo) {
+                btnActivo.classList.add('active');
+            }
+        };
+        
+        // Función para mostrar filtro personalizado
+        window.mostrarFiltroPersonalizado = function() {
+            const customFilter = document.getElementById('custom-stock-filter');
+            if (customFilter) {
+                customFilter.style.display = 'flex';
+                document.getElementById('stock-custom-value').focus();
+            }
+        };
+        
+        // Función para ocultar filtro personalizado
+        window.ocultarFiltroPersonalizado = function() {
+            const customFilter = document.getElementById('custom-stock-filter');
+            if (customFilter) {
+                customFilter.style.display = 'none';
+                document.getElementById('stock-custom-value').value = '';
+            }
+        };
+        
+        // Función para aplicar filtro personalizado
+        window.aplicarFiltroPersonalizado = function() {
+            const input = document.getElementById('stock-custom-value');
+            if (input && input.value !== '') {
+                const valor = parseInt(input.value);
+                if (!isNaN(valor) && valor >= 0) {
+                    filtrarPorStock(valor);
+                    ocultarFiltroPersonalizado();
+                } else {
+                    alert('Por favor, ingresa un número válido (mayor o igual a 0)');
+                }
+            }
+        };
+        
+        // Función para limpiar filtro de stock
+        window.limpiarFiltroStock = function() {
+            filtroStockActivo = null;
+            aplicarTodosLosFiltros();
+            
+            // Actualizar estado de botones
+            document.querySelectorAll('[id^="filter-stock"]').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Ocultar filtro personalizado si está visible
+            ocultarFiltroPersonalizado();
+        };
+        
+        // Event listener para la búsqueda con debounce (usando función unificada)
         let searchTimeout;
         searchInput.addEventListener('input', function() {
             clearTimeout(searchTimeout);
             searchTimeout = setTimeout(() => {
-                const termino = this.value.trim();
-                filtrarRepuestos(termino);
+                aplicarTodosLosFiltros();
             }, 150); // Debounce de 150ms
         });
         
@@ -844,13 +1125,24 @@ document.addEventListener('DOMContentLoaded', function() {
         searchInput.addEventListener('keydown', function(e) {
             if (e.key === 'Escape') {
                 this.value = '';
-                filtrarRepuestos('');
+                limpiarFiltroStock();
                 this.blur();
             }
         });
         
+        // Permitir Enter en el filtro personalizado
+        const stockCustomInput = document.getElementById('stock-custom-value');
+        if (stockCustomInput) {
+            stockCustomInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    aplicarFiltroPersonalizado();
+                }
+            });
+        }
+        
         // Auto-focus en la búsqueda
         searchInput.focus();
+        
     } catch (error) {
         console.error('❌ Error inicializando búsqueda:', error);
     }

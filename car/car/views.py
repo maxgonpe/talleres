@@ -4253,6 +4253,69 @@ class RepuestoListView(ListView):
         # Obtener configuración del taller
         config = AdministracionTaller.get_configuracion_activa()
         context['config'] = config
+        
+        # Estadísticas para las cards informativas
+        from django.db.models import Sum, Max, Q
+        from .models import RepuestoEnStock, VentaItem, VentaPOSItem, StockMovimiento
+        
+        # Total de repuestos
+        total_repuestos = Repuesto.objects.count()
+        
+        # Repuestos con stock cero
+        repuestos_stock_cero = Repuesto.objects.filter(stock=0).count()
+        
+        # Último repuesto vendido (desde VentaItem o VentaPOSItem)
+        ultimo_repuesto_vendido = None
+        ultima_venta_item = VentaItem.objects.select_related('repuesto_stock__repuesto', 'venta').order_by('-venta__fecha').first()
+        ultima_venta_pos_item = VentaPOSItem.objects.select_related('repuesto', 'venta').order_by('-venta__fecha').first()
+        
+        if ultima_venta_pos_item and (not ultima_venta_item or ultima_venta_pos_item.venta.fecha > ultima_venta_item.venta.fecha):
+            ultimo_repuesto_vendido = {
+                'nombre': ultima_venta_pos_item.repuesto.nombre,
+                'fecha': ultima_venta_pos_item.venta.fecha,
+                'cantidad': ultima_venta_pos_item.cantidad
+            }
+        elif ultima_venta_item:
+            ultimo_repuesto_vendido = {
+                'nombre': ultima_venta_item.repuesto_stock.repuesto.nombre,
+                'fecha': ultima_venta_item.venta.fecha,
+                'cantidad': ultima_venta_item.cantidad
+            }
+        
+        # Último repuesto ingresado/actualizado (desde StockMovimiento o RepuestoEnStock)
+        ultimo_repuesto_ingresado = None
+        ultimo_movimiento_ingreso = StockMovimiento.objects.filter(
+            tipo='ingreso'
+        ).select_related('repuesto_stock__repuesto').order_by('-fecha').first()
+        
+        ultimo_stock_actualizado = RepuestoEnStock.objects.select_related('repuesto').order_by('-ultima_actualizacion').first()
+        
+        if ultimo_movimiento_ingreso and (not ultimo_stock_actualizado or ultimo_movimiento_ingreso.fecha > ultimo_stock_actualizado.ultima_actualizacion):
+            ultimo_repuesto_ingresado = {
+                'nombre': ultimo_movimiento_ingreso.repuesto_stock.repuesto.nombre,
+                'fecha': ultimo_movimiento_ingreso.fecha,
+                'cantidad': ultimo_movimiento_ingreso.cantidad
+            }
+        elif ultimo_stock_actualizado:
+            ultimo_repuesto_ingresado = {
+                'nombre': ultimo_stock_actualizado.repuesto.nombre,
+                'fecha': ultimo_stock_actualizado.ultima_actualizacion,
+                'cantidad': None
+            }
+        
+        # Total stock disponible (suma de todos los stocks)
+        total_stock_disponible = RepuestoEnStock.objects.aggregate(
+            total=Sum('stock')
+        )['total'] or 0
+        
+        context['stats'] = {
+            'total_repuestos': total_repuestos,
+            'repuestos_stock_cero': repuestos_stock_cero,
+            'ultimo_repuesto_vendido': ultimo_repuesto_vendido,
+            'ultimo_repuesto_ingresado': ultimo_repuesto_ingresado,
+            'total_stock_disponible': total_stock_disponible,
+        }
+        
         return context
 
 class RepuestoCreateView(CreateView):
