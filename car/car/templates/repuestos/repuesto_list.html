@@ -189,14 +189,18 @@
     
     
     .ficha-modal {
-        display: none;
+        display: none !important;
         position: fixed;
-        z-index: 1000;
+        z-index: 9999 !important;
         left: 0;
         top: 0;
         width: 100%;
         height: 100%;
         background-color: rgba(0,0,0,0.5);
+    }
+    
+    .ficha-modal.show {
+        display: block !important;
     }
     
     .ficha-content {
@@ -589,9 +593,9 @@
                                 <a href="{% url 'repuesto_update' repuesto.pk %}" class="btn btn-warning btn-action" title="Editar">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <button class="btn btn-info btn-action" title="Ver Ficha" onclick="mostrarFicha({{ repuesto.id }})">
+                                <a href="{% url 'repuesto_detail' repuesto.pk %}" class="btn btn-info btn-action" title="Ver Ficha">
                                     <i class="fas fa-eye"></i>
-                                </button>
+                                </a>
                                 <a href="{% url 'repuesto_compatibilidad' repuesto.pk %}" class="btn btn-success btn-action" title="Compatibilidad">
                                     <i class="fas fa-link"></i>
                                 </a>
@@ -617,7 +621,7 @@
     <div class="ficha-content">
         <div class="ficha-header">
             <h3 class="ficha-title">📦 Ficha del Repuesto</h3>
-            <button class="ficha-close" onclick="cerrarFicha()">&times;</button>
+            <button type="button" class="ficha-close" onclick="window.cerrarFicha()">&times;</button>
         </div>
         <div id="ficha-content-body">
             <!-- El contenido se llenará dinámicamente -->
@@ -698,24 +702,47 @@ function detectarTema() {
     return 'light'; // Por defecto
 }
 
-// Función para mostrar ficha del repuesto
-function mostrarFicha(repuestoId) {
+// Función para mostrar ficha del repuesto (scope global)
+window.mostrarFicha = function(repuestoId) {
     try {
-        console.log('Mostrando ficha para repuesto ID:', repuestoId);
-        const repuesto = repuestosData[repuestoId];
-        if (!repuesto) {
-            console.error('No se encontró el repuesto con ID:', repuestoId);
-            alert('No se pudo cargar la información del repuesto');
+        console.log('🔍 [mostrarFicha] Iniciando con ID:', repuestoId);
+        
+        // Convertir a número si es necesario
+        repuestoId = parseInt(repuestoId);
+        if (isNaN(repuestoId)) {
+            console.error('❌ ID inválido:', repuestoId);
+            alert('Error: ID de repuesto inválido');
             return;
         }
+        
+        console.log('📦 [mostrarFicha] Buscando repuesto en datos...');
+        const repuesto = repuestosData[repuestoId];
+        if (!repuesto) {
+            console.error('❌ No se encontró el repuesto con ID:', repuestoId);
+            console.log('📋 Repuestos disponibles:', Object.keys(repuestosData));
+            console.log('📊 Total de repuestos en datos:', Object.keys(repuestosData).length);
+            alert('No se pudo cargar la información del repuesto con ID: ' + repuestoId);
+            return;
+        }
+        
+        console.log('✅ [mostrarFicha] Repuesto encontrado:', repuesto);
         
         const modal = document.getElementById('ficha-modal');
         const contentBody = document.getElementById('ficha-content-body');
         
-        if (!modal || !contentBody) {
-            console.error('No se encontraron los elementos del modal');
+        if (!modal) {
+            console.error('❌ No se encontró el elemento modal con id "ficha-modal"');
+            alert('Error: No se encontró el modal en el DOM');
             return;
         }
+        
+        if (!contentBody) {
+            console.error('❌ No se encontró el elemento contentBody con id "ficha-content-body"');
+            alert('Error: No se encontró el contenedor del modal');
+            return;
+        }
+        
+        console.log('✅ [mostrarFicha] Elementos del modal encontrados');
         
         // Detectar y aplicar tema
         const tema = detectarTema();
@@ -729,6 +756,7 @@ function mostrarFicha(repuestoId) {
         }
         
         // Crear contenido de la ficha
+        console.log('📝 [mostrarFicha] Generando contenido HTML...');
         contentBody.innerHTML = `
         <div class="ficha-grid">
             <div class="ficha-field">
@@ -740,8 +768,8 @@ function mostrarFicha(repuestoId) {
                 <div class="ficha-value ${repuesto.sku === '-' ? 'empty' : ''}">${repuesto.sku}</div>
             </div>
             <div class="ficha-field">
-                <div class="ficha-label">Marca</div>
-                <div class="ficha-value ${repuesto.marca === '-' ? 'empty' : ''}">${repuesto.marca}</div>
+                <div class="ficha-label">OEM</div>
+                <div class="ficha-value ${repuesto.oem === '-' ? 'empty' : ''}">${repuesto.oem}</div>
             </div>
             <div class="ficha-field">
                 <div class="ficha-label">Referencia</div>
@@ -834,25 +862,71 @@ function mostrarFicha(repuestoId) {
         </div>
     `;
     
+        // Mostrar el modal usando múltiples métodos para asegurar que se muestre
+        console.log('👁️ [mostrarFicha] Mostrando modal...');
         modal.style.display = 'block';
+        modal.classList.add('show');
+        modal.style.visibility = 'visible';
+        modal.style.opacity = '1';
+        
+        console.log('✅ [mostrarFicha] Modal mostrado. Display:', modal.style.display, 'Class:', modal.className);
     } catch (error) {
         console.error('❌ Error mostrando ficha del repuesto:', error);
-        alert('Error al mostrar la información del repuesto');
+        console.error('Stack trace:', error.stack);
+        alert('Error al mostrar la información del repuesto: ' + error.message);
     }
-}
+};
 
-// Función para cerrar ficha
-function cerrarFicha() {
-    document.getElementById('ficha-modal').style.display = 'none';
-}
-
-// Cerrar modal al hacer clic fuera de él
-window.onclick = function(event) {
+// Función para cerrar ficha (scope global)
+window.cerrarFicha = function() {
     const modal = document.getElementById('ficha-modal');
-    if (event.target === modal) {
+    if (modal) {
         modal.style.display = 'none';
+        modal.classList.remove('show');
+        modal.style.visibility = 'hidden';
+        console.log('🔒 Modal cerrado');
     }
-}
+};
+
+// Event listeners para los botones "Ver Ficha" usando delegación de eventos
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Inicializando event listeners para botones Ver Ficha...');
+    
+    // Usar delegación de eventos para manejar clics en botones "Ver Ficha"
+    document.addEventListener('click', function(event) {
+        const btn = event.target.closest('.btn-ver-ficha');
+        if (btn) {
+            event.preventDefault();
+            event.stopPropagation();
+            const repuestoId = btn.getAttribute('data-repuesto-id');
+            if (repuestoId) {
+                console.log('🖱️ Click en botón Ver Ficha, ID:', repuestoId);
+                window.mostrarFicha(repuestoId);
+            } else {
+                console.error('❌ No se encontró data-repuesto-id en el botón');
+            }
+        }
+    });
+    
+    // También mantener el onclick inline como respaldo
+    const verFichaButtons = document.querySelectorAll('.btn-ver-ficha');
+    verFichaButtons.forEach(function(btn) {
+        const repuestoId = btn.getAttribute('data-repuesto-id');
+        if (repuestoId) {
+            btn.setAttribute('onclick', 'window.mostrarFicha(' + repuestoId + '); return false;');
+        }
+    });
+    
+    console.log('✅ Event listeners inicializados. Botones encontrados:', verFichaButtons.length);
+});
+
+// Cerrar modal al hacer clic fuera de él (sin sobrescribir otros handlers)
+document.addEventListener('click', function(event) {
+    const modal = document.getElementById('ficha-modal');
+    if (modal && event.target === modal && modal.style.display === 'block') {
+        window.cerrarFicha();
+    }
+});
 
 // Función de búsqueda en tiempo real
 document.addEventListener('DOMContentLoaded', function() {

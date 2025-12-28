@@ -36,7 +36,7 @@ from reportlab.lib.units import inch
 from difflib import SequenceMatcher
 import re
 from collections import defaultdict
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.urls import reverse_lazy
 from reportlab.lib.styles import ParagraphStyle
 from django.contrib.auth import authenticate, login, logout
@@ -4382,6 +4382,18 @@ class RepuestoUpdateView(UpdateView):
             print(f"Error sincronizando con RepuestoEnStock: {e}")
         
         return response
+
+class RepuestoDetailView(DetailView):
+    model = Repuesto
+    template_name = "repuestos/repuesto_detail.html"
+    context_object_name = "repuesto"
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Obtener configuración del taller
+        config = AdministracionTaller.get_configuracion_activa()
+        context['config'] = config
+        return context
 
 class RepuestoDeleteView(DeleteView):
     model = Repuesto

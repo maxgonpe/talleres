@@ -10,9 +10,9 @@ from .views import ClienteListView, ClienteTallerListView, ClienteTallerCreateVi
                    VehiculoCreateView,VehiculoUpdateView,\
                    VehiculoDeleteView,MecanicoListView,\
                    MecanicoDeleteView,MecanicoCreateView,\
-                   MecanicoUpdateView,RepuestoCreateView,\
+                   MecanicoUpdateView,                   RepuestoCreateView,\
                    RepuestoUpdateView,RepuestoDeleteView,\
-                   RepuestoListView
+                   RepuestoListView,RepuestoDetailView
 from . import views_pos
 from . import views_compras
 from . import views_algoritmo
@@ -134,6 +134,7 @@ urlpatterns = [
     # Repuestos
     path("repuestos/", RepuestoListView.as_view(), name="repuesto_list"),
     path("repuestos/nuevo/", RepuestoCreateView.as_view(), name="repuesto_create"),
+    path("repuestos/<int:pk>/", RepuestoDetailView.as_view(), name="repuesto_detail"),
     path("repuestos/<int:pk>/editar/", RepuestoUpdateView.as_view(), name="repuesto_update"),
     path("repuestos/<int:pk>/eliminar/", RepuestoDeleteView.as_view(), name="repuesto_delete"),
     path("repuestos/buscar-insumos/", views.buscar_insumos, name="buscar_insumos"),
