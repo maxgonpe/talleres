@@ -1,0 +1,1887 @@
+{% extends "base.html" %}
+{% load static crispy_forms_tags %}
+
+{% block title %}Netgogo2 - Ingreso Guiado por IA{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+<style>
+  .netgogo2-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: var(--spacing-lg);
+    min-height: calc(100vh - 120px);
+  }
+
+  .ai-guide-panel {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 24px;
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ai-guide-panel::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    animation: pulse 3s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+  }
+
+  .ai-avatar {
+    width: 80px;
+    height: 80px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    margin-bottom: 1.5rem;
+    border: 3px solid rgba(255,255,255,0.3);
+    backdrop-filter: blur(10px);
+  }
+
+  .ai-message {
+    font-size: 1.3rem;
+    font-weight: 500;
+    line-height: 1.6;
+    margin: 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  .ai-message.typing::after {
+    content: '...';
+    animation: dots 1.5s steps(4, end) infinite;
+  }
+
+  @keyframes dots {
+    0%, 20% { content: '.'; }
+    40% { content: '..'; }
+    60%, 100% { content: '...'; }
+  }
+
+  .form-section {
+    background: var(--card-bg);
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    opacity: 0;
+    transform: translateY(20px);
+    display: none;
+  }
+
+  .form-section.active {
+    opacity: 1;
+    transform: translateY(0);
+    display: block;
+    animation: slideIn 0.5s ease-out;
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .form-section.hidden {
+    display: none;
+  }
+
+  .progress-indicator {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: var(--hover-bg);
+    border-radius: 16px;
+  }
+
+  .progress-step {
+    flex: 1;
+    text-align: center;
+    position: relative;
+    padding: 0.5rem;
+  }
+
+  .progress-step::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: -50%;
+    width: 100%;
+    height: 2px;
+    background: var(--muted);
+    z-index: 0;
+  }
+
+  .progress-step:last-child::after {
+    display: none;
+  }
+
+  .progress-step.completed::after {
+    background: var(--success-600);
+  }
+
+  .progress-step-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--muted);
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    position: relative;
+    z-index: 1;
+    transition: all 0.3s ease;
+  }
+
+  .progress-step.active .progress-step-circle {
+    background: var(--primary-600);
+    transform: scale(1.2);
+    box-shadow: 0 0 20px rgba(13, 110, 253, 0.5);
+  }
+
+  .progress-step.completed .progress-step-circle {
+    background: var(--success-600);
+  }
+
+  .progress-step-label {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+  }
+
+  .progress-step.active .progress-step-label {
+    color: var(--primary-600);
+    font-weight: 700;
+  }
+
+  .field-group {
+    margin-bottom: 1.5rem;
+  }
+
+  .field-group label {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    display: block;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    justify-content: flex-end;
+  }
+
+  .btn-ai-action {
+    padding: 0.75rem 2rem;
+    border-radius: 12px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .btn-ai-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+  }
+
+  .btn-primary-ai {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+  }
+
+  .btn-success-ai {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white;
+  }
+
+  .missing-fields-alert {
+    background: #fff3cd;
+    border-left: 4px solid #ffc107;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-top: 1rem;
+  }
+
+  .missing-fields-alert ul {
+    margin: 0.5rem 0 0 1.5rem;
+    padding: 0;
+  }
+
+  .missing-fields-alert li {
+    margin: 0.25rem 0;
+  }
+
+  @media (max-width: 768px) {
+    .ai-guide-panel {
+      padding: 1.5rem;
+    }
+
+    .ai-message {
+      font-size: 1.1rem;
+    }
+
+    .progress-indicator {
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .progress-step::after {
+      display: none;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="netgogo2-container">
+  <!-- Panel de guía de IA -->
+  <div class="ai-guide-panel" id="ai-guide-panel">
+    <div class="ai-avatar">🤖</div>
+    <p class="ai-message" id="ai-message">
+      ¡Hola! Soy tu asistente de IA. Te guiaré paso a paso para ingresar el diagnóstico.
+      <br><br>
+      Comencemos identificando al cliente...
+    </p>
+  </div>
+
+  <!-- Indicador de progreso -->
+  <div class="progress-indicator">
+    <div class="progress-step active" data-step="cliente">
+      <div class="progress-step-circle">1</div>
+      <div class="progress-step-label">Cliente</div>
+    </div>
+    <div class="progress-step" data-step="vehiculo">
+      <div class="progress-step-circle">2</div>
+      <div class="progress-step-label">Vehículo</div>
+    </div>
+    <div class="progress-step" data-step="diagnostico">
+      <div class="progress-step-circle">3</div>
+      <div class="progress-step-label">Diagnóstico</div>
+    </div>
+    <div class="progress-step" data-step="componentes">
+      <div class="progress-step-circle">4</div>
+      <div class="progress-step-label">Componentes</div>
+    </div>
+    <div class="progress-step" data-step="finalizar">
+      <div class="progress-step-circle">✓</div>
+      <div class="progress-step-label">Finalizar</div>
+    </div>
+  </div>
+
+  <!-- Formulario -->
+  <form id="form-ingreso-netgogo2" method="post" action="{% url 'ingreso_rapido' %}" novalidate>
+    {% csrf_token %}
+
+    <!-- Sección Cliente -->
+    <div class="form-section active" id="section-cliente" data-section="cliente">
+      <h3 class="mb-4">👤 Datos del Cliente</h3>
+      <div class="field-group">
+        <label>Cliente existente</label>
+        <select id="cliente_existente" name="cliente_existente" class="form-select">
+          <option value="">-- Nuevo cliente --</option>
+          {% for cliente in clientes_existentes %}
+            <option value="{{ cliente.rut }}">{{ cliente.nombre }} ({{ cliente.rut }})</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div id="nuevo_cliente_campos">
+        {{ cliente_form|crispy }}
+      </div>
+      <div class="action-buttons">
+        <button type="button" class="btn btn-ai-action btn-primary-ai" onclick="analizarYAvanzar('cliente')">
+          Continuar →
+        </button>
+      </div>
+    </div>
+
+    <!-- Sección Vehículo -->
+    <div class="form-section hidden" id="section-vehiculo" data-section="vehiculo">
+      <h3 class="mb-4">🚗 Datos del Vehículo</h3>
+      
+      <!-- Si es cliente existente: mostrar selector de vehículos -->
+      <div id="vehiculo-cliente-existente" style="display: none;">
+        <div class="field-group">
+          <label>Selecciona un vehículo del cliente</label>
+          <select id="vehiculo_select" name="vehiculo_existente" class="form-select">
+            <option value="">-- Cargando vehículos... --</option>
+          </select>
+        </div>
+        <div class="alert alert-info mt-3">
+          <i class="fas fa-info-circle"></i> Si el vehículo no está en la lista, selecciona "Nuevo vehículo" abajo.
+        </div>
+      </div>
+      
+      <!-- Si es cliente nuevo o quiere agregar nuevo vehículo -->
+      <div id="vehiculo-nuevo-container">
+        <div class="alert alert-info border border-primary border-3 rounded-3 p-4 mb-4 shadow-sm" style="background: linear-gradient(135deg, rgba(13, 110, 253, 0.12) 0%, rgba(13, 110, 253, 0.05) 100%);">
+          <div class="d-flex align-items-center mb-3">
+            <div class="bg-primary text-white rounded-circle p-3 me-3" style="width: 52px; height: 52px; display: flex; align-items: center; justify-content: center;">
+              <i class="fas fa-search fa-lg"></i>
+            </div>
+            <div>
+              <h6 class="mb-1 text-primary fw-bold">Buscar datos del vehículo por placa</h6>
+              <p class="mb-0 text-muted small">Introduce la placa y consulta la API para autocompletar los campos.</p>
+            </div>
+          </div>
+          <label for="vehiculo-placa" class="form-label fw-semibold">Placa del vehículo</label>
+          <div class="input-group">
+            <input type="text"
+                   id="vehiculo-placa"
+                   name="vehiculo-placa"
+                   class="form-control text-uppercase fw-semibold"
+                   placeholder="Ej: JGCX79"
+                   autocomplete="off"
+                   style="letter-spacing: 0.12em;">
+            <button type="button" class="btn btn-primary" id="btn-buscar-vehiculo">
+              <i class="fas fa-search me-1"></i> Buscar en API
+            </button>
+          </div>
+          <small class="text-muted d-block mt-2">
+            <i class="fas fa-lightbulb"></i> Consejo: presiona Enter o sal del campo para buscar automáticamente.
+          </small>
+          <div id="vehiculo-lookup-badge" class="mt-2" style="display: none;"></div>
+        </div>
+      </div>
+      
+      <div id="vehiculo_fields">
+        {{ vehiculo_form|crispy }}
+      </div>
+      
+      <div class="field-group mt-3">
+        <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-toggle-nuevo-vehiculo" style="display: none;">
+          <i class="fas fa-plus"></i> Agregar nuevo vehículo
+        </button>
+      </div>
+      
+      <div class="action-buttons">
+        <button type="button" class="btn btn-secondary" onclick="mostrarSeccion('cliente')">← Volver</button>
+        <button type="button" class="btn btn-ai-action btn-primary-ai" onclick="analizarYAvanzar('vehiculo')">
+          Continuar →
+        </button>
+      </div>
+    </div>
+
+    <!-- Sección Diagnóstico -->
+    <div class="form-section hidden" id="section-diagnostico" data-section="diagnostico">
+      <h3 class="mb-4">📝 Descripción del Problema</h3>
+      {{ diagnostico_form|crispy }}
+      <div class="action-buttons">
+        <button type="button" class="btn btn-secondary" onclick="mostrarSeccion('vehiculo')">← Volver</button>
+        <button type="button" class="btn btn-ai-action btn-primary-ai" onclick="avanzarDesdeDiagnostico()">
+          Continuar →
+        </button>
+      </div>
+    </div>
+
+    <!-- Sección Componentes -->
+    <div class="form-section hidden" id="section-componentes" data-section="componentes">
+      <h3 class="mb-4">🔧 Componentes Afectados</h3>
+      <p class="text-muted mb-3">Selecciona los componentes del vehículo que requieren atención según el diagnóstico descrito.</p>
+      
+      <!-- Panel de componentes sugeridos por IA (se mostrará dinámicamente) -->
+      <div id="componentes-sugeridos-container" style="display: none; margin-bottom: 1.5rem;"></div>
+      
+      <!-- Lista de componentes en acordeón -->
+      <div class="accordion" id="componentesAccordion">
+        {% for padre in componentes %}
+          <div class="accordion-item">
+            <h2 class="accordion-header" id="heading-{{ padre.id }}">
+              <button class="accordion-button collapsed" type="button"
+                      data-bs-toggle="collapse" data-bs-target="#collapse-{{ padre.id }}"
+                      aria-expanded="false" aria-controls="collapse-{{ padre.id }}">
+                <i class="fas fa-folder me-2"></i> {{ padre.nombre }}
+                <span class="badge bg-secondary ms-2" id="badge-{{ padre.id }}">0</span>
+              </button>
+            </h2>
+            <div id="collapse-{{ padre.id }}" class="accordion-collapse collapse"
+                 aria-labelledby="heading-{{ padre.id }}" data-bs-parent="#componentesAccordion">
+              <div class="accordion-body">
+                {% for hijo in padre.hijos.all %}
+                  {% if hijo.activo %}
+                    <div class="form-check mb-2">
+                      <input class="form-check-input componente-checkbox"
+                             type="checkbox"
+                             name="componentes_seleccionados"
+                             value="{{ hijo.id }}"
+                             id="comp-{{ hijo.id }}"
+                             data-nombre="{{ hijo.nombre }}"
+                             data-padre-id="{{ padre.id }}"
+                             data-padre-nombre="{{ padre.nombre }}">
+                      <label class="form-check-label" for="comp-{{ hijo.id }}">
+                        <strong>{{ hijo.nombre }}</strong>
+                        {% if hijo.codigo %}
+                          <small class="text-muted ms-2">({{ hijo.codigo }})</small>
+                        {% endif %}
+                      </label>
+                    </div>
+                  {% endif %}
+                {% empty %}
+                  <p class="text-secondary small">No hay subcomponentes registrados.</p>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        {% empty %}
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> No hay componentes registrados en el sistema.
+          </div>
+        {% endfor %}
+      </div>
+      
+      <!-- Resumen de componentes seleccionados -->
+      <div class="mt-4 p-3 bg-light rounded" id="resumen-componentes" style="display: none;">
+        <h5 class="mb-2"><i class="fas fa-check-circle text-success"></i> Componentes seleccionados:</h5>
+        <div id="lista-componentes-seleccionados" class="d-flex flex-wrap gap-2"></div>
+      </div>
+      
+      <div class="action-buttons">
+        <button type="button" class="btn btn-secondary" onclick="mostrarSeccion('diagnostico')">← Volver</button>
+        <button type="button" class="btn btn-ai-action btn-primary-ai" onclick="analizarYAvanzar('componentes')">
+          <i class="fas fa-magic me-1"></i> Sugerir componentes con IA
+        </button>
+        <button type="button" class="btn btn-ai-action btn-success-ai" onclick="finalizarIngreso()">
+          Finalizar ✓
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script>
+let currentSection = 'cliente';
+let formData = {
+  cliente: {},
+  vehiculo: {},
+  diagnostico: {}
+};
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+// Variable para evitar llamadas simultáneas
+let analizando = false;
+
+async function analizarYAvanzar(section) {
+  // Evitar llamadas simultáneas
+  if (analizando) {
+    console.log('⏳ Ya hay un análisis en curso, esperando...');
+    return;
+  }
+  
+  // Recopilar datos del formulario
+  recopilarDatosFormulario();
+  
+  // Mostrar mensaje de carga
+  const aiMessage = document.getElementById('ai-message');
+  aiMessage.textContent = 'Analizando...';
+  aiMessage.classList.add('typing');
+  
+  analizando = true;
+  
+  try {
+    const response = await fetch("{% url 'netgogo2_chat' %}", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken'),
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify({
+        action: 'analyze',
+        form_data: formData,
+        current_section: section
+      })
+    });
+    
+    // Verificar si la respuesta es exitosa
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Error del servidor:', response.status, errorText);
+      throw new Error(`Error del servidor: ${response.status}`);
+    }
+    
+    // Verificar Content-Type antes de parsear JSON
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await response.text();
+      console.error('Respuesta no es JSON:', text);
+      throw new Error('La respuesta del servidor no es JSON válido');
+    }
+    
+    const data = await response.json();
+    aiMessage.classList.remove('typing');
+    
+    // Si hay error en la respuesta
+    if (data.error) {
+      console.error('Error en respuesta:', data.error, data.details);
+      // Usar análisis local como fallback
+      const localAnalysis = analizarLocalmente(section);
+      aiMessage.textContent = localAnalysis.message;
+      mostrarCamposFaltantes(localAnalysis.missing_fields);
+      return;
+    }
+    
+    if (data.success && data.analysis) {
+      const analysis = data.analysis;
+      
+      // Actualizar mensaje de IA
+      const messageText = analysis.message || data.message;
+      aiMessage.textContent = messageText;
+      
+      // Log si se conectó a la IA
+      if (data.ia_connected) {
+        console.log('✅ Conectado a IA - Mensaje personalizado recibido');
+      } else {
+        console.log('ℹ️ Usando análisis local (IA no disponible o sin respuesta personalizada)');
+      }
+      
+      // Procesar resultados de búsquedas si la IA ejecutó function calls
+      if (data.tool_called && data.search_results) {
+        console.log('🔍 La IA ejecutó una búsqueda:', data.tool.name, data.search_results);
+        mostrarResultadosBusqueda(data.tool.name, data.search_results, section);
+      }
+      
+      // Mostrar campos faltantes si hay
+      mostrarCamposFaltantes(analysis.missing_fields);
+      
+      // Avanzar a la siguiente sección si está completa
+      if (analysis.next_action && analysis.next_action.startsWith('mostrar_seccion_')) {
+        const nextSection = analysis.next_action.replace('mostrar_seccion_', '');
+        // NO avanzar automáticamente si estamos en componentes y el siguiente paso es finalizar
+        // Permitir al usuario decidir cuándo finalizar
+        if (section === 'componentes' && nextSection === 'finalizar') {
+          console.log('ℹ️ Componentes seleccionados. Esperando decisión del usuario para finalizar.');
+          // Solo actualizar el mensaje, no cambiar de sección
+        } else {
+          mostrarSeccion(nextSection);
+        }
+      } else {
+        // Si no hay next_action pero la sección está completa, avanzar automáticamente
+        const localCheck = analizarLocalmente(section);
+        if (localCheck.next_action && localCheck.next_action.startsWith('mostrar_seccion_')) {
+          const nextSection = localCheck.next_action.replace('mostrar_seccion_', '');
+          // Solo avanzar si la sección actual está realmente completa
+          // Y NO avanzar automáticamente desde componentes a finalizar
+          if (nextSection !== section && !(section === 'componentes' && nextSection === 'finalizar')) {
+            console.log('✅ Sección completa, avanzando automáticamente a:', nextSection);
+            mostrarSeccion(nextSection);
+          } else if (section === 'componentes' && nextSection === 'finalizar') {
+            console.log('ℹ️ Componentes seleccionados. Esperando decisión del usuario para finalizar.');
+          }
+        }
+      }
+    } else if (data.message) {
+      // Si solo hay mensaje, verificar si podemos avanzar
+      const localCheck = analizarLocalmente(section);
+      if (localCheck.next_action && localCheck.next_action.startsWith('mostrar_seccion_')) {
+        const nextSection = localCheck.next_action.replace('mostrar_seccion_', '');
+        // NO avanzar automáticamente si estamos en componentes y el siguiente paso es finalizar
+        if (nextSection !== section && !(section === 'componentes' && nextSection === 'finalizar')) {
+          console.log('✅ Sección completa, avanzando automáticamente a:', nextSection);
+          mostrarSeccion(nextSection);
+        } else if (section === 'componentes' && nextSection === 'finalizar') {
+          console.log('ℹ️ Componentes seleccionados. Esperando decisión del usuario para finalizar.');
+          aiMessage.textContent = data.message;
+        } else {
+          aiMessage.textContent = data.message;
+        }
+      } else {
+        aiMessage.textContent = data.message;
+      }
+    } else {
+      // Fallback: análisis local
+      const localAnalysis = analizarLocalmente(section);
+      aiMessage.textContent = localAnalysis.message;
+      mostrarCamposFaltantes(localAnalysis.missing_fields);
+      
+      // Intentar avanzar si está completo
+      if (localAnalysis.next_action && localAnalysis.next_action.startsWith('mostrar_seccion_')) {
+        const nextSection = localAnalysis.next_action.replace('mostrar_seccion_', '');
+        // NO avanzar automáticamente si estamos en componentes y el siguiente paso es finalizar
+        if (nextSection !== section && !(section === 'componentes' && nextSection === 'finalizar')) {
+          console.log('✅ Sección completa, avanzando automáticamente a:', nextSection);
+          mostrarSeccion(nextSection);
+        } else if (section === 'componentes' && nextSection === 'finalizar') {
+          console.log('ℹ️ Componentes seleccionados. Esperando decisión del usuario para finalizar.');
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error completo:', error);
+    aiMessage.classList.remove('typing');
+    
+    // Usar análisis local como fallback (sin mensaje de "Modo sin IA" para no confundir)
+    const localAnalysis = analizarLocalmente(section);
+    aiMessage.textContent = localAnalysis.message;
+    mostrarCamposFaltantes(localAnalysis.missing_fields);
+  } finally {
+    analizando = false;
+  }
+}
+
+// Función de análisis local como fallback
+function analizarLocalmente(section) {
+  const cliente = formData.cliente || {};
+  const vehiculo = formData.vehiculo || {};
+  const diagnostico = formData.diagnostico || {};
+  
+  const clienteCompleto = !!(cliente.rut || cliente.nombre);
+  const vehiculoCompleto = !!(vehiculo.placa || vehiculo.marca || vehiculo.id);
+  // Verificar tanto descripcion como descripcion_problema
+  const diagnosticoCompleto = !!(diagnostico.descripcion || diagnostico.descripcion_problema);
+  
+  if (!clienteCompleto) {
+    return {
+      section: 'cliente',
+      message: '👤 Comencemos con los datos del cliente. ¿Es un cliente existente o nuevo?',
+      missing_fields: ['RUT o nombre del cliente'],
+      next_action: 'mostrar_seccion_cliente'
+    };
+  } else if (!vehiculoCompleto) {
+    return {
+      section: 'vehiculo',
+      message: '🚗 Ahora necesitamos información del vehículo. ¿Tienes la placa del vehículo?',
+      missing_fields: ['Placa, marca o modelo del vehículo'],
+      next_action: 'mostrar_seccion_vehiculo'
+    };
+  } else if (!diagnosticoCompleto) {
+    return {
+      section: 'diagnostico',
+      message: '📝 Describe el problema o síntoma que presenta el vehículo.',
+      missing_fields: ['Descripción del diagnóstico'],
+      next_action: 'mostrar_seccion_diagnostico'
+    };
+  } else {
+    // Si todo está completo, avanzar a componentes
+    const componentesSeleccionados = document.querySelectorAll('.componente-checkbox:checked').length;
+    if (componentesSeleccionados === 0) {
+      return {
+        section: 'componentes',
+        message: '🔧 Excelente. Ahora selecciona los componentes afectados. Puedes usar el botón "Sugerir componentes con IA" para obtener sugerencias basadas en la descripción del problema.',
+        missing_fields: ['Selección de componentes afectados'],
+        next_action: 'mostrar_seccion_componentes'
+      };
+    } else {
+      // Si hay componentes seleccionados y estamos en la sección de componentes,
+      // NO avanzar automáticamente - solo mostrar mensaje informativo
+      // El usuario decidirá cuándo finalizar
+      if (section === 'componentes') {
+        return {
+          section: 'componentes',
+          message: `✅ Perfecto. Has seleccionado ${componentesSeleccionados} componente(s). Puedes finalizar el ingreso cuando estés listo.`,
+          missing_fields: [],
+          next_action: null  // No avanzar automáticamente
+        };
+      } else {
+        // Si estamos en otra sección, permitir avanzar a finalizar
+        return {
+          section: 'finalizar',
+          message: `✅ Perfecto. Has seleccionado ${componentesSeleccionados} componente(s). Puedes finalizar el ingreso.`,
+          missing_fields: [],
+          next_action: 'mostrar_seccion_finalizar'
+        };
+      }
+    }
+  }
+}
+
+function recopilarDatosFormulario() {
+  // Cliente
+  const clienteSelect = document.getElementById('cliente_existente');
+  formData.cliente = {}; // Resetear
+  if (clienteSelect && clienteSelect.value) {
+    formData.cliente.rut = clienteSelect.value;
+    formData.cliente.existente = true;
+  } else {
+    const clienteRut = document.querySelector('[name="cliente-rut"]');
+    const clienteNombre = document.querySelector('[name="cliente-nombre"]');
+    const clienteTelefono = document.querySelector('[name="cliente-telefono"]');
+    if (clienteRut) formData.cliente.rut = clienteRut.value;
+    if (clienteNombre) formData.cliente.nombre = clienteNombre.value;
+    if (clienteTelefono) formData.cliente.telefono = clienteTelefono.value;
+    formData.cliente.existente = false;
+  }
+  
+  // Vehículo
+  formData.vehiculo = {}; // Resetear
+  const vehiculoSelect = document.getElementById('vehiculo_select');
+  if (vehiculoSelect && vehiculoSelect.value) {
+    formData.vehiculo.id = vehiculoSelect.value;
+    formData.vehiculo.existente = true;
+  } else {
+    formData.vehiculo.existente = false;
+    // Buscar campos de vehículo con diferentes nombres posibles
+    const vehiculoPlaca = document.querySelector('[name="vehiculo-placa"], #vehiculo-placa');
+    const vehiculoMarca = document.querySelector('[name="vehiculo-marca"], [id*="vehiculo-marca"], [id*="vehiculo_marca"]');
+    const vehiculoModelo = document.querySelector('[name="vehiculo-modelo"], [id*="vehiculo-modelo"], [id*="vehiculo_modelo"]');
+    const vehiculoAnio = document.querySelector('[name="vehiculo-anio"], [id*="vehiculo-anio"], [id*="vehiculo_anio"]');
+    const vehiculoVin = document.querySelector('[name="vehiculo-vin"], [id*="vehiculo-vin"], [id*="vehiculo_vin"]');
+    
+    if (vehiculoPlaca) formData.vehiculo.placa = vehiculoPlaca.value;
+    if (vehiculoMarca) formData.vehiculo.marca = vehiculoMarca.value;
+    if (vehiculoModelo) formData.vehiculo.modelo = vehiculoModelo.value;
+    if (vehiculoAnio) formData.vehiculo.anio = vehiculoAnio.value;
+    if (vehiculoVin) formData.vehiculo.vin = vehiculoVin.value;
+  }
+  
+  // Diagnóstico - Buscar de múltiples formas
+  formData.diagnostico = {}; // Resetear
+  
+  // Método 1: Buscar por nombre exacto (todas las variantes posibles)
+  let diagnosticoDesc = document.querySelector(
+    '[name="diag-descripcion_problema"], ' +
+    '[name="diag-descripcion-problema"], ' +
+    '[name="diag_descripcion_problema"], ' +
+    '[id*="diag-descripcion_problema"], ' +
+    '[id*="diag-descripcion-problema"], ' +
+    '[id*="diag_descripcion_problema"], ' +
+    '[name="diag-descripcion"], ' +
+    '[id*="diag-descripcion"], ' +
+    '[id*="diag_descripcion"]'
+  );
+  
+  // Método 2: Si no se encuentra, buscar cualquier textarea o input de texto en la sección de diagnóstico
+  if (!diagnosticoDesc || !diagnosticoDesc.value) {
+    const sectionDiagnostico = document.getElementById('section-diagnostico');
+    if (sectionDiagnostico) {
+      // Buscar textarea primero (más probable para descripción)
+      diagnosticoDesc = sectionDiagnostico.querySelector('textarea');
+      if (!diagnosticoDesc || !diagnosticoDesc.value) {
+        // Si no hay textarea con valor, buscar input de texto
+        diagnosticoDesc = sectionDiagnostico.querySelector('input[type="text"]');
+      }
+    }
+  }
+  
+  // Método 3: Buscar cualquier campo que contenga "descripcion" en su nombre o id
+  if (!diagnosticoDesc || !diagnosticoDesc.value) {
+    const allInputs = document.querySelectorAll('#section-diagnostico input, #section-diagnostico textarea');
+    for (let input of allInputs) {
+      const name = (input.name || '').toLowerCase();
+      const id = (input.id || '').toLowerCase();
+      if ((name.includes('descripcion') || id.includes('descripcion')) && input.value.trim()) {
+        diagnosticoDesc = input;
+        break;
+      }
+    }
+  }
+  
+  // Guardar el valor si se encontró
+  if (diagnosticoDesc && diagnosticoDesc.value) {
+    const valor = diagnosticoDesc.value.trim();
+    formData.diagnostico.descripcion = valor;
+    formData.diagnostico.descripcion_problema = valor;
+    console.log('✅ Campo diagnóstico encontrado:', diagnosticoDesc.name || diagnosticoDesc.id, 'Valor:', valor.substring(0, 50) + '...');
+  } else {
+    console.warn('⚠️ Campo diagnóstico NO encontrado. Buscando en todos los campos de la sección...');
+    // Último recurso: buscar cualquier campo con texto en la sección
+    const sectionDiagnostico = document.getElementById('section-diagnostico');
+    if (sectionDiagnostico) {
+      const allFields = sectionDiagnostico.querySelectorAll('input, textarea');
+      for (let field of allFields) {
+        if (field.value && field.value.trim().length > 0) {
+          formData.diagnostico.descripcion = field.value.trim();
+          formData.diagnostico.descripcion_problema = field.value.trim();
+          console.log('✅ Campo encontrado por fallback:', field.name || field.id, 'Valor:', field.value.trim().substring(0, 50) + '...');
+          break;
+        }
+      }
+    }
+  }
+  
+  // Componentes seleccionados
+  formData.componentes = {}; // Resetear
+  const componentesCheckboxes = document.querySelectorAll('.componente-checkbox:checked');
+  const componentesSeleccionados = [];
+  componentesCheckboxes.forEach(checkbox => {
+    componentesSeleccionados.push({
+      id: parseInt(checkbox.value),
+      nombre: checkbox.dataset.nombre || checkbox.nextElementSibling?.textContent?.trim() || 'Sin nombre',
+      padre_id: parseInt(checkbox.dataset.padreId) || null,
+      padre_nombre: checkbox.dataset.padreNombre || null
+    });
+  });
+  formData.componentes.seleccionados = componentesSeleccionados;
+  formData.componentes.ids = componentesSeleccionados.map(c => c.id);
+  formData.componentes.count = componentesSeleccionados.length;
+  
+  console.log('📊 Datos recopilados:', formData);
+}
+
+function mostrarSeccion(section) {
+  // Ocultar todas las secciones
+  document.querySelectorAll('.form-section').forEach(sec => {
+    sec.classList.remove('active');
+    sec.classList.add('hidden');
+  });
+  
+  // Mostrar sección solicitada
+  const targetSection = document.getElementById(`section-${section}`);
+  if (targetSection) {
+    targetSection.classList.remove('hidden');
+    targetSection.classList.add('active');
+    currentSection = section;
+  }
+  
+  // Si es la sección de vehículo, configurarla según el cliente
+  if (section === 'vehiculo') {
+    configurarSeccionVehiculo();
+  }
+  
+  // Actualizar indicador de progreso
+  document.querySelectorAll('.progress-step').forEach(step => {
+    step.classList.remove('active', 'completed');
+    if (step.dataset.step === section) {
+      step.classList.add('active');
+    } else {
+      const stepIndex = Array.from(document.querySelectorAll('.progress-step')).indexOf(step);
+      const currentIndex = Array.from(document.querySelectorAll('.progress-step')).findIndex(s => s.dataset.step === section);
+      if (stepIndex < currentIndex) {
+        step.classList.add('completed');
+      }
+    }
+  });
+  
+  // NO llamar automáticamente a la IA al mostrar sección
+  // Solo actualizar mensaje con análisis local para evitar loops
+  const localAnalysis = analizarLocalmente(section);
+  const aiMessage = document.getElementById('ai-message');
+  if (aiMessage) {
+    aiMessage.textContent = localAnalysis.message;
+  }
+  
+  // Si es la sección de componentes y hay descripción del diagnóstico, buscar componentes automáticamente
+  if (section === 'componentes') {
+    recopilarDatosFormulario();
+    const descripcion = formData.diagnostico?.descripcion || formData.diagnostico?.descripcion_problema;
+    if (descripcion && descripcion.trim().length >= 10) {
+      // Esperar un momento para que la sección se muestre, luego buscar componentes
+      setTimeout(() => {
+        console.log('🔍 Búsqueda automática de componentes basada en descripción');
+        analizarYAvanzar('componentes').catch(err => {
+          console.log('Error en búsqueda automática de componentes:', err);
+        });
+      }, 500);
+    }
+  }
+}
+
+function avanzarSeccion() {
+  const sections = ['cliente', 'vehiculo', 'diagnostico', 'componentes', 'finalizar'];
+  const currentIndex = sections.indexOf(currentSection);
+  if (currentIndex < sections.length - 1) {
+    mostrarSeccion(sections[currentIndex + 1]);
+  }
+}
+
+function mostrarCamposFaltantes(missingFields) {
+  // Remover alerta anterior si existe
+  const existingAlert = document.querySelector('.missing-fields-alert');
+  if (existingAlert) {
+    existingAlert.remove();
+  }
+  
+  if (missingFields && missingFields.length > 0) {
+    const alert = document.createElement('div');
+    alert.className = 'missing-fields-alert';
+    alert.innerHTML = `
+      <strong>⚠️ Campos pendientes:</strong>
+      <ul>
+        ${missingFields.map(field => `<li>${field}</li>`).join('')}
+      </ul>
+    `;
+    
+    // Usar la variable global currentSection (no redeclarar)
+    const sectionElement = document.getElementById(`section-${currentSection}`);
+    if (sectionElement) {
+      sectionElement.appendChild(alert);
+    }
+  }
+}
+
+// Función para mostrar resultados de búsquedas de la IA
+function mostrarResultadosBusqueda(toolName, searchResults, section) {
+  // Remover resultados anteriores
+  const existingResults = document.querySelector('.search-results-container');
+  if (existingResults) {
+    existingResults.remove();
+  }
+  
+  if (!searchResults || searchResults.error) {
+    return;
+  }
+  
+  const sectionElement = document.getElementById(`section-${section}`);
+  if (!sectionElement) return;
+  
+  const resultsContainer = document.createElement('div');
+  resultsContainer.className = 'search-results-container';
+  resultsContainer.style.cssText = `
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    border-radius: 16px;
+    border: 2px solid rgba(102, 126, 234, 0.2);
+  `;
+  
+  let resultsHTML = '<div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;"><i class="fas fa-search" style="color: #667eea;"></i><strong style="color: #667eea;">Resultados de búsqueda:</strong></div>';
+  
+  if (toolName === 'listado_clientes' && searchResults.clientes) {
+    const clientes = searchResults.clientes;
+    if (clientes.length > 0) {
+      resultsHTML += '<div class="search-results-list">';
+      clientes.forEach(cliente => {
+        resultsHTML += `
+          <div class="search-result-item" style="
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            background: white;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+          " 
+          onmouseover="this.style.borderColor='#667eea'; this.style.transform='translateX(5px)'"
+          onmouseout="this.style.borderColor='transparent'; this.style.transform='translateX(0)'"
+          onclick="seleccionarCliente('${cliente.rut}', '${cliente.nombre.replace(/'/g, "\\'")}')">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <strong style="color: #333;">${cliente.nombre}</strong>
+                <div style="color: #666; font-size: 0.9rem; margin-top: 0.25rem;">RUT: ${cliente.rut}</div>
+                ${cliente.telefono ? `<div style="color: #666; font-size: 0.85rem;">📞 ${cliente.telefono}</div>` : ''}
+              </div>
+              <div style="text-align: right; font-size: 0.85rem; color: #667eea;">
+                ${cliente.estadisticas ? `<div>🚗 ${cliente.estadisticas.vehiculos} vehículo(s)</div>` : ''}
+                ${cliente.estadisticas ? `<div>🔧 ${cliente.estadisticas.trabajos} trabajo(s)</div>` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      resultsHTML += '</div>';
+    } else {
+      resultsHTML += '<p style="color: #666; font-style: italic;">No se encontraron clientes que coincidan con tu búsqueda.</p>';
+    }
+  } else if (toolName === 'listado_vehiculos' && searchResults.vehiculos) {
+    const vehiculos = searchResults.vehiculos;
+    if (vehiculos.length > 0) {
+      resultsHTML += '<div class="search-results-list">';
+      vehiculos.forEach(vehiculo => {
+        resultsHTML += `
+          <div class="search-result-item" style="
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            background: white;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+          " 
+          onmouseover="this.style.borderColor='#667eea'; this.style.transform='translateX(5px)'"
+          onmouseout="this.style.borderColor='transparent'; this.style.transform='translateX(0)'"
+          onclick="seleccionarVehiculo(${vehiculo.id}, '${vehiculo.placa}', '${vehiculo.marca}', '${vehiculo.modelo}')">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <strong style="color: #333;">${vehiculo.placa}</strong>
+                <div style="color: #666; font-size: 0.9rem; margin-top: 0.25rem;">${vehiculo.marca} ${vehiculo.modelo} ${vehiculo.anio ? `(${vehiculo.anio})` : ''}</div>
+                ${vehiculo.cliente ? `<div style="color: #666; font-size: 0.85rem;">👤 ${vehiculo.cliente.nombre}</div>` : ''}
+              </div>
+              <div style="text-align: right; font-size: 0.85rem; color: #667eea;">
+                ${vehiculo.estadisticas ? `<div>🔧 ${vehiculo.estadisticas.trabajos} trabajo(s)</div>` : ''}
+                ${vehiculo.estadisticas ? `<div>📝 ${vehiculo.estadisticas.diagnosticos} diagnóstico(s)</div>` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      resultsHTML += '</div>';
+    } else {
+      resultsHTML += '<p style="color: #666; font-style: italic;">No se encontraron vehículos que coincidan con tu búsqueda.</p>';
+    }
+  } else if (toolName === 'listado_diagnosticos' && searchResults.diagnosticos) {
+    const diagnosticos = searchResults.diagnosticos;
+    if (diagnosticos.length > 0) {
+      resultsHTML += '<div style="margin-bottom: 0.5rem; color: #666; font-size: 0.9rem;">💡 Diagnósticos similares que pueden ayudarte:</div>';
+      resultsHTML += '<div class="search-results-list">';
+      diagnosticos.forEach(diag => {
+        resultsHTML += `
+          <div class="search-result-item" style="
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            background: white;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+          ">
+            <div style="color: #333; margin-bottom: 0.5rem;">
+              <strong>${diag.vehiculo.placa}</strong> - ${diag.vehiculo.marca} ${diag.vehiculo.modelo}
+            </div>
+            <div style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;">
+              ${diag.descripcion_problema ? diag.descripcion_problema.substring(0, 150) + (diag.descripcion_problema.length > 150 ? '...' : '') : 'Sin descripción'}
+            </div>
+            <div style="display: flex; gap: 1rem; font-size: 0.85rem; color: #667eea;">
+              ${diag.fecha ? `<span>📅 ${diag.fecha}</span>` : ''}
+              ${diag.componentes_count ? `<span>🔧 ${diag.componentes_count} componente(s)</span>` : ''}
+              ${diag.acciones_count ? `<span>⚙️ ${diag.acciones_count} acción(es)</span>` : ''}
+            </div>
+          </div>
+        `;
+      });
+      resultsHTML += '</div>';
+    } else {
+      resultsHTML += '<p style="color: #666; font-style: italic;">No se encontraron diagnósticos similares.</p>';
+    }
+  } else if ((toolName === 'listado_componentes' || toolName === 'sugerir_componentes_por_descripcion') && searchResults.componentes) {
+    const componentes = searchResults.componentes;
+    if (componentes.length > 0) {
+      // Si estamos en la sección de componentes, mostrar sugerencias destacadas
+      if (section === 'componentes') {
+        mostrarComponentesSugeridos(componentes);
+      } else {
+        // En otras secciones, mostrar en el contenedor de resultados normal
+        const metodo = searchResults.metodo || 'búsqueda';
+        const accionesDetectadas = searchResults.acciones_detectadas || [];
+        resultsHTML += '<div style="margin-bottom: 0.5rem; color: #666; font-size: 0.9rem;">💡 Componentes sugeridos';
+        if (metodo === 'acciones' && accionesDetectadas.length > 0) {
+          resultsHTML += ` (basados en acciones: ${accionesDetectadas.join(', ')})`;
+        }
+        resultsHTML += ':</div>';
+        resultsHTML += '<div class="search-results-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem;">';
+        componentes.forEach(comp => {
+          const accionesHTML = comp.acciones_disponibles && comp.acciones_disponibles.length > 0
+            ? `<div style="color: #667eea; font-size: 0.8rem; margin-top: 0.25rem;">${comp.acciones_count} acción(es) disponible(s)</div>`
+            : '';
+          resultsHTML += `
+            <div class="search-result-item" style="
+              padding: 0.75rem;
+              background: white;
+              border-radius: 8px;
+              border: 1px solid #e0e0e0;
+              cursor: pointer;
+              transition: all 0.3s ease;
+            " 
+            onmouseover="this.style.borderColor='#667eea'; this.style.boxShadow='0 2px 8px rgba(102, 126, 234, 0.2)'"
+            onmouseout="this.style.borderColor='#e0e0e0'; this.style.boxShadow='none'">
+              <strong style="color: #333; font-size: 0.9rem;">${comp.nombre}</strong>
+              ${comp.codigo ? `<div style="color: #666; font-size: 0.8rem; margin-top: 0.25rem;">Código: ${comp.codigo}</div>` : ''}
+              ${accionesHTML}
+            </div>
+          `;
+        });
+        resultsHTML += '</div>';
+      }
+    }
+  }
+  
+  resultsContainer.innerHTML = resultsHTML;
+  sectionElement.appendChild(resultsContainer);
+}
+
+// Funciones para seleccionar resultados de búsqueda
+function seleccionarCliente(rut, nombre) {
+  const clienteSelect = document.getElementById('cliente_existente');
+  if (clienteSelect) {
+    // Buscar la opción que coincida con el RUT
+    for (let option of clienteSelect.options) {
+      if (option.value === rut) {
+        clienteSelect.value = rut;
+        clienteSelect.dispatchEvent(new Event('change', { bubbles: true }));
+        break;
+      }
+    }
+  }
+  
+  // Ocultar resultados después de seleccionar
+  const resultsContainer = document.querySelector('.search-results-container');
+  if (resultsContainer) {
+    resultsContainer.style.opacity = '0.5';
+    setTimeout(() => resultsContainer.remove(), 300);
+  }
+  
+  // Actualizar datos
+  recopilarDatosFormulario();
+  
+  // Mostrar mensaje de confirmación
+  const aiMessage = document.getElementById('ai-message');
+  if (aiMessage) {
+    aiMessage.textContent = `✅ Cliente "${nombre}" seleccionado. Continuemos con el vehículo...`;
+  }
+}
+
+function seleccionarVehiculo(id, placa, marca, modelo) {
+  const vehiculoSelect = document.getElementById('vehiculo_select');
+  if (vehiculoSelect) {
+    vehiculoSelect.value = id;
+    vehiculoSelect.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+  
+  // Ocultar resultados después de seleccionar
+  const resultsContainer = document.querySelector('.search-results-container');
+  if (resultsContainer) {
+    resultsContainer.style.opacity = '0.5';
+    setTimeout(() => resultsContainer.remove(), 300);
+  }
+  
+  // Actualizar datos
+  recopilarDatosFormulario();
+  
+  // Mostrar mensaje de confirmación
+  const aiMessage = document.getElementById('ai-message');
+  if (aiMessage) {
+    aiMessage.textContent = `✅ Vehículo "${placa}" (${marca} ${modelo}) seleccionado. Continuemos con el diagnóstico...`;
+  }
+}
+
+function avanzarDesdeDiagnostico() {
+  // Forzar recopilación de datos antes de analizar
+  recopilarDatosFormulario();
+  
+  // Verificar si hay texto en algún campo de la sección de diagnóstico
+  const sectionDiagnostico = document.getElementById('section-diagnostico');
+  let tieneTexto = false;
+  
+  if (sectionDiagnostico) {
+    const allFields = sectionDiagnostico.querySelectorAll('input, textarea');
+    for (let field of allFields) {
+      if (field.value && field.value.trim().length > 0) {
+        tieneTexto = true;
+        console.log('✅ Texto encontrado en campo:', field.name || field.id);
+        break;
+      }
+    }
+  }
+  
+  // Si hay texto, avanzar directamente (asumir que está completo)
+  if (tieneTexto) {
+    console.log('✅ Diagnóstico con texto detectado, avanzando a componentes...');
+    mostrarSeccion('componentes');
+    // Actualizar mensaje de IA
+    const aiMessage = document.getElementById('ai-message');
+    if (aiMessage) {
+      aiMessage.textContent = '🔧 Excelente. Ahora selecciona los componentes afectados.';
+    }
+  } else {
+    // Si no hay texto, analizar normalmente
+    analizarYAvanzar('diagnostico');
+  }
+}
+
+function finalizarIngreso() {
+  if (confirm('¿Estás seguro de finalizar el ingreso?')) {
+    // Asegurar que todos los componentes seleccionados se incluyan en el envío
+    prepararComponentesParaEnvio();
+    document.getElementById('form-ingreso-netgogo2').submit();
+  }
+}
+
+// Función para asegurar que los componentes seleccionados se envíen correctamente
+function prepararComponentesParaEnvio() {
+  // Obtener todos los checkboxes seleccionados, incluso si están en secciones ocultas
+  const componentesCheckboxes = document.querySelectorAll('.componente-checkbox:checked');
+  const form = document.getElementById('form-ingreso-netgogo2');
+  
+  if (!form) {
+    console.warn('⚠️ Formulario no encontrado');
+    return;
+  }
+  
+  // Remover solo los inputs hidden que agregamos previamente (no los checkboxes)
+  // Usamos un identificador para distinguirlos
+  const existingHidden = form.querySelectorAll('input[type="hidden"][name="componentes_seleccionados"][data-backup="true"]');
+  existingHidden.forEach(input => input.remove());
+  
+  // Verificar que los checkboxes estén correctamente configurados
+  console.log(`🔍 Encontrados ${componentesCheckboxes.length} componente(s) seleccionado(s)`);
+  
+  // Agregar un input hidden por cada componente seleccionado como respaldo
+  // Esto asegura que se envíen incluso si los checkboxes están en secciones ocultas
+  // o si hay algún problema con el envío de los checkboxes originales
+  componentesCheckboxes.forEach((checkbox, index) => {
+    const hiddenInput = document.createElement('input');
+    hiddenInput.type = 'hidden';
+    hiddenInput.name = 'componentes_seleccionados';
+    hiddenInput.value = checkbox.value;
+    hiddenInput.setAttribute('data-backup', 'true'); // Marcar como respaldo
+    form.appendChild(hiddenInput);
+    console.log(`  ✅ Componente ${index + 1}: ID=${checkbox.value}, Nombre=${checkbox.dataset.nombre || 'N/A'}`);
+  });
+  
+  console.log(`✅ Preparados ${componentesCheckboxes.length} componente(s) para envío`);
+}
+
+// Función para normalizar RUT (convertir 'k' final a MAYÚSCULA)
+function normalizarRut(rut) {
+  if (!rut) return rut;
+  rut = String(rut).trim();
+  // Si termina en 'k' o 'K', convertir a MAYÚSCULA para que coincida con la BD
+  if (rut && rut.slice(-1).toLowerCase() === 'k') {
+    rut = rut.slice(0, -1) + 'K';
+  }
+  return rut;
+}
+
+// Función para cargar vehículos de un cliente existente
+async function cargarVehiculosCliente(clienteRut) {
+  const vehiculoSelect = document.getElementById('vehiculo_select');
+  if (!vehiculoSelect) return;
+  
+  vehiculoSelect.innerHTML = '<option value="">-- Cargando vehículos... --</option>';
+  
+  const cleanedRut = normalizarRut((clienteRut || "").trim());
+  if (!cleanedRut) {
+    vehiculoSelect.innerHTML = '<option value="">-- Nuevo vehículo --</option>';
+    return;
+  }
+  
+  try {
+    const encodedRut = encodeURIComponent(cleanedRut);
+    const url = `/api/vehiculos/${encodedRut}/`;
+    console.log('📡 Cargando vehículos desde:', url);
+    
+    const res = await fetch(url);
+    if (!res.ok) {
+      console.error('❌ Error cargando vehículos:', res.status);
+      vehiculoSelect.innerHTML = '<option value="">-- Error al cargar vehículos --</option>';
+      return;
+    }
+    
+    const data = await res.json();
+    console.log('✅ Vehículos recibidos:', data.length);
+    
+    vehiculoSelect.innerHTML = '<option value="">-- Nuevo vehículo --</option>';
+    
+    if (data.length === 0) {
+      vehiculoSelect.innerHTML = '<option value="">-- Cliente sin vehículos registrados --</option>';
+    } else {
+      data.forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v.id;
+        const placa = (v.placa || "").trim() || "(sin patente)";
+        const marca = (v.marca || "").trim();
+        const modelo = (v.modelo || "").trim();
+        const anio = v.anio ? String(v.anio) : "";
+        opt.textContent = `${placa} • ${[marca, modelo].filter(Boolean).join(" ")}` + (anio ? ` (${anio})` : "");
+        vehiculoSelect.appendChild(opt);
+      });
+    }
+    
+    toggleVehiculoCampos();
+  } catch (error) {
+    console.error('❌ Error cargando vehículos:', error);
+    vehiculoSelect.innerHTML = '<option value="">-- Error al cargar vehículos --</option>';
+  }
+}
+
+// Función para buscar vehículo por placa en la API externa
+async function buscarVehiculoPorPlaca(rawPlaca, opts = { showAlerts: true }) {
+  const placa = String(rawPlaca || "").trim().toUpperCase();
+  if (!placa) {
+    if (opts.showAlerts) console.warn("buscarVehiculoPorPlaca: placa vacía");
+    return null;
+  }
+
+  try {
+    const url = `/car/vehiculo_lookup/?placa=${encodeURIComponent(placa)}`;
+    const resp = await fetch(url);
+    if (!resp.ok) {
+      const msg = `Error HTTP ${resp.status}`;
+      if (opts.showAlerts) alert(msg);
+      return null;
+    }
+    const dataRaw = await resp.json();
+    const payload = (dataRaw && dataRaw.success && dataRaw.data) ? dataRaw.data : dataRaw;
+
+    const marca = payload.marca || (payload.model && (payload.model.brand?.name || payload.model.brand_name)) || payload.brand?.name || "";
+    const modelo = payload.modelo || payload.model?.name || payload.version || payload.modelName || "";
+    const anio = payload.anio || payload.year || payload.yearRT || payload.model?.year || "";
+    const vin = payload.vin || payload.vinNumber || payload.vin_number || payload.vin_no || "";
+    const placaRes = payload.placa || payload.licensePlate || placa;
+    const descripcionMotor = payload.descripcion_motor || (payload.engine ? `Motor ${payload.engine} • ${payload.version || ""}` : (payload.engineNumber || ""));
+
+    const datos = {
+      marca: marca || "",
+      modelo: modelo || "",
+      anio: anio || "",
+      vin: vin || "",
+      placa: placaRes || placa,
+      descripcion_motor: descripcionMotor || ""
+    };
+
+    // Función para establecer campos del formulario
+    function setField(nameSuffix, value) {
+      if (value === undefined || value === null) value = "";
+      const candidates = [
+        `id_vehiculo-${nameSuffix}`,
+        `id_vehiculo_${nameSuffix}`,
+        `vehiculo-${nameSuffix}`,
+        `vehiculo_${nameSuffix}`,
+        `id_${nameSuffix}`,
+        nameSuffix
+      ];
+      for (const sel of candidates) {
+        const byId = document.getElementById(sel);
+        if (byId) {
+          byId.value = value;
+          byId.dispatchEvent(new Event("input", { bubbles: true }));
+          return true;
+        }
+        const byName = document.querySelector(`[name="${sel}"]`);
+        if (byName) {
+          byName.value = value;
+          byName.dispatchEvent(new Event("input", { bubbles: true }));
+          return true;
+        }
+      }
+      return false;
+    }
+
+    setField("marca", datos.marca);
+    setField("modelo", datos.modelo);
+    setField("anio", datos.anio);
+    setField("vin", datos.vin);
+    setField("placa", datos.placa);
+    setField("descripcion_motor", datos.descripcion_motor);
+
+    if (opts.showAlerts) {
+      const placaInput = document.getElementById('vehiculo-placa');
+      if (placaInput) {
+        let badge = document.getElementById("vehiculo-lookup-badge");
+        if (!badge) {
+          badge = document.createElement("div");
+          badge.id = "vehiculo-lookup-badge";
+          badge.className = "alert alert-success mt-2";
+        }
+        badge.innerHTML = `<i class="fas fa-check-circle"></i> <strong>Vehículo encontrado:</strong> ${datos.marca} ${datos.modelo} ${datos.anio}`;
+        badge.style.display = "block";
+        placaInput.closest(".field-group")?.parentNode.insertBefore(badge, placaInput.closest(".field-group")?.nextSibling);
+        setTimeout(() => {
+          if (badge) badge.style.display = "none";
+        }, 5000);
+      }
+    }
+
+    return datos;
+  } catch (error) {
+    console.error("Error en buscarVehiculoPorPlaca:", error);
+    if (opts.showAlerts) alert("Error al consultar la API del vehículo. Revisa la consola.");
+    return null;
+  }
+}
+
+// Función para mostrar/ocultar campos de vehículo según selección
+function toggleVehiculoCampos() {
+  const vehiculoSelect = document.getElementById('vehiculo_select');
+  const vehiculoFields = document.getElementById('vehiculo_fields');
+  const vehiculoNuevoContainer = document.getElementById('vehiculo-nuevo-container');
+  
+  if (!vehiculoFields) return;
+  
+  // Si hay un vehículo seleccionado, ocultar campos de nuevo vehículo
+  if (vehiculoSelect && vehiculoSelect.value) {
+    vehiculoFields.style.display = 'none';
+    if (vehiculoNuevoContainer) vehiculoNuevoContainer.style.display = 'none';
+  } else {
+    vehiculoFields.style.display = 'block';
+    if (vehiculoNuevoContainer) vehiculoNuevoContainer.style.display = 'block';
+  }
+}
+
+// Función para configurar la sección de vehículo según el tipo de cliente
+function configurarSeccionVehiculo() {
+  const clienteSelect = document.getElementById('cliente_existente');
+  const vehiculoClienteExistente = document.getElementById('vehiculo-cliente-existente');
+  const vehiculoNuevoContainer = document.getElementById('vehiculo-nuevo-container');
+  const btnToggleNuevo = document.getElementById('btn-toggle-nuevo-vehiculo');
+  
+  if (!clienteSelect) return;
+  
+  const clienteRut = clienteSelect.value;
+  
+  if (clienteRut) {
+    // Cliente existente: cargar vehículos y mostrar selector
+    if (vehiculoClienteExistente) vehiculoClienteExistente.style.display = 'block';
+    if (vehiculoNuevoContainer) vehiculoNuevoContainer.style.display = 'none';
+    if (btnToggleNuevo) btnToggleNuevo.style.display = 'inline-block';
+    
+    // Cargar vehículos del cliente
+    cargarVehiculosCliente(clienteRut);
+  } else {
+    // Cliente nuevo: mostrar solo búsqueda por placa
+    if (vehiculoClienteExistente) vehiculoClienteExistente.style.display = 'none';
+    if (vehiculoNuevoContainer) vehiculoNuevoContainer.style.display = 'block';
+    if (btnToggleNuevo) btnToggleNuevo.style.display = 'none';
+    
+    const vehiculoSelect = document.getElementById('vehiculo_select');
+    if (vehiculoSelect) {
+      vehiculoSelect.innerHTML = '<option value="">-- Nuevo vehículo --</option>';
+    }
+  }
+}
+
+// Inicializar al cargar
+document.addEventListener('DOMContentLoaded', function() {
+  // Manejar cambio de cliente existente
+  const clienteSelect = document.getElementById('cliente_existente');
+  if (clienteSelect) {
+    clienteSelect.addEventListener('change', function() {
+      const nuevoClienteCampos = document.getElementById('nuevo_cliente_campos');
+      if (nuevoClienteCampos) {
+        nuevoClienteCampos.style.display = this.value ? 'none' : 'block';
+      }
+      // Actualizar datos cuando cambia
+      recopilarDatosFormulario();
+      
+      // Si estamos en la sección de vehículo, reconfigurarla
+      if (currentSection === 'vehiculo') {
+        configurarSeccionVehiculo();
+      }
+    });
+  }
+  
+  // Manejar cambio de vehículo existente
+  const vehiculoSelect = document.getElementById('vehiculo_select');
+  if (vehiculoSelect) {
+    vehiculoSelect.addEventListener('change', function() {
+      toggleVehiculoCampos();
+      recopilarDatosFormulario();
+    });
+  }
+  
+  // Botón para agregar nuevo vehículo (cuando es cliente existente)
+  const btnToggleNuevo = document.getElementById('btn-toggle-nuevo-vehiculo');
+  if (btnToggleNuevo) {
+    btnToggleNuevo.addEventListener('click', function() {
+      const vehiculoSelect = document.getElementById('vehiculo_select');
+      const vehiculoNuevoContainer = document.getElementById('vehiculo-nuevo-container');
+      if (vehiculoSelect) vehiculoSelect.value = '';
+      if (vehiculoNuevoContainer) vehiculoNuevoContainer.style.display = 'block';
+      toggleVehiculoCampos();
+    });
+  }
+  
+  // Búsqueda de vehículo por placa
+  const placaInput = document.getElementById('vehiculo-placa');
+  const btnBuscarVehiculo = document.getElementById('btn-buscar-vehiculo');
+  
+  if (btnBuscarVehiculo) {
+    btnBuscarVehiculo.addEventListener('click', function() {
+      const placa = placaInput ? placaInput.value : '';
+      buscarVehiculoPorPlaca(placa);
+    });
+  }
+  
+  if (placaInput) {
+    placaInput.addEventListener('blur', function() {
+      const val = this.value || "";
+      if (val && String(val).trim().length >= 3) {
+        buscarVehiculoPorPlaca(val, { showAlerts: false });
+      }
+    });
+    
+    placaInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        buscarVehiculoPorPlaca(this.value);
+      }
+    });
+  }
+  
+  // Búsquedas proactivas: RUT de cliente
+  const clienteRutInput = document.querySelector('[name="cliente-rut"]');
+  if (clienteRutInput) {
+    let rutTimeout;
+    clienteRutInput.addEventListener('input', function() {
+      clearTimeout(rutTimeout);
+      const rut = this.value.trim();
+      if (rut && rut.length >= 6) {
+        // Esperar 800ms después de que el usuario deje de escribir
+        rutTimeout = setTimeout(() => {
+          console.log('🔍 Búsqueda proactiva de cliente por RUT:', rut);
+          recopilarDatosFormulario();
+          analizarYAvanzar('cliente').catch(err => {
+            console.log('Error en búsqueda proactiva de cliente:', err);
+          });
+        }, 800);
+      }
+    });
+  }
+  
+  // Búsquedas proactivas: Nombre de cliente
+  const clienteNombreInput = document.querySelector('[name="cliente-nombre"]');
+  if (clienteNombreInput) {
+    let nombreTimeout;
+    clienteNombreInput.addEventListener('input', function() {
+      clearTimeout(nombreTimeout);
+      const nombre = this.value.trim();
+      if (nombre && nombre.length >= 3) {
+        // Esperar 800ms después de que el usuario deje de escribir
+        nombreTimeout = setTimeout(() => {
+          console.log('🔍 Búsqueda proactiva de cliente por nombre:', nombre);
+          recopilarDatosFormulario();
+          analizarYAvanzar('cliente').catch(err => {
+            console.log('Error en búsqueda proactiva de cliente:', err);
+          });
+        }, 800);
+      }
+    });
+  }
+  
+  // Búsquedas proactivas: Placa de vehículo (ya existe, pero mejoramos el feedback)
+  if (placaInput) {
+    let placaSearchTimeout;
+    const originalBlur = placaInput.onblur;
+    placaInput.addEventListener('input', function() {
+      clearTimeout(placaSearchTimeout);
+      const placa = this.value.trim().toUpperCase();
+      if (placa && placa.length >= 3) {
+        // Esperar 1 segundo después de que el usuario deje de escribir
+        placaSearchTimeout = setTimeout(() => {
+          console.log('🔍 Búsqueda proactiva de vehículo por placa:', placa);
+          recopilarDatosFormulario();
+          analizarYAvanzar('vehiculo').catch(err => {
+            console.log('Error en búsqueda proactiva de vehículo:', err);
+          });
+        }, 1000);
+      }
+    });
+  }
+  
+  // Búsquedas proactivas: Descripción del diagnóstico
+  const diagnosticoDescInput = document.querySelector(
+    '[name="diag-descripcion_problema"], ' +
+    '[name="diag-descripcion-problema"], ' +
+    '[name="diag_descripcion_problema"], ' +
+    '[id*="diag-descripcion_problema"], ' +
+    '[id*="diag-descripcion-problema"], ' +
+    '[id*="diag_descripcion_problema"], ' +
+    '[name="diag-descripcion"], ' +
+    '[id*="diag-descripcion"], ' +
+    '[id*="diag_descripcion"]'
+  );
+  
+  if (!diagnosticoDescInput) {
+    // Buscar cualquier textarea en la sección de diagnóstico
+    const sectionDiagnostico = document.getElementById('section-diagnostico');
+    if (sectionDiagnostico) {
+      const textareas = sectionDiagnostico.querySelectorAll('textarea');
+      if (textareas.length > 0) {
+        diagnosticoDescInput = textareas[0];
+      }
+    }
+  }
+  
+  if (diagnosticoDescInput) {
+    let descripcionTimeout;
+    diagnosticoDescInput.addEventListener('input', function() {
+      clearTimeout(descripcionTimeout);
+      const descripcion = this.value.trim();
+      if (descripcion && descripcion.length >= 10) {
+        // Esperar 1.5 segundos después de que el usuario deje de escribir
+        descripcionTimeout = setTimeout(() => {
+          console.log('🔍 Búsqueda proactiva de diagnósticos similares');
+          recopilarDatosFormulario();
+          analizarYAvanzar('diagnostico').catch(err => {
+            console.log('Error en búsqueda proactiva de diagnósticos:', err);
+          });
+        }, 1500);
+      }
+    });
+  }
+  
+  // Manejar selección de componentes
+  const componenteCheckboxes = document.querySelectorAll('.componente-checkbox');
+  componenteCheckboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      actualizarResumenComponentes();
+      actualizarBadgesComponentes();
+      // Actualizar mensaje cuando se seleccionan componentes
+      if (currentSection === 'componentes') {
+        recopilarDatosFormulario();
+        const localAnalysis = analizarLocalmente('componentes');
+        const aiMessage = document.getElementById('ai-message');
+        if (aiMessage) {
+          aiMessage.textContent = localAnalysis.message;
+        }
+      }
+    });
+  });
+  
+  // Inicializar resumen de componentes
+  actualizarResumenComponentes();
+  actualizarBadgesComponentes();
+  
+  // Inicializar con análisis local
+  const localAnalysis = analizarLocalmente('cliente');
+  const aiMessage = document.getElementById('ai-message');
+  if (aiMessage) {
+    aiMessage.textContent = localAnalysis.message;
+  }
+  
+  // Opcional: Intentar análisis con IA después de un delay
+  setTimeout(() => {
+    if (currentSection === 'cliente' && Object.keys(formData.cliente).length === 0) {
+      analizarYAvanzar('cliente').catch(err => {
+        console.log('Análisis con IA no disponible, usando modo local');
+      });
+    }
+  }, 1000);
+  
+  // Asegurar que los componentes se envíen al hacer submit del formulario
+  const form = document.getElementById('form-ingreso-netgogo2');
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      prepararComponentesParaEnvio();
+      console.log('📤 Formulario enviado - Componentes preparados');
+    });
+  }
+});
+
+// Función para actualizar el resumen de componentes seleccionados
+function actualizarResumenComponentes() {
+  const checkboxes = document.querySelectorAll('.componente-checkbox:checked');
+  const resumenContainer = document.getElementById('resumen-componentes');
+  const listaContainer = document.getElementById('lista-componentes-seleccionados');
+  
+  if (!resumenContainer || !listaContainer) return;
+  
+  if (checkboxes.length === 0) {
+    resumenContainer.style.display = 'none';
+    return;
+  }
+  
+  resumenContainer.style.display = 'block';
+  listaContainer.innerHTML = '';
+  
+  checkboxes.forEach(checkbox => {
+    const nombre = checkbox.dataset.nombre || checkbox.nextElementSibling?.textContent || 'Sin nombre';
+    const id = checkbox.value;
+    const badge = document.createElement('span');
+    badge.className = 'badge bg-primary';
+    badge.style.cssText = 'font-size: 0.9rem; padding: 0.5rem 0.75rem;';
+    badge.innerHTML = `<i class="fas fa-check me-1"></i>${nombre} <button type="button" class="btn-close btn-close-white ms-2" style="font-size: 0.7rem;" onclick="deseleccionarComponente(${id})"></button>`;
+    listaContainer.appendChild(badge);
+  });
+}
+
+// Función para deseleccionar un componente
+function deseleccionarComponente(id) {
+  const checkbox = document.getElementById(`comp-${id}`);
+  if (checkbox) {
+    checkbox.checked = false;
+    actualizarResumenComponentes();
+    actualizarBadgesComponentes();
+  }
+}
+
+// Función para actualizar badges de componentes en acordeones
+function actualizarBadgesComponentes() {
+  const padres = document.querySelectorAll('[id^="heading-"]');
+  padres.forEach(padreHeader => {
+    const padreId = padreHeader.id.replace('heading-', '');
+    const badge = document.getElementById(`badge-${padreId}`);
+    if (badge) {
+      const checkboxes = document.querySelectorAll(`.componente-checkbox[data-padre-id="${padreId}"]:checked`);
+      badge.textContent = checkboxes.length;
+      if (checkboxes.length > 0) {
+        badge.className = 'badge bg-success ms-2';
+      } else {
+        badge.className = 'badge bg-secondary ms-2';
+      }
+    }
+  });
+}
+
+// Función para mostrar componentes sugeridos por la IA
+function mostrarComponentesSugeridos(componentes) {
+  const container = document.getElementById('componentes-sugeridos-container');
+  if (!container || !componentes || componentes.length === 0) {
+    if (container) container.style.display = 'none';
+    return;
+  }
+  
+  // Verificar si los componentes tienen información de acciones
+  const tieneAcciones = componentes.some(c => c.acciones_disponibles && c.acciones_disponibles.length > 0);
+  
+  container.style.display = 'block';
+  
+  let componentesHTML = '';
+  if (tieneAcciones) {
+    // Mostrar componentes con sus acciones disponibles
+    componentesHTML = componentes.map(comp => {
+      const accionesHTML = comp.acciones_disponibles && comp.acciones_disponibles.length > 0
+        ? comp.acciones_disponibles.map(acc => 
+            `<span class="badge bg-secondary me-1" style="font-size: 0.75rem;">${acc.nombre}</span>`
+          ).join('')
+        : '';
+      
+      return `
+        <div class="card mb-2" style="border: 2px solid rgba(102, 126, 234, 0.3); border-radius: 12px;">
+          <div class="card-body p-3">
+            <div class="d-flex justify-content-between align-items-start">
+              <div class="flex-grow-1">
+                <h6 class="mb-2" style="color: #333;">
+                  <i class="fas fa-cog me-1" style="color: #667eea;"></i>
+                  ${comp.nombre}
+                </h6>
+                ${accionesHTML ? `
+                  <div class="mb-2">
+                    <small class="text-muted d-block mb-1">Acciones disponibles:</small>
+                    ${accionesHTML}
+                  </div>
+                ` : ''}
+                ${comp.codigo ? `<small class="text-muted">Código: ${comp.codigo}</small>` : ''}
+              </div>
+              <button type="button" 
+                      class="btn btn-sm btn-primary componente-sugerido-btn"
+                      data-componente-id="${comp.id}"
+                      onclick="seleccionarComponenteSugerido(${comp.id}, '${comp.nombre.replace(/'/g, "\\'")}')"
+                      style="white-space: nowrap;">
+                <i class="fas fa-plus-circle me-1"></i> Seleccionar
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } else {
+    // Mostrar componentes simples sin acciones
+    componentesHTML = `
+      <div class="d-flex flex-wrap gap-2">
+        ${componentes.map(comp => `
+          <button type="button" 
+                  class="btn btn-outline-primary componente-sugerido-btn"
+                  data-componente-id="${comp.id}"
+                  onclick="seleccionarComponenteSugerido(${comp.id}, '${comp.nombre.replace(/'/g, "\\'")}')"
+                  style="border-width: 2px;">
+            <i class="fas fa-plus-circle me-1"></i>${comp.nombre}
+          </button>
+        `).join('')}
+      </div>
+    `;
+  }
+  
+  container.innerHTML = `
+    <div style="
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+      border: 2px solid rgba(102, 126, 234, 0.3);
+      border-radius: 16px;
+      padding: 1.5rem;
+    ">
+      <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+        <i class="fas fa-magic" style="color: #667eea; font-size: 1.2rem;"></i>
+        <strong style="color: #667eea;">Componentes sugeridos por IA basados en la descripción:</strong>
+      </div>
+      ${componentesHTML}
+      <small class="text-muted d-block mt-3">
+        <i class="fas fa-info-circle"></i> Estos componentes fueron sugeridos porque tienen acciones asociadas que coinciden con la descripción del problema.
+      </small>
+    </div>
+  `;
+}
+
+// Función para seleccionar un componente sugerido
+function seleccionarComponenteSugerido(id, nombre) {
+  // Intentar encontrar por ID primero
+  let checkbox = document.getElementById(`comp-${id}`);
+  
+  // Si no se encuentra por ID, buscar por nombre
+  if (!checkbox) {
+    const allCheckboxes = document.querySelectorAll('.componente-checkbox');
+    for (let cb of allCheckboxes) {
+      const cbNombre = cb.dataset.nombre || cb.nextElementSibling?.textContent?.trim();
+      if (cbNombre && cbNombre.toLowerCase().includes(nombre.toLowerCase())) {
+        checkbox = cb;
+        break;
+      }
+    }
+  }
+  
+  if (checkbox) {
+    checkbox.checked = true;
+    checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+    
+    // Expandir el acordeón del padre si está colapsado
+    const padreId = checkbox.dataset.padreId;
+    if (padreId) {
+      const collapse = document.getElementById(`collapse-${padreId}`);
+      if (collapse && !collapse.classList.contains('show')) {
+        const bsCollapse = new bootstrap.Collapse(collapse, { toggle: true });
+      }
+    }
+    
+    // Scroll al componente seleccionado
+    setTimeout(() => {
+      checkbox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 300);
+    
+    // Resaltar brevemente
+    checkbox.parentElement.style.background = 'rgba(102, 126, 234, 0.2)';
+    checkbox.parentElement.style.transition = 'background 0.3s ease';
+    setTimeout(() => {
+      checkbox.parentElement.style.background = '';
+    }, 2000);
+    
+    // Actualizar resumen
+    actualizarResumenComponentes();
+    actualizarBadgesComponentes();
+    
+    // Mostrar mensaje de confirmación
+    const aiMessage = document.getElementById('ai-message');
+    if (aiMessage) {
+      aiMessage.textContent = `✅ Componente "${nombre}" seleccionado. Puedes seleccionar más componentes si es necesario.`;
+    }
+  } else {
+    // Si no se encuentra, mostrar mensaje
+    console.warn(`Componente "${nombre}" (ID: ${id}) no encontrado en el formulario`);
+    const aiMessage = document.getElementById('ai-message');
+    if (aiMessage) {
+      aiMessage.textContent = `⚠️ El componente "${nombre}" no se encontró en la lista. Por favor, selecciónalo manualmente.`;
+    }
+  }
+}
+</script>
+{% endblock %}
+

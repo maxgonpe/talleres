@@ -5,7 +5,7 @@ from django.utils.timezone import now
 from django.shortcuts import redirect
 from .import views
 from .views_api import vehiculo_lookup, openai_response
-from .views_ia import netgogo_console, netgogo_chat
+from .views_ia import netgogo_console, netgogo_chat, netgogo2_console, netgogo2_chat
 from .views import ClienteListView, ClienteTallerListView, ClienteTallerCreateView, ClienteTallerUpdateView, ClienteTallerDeleteView, cliente_taller_lookup, VehiculoListView,\
                    VehiculoCreateView,VehiculoUpdateView,\
                    VehiculoDeleteView,MecanicoListView,\
@@ -58,6 +58,8 @@ urlpatterns = [
     path("api/openai/response/", openai_response, name="openai_response"),
     path("netgogo/", netgogo_console, name="netgogo_console"),
     path("api/netgogo/chat/", netgogo_chat, name="netgogo_chat"),
+    path("netgogo2/", netgogo2_console, name="netgogo2_console"),
+    path("api/netgogo2/chat/", netgogo2_chat, name="netgogo2_chat"),
 
     # === Componente + Acción (precios) ===
     path('componente-acciones/', views.comp_accion_list, name='comp_accion_list'),

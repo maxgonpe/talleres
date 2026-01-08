@@ -1933,6 +1933,733 @@ def netgogo_chat(request):
         return JsonResponse(error_response, status=500)
 
 
+@login_required
+def netgogo2_console(request):
+    """Vista para Netgogo2 - Interfaz guiada por IA para ingreso de diagnóstico - Solo accesible para maxgonpe"""
+    # Restricción temporal: solo el usuario maxgonpe puede acceder
+    if request.user.username != 'maxgonpe':
+        from django.contrib import messages
+        from django.shortcuts import redirect
+        messages.error(request, "Acceso restringido. Esta funcionalidad está en desarrollo.")
+        return redirect('panel_principal')
+    
+    # Obtener datos necesarios para el formulario
+    from .models import Cliente_Taller, Componente, AdministracionTaller
+    from .forms import ClienteTallerForm, VehiculoForm, DiagnosticoForm
+    
+    config = AdministracionTaller.get_configuracion_activa()
+    clientes_existentes = Cliente_Taller.objects.filter(activo=True).order_by('nombre')
+    componentes = Componente.objects.filter(padre__isnull=True, activo=True).order_by('nombre')
+    
+    cliente_form = ClienteTallerForm(prefix='cliente')
+    vehiculo_form = VehiculoForm(prefix='vehiculo')
+    diagnostico_form = DiagnosticoForm(prefix='diag')
+    
+    return render(request, "car/netgogo2_console.html", {
+        'cliente_form': cliente_form,
+        'vehiculo_form': vehiculo_form,
+        'diagnostico_form': diagnostico_form,
+        'clientes_existentes': clientes_existentes,
+        'componentes': componentes,
+        'config': config,
+    })
+
+
+@csrf_exempt
+@ajax_login_required
+def netgogo2_chat(request):
+    """Endpoint para Netgogo2 - Maneja interacciones con IA guiada para formulario con function calls"""
+    try:
+        # Restricción temporal: solo el usuario maxgonpe puede acceder
+        if not request.user.is_authenticated:
+            return JsonResponse({"error": "No autenticado. Por favor inicia sesión."}, status=401)
+        
+        if request.user.username != 'maxgonpe':
+            return JsonResponse({"error": "Acceso restringido. Esta funcionalidad está en desarrollo."}, status=403)
+        
+        if request.method != 'POST':
+            return JsonResponse({"error": "Método no permitido. Use POST."}, status=405)
+        
+        # Obtener datos del request
+        if request.content_type == 'application/json':
+            try:
+                data = json.loads(request.body)
+            except json.JSONDecodeError as e:
+                logger.error(f"Error parseando JSON en netgogo2_chat: {str(e)}")
+                return JsonResponse({"error": "JSON inválido"}, status=400)
+        else:
+            data = request.POST
+        
+        action = data.get("action", "analyze")
+        form_data = data.get("form_data", {})
+        current_section = data.get("current_section", "cliente")
+        
+        # Obtener o crear agente en la sesión
+        # IMPORTANTE: Para Netgogo2, NO acumulamos historial para evitar loops y rate limits
+        # Solo mantenemos el mensaje del sistema y el último análisis
+        if 'netgogo2_agent' not in request.session:
+            agent = Agent()
+            # Crear mensaje del sistema específico para diagnóstico
+            system_message = {
+                "role": "system",
+                "content": (
+                    "Eres un asistente experto en diagnóstico automotriz que ayuda a ingresar diagnósticos en un taller mecánico. "
+                    "Tu tarea es guiar al usuario paso a paso para completar un formulario de diagnóstico. "
+                    "\n\n"
+                    "IMPORTANTE: Cuando tengas información parcial (como RUT, placa, o descripción del problema), "
+                    "DEBES usar las function calls disponibles para buscar información en el sistema:\n"
+                    "- Si el usuario ingresa un RUT o nombre de cliente, usa 'listado_clientes' con filtro para buscarlo\n"
+                    "- Si el usuario ingresa una placa, usa 'listado_vehiculos' con filtro para buscarlo\n"
+                    "- Si el usuario describe un problema, usa 'listado_diagnosticos' con filtro para encontrar diagnósticos similares\n"
+                    "- Si necesitas sugerir componentes, usa 'listado_componentes' para listar componentes relevantes\n"
+                    "- Usa 'query_sistema' para consultas generales sobre el estado del taller\n"
+                    "\n"
+                    "Cuando ejecutes una función y recibas su resultado, SIEMPRE debes procesar ese resultado y responder "
+                    "al usuario de forma clara y amigable, extrayendo la información relevante. "
+                    "NO muestres el JSON crudo, sino presenta los datos de manera legible y útil.\n"
+                    "\n"
+                    "Responde en español de forma amigable y profesional. "
+                    "Sé conciso pero completo en tus respuestas."
+                )
+            }
+            request.session['netgogo2_agent'] = {
+                'system_message': system_message,
+                'last_analysis': None,
+                'last_section': None
+            }
+        
+        # Construir prompt contextual (sin acumular historial)
+        if action == "analyze":
+            cliente_data = form_data.get('cliente', {})
+            vehiculo_data = form_data.get('vehiculo', {})
+            diagnostico_data = form_data.get('diagnostico', {})
+            
+            # Construir contexto para la IA según la sección
+            if current_section == "componentes":
+                descripcion = diagnostico_data.get('descripcion', '') or diagnostico_data.get('descripcion_problema', '')
+                if descripcion:
+                    # En la sección de componentes, buscar componentes relevantes basados en acciones mencionadas
+                    contexto = f"""Estás en la sección de selección de componentes afectados.
+
+Descripción del problema: {descripcion[:300]}
+
+Tu tarea CRÍTICA:
+1. DEBES usar 'sugerir_componentes_por_descripcion' con la descripción completa del problema
+2. Esta función analiza la descripción para identificar acciones mencionadas (como "cambio", "reparación", "falla", "ruido", etc.)
+3. Busca componentes que tienen esas acciones asociadas con tarifas en el sistema (ComponenteAccion)
+4. Si no encuentra componentes por acciones, busca por palabras clave en nombres de componentes
+5. Sugiere al usuario los componentes más relevantes basados en el problema descrito
+6. Proporciona un mensaje claro explicando qué componentes podrían estar afectados y por qué
+
+IMPORTANTE: Usa 'sugerir_componentes_por_descripcion' en lugar de 'listado_componentes' porque es más inteligente y busca basándose en acciones y componentes asociados que tienen tarifas.
+
+Ejemplos:
+- Si la descripción dice "cambio de bujías" → buscará componentes asociados a la acción "cambio" y que contengan "bujías"
+- Si dice "falla de frenos" → buscará componentes asociados a "falla" y que contengan "frenos"
+- Si dice "ruido en el motor" → buscará componentes asociados a acciones relacionadas con "ruido" y que contengan "motor"
+
+Responde de forma natural y amigable, sugiriendo componentes específicos con sus acciones disponibles."""
+                else:
+                    contexto = f"""Estás en la sección de selección de componentes afectados.
+
+No hay descripción del problema disponible aún. Guía al usuario para que seleccione los componentes que requieren atención.
+
+Si el usuario necesita ayuda, puedes usar 'listado_componentes' para mostrar todos los componentes disponibles."""
+            else:
+                # Construir contexto para otras secciones
+                contexto = f"""Analiza el estado actual del formulario de ingreso de diagnóstico.
+
+Sección actual: {current_section}
+
+Datos del formulario:
+- Cliente: RUT={cliente_data.get('rut', 'N/A')}, Nombre={cliente_data.get('nombre', 'N/A')}, Existente={cliente_data.get('existente', False)}
+- Vehículo: Placa={vehiculo_data.get('placa', 'N/A')}, Marca={vehiculo_data.get('marca', 'N/A')}, Modelo={vehiculo_data.get('modelo', 'N/A')}, ID={vehiculo_data.get('id', 'N/A')}
+- Diagnóstico: Descripción={diagnostico_data.get('descripcion', 'N/A')[:100] if diagnostico_data.get('descripcion') else 'N/A'}
+
+Tu tarea:
+1. Si hay información parcial (RUT, placa, descripción), usa las function calls para buscar información en el sistema
+2. Determina qué sección debe mostrarse al usuario
+3. Identifica qué campos faltan o necesitan atención
+4. Proporciona un mensaje claro y amigable guiando al usuario
+5. Si encontraste información relevante (clientes, vehículos, diagnósticos similares), inclúyela en tu respuesta
+
+IMPORTANTE: Si el usuario ingresó un RUT o nombre de cliente pero no está completo, usa 'listado_clientes' con filtro para buscarlo.
+Si ingresó una placa, usa 'listado_vehiculos' con filtro para buscarla.
+Si describió un problema, usa 'listado_diagnosticos' con filtro para encontrar diagnósticos similares que puedan ayudar.
+
+Responde de forma natural y amigable, no en formato JSON estructurado."""
+        else:
+            prompt = f"Acción: {action}. Datos: {json.dumps(form_data, ensure_ascii=False)}"
+            contexto = prompt
+        
+        # Crear mensajes frescos para cada petición (sin acumular historial)
+        agent = Agent()
+        agent.messages = [request.session['netgogo2_agent']['system_message']]
+        agent.messages.append({"role": "user", "content": contexto})
+        
+        # Análisis local (siempre disponible como fallback)
+        analysis = analizar_formulario_ingreso(form_data, current_section)
+        
+        # Intentar llamar a la API de IA con function calls
+        final_message = None
+        ia_connected = False
+        tool_called = False
+        tool_info = None
+        search_results = None
+        
+        try:
+            from .views_api import call_openai_api
+            
+            logger.info(f"Netgogo2: Intentando conectar con IA. Sección: {current_section}, Mensajes: {len(agent.messages)}")
+            
+            response_data = call_openai_api(
+                input_data=agent.messages,
+                model="gpt-4o-mini",
+                tools=agent.tools,
+                store=True,
+                timeout=60
+            )
+            
+            # Procesar respuesta y detectar function calls
+            if response_data and 'output' in response_data:
+                outputs = response_data.get('output', [])
+                for output in outputs:
+                    if isinstance(output, dict):
+                        output_type = output.get('type')
+                        
+                        # Si es function_call, ejecutarla
+                        if output_type == 'function_call':
+                            fn_name = output.get('name')
+                            args_str = output.get('arguments', '{}')
+                            
+                            try:
+                                args = json.loads(args_str) if isinstance(args_str, str) else args_str
+                            except:
+                                args = {}
+                            
+                            tool_called = True
+                            tool_info = {
+                                'name': fn_name,
+                                'arguments': args,
+                                'call_id': output.get('call_id', '')
+                            }
+                            
+                            # Ejecutar la función correspondiente
+                            try:
+                                if fn_name == 'listado_clientes':
+                                    activo = args.get('activo')
+                                    limite = args.get('limite', 10)
+                                    filtro = args.get('filtro')
+                                    result = listado_clientes_data(activo=activo, limite=limite, filtro=filtro)
+                                elif fn_name == 'listado_vehiculos':
+                                    limite = args.get('limite', 10)
+                                    filtro = args.get('filtro')
+                                    result = listado_vehiculos_data(limite=limite, filtro=filtro)
+                                elif fn_name == 'listado_diagnosticos':
+                                    estado = args.get('estado')
+                                    limite = args.get('limite', 10)
+                                    filtro = args.get('filtro')
+                                    result = listado_diagnosticos_data(estado=estado, limite=limite, filtro=filtro)
+                                elif fn_name == 'listado_componentes':
+                                    activo = args.get('activo')
+                                    limite = args.get('limite', 20)
+                                    filtro = args.get('filtro')
+                                    result = listado_componentes_data(activo=activo, limite=limite, filtro=filtro)
+                                elif fn_name == 'sugerir_componentes_por_descripcion':
+                                    descripcion = args.get('descripcion', '')
+                                    limite = args.get('limite', 20)
+                                    result = sugerir_componentes_por_descripcion(descripcion=descripcion, limite=limite)
+                                elif fn_name == 'query_sistema':
+                                    result = query_sistema_data(
+                                        tipo=args.get('tipo'),
+                                        filtro=args.get('filtro'),
+                                        detalle=args.get('detalle', False)
+                                    )
+                                elif fn_name == 'list_files_in_dir':
+                                    result = agent.list_files_in_dir(**args)
+                                elif fn_name == 'read_file':
+                                    result = agent.read_file(**args)
+                                elif fn_name == 'edit_file':
+                                    result = agent.edit_file(**args)
+                                else:
+                                    result = {"error": f"Función desconocida: {fn_name}", "success": False}
+                                
+                                # Asegurar que result siempre sea un dict
+                                if not isinstance(result, dict):
+                                    result = {"result": result, "success": True}
+                                    
+                            except Exception as func_error:
+                                error_msg = str(func_error)
+                                error_type = type(func_error).__name__
+                                logger.error(f"Error ejecutando función {fn_name}: {error_type}: {error_msg}", exc_info=True)
+                                result = {
+                                    "error": f"Error ejecutando {fn_name}: {error_msg}",
+                                    "error_type": error_type,
+                                    "success": False
+                                }
+                            
+                            tool_info['result'] = result
+                            search_results = result  # Guardar resultados para enviar al frontend
+                            
+                            # Agregar resultado al historial
+                            agent.messages.append({
+                                "type": "function_call_output",
+                                "call_id": output.get('call_id', ''),
+                                "output": json.dumps({
+                                    "result": result
+                                })
+                            })
+                            
+                            # Continuar conversación para obtener respuesta final
+                            try:
+                                continuation_messages = []
+                                for msg in agent.messages:
+                                    if isinstance(msg, dict):
+                                        if 'role' in msg and 'content' in msg:
+                                            continuation_messages.append({
+                                                "role": msg['role'],
+                                                "content": str(msg['content'])
+                                            })
+                                        elif msg.get('type') == 'function_call_output':
+                                            output_content = msg.get('output', '')
+                                            continuation_messages.append({
+                                                "role": "function",
+                                                "name": "function_output",
+                                                "content": output_content if isinstance(output_content, str) else json.dumps(output_content)
+                                            })
+                                
+                                # Agregar mensaje explícito pidiendo que procese el resultado
+                                continuation_messages.append({
+                                    "role": "user",
+                                    "content": (
+                                        f"Procesa el resultado de la función '{fn_name}' que acabas de ejecutar. "
+                                        f"Responde al usuario de forma clara y amigable, extrayendo la información relevante del resultado. "
+                                        f"NO muestres el JSON crudo, sino presenta los datos de manera legible. "
+                                        f"Si encontraste clientes, vehículos o diagnósticos similares, sugiérelos al usuario. "
+                                        f"También indica qué sección del formulario debe mostrarse y qué campos faltan."
+                                    )
+                                })
+                                
+                                continuation_response = call_openai_api(
+                                    input_data=continuation_messages,
+                                    model="gpt-4o-mini",
+                                    tools=None,  # No necesitamos herramientas en la continuación
+                                    store=True,
+                                    timeout=60
+                                )
+                                
+                                # Procesar respuesta de continuación
+                                if 'output' in continuation_response:
+                                    cont_outputs = continuation_response.get('output', [])
+                                    for cont_output in cont_outputs:
+                                        if isinstance(cont_output, dict) and cont_output.get('type') == 'message':
+                                            content = cont_output.get('content', [])
+                                            if isinstance(content, list):
+                                                message_parts = []
+                                                for part in content:
+                                                    if isinstance(part, dict) and part.get('type') == 'output_text':
+                                                        text = part.get('text', '')
+                                                        if text:
+                                                            message_parts.append(text)
+                                                final_message = '\n'.join(message_parts) if message_parts else None
+                                            elif isinstance(content, str):
+                                                final_message = content
+                                            break
+                                
+                                # Si no se obtuvo mensaje de la continuación, crear uno básico desde el resultado
+                                if not final_message:
+                                    if isinstance(result, dict) and 'error' not in result:
+                                        try:
+                                            if 'clientes' in result:
+                                                count = result.get('total_encontrados', 0)
+                                                final_message = f"Encontré {count} cliente(s) que coinciden con tu búsqueda."
+                                            elif 'vehiculos' in result:
+                                                count = result.get('total_encontrados', 0)
+                                                final_message = f"Encontré {count} vehículo(s) que coinciden con tu búsqueda."
+                                            elif 'diagnosticos' in result:
+                                                count = result.get('total_encontrados', 0)
+                                                final_message = f"Encontré {count} diagnóstico(s) similar(es) que pueden ayudarte."
+                                            else:
+                                                final_message = "Información obtenida correctamente."
+                                        except:
+                                            final_message = "Información obtenida correctamente."
+                                    else:
+                                        final_message = "Información obtenida correctamente."
+                                
+                            except Exception as cont_error:
+                                logger.warning(f"Error en continuación de conversación: {str(cont_error)}")
+                                # Usar mensaje básico si falla la continuación
+                                if not final_message:
+                                    final_message = "Búsqueda completada. Revisa los resultados."
+                        
+                        elif output_type == 'message':
+                            # Si es mensaje directo (sin function call)
+                            content = output.get('content', [])
+                            if isinstance(content, list):
+                                message_parts = []
+                                for part in content:
+                                    if isinstance(part, dict) and part.get('type') == 'output_text':
+                                        text = part.get('text', '')
+                                        if text:
+                                            message_parts.append(text)
+                                final_message = '\n'.join(message_parts) if message_parts else None
+                            elif isinstance(content, str):
+                                final_message = content
+            
+            # Actualizar mensaje si se obtuvo de la IA
+                        if final_message:
+                            analysis['message'] = final_message
+                            ia_connected = True
+                            logger.info(f"Netgogo2: IA conectada exitosamente. Mensaje recibido: {final_message[:50]}...")
+            
+            # Guardar solo el último análisis (no todo el historial)
+            request.session['netgogo2_agent']['last_analysis'] = {
+                'section': current_section
+            }
+            request.session['netgogo2_agent']['last_section'] = current_section
+            request.session.modified = True
+        except Exception as api_error:
+            # Si falla la API, usar solo el análisis local
+            logger.warning(f"Netgogo2: Error llamando a API de IA: {str(api_error)}")
+            # Continuar con análisis local (sin marcar como error, es un fallback normal)
+        
+        # Preparar respuesta
+        response_data = {
+            "success": True,
+            "message": analysis.get("message", "Continuemos con el formulario"),
+            "analysis": analysis,
+            "ia_connected": ia_connected
+        }
+        
+        # Agregar información de function calls si se ejecutó alguna
+        if tool_called and tool_info:
+            response_data["tool_called"] = True
+            response_data["tool"] = {
+                "name": tool_info['name'],
+                "arguments": tool_info['arguments']
+            }
+            # Incluir resultados de búsqueda para el frontend
+            if search_results:
+                response_data["search_results"] = search_results
+        
+        return JsonResponse(response_data)
+        
+    except Exception as e:
+        logger.error(f"Error en netgogo2_chat: {str(e)}", exc_info=True)
+        return JsonResponse({
+            "error": "Error procesando la solicitud",
+            "details": str(e)
+        }, status=500)
+
+
+def analizar_formulario_ingreso(form_data, current_section):
+    """Analiza el estado del formulario y determina qué mostrar"""
+    cliente_data = form_data.get('cliente', {})
+    vehiculo_data = form_data.get('vehiculo', {})
+    diagnostico_data = form_data.get('diagnostico', {})
+    componentes_data = form_data.get('componentes', {})
+    
+    cliente_completo = bool(cliente_data.get('rut') or cliente_data.get('nombre'))
+    vehiculo_completo = bool(vehiculo_data.get('placa') or vehiculo_data.get('marca') or vehiculo_data.get('id'))
+    # Verificar tanto descripcion como descripcion_problema
+    diagnostico_completo = bool(
+        diagnostico_data.get('descripcion') or 
+        diagnostico_data.get('descripcion_problema')
+    )
+    # Verificar si hay componentes seleccionados
+    componentes_seleccionados = componentes_data.get('seleccionados', [])
+    if not componentes_seleccionados:
+        # También verificar si viene como lista directa
+        if isinstance(componentes_data, list):
+            componentes_seleccionados = componentes_data
+        elif 'ids' in componentes_data:
+            componentes_seleccionados = componentes_data.get('ids', [])
+    componentes_completo = len(componentes_seleccionados) > 0 if componentes_seleccionados else False
+    
+    if not cliente_completo:
+        next_section = "cliente"
+        message = "👤 Comencemos con los datos del cliente. ¿Es un cliente existente o nuevo?"
+        missing = ["RUT o nombre del cliente"]
+    elif not vehiculo_completo:
+        next_section = "vehiculo"
+        message = "🚗 Ahora necesitamos información del vehículo. ¿Tienes la placa del vehículo?"
+        missing = ["Placa, marca o modelo del vehículo"]
+    elif not diagnostico_completo:
+        next_section = "diagnostico"
+        message = "📝 Describe el problema o síntoma que presenta el vehículo."
+        missing = ["Descripción del diagnóstico"]
+    elif current_section == "componentes" and not componentes_completo:
+        next_section = "componentes"
+        message = "🔧 Selecciona los componentes afectados. Puedes usar el botón 'Sugerir componentes con IA' para obtener sugerencias basadas en la descripción del problema."
+        missing = ["Selección de componentes afectados"]
+    elif not componentes_completo:
+        next_section = "componentes"
+        message = "🔧 Excelente. Ahora selecciona los componentes afectados según el diagnóstico descrito."
+        missing = []
+    else:
+        next_section = "finalizar"
+        message = f"✅ Perfecto. Has seleccionado {len(componentes_seleccionados) if componentes_seleccionados else 0} componente(s). Puedes finalizar el ingreso."
+        missing = []
+    
+    return {
+        "section": next_section,
+        "message": message,
+        "missing_fields": missing,
+        "next_action": f"mostrar_seccion_{next_section}",
+        "progress": {
+            "cliente": cliente_completo,
+            "vehiculo": vehiculo_completo,
+            "diagnostico": diagnostico_completo,
+            "componentes": componentes_completo
+        }
+    }
+
+
+def buscar_diagnosticos_similares(descripcion, limite=5):
+    """
+    Busca diagnósticos similares basados en la descripción del problema
+    
+    Args:
+        descripcion: Texto de descripción del problema
+        limite: Número máximo de diagnósticos a retornar
+    
+    Returns:
+        dict: Lista de diagnósticos similares con información relevante
+    """
+    try:
+        if not descripcion or len(descripcion.strip()) < 3:
+            return {
+                "total_encontrados": 0,
+                "diagnosticos": [],
+                "message": "La descripción es muy corta para buscar diagnósticos similares"
+            }
+        
+        # Buscar diagnósticos que contengan palabras clave de la descripción
+        palabras_clave = descripcion.lower().split()
+        palabras_clave = [p.strip() for p in palabras_clave if len(p.strip()) > 2][:5]  # Máximo 5 palabras clave
+        
+        if not palabras_clave:
+            return {
+                "total_encontrados": 0,
+                "diagnosticos": []
+            }
+        
+        # Construir query con OR para buscar cualquier palabra clave
+        query = Q()
+        for palabra in palabras_clave:
+            query |= Q(descripcion_problema__icontains=palabra)
+        
+        diagnosticos = Diagnostico.objects.filter(
+            query,
+            visible=True
+        ).order_by('-fecha')[:limite]
+        
+        lista_diagnosticos = []
+        for d in diagnosticos:
+            try:
+                vehiculo = d.vehiculo
+                componentes_count = d.componentes.count() if hasattr(d, 'componentes') else 0
+                acciones_count = d.acciones_componentes.count() if hasattr(d, 'acciones_componentes') else 0
+                
+                diagnostico_data = {
+                    "id": d.id,
+                    "vehiculo": {
+                        "placa": vehiculo.placa if vehiculo else "N/A",
+                        "marca": vehiculo.marca if vehiculo else "N/A",
+                        "modelo": vehiculo.modelo if vehiculo else "N/A"
+                    },
+                    "descripcion_problema": d.descripcion_problema or "",
+                    "fecha": d.fecha.strftime("%Y-%m-%d") if d.fecha else None,
+                    "estado": d.estado,
+                    "componentes_count": componentes_count,
+                    "acciones_count": acciones_count
+                }
+                lista_diagnosticos.append(diagnostico_data)
+            except Exception as e_diag:
+                logger.warning(f"Error procesando diagnóstico {d.id}: {str(e_diag)}")
+                continue
+        
+        return {
+            "total_encontrados": len(lista_diagnosticos),
+            "diagnosticos": lista_diagnosticos,
+            "palabras_buscadas": palabras_clave
+        }
+    
+    except Exception as e:
+        error_msg = str(e)
+        error_type = type(e).__name__
+        logger.error(f"Error en buscar_diagnosticos_similares: {error_type}: {error_msg}", exc_info=True)
+        return {
+            "error": f"Error al buscar diagnósticos similares: {error_msg}",
+            "error_type": error_type,
+            "success": False,
+            "total_encontrados": 0,
+            "diagnosticos": []
+        }
+
+
+def sugerir_componentes_por_descripcion(descripcion, limite=20):
+    """
+    Sugiere componentes relevantes basados en acciones mencionadas en la descripción.
+    Busca en ComponenteAccion para encontrar componentes que tienen acciones asociadas
+    que coinciden con palabras clave de la descripción.
+    
+    Args:
+        descripcion: Texto de descripción del problema
+        limite: Número máximo de componentes a sugerir
+    
+    Returns:
+        dict: Lista de componentes sugeridos con sus acciones asociadas
+    """
+    try:
+        if not descripcion or len(descripcion.strip()) < 3:
+            return {
+                "total_encontrados": 0,
+                "componentes": [],
+                "message": "La descripción es muy corta para sugerir componentes"
+            }
+        
+        descripcion_lower = descripcion.lower()
+        
+        # Palabras clave de acciones comunes (mapeo de términos del usuario a acciones en BD)
+        acciones_keywords = {
+            'cambio': ['cambio', 'cambiar', 'reemplazo', 'reemplazar', 'sustituir', 'sustitución'],
+            'reparacion': ['reparar', 'reparación', 'arreglar', 'arreglo', 'reparo'],
+            'revision': ['revisar', 'revisión', 'revisa', 'inspección', 'inspeccionar'],
+            'calibracion': ['calibrar', 'calibración', 'calibra'],
+            'limpieza': ['limpiar', 'limpieza', 'lavar', 'lavado'],
+            'ajuste': ['ajustar', 'ajuste', 'reglar', 'regulación'],
+            'desarmar': ['desarmar', 'desarme', 'desmontar', 'desmontaje'],
+            'armar': ['armar', 'armado', 'montar', 'montaje'],
+            'diagnostico': ['diagnóstico', 'diagnosticar', 'diagnostica'],
+            'falla': ['falla', 'fallo', 'falló', 'no funciona', 'no trabaja', 'mal funcionamiento'],
+            'ruido': ['ruido', 'ruidos', 'sonido extraño', 'hace ruido'],
+            'fuga': ['fuga', 'fugas', 'gotea', 'goteo', 'pierde'],
+            'vibracion': ['vibración', 'vibra', 'vibraciones', 'tiembla'],
+        }
+        
+        # Buscar acciones en la BD que coincidan con palabras clave de la descripción
+        from .models import Accion, ComponenteAccion
+        
+        acciones_encontradas = []
+        for accion_nombre, keywords in acciones_keywords.items():
+            for keyword in keywords:
+                if keyword in descripcion_lower:
+                    # Buscar acciones en BD que contengan esta palabra clave
+                    acciones_bd = Accion.objects.filter(
+                        nombre__icontains=keyword
+                    ).distinct()
+                    acciones_encontradas.extend(acciones_bd)
+                    break
+        
+        # Si no se encontraron acciones específicas, buscar por palabras clave directas en nombres de acciones
+        if not acciones_encontradas:
+            palabras_descripcion = descripcion_lower.split()
+            palabras_descripcion = [p.strip() for p in palabras_descripcion if len(p.strip()) > 3]
+            
+            for palabra in palabras_descripcion[:10]:  # Máximo 10 palabras
+                acciones_bd = Accion.objects.filter(
+                    nombre__icontains=palabra
+                ).distinct()
+                acciones_encontradas.extend(acciones_bd)
+        
+        # Eliminar duplicados
+        acciones_encontradas = list(set(acciones_encontradas))
+        
+        # Buscar ComponenteAccion que tengan estas acciones
+        componentes_ids = set()
+        componentes_acciones_map = {}  # {componente_id: [acciones]}
+        
+        if acciones_encontradas:
+            acciones_ids = [a.id for a in acciones_encontradas]
+            componente_acciones = ComponenteAccion.objects.filter(
+                accion_id__in=acciones_ids
+            ).select_related('componente', 'accion')
+            
+            for ca in componente_acciones:
+                comp_id = ca.componente.id
+                componentes_ids.add(comp_id)
+                
+                if comp_id not in componentes_acciones_map:
+                    componentes_acciones_map[comp_id] = {
+                        'componente': ca.componente,
+                        'acciones': []
+                    }
+                
+                componentes_acciones_map[comp_id]['acciones'].append({
+                    'nombre': ca.accion.nombre,
+                    'precio': float(ca.precio_mano_obra)
+                })
+        
+        # Si no se encontraron componentes por acciones, buscar por palabras clave en nombres de componentes
+        if not componentes_ids:
+            palabras_clave = descripcion_lower.split()
+            palabras_clave = [p.strip() for p in palabras_clave if len(p.strip()) > 2][:5]
+            
+            if palabras_clave:
+                query = Q()
+                for palabra in palabras_clave:
+                    query |= Q(nombre__icontains=palabra) | Q(codigo__icontains=palabra)
+                
+                componentes_por_nombre = Componente.objects.filter(
+                    query,
+                    activo=True
+                ).distinct()[:limite]
+                
+                for c in componentes_por_nombre:
+                    if c.id not in componentes_ids:
+                        componentes_ids.add(c.id)
+                        componentes_acciones_map[c.id] = {
+                            'componente': c,
+                            'acciones': []
+                        }
+        
+        # Construir lista de componentes sugeridos
+        lista_componentes = []
+        componentes_ordenados = sorted(
+            componentes_acciones_map.items(),
+            key=lambda x: len(x[1]['acciones']),
+            reverse=True
+        )[:limite]
+        
+        for comp_id, data in componentes_ordenados:
+            try:
+                componente = data['componente']
+                acciones = data['acciones']
+                
+                componente_data = {
+                    "id": componente.id,
+                    "nombre": componente.nombre or "N/A",
+                    "codigo": componente.codigo or "N/A",
+                    "activo": componente.activo,
+                    "acciones_disponibles": acciones,
+                    "acciones_count": len(acciones)
+                }
+                lista_componentes.append(componente_data)
+            except Exception as e_comp:
+                logger.warning(f"Error procesando componente {comp_id}: {str(e_comp)}")
+                continue
+        
+        return {
+            "total_encontrados": len(lista_componentes),
+            "componentes": lista_componentes,
+            "acciones_detectadas": [a.nombre for a in acciones_encontradas[:5]],
+            "metodo": "acciones" if acciones_encontradas else "palabras_clave"
+        }
+    
+    except Exception as e:
+        error_msg = str(e)
+        error_type = type(e).__name__
+        logger.error(f"Error en sugerir_componentes_por_descripcion: {error_type}: {error_msg}", exc_info=True)
+        return {
+            "error": f"Error al sugerir componentes: {error_msg}",
+            "error_type": error_type,
+            "success": False,
+            "total_encontrados": 0,
+            "componentes": []
+        }
+
+
 
 
 

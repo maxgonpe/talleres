@@ -231,6 +231,25 @@ class Agent:
             },
             {
                 "type": "function",
+                "name": "sugerir_componentes_por_descripcion",
+                "description": "Sugiere componentes relevantes basados en la descripción del problema. Analiza la descripción para identificar acciones mencionadas (como 'cambio', 'reparación', 'falla', etc.) y busca componentes que tienen esas acciones asociadas con tarifas en el sistema. Úsala ESPECIALMENTE en la sección de componentes cuando el usuario haya descrito un problema. Esta función es más inteligente que listado_componentes porque busca basándose en acciones y componentes asociados.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "descripcion": {
+                            "type": "string",
+                            "description": "Descripción del problema o síntoma del vehículo. Ejemplos: 'falla de frenos', 'cambio de bujías', 'ruido en el motor', 'reparación de transmisión', etc."
+                        },
+                        "limite": {
+                            "type": "integer",
+                            "description": "Número máximo de componentes a sugerir (default: 20)"
+                        }
+                    },
+                    "required": ["descripcion"]
+                }
+            },
+            {
+                "type": "function",
                 "name": "listado_acciones",
                 "description": "Lista todas las acciones disponibles en el sistema. Úsala cuando el usuario pida: 'muéstrame las acciones', 'búscame acciones', 'listado de acciones', 'acciones disponibles', 'ver acciones', o cualquier variación de estas frases.",
                 "parameters": {
