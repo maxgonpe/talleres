@@ -383,9 +383,7 @@
       buscarTimeout = setTimeout(() => {
         buscarTrabajos(termino);
       }, 300);
-    });
-
-    // Permitir búsqueda con Enter
+    });    // Permitir búsqueda con Enter
     buscarInput.addEventListener('keypress', function(e) {
       if (e.key === 'Enter') {
         e.preventDefault();

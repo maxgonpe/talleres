@@ -494,9 +494,17 @@
                     <div class="item-info">
                         <div class="fw-bold">{{ item.repuesto.nombre }}</div>
                         <small class="text-secondary">
+                            {% if item.repuesto.marca %}
+                                <strong>Marca:</strong> {{ item.repuesto.marca }} | 
+                            {% endif %}
                             SKU: {{ item.repuesto.sku|default:"N/A" }} | 
                             Stock: {{ item.repuesto.stock_total|default:0 }}
                         </small>
+                        {% if item.repuesto.descripcion %}
+                            <div class="text-muted mt-1" style="font-size: 0.85rem;">
+                                {{ item.repuesto.descripcion|truncatewords:15 }}
+                            </div>
+                        {% endif %}
                     </div>
                     <div class="item-controls">
                         <input type="number" 
@@ -687,14 +695,26 @@ function mostrarResultados(repuestos) {
     if (repuestos.length === 0) {
         resultsContainer.innerHTML = '<div class="search-item text-secondary">No se encontraron repuestos</div>';
     } else {
-        resultsContainer.innerHTML = repuestos.map(repuesto => `
-            <div class="search-item" onclick="agregarAlCarrito(${repuesto.id}, '${repuesto.nombre}', ${repuesto.precio_venta}, ${repuesto.stock})">
-                <div class="fw-bold">${repuesto.nombre}</div>
-                <small class="text-secondary">
-                    SKU: ${repuesto.sku} | Stock: ${repuesto.stock} | $${repuesto.precio_venta}
-                </small>
-            </div>
-        `).join('');
+        resultsContainer.innerHTML = repuestos.map(repuesto => {
+            // Escapar caracteres especiales para evitar problemas con comillas
+            const nombre = (repuesto.nombre || '').replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+            const descripcion = (repuesto.descripcion || '').replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+            const marca = (repuesto.marca || '').replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+            const sku = repuesto.sku || 'N/A';
+            const stock = repuesto.stock || 0;
+            const precio = repuesto.precio_venta || 0;
+            
+            return `
+                <div class="search-item" onclick="agregarAlCarrito(${repuesto.id}, '${nombre}', ${precio}, ${stock})">
+                    <div class="fw-bold">${nombre}</div>
+                    <small class="text-secondary">
+                        ${marca ? `<strong>Marca:</strong> ${marca} | ` : ''}
+                        SKU: ${sku} | Stock: ${stock} | $${precio.toFixed(0)}
+                    </small>
+                    ${descripcion ? `<div class="text-muted mt-1" style="font-size: 0.85rem;">${descripcion.length > 80 ? descripcion.substring(0, 80) + '...' : descripcion}</div>` : ''}
+                </div>
+            `;
+        }).join('');
     }
     
     resultsContainer.style.display = 'block';

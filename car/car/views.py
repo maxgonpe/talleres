@@ -2679,7 +2679,18 @@ def trabajo_detalle(request, pk):
     
     # 🔹 COMPONENTES DISPONIBLES (igual que en ingreso.html - solo componentes padre)
     # Los componentes no tienen compatibilidad específica por vehículo, son genéricos
-    componentes = Componente.objects.filter(padre__isnull=True, activo=True)
+    # Ordenar alfabéticamente por nombre y pre-cargar hijos ordenados alfabéticamente
+    from django.db.models import Prefetch
+    componentes = Componente.objects.filter(
+        padre__isnull=True, 
+        activo=True
+    ).prefetch_related(
+        Prefetch(
+            'hijos',
+            queryset=Componente.objects.filter(activo=True).order_by('nombre'),
+            to_attr='hijos_ordenados'
+        )
+    ).order_by('nombre')
     
     # 🔹 FILTRO INTELIGENTE DE REPUESTOS basado en el vehículo del trabajo
     repuestos_disponibles = Repuesto.objects.all()

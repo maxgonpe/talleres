@@ -790,7 +790,7 @@
                             <div id="collapse-{{ padre.id }}" class="accordion-collapse collapse"
                                  aria-labelledby="heading-{{ padre.id }}" data-bs-parent="#componentesAccordion">
                                 <div class="accordion-body" style="background-color: var(--bg-card) !important;">
-                                    {% for hijo in padre.hijos.all %}
+                                    {% for hijo in padre.hijos_ordenados %}
                                         <div class="form-check">
                                             <input class="form-check-input componente-checkbox"
                                                    type="checkbox"

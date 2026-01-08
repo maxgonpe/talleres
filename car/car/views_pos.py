@@ -125,6 +125,7 @@ def buscar_repuestos_pos(request):
                 'nombre': repuesto.nombre,
                 'sku': repuesto.sku or '',
                 'marca': repuesto.marca or '',
+                'descripcion': repuesto.descripcion or '',
                 'precio_venta': float(precio_venta),
                 'stock': stock_total,
                 'codigo_barra': repuesto.codigo_barra or '',
