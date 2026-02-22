@@ -228,7 +228,7 @@
                         <a href="{% url 'cuenta_mecanico' config.mecanico.id %}" class="btn-primary" style="padding: 0.5rem 1rem; text-decoration: none; display: inline-block; background: #17a2b8;">
                             💰 Ver Cuenta
                         </a>
-                        <a href="{% url 'eliminar_configuracion_bono' config.pk %}" class="btn-primary" style="padding: 0.5rem 1rem; text-decoration: none; display: inline-block; background: #dc3545;" onclick="{% if ver_avisos %}return confirm('¿Estás seguro de eliminar esta configuración de bono? Los bonos ya generados no se verán afectados.');{% else %}return true;{% endif %}">
+                        <a href="{% url 'eliminar_configuracion_bono' config.pk %}" class="btn-primary" style="padding: 0.5rem 1rem; text-decoration: none; display: inline-block; background: #dc3545;" onclick="{% if ver_mensajes %}return confirm('¿Estás seguro de eliminar esta configuración de bono? Los bonos ya generados no se verán afectados.');{% else %}return true;{% endif %}">
                             🗑️ Eliminar
                         </a>
                     </td>

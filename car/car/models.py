@@ -2289,6 +2289,25 @@ class BonoGenerado(models.Model):
     fecha_pago = models.DateTimeField(null=True, blank=True)
     notas = models.TextField(blank=True, null=True, verbose_name="Notas")
     
+    # Campos para cierre por período
+    periodo_mes = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name="Mes del Período",
+        help_text="Mes del período (1-12)"
+    )
+    periodo_anio = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name="Año del Período",
+        help_text="Año del período (ej: 2025)"
+    )
+    cerrado = models.BooleanField(
+        default=False,
+        verbose_name="Período Cerrado",
+        help_text="Indica si este bono pertenece a un período cerrado"
+    )
+    
     class Meta:
         verbose_name = "Bono Generado"
         verbose_name_plural = "Bonos Generados"
@@ -2296,11 +2315,24 @@ class BonoGenerado(models.Model):
         indexes = [
             models.Index(fields=['mecanico', 'pagado']),
             models.Index(fields=['fecha_generacion']),
+            models.Index(fields=['periodo_anio', 'periodo_mes']),
+            models.Index(fields=['mecanico', 'periodo_anio', 'periodo_mes']),
         ]
     
     def __str__(self):
         estado = "Pagado" if self.pagado else "Pendiente"
-        return f"Bono {self.mecanico} - Trabajo #{self.trabajo.id} - ${self.monto} ({estado})"
+        periodo = f" ({self.periodo_mes}/{self.periodo_anio})" if self.periodo_mes and self.periodo_anio else ""
+        cerrado_texto = " [CERRADO]" if self.cerrado else ""
+        return f"Bono {self.mecanico} - Trabajo #{self.trabajo.id} - ${self.monto} ({estado}){periodo}{cerrado_texto}"
+    
+    @property
+    def periodo_texto(self):
+        """Retorna el período en formato texto (ej: 'Enero 2025')"""
+        if not self.periodo_mes or not self.periodo_anio:
+            return "Sin período"
+        meses = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+        return f"{meses[self.periodo_mes]} {self.periodo_anio}"
 
 
 class PagoMecanico(models.Model):
@@ -2355,16 +2387,41 @@ class PagoMecanico(models.Model):
         verbose_name="Registrado por"
     )
     
+    # Campos para cierre por período
+    periodo_mes = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name="Mes del Período",
+        help_text="Mes del período (1-12)"
+    )
+    periodo_anio = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name="Año del Período",
+        help_text="Año del período (ej: 2025)"
+    )
+    
     class Meta:
         verbose_name = "Pago a Mecánico"
         verbose_name_plural = "Pagos a Mecánicos"
         ordering = ['-fecha_pago']
         indexes = [
             models.Index(fields=['mecanico', 'fecha_pago']),
+            models.Index(fields=['periodo_anio', 'periodo_mes']),
         ]
     
     def __str__(self):
-        return f"Pago {self.mecanico} - ${self.monto} - {self.fecha_pago.strftime('%d/%m/%Y')}"
+        periodo = f" ({self.periodo_mes}/{self.periodo_anio})" if self.periodo_mes and self.periodo_anio else ""
+        return f"Pago {self.mecanico} - ${self.monto} - {self.fecha_pago.strftime('%d/%m/%Y')}{periodo}"
+    
+    @property
+    def periodo_texto(self):
+        """Retorna el período en formato texto (ej: 'Enero 2025')"""
+        if not self.periodo_mes or not self.periodo_anio:
+            return "Sin período"
+        meses = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+        return f"{meses[self.periodo_mes]} {self.periodo_anio}"
     
     def save(self, *args, **kwargs):
         """
@@ -2378,5 +2435,136 @@ class PagoMecanico(models.Model):
             for bono in bonos:
                 bono.pagado = True
                 bono.fecha_pago = self.fecha_pago
+                # Sincronizar período del pago al bono si no tiene período
+                if not bono.periodo_mes or not bono.periodo_anio:
+                    if self.periodo_mes and self.periodo_anio:
+                        bono.periodo_mes = self.periodo_mes
+                        bono.periodo_anio = self.periodo_anio
                 bono.save()
+
+
+class CierrePeriodo(models.Model):
+    """
+    Representa un cierre de período de bonos (mes/año).
+    Permite agrupar y cerrar bonos de un período específico.
+    """
+    mecanico = models.ForeignKey(
+        Mecanico,
+        on_delete=models.CASCADE,
+        related_name='cierres_periodo',
+        verbose_name="Mecánico"
+    )
+    periodo_mes = models.PositiveIntegerField(
+        verbose_name="Mes",
+        help_text="Mes del período (1-12)"
+    )
+    periodo_anio = models.PositiveIntegerField(
+        verbose_name="Año",
+        help_text="Año del período (ej: 2025)"
+    )
+    fecha_cierre = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Fecha de Cierre"
+    )
+    cerrado_por = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name="Cerrado por"
+    )
+    total_bonos = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        verbose_name="Total Bonos del Período"
+    )
+    total_pagado = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        verbose_name="Total Pagado del Período"
+    )
+    saldo_pendiente = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        verbose_name="Saldo Pendiente"
+    )
+    notas = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="Notas",
+        help_text="Notas sobre el cierre del período"
+    )
+    
+    class Meta:
+        verbose_name = "Cierre de Período"
+        verbose_name_plural = "Cierres de Períodos"
+        ordering = ['-periodo_anio', '-periodo_mes']
+        unique_together = ['mecanico', 'periodo_mes', 'periodo_anio']
+        indexes = [
+            models.Index(fields=['mecanico', 'periodo_anio', 'periodo_mes']),
+            models.Index(fields=['periodo_anio', 'periodo_mes']),
+        ]
+    
+    def __str__(self):
+        meses = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+        return f"Cierre {self.mecanico} - {meses[self.periodo_mes]} {self.periodo_anio}"
+    
+    @property
+    def periodo_texto(self):
+        """Retorna el período en formato texto (ej: 'Enero 2025')"""
+        meses = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+        return f"{meses[self.periodo_mes]} {self.periodo_anio}"
+    
+    def calcular_totales(self):
+        """
+        Calcula los totales del período basándose en los bonos.
+        Total pagado se calcula como suma de bonos marcados como pagados (no de pagos registrados).
+        """
+        # Bonos del período
+        bonos_periodo = BonoGenerado.objects.filter(
+            mecanico=self.mecanico,
+            periodo_mes=self.periodo_mes,
+            periodo_anio=self.periodo_anio
+        )
+        
+        self.total_bonos = bonos_periodo.aggregate(
+            total=Sum('monto')
+        )['total'] or Decimal('0')
+        
+        # Total pagado: suma de bonos marcados como pagados (no de pagos registrados)
+        # Esto es consistente con el cálculo en la vista cuenta_mecanico
+        bonos_pagados = bonos_periodo.filter(pagado=True)
+        self.total_pagado = bonos_pagados.aggregate(
+            total=Sum('monto')
+        )['total'] or Decimal('0')
+        
+        # Saldo pendiente
+        bonos_pendientes = bonos_periodo.filter(pagado=False)
+        self.saldo_pendiente = bonos_pendientes.aggregate(
+            total=Sum('monto')
+        )['total'] or Decimal('0')
+        
+        self.save()
+    
+    def cerrar_periodo(self, usuario=None):
+        """
+        Cierra el período marcando todos los bonos como cerrados.
+        """
+        bonos_periodo = BonoGenerado.objects.filter(
+            mecanico=self.mecanico,
+            periodo_mes=self.periodo_mes,
+            periodo_anio=self.periodo_anio
+        )
+        
+        bonos_periodo.update(cerrado=True)
+        
+        if usuario:
+            self.cerrado_por = usuario
+            self.save()
+        
+        self.calcular_totales()
 

@@ -335,12 +335,8 @@
       trabajosLista.innerHTML = trabajosOriginales;
       contadorResultados.textContent = '';
       return;
-    }
-
-    // Mostrar indicador de carga
-    trabajosLista.innerHTML = '<div class="text-center p-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Buscando...</p></div>';
-
-    // Realizar búsqueda AJAX
+    }    // Mostrar indicador de carga
+    trabajosLista.innerHTML = '<div class="text-center p-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Buscando...</p></div>';    // Realizar búsqueda AJAX
     fetch(`{% url 'historial_trabajos' %}?q=${encodeURIComponent(termino)}`, {
       method: 'GET',
       headers: {
@@ -391,9 +387,7 @@
         buscarTrabajos(e.target.value.trim());
       }
     });
-  }
-
-  // Botón limpiar búsqueda
+  }  // Botón limpiar búsqueda
   if (btnLimpiar) {
     btnLimpiar.addEventListener('click', function() {
       buscarInput.value = '';

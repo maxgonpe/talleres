@@ -2998,6 +2998,42 @@ def trabajo_detalle(request, pk):
                     messages.error(request, "Acción no encontrada.")
             return redirect_with_tab("acciones")
 
+        # 🔹 Guardar cambios de acciones en lote (estados + eliminar)
+        elif "guardar_acciones_batch" in request.POST:
+            config = AdministracionTaller.get_configuracion_activa()
+            ids_completado = request.POST.getlist("accion_completado")
+            ids_pendiente = request.POST.getlist("accion_pendiente")
+            ids_eliminar = request.POST.getlist("accion_eliminar")
+            ok_count = 0
+            for accion_id in ids_eliminar:
+                try:
+                    accion = TrabajoAccion.objects.get(id=accion_id, trabajo=trabajo)
+                    accion.delete()
+                    ok_count += 1
+                except TrabajoAccion.DoesNotExist:
+                    pass
+            for accion_id in ids_completado:
+                try:
+                    accion = TrabajoAccion.objects.get(id=accion_id, trabajo=trabajo)
+                    if accion_id not in ids_eliminar:
+                        accion.completado = True
+                        accion.save()
+                        ok_count += 1
+                except TrabajoAccion.DoesNotExist:
+                    pass
+            for accion_id in ids_pendiente:
+                try:
+                    accion = TrabajoAccion.objects.get(id=accion_id, trabajo=trabajo)
+                    if accion_id not in ids_eliminar:
+                        accion.completado = False
+                        accion.save()
+                        ok_count += 1
+                except TrabajoAccion.DoesNotExist:
+                    pass
+            if config.ver_mensajes and ok_count:
+                messages.success(request, f"Cambios guardados ({ok_count} acción(es) actualizada(s)).")
+            return redirect_with_tab("acciones")
+
         # 🔹 Agregar repuesto
         elif "agregar_repuesto" in request.POST:
             repuesto_id = request.POST.get("repuesto")

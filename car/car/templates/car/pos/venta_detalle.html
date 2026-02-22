@@ -149,6 +149,8 @@
 {% endblock %}
 
 {% block content %}
+<!-- Token CSRF oculto para JavaScript -->
+{% csrf_token %}
 <div class="venta-detalle-container">
     <!-- Header -->
     <div class="venta-header">
@@ -244,12 +246,18 @@
         <a href="{% url 'pos_historial_ventas' %}" class="btn btn-secondary btn-accion btn-secondary-accion">
             📋 Ver Historial
         </a>
+        <button type="button" class="btn btn-danger btn-accion" onclick="anularVenta()" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); border: none; color: var(--text-inverse);">
+            🗑️ Anular Venta
+        </button>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
+// Variable global para ver_mensajes (disponible para todos los scripts)
+window.ver_mensajes = {% if ver_mensajes %}true{% else %}false{% endif %};
+
 function imprimirTicket() {
     console.log('🖨️ Iniciando impresión de venta - VERSIÓN PWA');
     // Crear un modal en la misma ventana para mantener la PWA
@@ -804,6 +812,60 @@ function imprimirTicket() {
             }, 1000);
         };
     };
+}
+
+// Función para anular venta
+function anularVenta() {
+    // Verificar si se deben mostrar mensajes según la configuración
+    if (window.ver_mensajes) {
+        if (!confirm('¿Está seguro de que desea anular esta venta?\n\nEsta acción:\n- Revertirá el stock de los productos\n- Eliminará el registro de la venta\n- No se puede deshacer')) {
+            return;
+        }
+    }
+    
+    // Crear formulario para enviar POST
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '{% url "pos_anular_venta" venta.id %}';
+    
+    // Agregar CSRF token
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (csrfToken) {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'csrfmiddlewaretoken';
+        input.value = csrfToken.value;
+        form.appendChild(input);
+    } else {
+        // Si no hay token en la página, obtenerlo de las cookies
+        const csrftoken = getCookie('csrftoken');
+        if (csrftoken) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'csrfmiddlewaretoken';
+            input.value = csrftoken;
+            form.appendChild(input);
+        }
+    }
+    
+    document.body.appendChild(form);
+    form.submit();
+}
+
+// Función auxiliar para obtener cookie CSRF
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
 }
 
 // Auto-focus para mejor UX

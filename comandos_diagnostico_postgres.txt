@@ -1,0 +1,26 @@
+# Comandos para diagnosticar y resolver el problema de PostgreSQL
+# Ejecutar estos comandos en el servidor de producción: /home/max/myproject
+
+# 1. Verificar estado del contenedor
+docker ps -a | grep postgres_talleres
+
+# 2. Ver logs del contenedor (últimas 50 líneas)
+docker logs --tail 50 postgres_talleres
+
+# 3. Ver información detallada del contenedor
+docker inspect postgres_talleres | grep -A 10 "State\|Mounts\|Ports"
+
+# 4. Intentar reiniciar el contenedor
+docker start postgres_talleres
+
+# 5. Verificar que PostgreSQL esté listo (esperar unos segundos después del start)
+docker exec postgres_talleres pg_isready -U maxgonpe
+
+# 6. Verificar conectividad desde un contenedor de cliente
+docker exec cliente_solutioncar python manage.py check --database default
+
+# 7. Ver logs de un contenedor de cliente para verificar errores
+docker logs --tail 30 cliente_solutioncar
+
+# 8. Verificar variables de entorno de BD en el contenedor
+docker exec cliente_solutioncar env | grep -E "^DB_|^DATABASE"

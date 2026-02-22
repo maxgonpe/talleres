@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Cierres de Períodos{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+<style>
+    .lista-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: var(--spacing-md);
+    }
+    
+    .lista-header {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+        padding: var(--spacing-xl);
+        border-radius: var(--border-radius-lg);
+        margin-bottom: 2rem;
+        text-align: center;
+        box-shadow: var(--card-shadow);
+    }
+    
+    .table-cierres {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--card-bg);
+        border-radius: var(--border-radius-lg);
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+    }
+    
+    .table-cierres th,
+    .table-cierres td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .table-cierres th {
+        background: var(--bg-secondary);
+        font-weight: 600;
+        color: var(--fg);
+    }
+    
+    .table-cierres tbody tr:hover {
+        background: var(--hover-bg);
+    }
+    
+    .btn-primary {
+        background: var(--accent);
+        color: white;
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="lista-container">
+    <div class="lista-header">
+        <h1>📋 Cierres de Períodos</h1>
+        {% if mecanico %}
+        <p>{{ mecanico }}</p>
+        {% else %}
+        <p>Lista de todos los cierres de períodos</p>
+        {% endif %}
+    </div>
+    
+    {% if cierres %}
+    <table class="table-cierres">
+        <thead>
+            <tr>
+                <th>Mecánico</th>
+                <th>Período</th>
+                <th>Fecha de Cierre</th>
+                <th>Total Bonos</th>
+                <th>Total Pagado</th>
+                <th>Saldo Pendiente</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cierre in cierres %}
+            <tr>
+                <td><strong>{{ cierre.mecanico }}</strong></td>
+                <td>{{ cierre.periodo_texto }}</td>
+                <td>{{ cierre.fecha_cierre|date:"d/m/Y H:i" }}</td>
+                <td>${{ cierre.total_bonos|floatformat:0|intcomma }}</td>
+                <td style="color: #28a745;">${{ cierre.total_pagado|floatformat:0|intcomma }}</td>
+                <td style="color: #ffc107;">${{ cierre.saldo_pendiente|floatformat:0|intcomma }}</td>
+                <td>
+                    <a href="{% url 'cuenta_mecanico' cierre.mecanico.id %}?mes={{ cierre.periodo_mes }}&anio={{ cierre.periodo_anio }}" 
+                       class="btn-primary">
+                        Ver Detalles
+                    </a>
+                    <a href="{% url 'eliminar_cierre_periodo' cierre.id %}" 
+                       class="btn-danger"
+                       onclick="{% if ver_mensajes %}return confirm('¿Eliminar este cierre?');{% else %}return true;{% endif %}">
+                        Eliminar
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div style="background: var(--card-bg); padding: 2rem; border-radius: var(--border-radius-lg); text-align: center; box-shadow: var(--card-shadow);">
+        <p style="color: var(--muted);">No hay cierres de períodos registrados</p>
+    </div>
+    {% endif %}
+    
+    {% if mecanico %}
+    <div style="margin-top: 2rem; text-align: center;">
+        <a href="{% url 'cuenta_mecanico' mecanico.id %}" class="btn-primary">
+            ← Volver a Cuenta del Mecánico
+        </a>
+    </div>
+    {% else %}
+    <div style="margin-top: 2rem; text-align: center;">
+        <a href="{% url 'lista_mecanicos_bonos' %}" class="btn-primary">
+            ← Volver a Lista de Mecánicos
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

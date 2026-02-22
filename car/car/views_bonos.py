@@ -8,7 +8,7 @@ from decimal import Decimal
 
 from .models import (
     Mecanico, Trabajo, ConfiguracionBonoMecanico, 
-    BonoGenerado, PagoMecanico, ExcepcionBonoTrabajo
+    BonoGenerado, PagoMecanico, ExcepcionBonoTrabajo, CierrePeriodo
 )
 from .decorators import requiere_permiso
 
@@ -70,7 +70,12 @@ def generar_bonos_trabajo_entregado(trabajo):
         if monto_bono <= 0:
             continue
         
-        # Crear el bono generado
+        # Obtener período actual (mes y año de la fecha de entrega)
+        fecha_entrega = timezone.now()
+        periodo_mes = fecha_entrega.month
+        periodo_anio = fecha_entrega.year
+        
+        # Crear el bono generado con período automático
         bono = BonoGenerado.objects.create(
             mecanico=mecanico,
             trabajo=trabajo,
@@ -78,6 +83,8 @@ def generar_bonos_trabajo_entregado(trabajo):
             tipo_bono=config.tipo_bono,
             porcentaje_aplicado=config.porcentaje_mano_obra,
             total_mano_obra=total_mano_obra,
+            periodo_mes=periodo_mes,
+            periodo_anio=periodo_anio,
             notas=f"Bono generado automáticamente al entregar el trabajo #{trabajo.id}"
         )
         
@@ -196,36 +203,82 @@ def editar_configuracion_bono(request, pk):
 def cuenta_mecanico(request, mecanico_id):
     """
     Vista para ver la cuenta de un mecánico (bonos pendientes, pagos, etc.)
+    Ahora incluye filtrado por período y gestión de cierres.
     """
     mecanico = get_object_or_404(Mecanico, id=mecanico_id)
     
+    # Obtener filtros de período (opcional)
+    periodo_mes = request.GET.get('mes')
+    periodo_anio = request.GET.get('anio')
+    
+    # Base de consultas
+    bonos_query = BonoGenerado.objects.filter(mecanico=mecanico)
+    pagos_query = PagoMecanico.objects.filter(mecanico=mecanico)
+    
+    # Aplicar filtros de período si se proporcionan
+    if periodo_mes and periodo_anio:
+        try:
+            periodo_mes = int(periodo_mes)
+            periodo_anio = int(periodo_anio)
+            bonos_query = bonos_query.filter(periodo_mes=periodo_mes, periodo_anio=periodo_anio)
+            pagos_query = pagos_query.filter(periodo_mes=periodo_mes, periodo_anio=periodo_anio)
+        except (ValueError, TypeError):
+            periodo_mes = None
+            periodo_anio = None
+    
     # Bonos pendientes
-    bonos_pendientes = BonoGenerado.objects.filter(
-        mecanico=mecanico,
+    bonos_pendientes = bonos_query.filter(
         pagado=False
     ).select_related('trabajo', 'trabajo__vehiculo').order_by('-fecha_generacion')
     
     # Bonos pagados
-    bonos_pagados = BonoGenerado.objects.filter(
-        mecanico=mecanico,
+    bonos_pagados = bonos_query.filter(
         pagado=True
     ).select_related('trabajo', 'trabajo__vehiculo').order_by('-fecha_generacion')[:20]
     
     # Pagos realizados
-    pagos = PagoMecanico.objects.filter(
-        mecanico=mecanico
-    ).prefetch_related('bonos_aplicados').order_by('-fecha_pago')
+    pagos = pagos_query.prefetch_related('bonos_aplicados').order_by('-fecha_pago')
     
-    # Estadísticas
-    saldo_pendiente = mecanico.saldo_bonos_pendiente
-    total_generado = mecanico.saldo_bonos_total
-    total_pagado = mecanico.total_pagado
+    # Estadísticas (totales si no hay filtro, del período si hay filtro)
+    if periodo_mes and periodo_anio:
+        saldo_pendiente = bonos_pendientes.aggregate(total=Sum('monto'))['total'] or Decimal('0')
+        total_generado = bonos_query.aggregate(total=Sum('monto'))['total'] or Decimal('0')
+        # Total pagado debe ser la suma de los BONOS marcados como pagados, no de los pagos registrados
+        # Esto es más preciso porque un pago puede ser parcial o cubrir múltiples bonos
+        total_pagado = bonos_query.filter(pagado=True).aggregate(total=Sum('monto'))['total'] or Decimal('0')
+    else:
+        saldo_pendiente = mecanico.saldo_bonos_pendiente
+        total_generado = mecanico.saldo_bonos_total
+        # Total pagado: suma de los bonos marcados como pagados (no de los pagos registrados)
+        total_pagado = BonoGenerado.objects.filter(mecanico=mecanico, pagado=True).aggregate(total=Sum('monto'))['total'] or Decimal('0')
+    
+    # Cierres de períodos
+    cierres = CierrePeriodo.objects.filter(
+        mecanico=mecanico
+    ).order_by('-periodo_anio', '-periodo_mes')[:12]  # Últimos 12 períodos
+    
+    # Obtener períodos disponibles (meses/años con bonos)
+    periodos_disponibles = BonoGenerado.objects.filter(
+        mecanico=mecanico
+    ).values('periodo_mes', 'periodo_anio').distinct().order_by('-periodo_anio', '-periodo_mes')
+    
+    # Verificar si existe cierre para el período actual
+    cierre_actual = None
+    if periodo_mes and periodo_anio:
+        cierre_actual = CierrePeriodo.objects.filter(
+            mecanico=mecanico,
+            periodo_mes=periodo_mes,
+            periodo_anio=periodo_anio
+        ).first()
     
     # Configuración de bono
     try:
         config_bono = mecanico.configuracion_bono
     except ConfiguracionBonoMecanico.DoesNotExist:
         config_bono = None
+    
+    meses = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+             'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
     
     context = {
         'mecanico': mecanico,
@@ -236,6 +289,12 @@ def cuenta_mecanico(request, mecanico_id):
         'total_generado': total_generado,
         'total_pagado': total_pagado,
         'config_bono': config_bono,
+        'cierres': cierres,
+        'periodos_disponibles': periodos_disponibles,
+        'periodo_mes': periodo_mes,
+        'periodo_anio': periodo_anio,
+        'cierre_actual': cierre_actual,
+        'meses': meses,
     }
     
     return render(request, 'car/bonos/cuenta_mecanico.html', context)
@@ -276,13 +335,20 @@ def registrar_pago_mecanico(request, mecanico_id):
             if config_taller.ver_mensajes:
                 messages.warning(request, f"El monto excede el saldo pendiente (${saldo_pendiente})")
         
-        # Crear el pago
+        # Obtener período actual (mes y año de la fecha de pago)
+        fecha_pago = timezone.now()
+        periodo_mes = fecha_pago.month
+        periodo_anio = fecha_pago.year
+        
+        # Crear el pago con período automático
         pago = PagoMecanico.objects.create(
             mecanico=mecanico,
             monto=monto,
             metodo_pago=metodo_pago,
             notas=notas,
-            registrado_por=request.user
+            registrado_por=request.user,
+            periodo_mes=periodo_mes,
+            periodo_anio=periodo_anio
         )
         
         # Asociar bonos seleccionados
@@ -464,4 +530,230 @@ def eliminar_configuracion_bono(request, pk):
     }
     
     return render(request, 'car/bonos/confirmar_eliminar_configuracion.html', context)
+
+
+@login_required
+@requiere_permiso('trabajos')
+def lista_cierres_periodo(request, mecanico_id=None):
+    """
+    Vista para listar todos los cierres de períodos.
+    Si se proporciona mecanico_id, filtra por ese mecánico.
+    """
+    cierres = CierrePeriodo.objects.select_related('mecanico', 'mecanico__user', 'cerrado_por').all()
+    
+    if mecanico_id:
+        mecanico = get_object_or_404(Mecanico, id=mecanico_id)
+        cierres = cierres.filter(mecanico=mecanico)
+    else:
+        mecanico = None
+    
+    # Ordenar por año y mes descendente
+    cierres = cierres.order_by('-periodo_anio', '-periodo_mes')
+    
+    context = {
+        'cierres': cierres,
+        'mecanico': mecanico,
+    }
+    
+    return render(request, 'car/bonos/lista_cierres_periodo.html', context)
+
+
+@login_required
+@requiere_permiso('trabajos')
+def crear_cierre_periodo(request, mecanico_id, mes, anio):
+    """
+    Vista para crear un cierre de período para un mecánico específico.
+    """
+    mecanico = get_object_or_404(Mecanico, id=mecanico_id)
+    
+    # Validar mes y año
+    try:
+        mes = int(mes)
+        anio = int(anio)
+        if mes < 1 or mes > 12:
+            raise ValueError("Mes inválido")
+    except (ValueError, TypeError):
+        from .models import AdministracionTaller
+        config_taller = AdministracionTaller.get_configuracion_activa()
+        if config_taller.ver_mensajes:
+            messages.error(request, "Período inválido")
+        return redirect('cuenta_mecanico', mecanico_id=mecanico_id)
+    
+    # Verificar si ya existe un cierre para este período
+    cierre_existente = CierrePeriodo.objects.filter(
+        mecanico=mecanico,
+        periodo_mes=mes,
+        periodo_anio=anio
+    ).first()
+    
+    if cierre_existente:
+        from .models import AdministracionTaller
+        config_taller = AdministracionTaller.get_configuracion_activa()
+        if config_taller.ver_mensajes:
+            messages.warning(request, f"Ya existe un cierre para {cierre_existente.periodo_texto}")
+        return redirect('cuenta_mecanico', mecanico_id=mecanico_id)
+    
+    if request.method == 'POST':
+        notas = request.POST.get('notas', '')
+        
+        # Crear el cierre
+        cierre = CierrePeriodo.objects.create(
+            mecanico=mecanico,
+            periodo_mes=mes,
+            periodo_anio=anio,
+            cerrado_por=request.user,
+            notas=notas
+        )
+        
+        # Calcular totales y cerrar período
+        cierre.calcular_totales()
+        cierre.cerrar_periodo(usuario=request.user)
+        
+        from .models import AdministracionTaller
+        config_taller = AdministracionTaller.get_configuracion_activa()
+        if config_taller.ver_mensajes:
+            messages.success(request, f"Cierre de período {cierre.periodo_texto} creado exitosamente")
+        return redirect('cuenta_mecanico', mecanico_id=mecanico_id)
+    
+    # Obtener estadísticas del período antes de cerrar
+    bonos_periodo = BonoGenerado.objects.filter(
+        mecanico=mecanico,
+        periodo_mes=mes,
+        periodo_anio=anio
+    )
+    
+    total_bonos = bonos_periodo.aggregate(total=Sum('monto'))['total'] or Decimal('0')
+    total_pagado = bonos_periodo.filter(pagado=True).aggregate(total=Sum('monto'))['total'] or Decimal('0')
+    saldo_pendiente = bonos_periodo.filter(pagado=False).aggregate(total=Sum('monto'))['total'] or Decimal('0')
+    cantidad_bonos = bonos_periodo.count()
+    
+    meses = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+             'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+    
+    context = {
+        'mecanico': mecanico,
+        'mes': mes,
+        'anio': anio,
+        'periodo_texto': f"{meses[mes]} {anio}",
+        'total_bonos': total_bonos,
+        'total_pagado': total_pagado,
+        'saldo_pendiente': saldo_pendiente,
+        'cantidad_bonos': cantidad_bonos,
+    }
+    
+    return render(request, 'car/bonos/crear_cierre_periodo.html', context)
+
+
+@login_required
+@requiere_permiso('trabajos')
+def eliminar_cierre_periodo(request, cierre_id):
+    """
+    Vista para eliminar un cierre de período.
+    Esto desmarcará los bonos como cerrados.
+    """
+    cierre = get_object_or_404(CierrePeriodo, id=cierre_id)
+    mecanico_id = cierre.mecanico.id
+    
+    if request.method == 'POST':
+        # Desmarcar bonos como cerrados
+        BonoGenerado.objects.filter(
+            mecanico=cierre.mecanico,
+            periodo_mes=cierre.periodo_mes,
+            periodo_anio=cierre.periodo_anio
+        ).update(cerrado=False)
+        
+        # Eliminar el cierre
+        periodo_texto = cierre.periodo_texto
+        cierre.delete()
+        
+        from .models import AdministracionTaller
+        config_taller = AdministracionTaller.get_configuracion_activa()
+        if config_taller.ver_mensajes:
+            messages.success(request, f"Cierre de período {periodo_texto} eliminado. Los bonos ya no están marcados como cerrados.")
+        return redirect('cuenta_mecanico', mecanico_id=mecanico_id)
+    
+    context = {
+        'cierre': cierre,
+    }
+    
+    return render(request, 'car/bonos/confirmar_eliminar_cierre.html', context)
+
+
+@login_required
+@requiere_permiso('trabajos')
+def eliminar_bono(request, bono_id):
+    """
+    Vista para eliminar un bono individual.
+    Solo se puede eliminar si no está pagado y no pertenece a un período cerrado.
+    """
+    bono = get_object_or_404(BonoGenerado, id=bono_id)
+    mecanico_id = bono.mecanico.id
+    
+    if request.method == 'POST':
+        # Verificar si está pagado
+        if bono.pagado:
+            from .models import AdministracionTaller
+            config_taller = AdministracionTaller.get_configuracion_activa()
+            if config_taller.ver_mensajes:
+                messages.error(request, "No se puede eliminar un bono que ya está pagado")
+            return redirect('cuenta_mecanico', mecanico_id=mecanico_id)
+        
+        # Verificar si pertenece a un período cerrado
+        if bono.cerrado:
+            from .models import AdministracionTaller
+            config_taller = AdministracionTaller.get_configuracion_activa()
+            if config_taller.ver_mensajes:
+                messages.error(request, "No se puede eliminar un bono de un período cerrado. Primero elimine el cierre del período.")
+            return redirect('cuenta_mecanico', mecanico_id=mecanico_id)
+        
+        # Eliminar el bono
+        trabajo_id = bono.trabajo.id
+        bono.delete()
+        
+        from .models import AdministracionTaller
+        config_taller = AdministracionTaller.get_configuracion_activa()
+        if config_taller.ver_mensajes:
+            messages.success(request, f"Bono del Trabajo #{trabajo_id} eliminado exitosamente")
+        return redirect('cuenta_mecanico', mecanico_id=mecanico_id)
+    
+    context = {
+        'bono': bono,
+    }
+    
+    return render(request, 'car/bonos/confirmar_eliminar_bono.html', context)
+
+
+@login_required
+@requiere_permiso('trabajos')
+def eliminar_pago(request, pago_id):
+    """
+    Vista para eliminar un pago individual.
+    Esto desmarcará los bonos asociados como no pagados.
+    """
+    pago = get_object_or_404(PagoMecanico, id=pago_id)
+    mecanico_id = pago.mecanico.id
+    
+    if request.method == 'POST':
+        # Desmarcar bonos como no pagados
+        bonos_aplicados = pago.bonos_aplicados.all()
+        for bono in bonos_aplicados:
+            bono.pagado = False
+            bono.fecha_pago = None
+            bono.save()
+        
+        # Eliminar el pago
+        monto = pago.monto
+        pago.delete()
+        
+        from .models import AdministracionTaller
+        config_taller = AdministracionTaller.get_configuracion_activa()
+        if config_taller.ver_mensajes:
+            messages.success(request, f"Pago de ${monto} eliminado. Los bonos asociados ahora están marcados como pendientes.")
+        return redirect('cuenta_mecanico', mecanico_id=mecanico_id)
+    
+    context = {
+        'pago': pago,
+    }
+    
+    return render(request, 'car/bonos/confirmar_eliminar_pago.html', context)
 

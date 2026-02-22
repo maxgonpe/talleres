@@ -403,6 +403,112 @@ def pos_venta_detalle(request, venta_id):
     return render(request, 'car/pos/venta_detalle.html', context)
 
 @login_required
+def anular_venta_pos(request, venta_id):
+    """Anular una venta POS y revertir el stock"""
+    if request.method != 'POST':
+        from .models import AdministracionTaller
+        config = AdministracionTaller.get_configuracion_activa()
+        if config.ver_mensajes:
+            messages.error(request, 'Método no permitido')
+        return redirect('pos_venta_detalle', venta_id=venta_id)
+    
+    # Obtener la venta y verificar que pertenezca al usuario
+    venta = get_object_or_404(
+        VentaPOS,
+        id=venta_id,
+        usuario=request.user
+    )
+    
+    # Verificar que la venta esté pagada (solo se pueden anular ventas pagadas)
+    if not venta.pagado:
+        from .models import AdministracionTaller
+        config = AdministracionTaller.get_configuracion_activa()
+        if config.ver_mensajes:
+            messages.error(request, 'No se puede anular una venta que no está pagada')
+        return redirect('pos_venta_detalle', venta_id=venta_id)
+    
+    try:
+        with transaction.atomic():
+            # Revertir stock para cada item de la venta
+            for item in venta.items.all():
+                repuesto = item.repuesto
+                cantidad = item.cantidad
+                
+                # Buscar RepuestoEnStock en bodega-principal
+                stock_disponible = RepuestoEnStock.objects.filter(
+                    repuesto=repuesto,
+                    deposito='bodega-principal'
+                ).first()
+                
+                if stock_disponible:
+                    # Revertir stock en RepuestoEnStock
+                    stock_disponible.stock = (stock_disponible.stock or 0) + cantidad
+                    stock_disponible.save()
+                else:
+                    # Si no existe, crear el registro con el stock revertido
+                    stock_disponible = RepuestoEnStock.objects.create(
+                        repuesto=repuesto,
+                        deposito='bodega-principal',
+                        stock=cantidad,
+                        reservado=0,
+                        precio_compra=repuesto.precio_costo or 0,
+                        precio_venta=repuesto.precio_venta or 0,
+                        proveedor=''
+                    )
+                
+                # Revertir stock en Repuesto (tabla maestra)
+                repuesto.stock = (repuesto.stock or 0) + cantidad
+                repuesto.save()
+                
+                # Registrar movimiento de entrada para documentar la reversión
+                StockMovimiento.objects.create(
+                    repuesto_stock=stock_disponible,
+                    tipo="ingreso",
+                    cantidad=cantidad,
+                    motivo=f"Anulación de Venta POS #{venta.id}",
+                    referencia=str(venta.id),
+                    usuario=request.user
+                )
+            
+            # Eliminar movimientos de stock relacionados con la venta (tipo salida)
+            StockMovimiento.objects.filter(
+                motivo__contains=f"Venta POS #{venta.id}",
+                tipo="salida"
+            ).delete()
+            
+            # También eliminar por referencia si existe
+            StockMovimiento.objects.filter(
+                referencia=str(venta.id),
+                tipo="salida"
+            ).delete()
+            
+            # Actualizar estadísticas de la sesión
+            sesion = venta.sesion
+            sesion.total_ventas = max(Decimal('0'), sesion.total_ventas - venta.total)
+            sesion.numero_ventas = max(0, sesion.numero_ventas - 1)
+            sesion.save()
+            
+            # Guardar el ID de la venta antes de eliminarla para el mensaje
+            venta_id_anulada = venta.id
+            
+            # Eliminar la venta (los items se eliminan automáticamente por CASCADE)
+            venta.delete()
+            
+            from .models import AdministracionTaller
+            config = AdministracionTaller.get_configuracion_activa()
+            if config.ver_mensajes:
+                messages.success(request, f'Venta #{venta_id_anulada} anulada exitosamente. El stock ha sido revertido.')
+            
+            return redirect('pos_historial_ventas')
+            
+    except Exception as e:
+        from .models import AdministracionTaller
+        config = AdministracionTaller.get_configuracion_activa()
+        if config.ver_mensajes:
+            messages.error(request, f'Error al anular la venta: {str(e)}')
+        return redirect('pos_venta_detalle', venta_id=venta_id)
+
+@login_required
 def pos_historial_ventas(request):
     """Historial de ventas del POS"""
     ventas = VentaPOS.objects.filter(

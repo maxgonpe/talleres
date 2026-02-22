@@ -159,6 +159,82 @@
         <p>{{ mecanico.user.email|default:"Sin email" }}</p>
     </div>
     
+    <!-- Selector de período y controles -->
+    <div style="background: var(--card-bg); padding: 1.5rem; border-radius: var(--border-radius-lg); margin-bottom: 2rem; box-shadow: var(--card-shadow);">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <h3 style="margin-bottom: 0.5rem;">📅 Filtrar por Período</h3>
+                <form method="get" style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                    <select name="mes" style="padding: 0.5rem; border-radius: var(--border-radius); border: 1px solid var(--border-color);">
+                        <option value="">Todos los meses</option>
+                        <option value="1" {% if periodo_mes == 1 %}selected{% endif %}>Enero</option>
+                        <option value="2" {% if periodo_mes == 2 %}selected{% endif %}>Febrero</option>
+                        <option value="3" {% if periodo_mes == 3 %}selected{% endif %}>Marzo</option>
+                        <option value="4" {% if periodo_mes == 4 %}selected{% endif %}>Abril</option>
+                        <option value="5" {% if periodo_mes == 5 %}selected{% endif %}>Mayo</option>
+                        <option value="6" {% if periodo_mes == 6 %}selected{% endif %}>Junio</option>
+                        <option value="7" {% if periodo_mes == 7 %}selected{% endif %}>Julio</option>
+                        <option value="8" {% if periodo_mes == 8 %}selected{% endif %}>Agosto</option>
+                        <option value="9" {% if periodo_mes == 9 %}selected{% endif %}>Septiembre</option>
+                        <option value="10" {% if periodo_mes == 10 %}selected{% endif %}>Octubre</option>
+                        <option value="11" {% if periodo_mes == 11 %}selected{% endif %}>Noviembre</option>
+                        <option value="12" {% if periodo_mes == 12 %}selected{% endif %}>Diciembre</option>
+                    </select>
+                    <input type="number" name="anio" placeholder="Año (ej: 2025)" value="{{ periodo_anio }}" 
+                           style="padding: 0.5rem; border-radius: var(--border-radius); border: 1px solid var(--border-color); width: 120px;">
+                    <button type="submit" class="btn-primary" style="padding: 0.5rem 1rem;">Filtrar</button>
+                    {% if periodo_mes or periodo_anio %}
+                    <a href="{% url 'cuenta_mecanico' mecanico.id %}" class="btn-primary" style="padding: 0.5rem 1rem; background: #6c757d;">
+                        Limpiar Filtro
+                    </a>
+                    {% endif %}
+                </form>
+            </div>
+            {% if periodo_mes and periodo_anio %}
+            <div style="text-align: right;">
+                <p style="margin-bottom: 0.5rem;"><strong>Período actual:</strong> 
+                    {% if periodo_mes == 1 %}Enero{% elif periodo_mes == 2 %}Febrero{% elif periodo_mes == 3 %}Marzo{% elif periodo_mes == 4 %}Abril{% elif periodo_mes == 5 %}Mayo{% elif periodo_mes == 6 %}Junio{% elif periodo_mes == 7 %}Julio{% elif periodo_mes == 8 %}Agosto{% elif periodo_mes == 9 %}Septiembre{% elif periodo_mes == 10 %}Octubre{% elif periodo_mes == 11 %}Noviembre{% elif periodo_mes == 12 %}Diciembre{% endif %} {{ periodo_anio }}
+                </p>
+                {% if cierre_actual %}
+                <span class="badge-pagado">✅ Período Cerrado</span>
+                <a href="{% url 'eliminar_cierre_periodo' cierre_actual.id %}" 
+                   class="btn-primary" 
+                   style="padding: 0.5rem 1rem; background: #dc3545; margin-left: 0.5rem;"
+                   onclick="{% if ver_mensajes %}return confirm('¿Está seguro de eliminar el cierre de este período?');{% else %}return true;{% endif %}">
+                    Eliminar Cierre
+                </a>
+                {% else %}
+                <a href="{% url 'crear_cierre_periodo' mecanico.id periodo_mes periodo_anio %}" 
+                   class="btn-success">
+                    🔒 Cerrar Período
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Cierres de períodos recientes -->
+    {% if cierres %}
+    <div style="background: var(--card-bg); padding: 1rem; border-radius: var(--border-radius-lg); margin-bottom: 2rem; box-shadow: var(--card-shadow);">
+        <h3>📋 Cierres de Períodos Recientes</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+            {% for cierre in cierres %}
+            <div style="border: 1px solid var(--border-color); padding: 1rem; border-radius: var(--border-radius);">
+                <strong>{{ cierre.periodo_texto }}</strong>
+                <p style="margin: 0.5rem 0; font-size: 0.9rem;">
+                    Total: ${{ cierre.total_bonos|floatformat:0|intcomma }}<br>
+                    Pagado: ${{ cierre.total_pagado|floatformat:0|intcomma }}<br>
+                    Pendiente: ${{ cierre.saldo_pendiente|floatformat:0|intcomma }}
+                </p>
+                <a href="{% url 'cuenta_mecanico' mecanico.id %}?mes={{ cierre.periodo_mes }}&anio={{ cierre.periodo_anio }}" 
+                   style="font-size: 0.85rem; color: var(--accent);">Ver detalles</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
     <!-- Tarjetas de saldo -->
     <div class="saldo-cards">
         <div class="saldo-card pendiente">
@@ -229,17 +305,29 @@
         <thead>
             <tr>
                 <th>Fecha</th>
+                <th>Período</th>
                 <th>Trabajo</th>
                 <th>Tipo</th>
                 <th>Mano de Obra</th>
                 <th>Monto del Bono</th>
                 <th>Estado</th>
+                <th>Acciones</th>
             </tr>
         </thead>
         <tbody>
             {% for bono in bonos_pendientes %}
             <tr>
                 <td>{{ bono.fecha_generacion|date:"d/m/Y H:i" }}</td>
+                <td>
+                    {% if bono.periodo_mes and bono.periodo_anio %}
+                    {{ bono.periodo_texto }}
+                    {% if bono.cerrado %}
+                    <br><small style="color: #28a745;">[Cerrado]</small>
+                    {% endif %}
+                    {% else %}
+                    <small style="color: var(--muted);">Sin período</small>
+                    {% endif %}
+                </td>
                 <td>
                     <a href="{% url 'trabajo_detalle' bono.trabajo.id %}" style="color: var(--accent); text-decoration: none;">
                         Trabajo #{{ bono.trabajo.id }} - {{ bono.trabajo.vehiculo }}
@@ -255,6 +343,17 @@
                 <td>${{ bono.total_mano_obra|floatformat:0|intcomma }}</td>
                 <td><strong style="color: #ffc107;">${{ bono.monto|floatformat:0|intcomma }}</strong></td>
                 <td><span class="badge-pendiente">Pendiente</span></td>
+                <td>
+                    {% if not bono.pagado and not bono.cerrado %}
+                    <a href="{% url 'eliminar_bono' bono.id %}" 
+                       style="color: #dc3545; text-decoration: none; font-size: 0.85rem;"
+                       onclick="{% if ver_mensajes %}return confirm('¿Está seguro de eliminar este bono?');{% else %}return true;{% endif %}">
+                        🗑️ Eliminar
+                    </a>
+                    {% else %}
+                    <small style="color: var(--muted);">-</small>
+                    {% endif %}
+                </td>
             </tr>
             {% endfor %}
         </tbody>
@@ -272,6 +371,7 @@
         <thead>
             <tr>
                 <th>Fecha Generación</th>
+                <th>Período</th>
                 <th>Fecha Pago</th>
                 <th>Trabajo</th>
                 <th>Monto</th>
@@ -282,6 +382,13 @@
             {% for bono in bonos_pagados %}
             <tr>
                 <td>{{ bono.fecha_generacion|date:"d/m/Y" }}</td>
+                <td>
+                    {% if bono.periodo_mes and bono.periodo_anio %}
+                    {{ bono.periodo_texto }}
+                    {% else %}
+                    <small style="color: var(--muted);">Sin período</small>
+                    {% endif %}
+                </td>
                 <td>{{ bono.fecha_pago|date:"d/m/Y"|default:"-" }}</td>
                 <td>
                     <a href="{% url 'trabajo_detalle' bono.trabajo.id %}" style="color: var(--accent); text-decoration: none;">
@@ -307,20 +414,36 @@
         <thead>
             <tr>
                 <th>Fecha</th>
+                <th>Período</th>
                 <th>Monto</th>
                 <th>Método</th>
                 <th>Bonos Aplicados</th>
                 <th>Notas</th>
+                <th>Acciones</th>
             </tr>
         </thead>
         <tbody>
             {% for pago in pagos %}
             <tr>
                 <td>{{ pago.fecha_pago|date:"d/m/Y H:i" }}</td>
+                <td>
+                    {% if pago.periodo_mes and pago.periodo_anio %}
+                    {{ pago.periodo_texto }}
+                    {% else %}
+                    <small style="color: var(--muted);">Sin período</small>
+                    {% endif %}
+                </td>
                 <td><strong>${{ pago.monto|floatformat:0|intcomma }}</strong></td>
                 <td>{{ pago.get_metodo_pago_display }}</td>
                 <td>{{ pago.bonos_aplicados.count }} bono(s)</td>
                 <td>{{ pago.notas|default:"-" }}</td>
+                <td>
+                    <a href="{% url 'eliminar_pago' pago.id %}" 
+                       style="color: #dc3545; text-decoration: none; font-size: 0.85rem;"
+                       onclick="{% if ver_mensajes %}return confirm('¿Está seguro de eliminar este pago? Esto marcará los bonos asociados como pendientes.');{% else %}return true;{% endif %}">
+                        🗑️ Eliminar
+                    </a>
+                </td>
             </tr>
             {% endfor %}
         </tbody>
@@ -339,3 +462,9 @@
 </div>
 {% endblock %}
 
+{% block extra_js %}
+<script>
+// Variable global para ver_mensajes (disponible para todos los scripts)
+window.ver_mensajes = {% if ver_mensajes %}true{% else %}false{% endif %};
+</script>
+{% endblock %}

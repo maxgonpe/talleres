@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Cerrar Período - {{ mecanico }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+<style>
+    .cierre-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: var(--spacing-md);
+    }
+    
+    .cierre-header {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+        padding: var(--spacing-xl);
+        border-radius: var(--border-radius-lg);
+        margin-bottom: 2rem;
+        text-align: center;
+        box-shadow: var(--card-shadow);
+    }
+    
+    .resumen-box {
+        background: var(--card-bg);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-lg);
+        box-shadow: var(--card-shadow);
+        margin-bottom: 2rem;
+    }
+    
+    .resumen-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .resumen-item:last-child {
+        border-bottom: none;
+    }
+    
+    .resumen-label {
+        font-weight: 600;
+        color: var(--muted);
+    }
+    
+    .resumen-valor {
+        font-weight: 700;
+        color: var(--accent);
+        font-size: 1.1rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: var(--fg);
+    }
+    
+    .form-group textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border-radius: var(--border-radius);
+        border: 1px solid var(--border-color);
+        min-height: 100px;
+    }
+    
+    .btn-primary {
+        background: var(--accent);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cierre-container">
+    <div class="cierre-header">
+        <h1>🔒 Cerrar Período de Bonos</h1>
+        <p>{{ mecanico }} - {{ periodo_texto }}</p>
+    </div>
+    
+    <div class="resumen-box">
+        <h3 style="margin-bottom: 1rem;">📊 Resumen del Período</h3>
+        <div class="resumen-item">
+            <span class="resumen-label">Total de Bonos:</span>
+            <span class="resumen-valor">${{ total_bonos|floatformat:0|intcomma }}</span>
+        </div>
+        <div class="resumen-item">
+            <span class="resumen-label">Total Pagado:</span>
+            <span class="resumen-valor" style="color: #28a745;">${{ total_pagado|floatformat:0|intcomma }}</span>
+        </div>
+        <div class="resumen-item">
+            <span class="resumen-label">Saldo Pendiente:</span>
+            <span class="resumen-valor" style="color: #ffc107;">${{ saldo_pendiente|floatformat:0|intcomma }}</span>
+        </div>
+        <div class="resumen-item">
+            <span class="resumen-label">Cantidad de Bonos:</span>
+            <span class="resumen-valor">{{ cantidad_bonos }}</span>
+        </div>
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="notas">Notas (opcional):</label>
+            <textarea name="notas" id="notas" placeholder="Notas adicionales sobre el cierre de este período..."></textarea>
+        </div>
+        
+        <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem;">
+            <button type="submit" class="btn-primary">
+                ✅ Confirmar Cierre de Período
+            </button>
+            <a href="{% url 'cuenta_mecanico' mecanico.id %}?mes={{ mes }}&anio={{ anio }}" class="btn-secondary">
+                Cancelar
+            </a>
+        </div>
+    </form>
+    
+    <div style="margin-top: 2rem; padding: 1rem; background: #fff3cd; border-radius: var(--border-radius-lg); border-left: 4px solid #ffc107;">
+        <p style="margin: 0;"><strong>⚠️ Nota:</strong> Al cerrar este período, todos los bonos del período quedarán marcados como cerrados. 
+        Podrás eliminar el cierre más adelante si es necesario, lo que desmarcará los bonos.</p>
+    </div>
+</div>
+{% endblock %}

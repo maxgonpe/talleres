@@ -126,6 +126,13 @@ urlpatterns = [
     path("bonos/mecanico/<int:mecanico_id>/pago/", views_bonos.registrar_pago_mecanico, name="registrar_pago_mecanico"),
     path("bonos/trabajo/<int:trabajo_id>/excepcion/", views_bonos.excepcion_bono_trabajo, name="excepcion_bono_trabajo"),
     path("bonos/trabajo/<int:trabajo_id>/excepcion/eliminar/", views_bonos.eliminar_excepcion_bono, name="eliminar_excepcion_bono"),
+    # === CIERRES DE PERÍODOS Y ELIMINACIÓN ===
+    path("bonos/cierres/", views_bonos.lista_cierres_periodo, name="lista_cierres_periodo"),
+    path("bonos/cierres/mecanico/<int:mecanico_id>/", views_bonos.lista_cierres_periodo, name="lista_cierres_periodo_mecanico"),
+    path("bonos/cierre/crear/<int:mecanico_id>/<int:mes>/<int:anio>/", views_bonos.crear_cierre_periodo, name="crear_cierre_periodo"),
+    path("bonos/cierre/<int:cierre_id>/eliminar/", views_bonos.eliminar_cierre_periodo, name="eliminar_cierre_periodo"),
+    path("bonos/bono/<int:bono_id>/eliminar/", views_bonos.eliminar_bono, name="eliminar_bono"),
+    path("bonos/pago/<int:pago_id>/eliminar/", views_bonos.eliminar_pago, name="eliminar_pago"),
     # Pizarra
     path("pizarra/", views.pizarra_view, name="pizarra"),
     # Ventas
@@ -155,6 +162,7 @@ urlpatterns = [
     path("pos/limpiar-sesiones/", views_pos.limpiar_sesiones_pos, name="pos_limpiar_sesiones"),
     path("pos/procesar-venta/", views_pos.procesar_venta, name="pos_procesar_venta"),
     path("pos/venta/<int:venta_id>/", views_pos.pos_venta_detalle, name="pos_venta_detalle"),
+    path("pos/venta/<int:venta_id>/anular/", views_pos.anular_venta_pos, name="pos_anular_venta"),
     path("pos/historial/", views_pos.pos_historial_ventas, name="pos_historial_ventas"),
     path("pos/configuracion/", views_pos.pos_configuracion, name="pos_configuracion"),
     path("pos/crear-cliente/", views_pos.crear_cliente_rapido, name="pos_crear_cliente"),

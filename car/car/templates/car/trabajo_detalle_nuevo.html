@@ -850,14 +850,17 @@
                 
                 <hr class="my-4">
                 
-                <!-- Lista de acciones existentes -->
+                <!-- Lista de acciones existentes (estado y eliminar se guardan en lote) -->
                 <h6>🛠️ Acciones Registradas</h6>
+                <p class="small text-secondary mb-2">Marque o desmarque estados y/o elimine acciones; luego pulse <strong>Guardar cambios</strong> para aplicar.</p>
+                <div id="acciones-registradas-list">
                 {% for accion in trabajo.acciones.all %}
-                    <div class="item-card {% if accion.completado %}completado{% else %}pendiente{% endif %}">
+                    <div class="item-card accion-registrada-row {% if accion.completado %}completado{% else %}pendiente{% endif %}" 
+                         data-accion-id="{{ accion.id }}">
                         <div style="flex: 1;">
                             <div>
                                 <strong>{{ accion.componente.nombre }}</strong>
-                                <span class="badge {% if accion.completado %}bg-success{% else %}bg-warning{% endif %} ms-2">
+                                <span class="badge accion-estado-badge {% if accion.completado %}bg-success{% else %}bg-warning{% endif %} ms-2">
                                     {% if accion.completado %}✅ Completado{% else %}⏳ Pendiente{% endif %}
                                 </span>
                             </div>
@@ -921,31 +924,36 @@
                                     💰
                                 </button>
                             </form>
-                            <div style="display: flex; gap: 0.5rem;">
-                                <form method="post" style="display: inline;">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="accion_id" value="{{ accion.id }}">
-                                    <button type="submit" name="toggle_accion" 
-                                            class="toggle-btn {% if accion.completado %}completado{% else %}pendiente{% endif %}"
-                                            title="Cambiar estado">
-                                        {% if accion.completado %}✅{% else %}⏳{% endif %}
-                                    </button>
-                                </form>
-                                <form method="post" style="display: inline;">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="accion_id" value="{{ accion.id }}">
-                                    <button type="submit" name="eliminar_accion" class="btn btn-danger btn-sm" 
-                                            onclick="{% if ver_avisos %}return confirm('¿Eliminar esta acción?');{% else %}return true;{% endif %}"
-                                            title="Eliminar acción">
-                                        🗑️
-                                    </button>
-                                </form>
+                            <div class="d-flex flex-column gap-1 align-items-start">
+                                <label class="small mb-0 d-flex align-items-center gap-1">
+                                    <input type="checkbox" class="form-check-input accion-completado-cb" 
+                                           {% if accion.completado %}checked{% endif %}
+                                           title="Marcar como completado">
+                                    <span>Completado</span>
+                                </label>
+                                <label class="small mb-0 d-flex align-items-center gap-1">
+                                    <input type="checkbox" class="form-check-input accion-eliminar-cb" 
+                                           title="Marcar para eliminar">
+                                    <span>Eliminar</span>
+                                </label>
                             </div>
                         </div>
                     </div>
                 {% empty %}
                     <p class="text-secondary">No hay acciones registradas</p>
                 {% endfor %}
+                </div>
+                {% if trabajo.acciones.exists %}
+                <form id="form-batch-acciones" method="post" action="" style="display: none;">
+                    {% csrf_token %}
+                    <input type="hidden" name="guardar_acciones_batch" value="1">
+                </form>
+                <div class="mt-3">
+                    <button type="button" class="btn btn-primary" id="btn-guardar-cambios-acciones">
+                        💾 Guardar cambios (estados y eliminaciones)
+                    </button>
+                </div>
+                {% endif %}
             </div>
         </div>
 
@@ -1639,6 +1647,92 @@ document.addEventListener('DOMContentLoaded', function() {
     const activeTab = urlParams.get('tab');
     if (activeTab) {
         showTab(activeTab);
+    }
+});
+
+// 🔹 Acciones Registradas: actualizar vista al marcar/desmarcar y enviar en lote
+document.addEventListener('DOMContentLoaded', function() {
+    var list = document.getElementById('acciones-registradas-list');
+    if (!list) return;
+    
+    function actualizarVistaFila(row) {
+        var completadoCb = row.querySelector('.accion-completado-cb');
+        var eliminarCb = row.querySelector('.accion-eliminar-cb');
+        var badge = row.querySelector('.accion-estado-badge');
+        if (eliminarCb && eliminarCb.checked) {
+            row.classList.add('marcado-eliminar');
+            row.style.opacity = '0.6';
+        } else {
+            row.classList.remove('marcado-eliminar');
+            row.style.opacity = '';
+        }
+        if (badge && completadoCb) {
+            if (completadoCb.checked) {
+                row.classList.remove('pendiente');
+                row.classList.add('completado');
+                badge.className = 'badge accion-estado-badge bg-success ms-2';
+                badge.textContent = '✅ Completado';
+            } else {
+                row.classList.remove('completado');
+                row.classList.add('pendiente');
+                badge.className = 'badge accion-estado-badge bg-warning ms-2';
+                badge.textContent = '⏳ Pendiente';
+            }
+        }
+    }
+    
+    list.querySelectorAll('.accion-registrada-row').forEach(function(row) {
+        row.querySelectorAll('.accion-completado-cb, .accion-eliminar-cb').forEach(function(cb) {
+            cb.addEventListener('change', function() { actualizarVistaFila(row); });
+        });
+    });
+    
+    var btnGuardar = document.getElementById('btn-guardar-cambios-acciones');
+    var formBatch = document.getElementById('form-batch-acciones');
+    if (btnGuardar && formBatch) {
+        btnGuardar.addEventListener('click', function() {
+            var completado = [];
+            var pendiente = [];
+            var eliminar = [];
+            list.querySelectorAll('.accion-registrada-row').forEach(function(row) {
+                var id = row.getAttribute('data-accion-id');
+                if (!id) return;
+                var eliminarCb = row.querySelector('.accion-eliminar-cb');
+                var completadoCb = row.querySelector('.accion-completado-cb');
+                if (eliminarCb && eliminarCb.checked) {
+                    eliminar.push(id);
+                } else {
+                    if (completadoCb && completadoCb.checked) {
+                        completado.push(id);
+                    } else {
+                        pendiente.push(id);
+                    }
+                }
+            });
+            formBatch.querySelectorAll('input[name="accion_completado"], input[name="accion_pendiente"], input[name="accion_eliminar"]').forEach(function(inp) { inp.remove(); });
+            completado.forEach(function(id) {
+                var i = document.createElement('input');
+                i.type = 'hidden';
+                i.name = 'accion_completado';
+                i.value = id;
+                formBatch.appendChild(i);
+            });
+            pendiente.forEach(function(id) {
+                var i = document.createElement('input');
+                i.type = 'hidden';
+                i.name = 'accion_pendiente';
+                i.value = id;
+                formBatch.appendChild(i);
+            });
+            eliminar.forEach(function(id) {
+                var i = document.createElement('input');
+                i.type = 'hidden';
+                i.name = 'accion_eliminar';
+                i.value = id;
+                formBatch.appendChild(i);
+            });
+            formBatch.submit();
+        });
     }
 });
 
