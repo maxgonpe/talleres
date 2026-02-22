@@ -2656,6 +2656,44 @@ def historial_trabajos(request):
     })
 
 
+def _descontar_stock_repuesto_trabajo(repuesto_trabajo):
+    """Descuenta del stock la cantidad del TrabajoRepuesto (inventario propio, bodega-principal)."""
+    if not repuesto_trabajo.repuesto:
+        return False
+    from .models import RepuestoEnStock
+    stock_item = RepuestoEnStock.objects.filter(
+        repuesto=repuesto_trabajo.repuesto,
+        deposito='bodega-principal'
+    ).first()
+    if not stock_item:
+        return False
+    cantidad = repuesto_trabajo.cantidad or 0
+    stock_item.stock = (stock_item.stock or 0) - cantidad
+    stock_item.save()
+    repuesto_obj = repuesto_trabajo.repuesto
+    repuesto_obj.stock = (repuesto_obj.stock or 0) - cantidad
+    repuesto_obj.save()
+    return True
+
+
+def _devolver_stock_repuesto_trabajo(repuesto_trabajo):
+    """Devuelve al stock la cantidad del TrabajoRepuesto (inventario propio, bodega-principal)."""
+    if not repuesto_trabajo.repuesto:
+        return False
+    from .models import RepuestoEnStock
+    stock_item = RepuestoEnStock.objects.filter(
+        repuesto=repuesto_trabajo.repuesto,
+        deposito='bodega-principal'
+    ).first()
+    if not stock_item:
+        return False
+    cantidad = repuesto_trabajo.cantidad or 0
+    stock_item.stock = (stock_item.stock or 0) + cantidad
+    stock_item.save()
+    repuesto_obj = repuesto_trabajo.repuesto
+    repuesto_obj.stock = (repuesto_obj.stock or 0) + cantidad
+    repuesto_obj.save()
+    return True
 
 
 @login_required
@@ -3093,6 +3131,57 @@ def trabajo_detalle(request, pk):
                 except RepuestoExterno.DoesNotExist:
                     if config.ver_mensajes:
                         messages.error(request, "Repuesto externo no encontrado.")
+            return redirect_with_tab("repuestos")
+
+        # 🔹 Guardar cambios de repuestos en lote (estados + eliminar)
+        elif "guardar_repuestos_batch" in request.POST:
+            config = AdministracionTaller.get_configuracion_activa()
+            ids_completado = request.POST.getlist("repuesto_completado")
+            ids_pendiente = request.POST.getlist("repuesto_pendiente")
+            ids_eliminar = request.POST.getlist("repuesto_eliminar")
+            ok_count = 0
+            # 1. Eliminar: devolver stock si estaba completado e interno, luego delete
+            for rep_id in ids_eliminar:
+                try:
+                    rep = TrabajoRepuesto.objects.get(id=rep_id, trabajo=trabajo)
+                    if rep.completado and rep.repuesto:
+                        _devolver_stock_repuesto_trabajo(rep)
+                    rep.delete()
+                    ok_count += 1
+                except TrabajoRepuesto.DoesNotExist:
+                    pass
+            # 2. Completado: marcar y descontar stock si interno
+            for rep_id in ids_completado:
+                if rep_id in ids_eliminar:
+                    continue
+                try:
+                    rep = TrabajoRepuesto.objects.get(id=rep_id, trabajo=trabajo)
+                    if not rep.completado:
+                        rep.completado = True
+                        rep.fecha = timezone.now()
+                        rep.save()
+                        if rep.repuesto:
+                            _descontar_stock_repuesto_trabajo(rep)
+                        ok_count += 1
+                except TrabajoRepuesto.DoesNotExist:
+                    pass
+            # 3. Pendiente: marcar y devolver stock si estaba completado e interno
+            for rep_id in ids_pendiente:
+                if rep_id in ids_eliminar:
+                    continue
+                try:
+                    rep = TrabajoRepuesto.objects.get(id=rep_id, trabajo=trabajo)
+                    if rep.completado:
+                        if rep.repuesto:
+                            _devolver_stock_repuesto_trabajo(rep)
+                        rep.completado = False
+                        rep.fecha = None
+                        rep.save()
+                        ok_count += 1
+                except TrabajoRepuesto.DoesNotExist:
+                    pass
+            if config.ver_mensajes and ok_count:
+                messages.success(request, f"Cambios guardados ({ok_count} repuesto(s) actualizado(s)).")
             return redirect_with_tab("repuestos")
 
         # 🔹 Toggle repuesto completado / pendiente (CON ACTUALIZACIÓN DE STOCK)

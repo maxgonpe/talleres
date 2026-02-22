@@ -993,49 +993,64 @@
 
                 <hr>
                 
-                <!-- 🧾 Repuestos agregados al trabajo -->
+                <!-- 🧾 Repuestos agregados al trabajo (estado y eliminar se guardan en lote) -->
                 <h6>🧾 Repuestos agregados al trabajo</h6>
+                <p class="small text-secondary mb-2">Marque o desmarque estados y/o elimine repuestos; luego pulse <strong>Guardar cambios</strong> para aplicar.</p>
                 <div id="tabla-contenido-trabajo">
+                <div id="repuestos-registrados-list">
                     {% for repuesto in trabajo.repuestos.all %}
-                        <div class="item-card {% if repuesto.completado %}completado{% else %}pendiente{% endif %}">
-                            <div>
-                                <strong>
-                                    {% if repuesto.repuesto_externo %}
-                                        🌐 {{ repuesto.repuesto_externo.nombre }}
-                                    {% elif repuesto.repuesto %}
-                                        {{ repuesto.repuesto.nombre }}
-                                    {% else %}
-                                        Repuesto sin nombre
-                                    {% endif %}
-                                </strong><br>
+                        <div class="item-card repuesto-registrado-row {% if repuesto.completado %}completado{% else %}pendiente{% endif %}" 
+                             data-repuesto-id="{{ repuesto.id }}">
+                            <div style="flex: 1;">
+                                <div>
+                                    <strong>
+                                        {% if repuesto.repuesto_externo %}
+                                            🌐 {{ repuesto.repuesto_externo.nombre }}
+                                        {% elif repuesto.repuesto %}
+                                            {{ repuesto.repuesto.nombre }}
+                                        {% else %}
+                                            Repuesto sin nombre
+                                        {% endif %}
+                                    </strong>
+                                    <span class="badge repuesto-estado-badge {% if repuesto.completado %}bg-success{% else %}bg-warning{% endif %} ms-2">
+                                        {% if repuesto.completado %}✅ Completado{% else %}⏳ Pendiente{% endif %}
+                                    </span>
+                                </div>
                                 <small>Cantidad: {{ repuesto.cantidad }}</small>
                                 {% if repuesto.precio_unitario %}
                                     <br><small class="text-success">${{ repuesto.precio_unitario|floatformat:0|intcomma }} c/u</small>
                                 {% endif %}
                             </div>
-                            <div>
-                                <form method="post" style="display: inline;">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="repuesto_id" value="{{ repuesto.id }}">
-                                    <button type="submit" name="toggle_repuesto" 
-                                            class="toggle-btn {% if repuesto.completado %}completado{% else %}pendiente{% endif %}">
-                                        {% if repuesto.completado %}✅ Completado{% else %}⏳ Pendiente{% endif %}
-                                    </button>
-                                </form>
-                                <form method="post" style="display: inline;">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="repuesto_id" value="{{ repuesto.id }}">
-                                    <button type="submit" name="eliminar_repuesto" class="btn btn-danger btn-sm" 
-                                            onclick="{% if ver_avisos %}return confirm('¿Eliminar este repuesto?');{% else %}return true;{% endif %}">
-                                        🗑️
-                                    </button>
-                                </form>
+                            <div class="d-flex flex-column gap-1 align-items-start">
+                                <label class="small mb-0 d-flex align-items-center gap-1">
+                                    <input type="checkbox" class="form-check-input repuesto-completado-cb" 
+                                           {% if repuesto.completado %}checked{% endif %}
+                                           title="Marcar como completado">
+                                    <span>Completado</span>
+                                </label>
+                                <label class="small mb-0 d-flex align-items-center gap-1">
+                                    <input type="checkbox" class="form-check-input repuesto-eliminar-cb" 
+                                           title="Marcar para eliminar">
+                                    <span>Eliminar</span>
+                                </label>
                             </div>
                         </div>
                     {% empty %}
                         <p class="text-secondary">No hay repuestos registrados</p>
                     {% endfor %}
                 </div>
+                </div>
+                {% if trabajo.repuestos.exists %}
+                <form id="form-batch-repuestos" method="post" action="" style="display: none;">
+                    {% csrf_token %}
+                    <input type="hidden" name="guardar_repuestos_batch" value="1">
+                </form>
+                <div class="mt-3">
+                    <button type="button" class="btn btn-primary" id="btn-guardar-cambios-repuestos">
+                        💾 Guardar cambios (estados y eliminaciones)
+                    </button>
+                </div>
+                {% endif %}
                 
                 <!-- Hidden input para enviar repuestos seleccionados -->
                 <input type="hidden" name="repuestos_json" id="repuestos-json-trabajo">
@@ -1732,6 +1747,92 @@ document.addEventListener('DOMContentLoaded', function() {
                 formBatch.appendChild(i);
             });
             formBatch.submit();
+        });
+    }
+});
+
+// 🔹 Repuestos Registrados: actualizar vista al marcar/desmarcar y enviar en lote
+document.addEventListener('DOMContentLoaded', function() {
+    var listRep = document.getElementById('repuestos-registrados-list');
+    if (!listRep) return;
+
+    function actualizarVistaFilaRepuesto(row) {
+        var completadoCb = row.querySelector('.repuesto-completado-cb');
+        var eliminarCb = row.querySelector('.repuesto-eliminar-cb');
+        var badge = row.querySelector('.repuesto-estado-badge');
+        if (eliminarCb && eliminarCb.checked) {
+            row.classList.add('marcado-eliminar');
+            row.style.opacity = '0.6';
+        } else {
+            row.classList.remove('marcado-eliminar');
+            row.style.opacity = '';
+        }
+        if (badge && completadoCb) {
+            if (completadoCb.checked) {
+                row.classList.remove('pendiente');
+                row.classList.add('completado');
+                badge.className = 'badge repuesto-estado-badge bg-success ms-2';
+                badge.textContent = '✅ Completado';
+            } else {
+                row.classList.remove('completado');
+                row.classList.add('pendiente');
+                badge.className = 'badge repuesto-estado-badge bg-warning ms-2';
+                badge.textContent = '⏳ Pendiente';
+            }
+        }
+    }
+
+    listRep.querySelectorAll('.repuesto-registrado-row').forEach(function(row) {
+        row.querySelectorAll('.repuesto-completado-cb, .repuesto-eliminar-cb').forEach(function(cb) {
+            cb.addEventListener('change', function() { actualizarVistaFilaRepuesto(row); });
+        });
+    });
+
+    var btnGuardarRep = document.getElementById('btn-guardar-cambios-repuestos');
+    var formBatchRep = document.getElementById('form-batch-repuestos');
+    if (btnGuardarRep && formBatchRep) {
+        btnGuardarRep.addEventListener('click', function() {
+            var completado = [];
+            var pendiente = [];
+            var eliminar = [];
+            listRep.querySelectorAll('.repuesto-registrado-row').forEach(function(row) {
+                var id = row.getAttribute('data-repuesto-id');
+                if (!id) return;
+                var eliminarCb = row.querySelector('.repuesto-eliminar-cb');
+                var completadoCb = row.querySelector('.repuesto-completado-cb');
+                if (eliminarCb && eliminarCb.checked) {
+                    eliminar.push(id);
+                } else {
+                    if (completadoCb && completadoCb.checked) {
+                        completado.push(id);
+                    } else {
+                        pendiente.push(id);
+                    }
+                }
+            });
+            formBatchRep.querySelectorAll('input[name="repuesto_completado"], input[name="repuesto_pendiente"], input[name="repuesto_eliminar"]').forEach(function(inp) { inp.remove(); });
+            completado.forEach(function(id) {
+                var i = document.createElement('input');
+                i.type = 'hidden';
+                i.name = 'repuesto_completado';
+                i.value = id;
+                formBatchRep.appendChild(i);
+            });
+            pendiente.forEach(function(id) {
+                var i = document.createElement('input');
+                i.type = 'hidden';
+                i.name = 'repuesto_pendiente';
+                i.value = id;
+                formBatchRep.appendChild(i);
+            });
+            eliminar.forEach(function(id) {
+                var i = document.createElement('input');
+                i.type = 'hidden';
+                i.name = 'repuesto_eliminar';
+                i.value = id;
+                formBatchRep.appendChild(i);
+            });
+            formBatchRep.submit();
         });
     }
 });
