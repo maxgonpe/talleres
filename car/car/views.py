@@ -13,6 +13,7 @@ from django.template.loader import render_to_string
 from django.conf import settings
 from django.contrib.staticfiles.storage import staticfiles_storage
 from django.views.decorators.http import require_GET
+from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.db import transaction
 from django.http import HttpResponse
@@ -267,22 +268,14 @@ def ingreso_view(request):
             # 🔹 Repuestos seleccionados desde hidden JSON
             # ====================================================
             repuestos_json = (request.POST.get("repuestos_json") or "").strip()
-            print("=" * 80)
-            print("📦 DEBUG REPUESTOS_JSON EN BACKEND")
-            print("=" * 80)
-            print(f"📋 repuestos_json recibido: {repr(repuestos_json)}")
-            print(f"📋 Longitud: {len(repuestos_json) if repuestos_json else 0}")
             if repuestos_json:
                 try:
                     repuestos_data = json.loads(repuestos_json)
-                    print(f"📦 Total repuestos parseados: {len(repuestos_data)}")
-                    print(f"📦 Datos completos: {repuestos_data}")
                     
                     for idx, r in enumerate(repuestos_data, 1):
                         try:
                             repuesto_id = int(r.get("id"))
                             repuesto = Repuesto.objects.get(pk=repuesto_id)
-                            print(f"✅ [{idx}/{len(repuestos_data)}] Procesando: {repuesto.nombre} (ID: {repuesto_id})")
 
                             stock_id_raw = r.get("repuesto_stock_id")
                             repuesto_stock = None
@@ -303,18 +296,10 @@ def ingreso_view(request):
                                 precio_unitario=precio,
                                 subtotal=cantidad * precio
                             )
-                            print(f"   ✅ DiagnosticoRepuesto creado: {repuesto.nombre} x{cantidad}")
                         except (ValueError, Repuesto.DoesNotExist, KeyError) as e:
-                            print(f"   ❌ Error procesando repuesto: {e}")
                             continue
-                    print("=" * 80)
-                except json.JSONDecodeError as e:
-                    print(f"❌ Error decodificando JSON de repuestos: {e}")
-                    print("=" * 80)
+                except json.JSONDecodeError:
                     pass
-            else:
-                print("⚠️ repuestos_json está vacío o es None")
-                print("=" * 80)
             # ====================================================
 
             # ====================================================
@@ -347,11 +332,9 @@ def ingreso_view(request):
                             # Incrementar contador de uso
                             repuesto_externo.incrementar_uso()
                             
-                        except (ValueError, RepuestoExterno.DoesNotExist, KeyError) as e:
-                            print(f"Error procesando repuesto externo: {e}")
+                        except (ValueError, RepuestoExterno.DoesNotExist, KeyError):
                             continue
-                except json.JSONDecodeError as e:
-                    print(f"Error decodificando JSON de repuestos externos: {e}")
+                except json.JSONDecodeError:
                     pass
             # ====================================================
             # 🧰 Nota: Los insumos ahora se agregan directamente a repuestos_json
@@ -421,27 +404,6 @@ def ingreso_exitoso_view(request):
     config = AdministracionTaller.get_configuracion_activa()
     
     return render(request, 'car/ingreso_exitoso.html', {'config': config})
-
-@login_required
-def eliminar_diagnostico(request, pk):
-    config = AdministracionTaller.get_configuracion_activa()
-    diag = get_object_or_404(Diagnostico, pk=pk)
-    diag.delete()
-    if config.ver_mensajes:
-        messages.success(request, "Diagnóstico eliminado.")
-    return redirect('ingreso')
-
-@login_required
-def editar_diagnostico(request, pk):
-    diag = get_object_or_404(Diagnostico, pk=pk)
-    diagnostico_form = DiagnosticoForm(request.POST or None, instance=diag)
-    if request.method == 'POST' and diagnostico_form.is_valid():
-        diagnostico_form.save()
-        return redirect('ingreso')
-    # Obtener configuración del taller
-    config = AdministracionTaller.get_configuracion_activa()
-    
-    return render(request, 'car/editar_diagnostico.html', {'form': diagnostico_form, 'config': config})
 
 @login_required
 def componente_create(request):
@@ -598,21 +560,11 @@ def get_vehiculos_por_cliente(request, cliente_id):
     Busca intentando ambas variantes (k minúscula y K mayúscula) simultáneamente.
     """
     import logging
-    import sys
     logger = logging.getLogger(__name__)
     
-    # Forzar salida inmediata a stdout/stderr para Docker - PRIMERO QUE TODO
-    print(f"\n{'='*80}", file=sys.stderr, flush=True)
-    print(f"🚨 get_vehiculos_por_cliente - FUNCIÓN LLAMADA - RUT: '{cliente_id}'", file=sys.stderr, flush=True)
-    print(f"🚨 Request path: {request.path}", file=sys.stderr, flush=True)
-    print(f"🚨 Request method: {request.method}", file=sys.stderr, flush=True)
-    print(f"🚨 User authenticated: {request.user.is_authenticated}", file=sys.stderr, flush=True)
-    print(f"🚨 User: {request.user.username if request.user.is_authenticated else 'ANÓNIMO'}", file=sys.stderr, flush=True)
-    print(f"{'='*80}\n", file=sys.stderr, flush=True)
     
     # El decorador @login_required ya maneja la autenticación, pero mantenemos el logging
     if not request.user.is_authenticated:
-        print(f"❌ USUARIO NO AUTENTICADO - Retornando 401", file=sys.stderr, flush=True)
         return JsonResponse({'error': 'No autenticado. Por favor inicia sesión.'}, status=401)
     
     if not cliente_id:
@@ -622,10 +574,6 @@ def get_vehiculos_por_cliente(request, cliente_id):
     cliente_id = str(cliente_id).strip()
     
     # Logging a stderr para que aparezca en docker logs
-    print(f"🔍 RUT recibido: '{cliente_id}'", file=sys.stderr, flush=True)
-    print(f"🔍 Request path: {request.path}", file=sys.stderr, flush=True)
-    print(f"🔍 Request method: {request.method}", file=sys.stderr, flush=True)
-    print(f"🔍 User: {request.user.username if request.user.is_authenticated else 'Anónimo'}", file=sys.stderr, flush=True)
     
     logger.info(f"🔍 get_vehiculos_por_cliente - INICIO - RUT recibido: '{cliente_id}'")
     logger.info(f"🔍 Request path: {request.path}")
@@ -639,9 +587,6 @@ def get_vehiculos_por_cliente(request, cliente_id):
         rut_minuscula = cliente_id[:-1] + 'k'
         rut_mayuscula = cliente_id[:-1] + 'K'
         
-        print(f"🔍 RUT termina en k/K - Buscando variantes:", file=sys.stderr, flush=True)
-        print(f"   - Minúscula: '{rut_minuscula}'", file=sys.stderr, flush=True)
-        print(f"   - Mayúscula: '{rut_mayuscula}'", file=sys.stderr, flush=True)
         
         logger.info(f"🔍 RUT termina en k/K - Buscando variantes:")
         logger.info(f"   - Minúscula: '{rut_minuscula}'")
@@ -651,13 +596,10 @@ def get_vehiculos_por_cliente(request, cliente_id):
         cliente_min_bd = Cliente_Taller.objects.filter(rut=rut_minuscula).first()
         cliente_may_bd = Cliente_Taller.objects.filter(rut=rut_mayuscula).first()
         
-        print(f"🔍 Verificación directa en BD:", file=sys.stderr, flush=True)
-        print(f"   - Cliente con '{rut_minuscula}': {'✅ EXISTE' if cliente_min_bd else '❌ NO EXISTE'}", file=sys.stderr, flush=True)
         if cliente_min_bd:
-            print(f"      → Nombre: {cliente_min_bd.nombre}, RUT en BD: '{cliente_min_bd.rut}'", file=sys.stderr, flush=True)
-        print(f"   - Cliente con '{rut_mayuscula}': {'✅ EXISTE' if cliente_may_bd else '❌ NO EXISTE'}", file=sys.stderr, flush=True)
+            pass
         if cliente_may_bd:
-            print(f"      → Nombre: {cliente_may_bd.nombre}, RUT en BD: '{cliente_may_bd.rut}'", file=sys.stderr, flush=True)
+            pass
         
         logger.info(f"🔍 Verificación directa en BD:")
         logger.info(f"   - Cliente con '{rut_minuscula}': {'✅ EXISTE' if cliente_min_bd else '❌ NO EXISTE'}")
@@ -715,17 +657,11 @@ def get_vehiculos_por_cliente(request, cliente_id):
             rut_base = cliente_id[:-1] if cliente_id and cliente_id[-1].lower() == 'k' else cliente_id
             rut_similares = Cliente_Taller.objects.filter(rut__startswith=rut_base).values_list('rut', flat=True)[:10]
             
-            print(f"\n❌ ERROR - Cliente no encontrado", file=sys.stderr, flush=True)
-            print(f"   RUT recibido: '{cliente_id}'", file=sys.stderr, flush=True)
-            print(f"   Variantes intentadas: {variantes_intentadas}", file=sys.stderr, flush=True)
-            print(f"   RUTs similares en BD (primeros 10): {list(rut_similares)}", file=sys.stderr, flush=True)
             
             # Verificar todos los RUTs que terminan en k/K
             todos_ruts_k = Cliente_Taller.objects.filter(
                 Q(rut__endswith='k') | Q(rut__endswith='K')
             ).values_list('rut', flat=True)[:20]
-            print(f"   Todos los RUTs con k/K en BD (primeros 20): {list(todos_ruts_k)}", file=sys.stderr, flush=True)
-            print(f"{'='*80}\n", file=sys.stderr, flush=True)
             
             logger.error(f"❌ ERROR - Cliente no encontrado")
             logger.error(f"   RUT recibido: '{cliente_id}'")
@@ -756,10 +692,6 @@ def get_vehiculos_por_cliente(request, cliente_id):
         for v in vehiculos
     ]
     
-    print(f"✅ FINAL - Retornando {len(data)} vehículos en JSON para RUT: '{cliente_id}'", file=sys.stderr, flush=True)
-    print(f"✅ Datos: {data}", file=sys.stderr, flush=True)
-    print(f"{'='*80}\n", file=sys.stderr, flush=True)
-    
     logger.info(f"✅ FINAL - Retornando {len(data)} vehículos en JSON para RUT: '{cliente_id}'")
     logger.info(f"✅ Datos: {data}")
     
@@ -775,7 +707,12 @@ def lista_diagnosticos(request):
     if request.method == "POST" and "ocultar_diagnostico" in request.POST:
         diagnostico_id = request.POST.get("diagnostico_id")
         try:
-            diagnostico = Diagnostico.objects.get(id=diagnostico_id)
+            diagnosticos_propios = Diagnostico.objects.all()
+            if request.permisos.get('es_mecanico'):
+                diagnosticos_propios = diagnosticos_propios.filter(
+                    Q(trabajo__isnull=True) | Q(trabajo__mecanicos__user=request.user)
+                )
+            diagnostico = diagnosticos_propios.get(id=diagnostico_id)
             diagnostico.visible = False
             config = AdministracionTaller.get_configuracion_activa()
             diagnostico.save()
@@ -788,7 +725,12 @@ def lista_diagnosticos(request):
         return redirect('lista_diagnosticos')
     
     # 🔹 Filtrar solo diagnósticos visibles (visible=True)
-    diagnosticos = Diagnostico.objects.filter(visible=True).select_related(
+    diagnosticos_qs = Diagnostico.objects.filter(visible=True)
+    if request.permisos.get('es_mecanico'):
+        diagnosticos_qs = diagnosticos_qs.filter(
+            Q(trabajo__isnull=True) | Q(trabajo__mecanicos__user=request.user)
+        )
+    diagnosticos = diagnosticos_qs.select_related(
         'vehiculo__cliente'
     ).prefetch_related(
         'componentes',
@@ -809,7 +751,12 @@ def lista_diagnosticos(request):
 @requiere_permiso('diagnosticos')
 def editar_diagnostico(request, pk):
     """Editar diagnóstico con pestañas para acciones, repuestos e insumos"""
-    diagnostico = get_object_or_404(Diagnostico, pk=pk)
+    diagnosticos_qs = Diagnostico.objects.all()
+    if request.permisos.get('es_mecanico'):
+        diagnosticos_qs = diagnosticos_qs.filter(
+            Q(trabajo__isnull=True) | Q(trabajo__mecanicos__user=request.user)
+        )
+    diagnostico = get_object_or_404(diagnosticos_qs, pk=pk)
     
     # 🔹 Helper para redirects con pestaña activa
     def redirect_with_tab(tab_name):
@@ -874,25 +821,12 @@ def editar_diagnostico(request, pk):
             
             if componente_id and accion_id:
                 try:
-                    from .models import DiagnosticoComponenteAccion
-                    componente = Componente.objects.get(id=componente_id)
-                    accion = Accion.objects.get(id=accion_id)
-                    
-                    # Verificar si ya existe esta combinación
-                    if not DiagnosticoComponenteAccion.objects.filter(
-                        diagnostico=diagnostico,
-                        componente=componente,
-                        accion=accion
-                    ).exists():
-                        DiagnosticoComponenteAccion.objects.create(
-                            diagnostico=diagnostico,
-                            componente=componente,
-                            accion=accion,
-                            precio_mano_obra=float(precio_mano_obra) if precio_mano_obra else 0
-                        )
+                    from .services.diagnostics import agregar_accion
+                    dca = agregar_accion(diagnostico, componente_id, accion_id, precio_mano_obra)
+                    if dca:
                         config = AdministracionTaller.get_configuracion_activa()
                         if config.ver_mensajes:
-                            messages.success(request, f"Acción '{accion.nombre}' agregada a '{componente.nombre}'.")
+                            messages.success(request, f"Acción '{dca.accion.nombre}' agregada a '{dca.componente.nombre}'.")
                     else:
                         config = AdministracionTaller.get_configuracion_activa()
                         if config.ver_mensajes:
@@ -1022,24 +956,12 @@ def editar_diagnostico(request, pk):
             
             if repuesto_id:
                 try:
-                    from .models import DiagnosticoRepuesto
-                    repuesto = Repuesto.objects.get(id=repuesto_id)
-                    
-                    # Verificar si ya existe este repuesto
-                    if not DiagnosticoRepuesto.objects.filter(
-                        diagnostico=diagnostico,
-                        repuesto=repuesto
-                    ).exists():
-                        DiagnosticoRepuesto.objects.create(
-                            diagnostico=diagnostico,
-                            repuesto=repuesto,
-                            cantidad=int(cantidad),
-                            precio_unitario=float(precio_unitario) if precio_unitario else 0,
-                            subtotal=int(cantidad) * (float(precio_unitario) if precio_unitario else 0)
-                        )
+                    from .services.diagnostics import agregar_repuesto
+                    item = agregar_repuesto(diagnostico, repuesto_id, cantidad, precio_unitario)
+                    if item:
                         config = AdministracionTaller.get_configuracion_activa()
                         if config.ver_mensajes:
-                            messages.success(request, f"Repuesto '{repuesto.nombre}' agregado.")
+                            messages.success(request, f"Repuesto '{item.repuesto.nombre}' agregado.")
                     else:
                         config = AdministracionTaller.get_configuracion_activa()
                         if config.ver_mensajes:
@@ -1228,19 +1150,39 @@ def editar_diagnostico(request, pk):
     return render(request, "car/diagnostico_editar.html", context)
 
 @login_required
+@requiere_permiso('diagnosticos')
+@transaction.atomic
 def eliminar_diagnostico(request, pk):
-    diagnostico = get_object_or_404(Diagnostico, pk=pk)
+    diagnosticos_qs = Diagnostico.objects.all()
+    if request.permisos.get('es_mecanico'):
+        diagnosticos_qs = diagnosticos_qs.filter(
+            Q(trabajo__isnull=True) | Q(trabajo__mecanicos__user=request.user)
+        )
+    diagnostico = get_object_or_404(diagnosticos_qs, pk=pk)
     # Obtener configuración del taller
     config = AdministracionTaller.get_configuracion_activa()
+
+    def liberar_reservas():
+        from .services.stock import liberar_reserva
+        for item in diagnostico.repuestos.filter(reservado=True, repuesto_stock__isnull=False):
+            liberar_reserva(
+                item.repuesto_stock,
+                item.cantidad,
+                'Liberación por eliminación de diagnóstico',
+                f'DIAG-{diagnostico.pk}-REPUESTO-{item.pk}',
+                request.user,
+            )
     
     # Si ver_avisos = False, eliminar directamente sin mostrar confirmación
     if not config.ver_avisos:
+        liberar_reservas()
         diagnostico.delete()
         if config.ver_mensajes:
             messages.success(request, "Diagnóstico eliminado.")
         return redirect('lista_diagnosticos')
     
     if request.method == 'POST':
+        liberar_reservas()
         diagnostico.delete()
         if config.ver_mensajes:
             messages.success(request, "Diagnóstico eliminado.")
@@ -1473,7 +1415,6 @@ def sugerir_repuestos2(request, diagnostico_id=None):
     - Si viene diagnostico_id: usa los datos guardados en la BD.
     - Si NO viene diagnostico_id: usa los datos enviados por el request (preview).
     """
-    print("entrando a buscar repuestos")
 
     componentes_ids = []
     veh_marca = veh_modelo = None
@@ -1495,7 +1436,6 @@ def sugerir_repuestos2(request, diagnostico_id=None):
     repuestos_comp = Repuesto.objects.filter(
         componenterepuesto__componente_id__in=componentes_ids
     ).distinct()
-    print("buscando en punto 1 ",repuestos_comp)
 
     # 2) compatibilidad con versión del vehículo
     candidates = repuestos_comp
@@ -1512,7 +1452,6 @@ def sugerir_repuestos2(request, diagnostico_id=None):
             repuestos_by_version = Repuesto.objects.filter(aplicaciones__version=version).distinct()
             candidates = (repuestos_comp | repuestos_by_version).distinct()
 
-    print("resultado del punto 2 ",candidates)        
     # 3) enriquecer con stock y precio
     resultados = []
     for r in candidates.select_related().order_by("nombre")[:60]:
@@ -1528,7 +1467,6 @@ def sugerir_repuestos2(request, diagnostico_id=None):
             "disponible": stock_obj.disponible if stock_obj else 0,
             "repuesto_stock_id": stock_obj.id if stock_obj else None,
         })
-    print("resultados del punto 3 ",resultados)
     return JsonResponse({"repuestos": resultados})
 
 @login_required
@@ -1769,7 +1707,7 @@ def obtener_texto_compatibilidad(score):
 #
 ######################
 @login_required
-@csrf_exempt
+@requiere_permiso('diagnosticos')
 def agregar_repuesto(request, diagnostico_id):
     """
     Agrega un repuesto al diagnóstico y, si hay stock, lo reserva.
@@ -1786,7 +1724,12 @@ def agregar_repuesto(request, diagnostico_id):
 
     repuesto_id = data.get("repuesto_id")
     stock_id = data.get("repuesto_stock_id")
-    cantidad = int(data.get("cantidad", 1))
+    try:
+        cantidad = int(data.get("cantidad", 1))
+    except (TypeError, ValueError):
+        return JsonResponse({"error": "Cantidad inválida"}, status=400)
+    if cantidad < 1:
+        return JsonResponse({"error": "La cantidad debe ser mayor que cero"}, status=400)
 
     rep = get_object_or_404(Repuesto, pk=repuesto_id)
 
@@ -1794,16 +1737,11 @@ def agregar_repuesto(request, diagnostico_id):
         repstk = None
         if stock_id:
             repstk = RepuestoEnStock.objects.select_for_update().get(pk=stock_id)
-            if repstk.disponible < cantidad:
+            from .services.stock import reservar_stock
+            try:
+                reservar_stock(repstk, cantidad, 'Reserva desde diagnóstico', f'DIAG-{diag.id}', request.user)
+            except ValueError:
                 return JsonResponse({"error": "Stock insuficiente"}, status=400)
-            # Reservar
-            repstk.reservado = (repstk.reservado or 0) + cantidad
-            repstk.save()
-            StockMovimiento.objects.create(
-                repuesto_stock=repstk, tipo='reserva', cantidad=cantidad,
-                motivo='Reserva desde diagnóstico',
-                referencia=f'DIAG-{diag.id}', usuario=request.user if request.user.is_authenticated else None
-            )
 
         dr = DiagnosticoRepuesto.objects.create(
             diagnostico=diag,
@@ -2126,6 +2064,8 @@ class ClienteDeleteView(DeleteView):
         return redirect('cliente_taller_list')
 
 # ---- VEHICULOS ----
+@method_decorator(login_required, name='dispatch')
+@method_decorator(requiere_permiso('crear_vehiculos'), name='dispatch')
 class VehiculoListView(ListView):
     model = Vehiculo
     template_name = "car/vehiculo_list.html"
@@ -2138,6 +2078,8 @@ class VehiculoListView(ListView):
         context['config'] = config
         return context
 
+@method_decorator(login_required, name='dispatch')
+@method_decorator(requiere_permiso('crear_vehiculos'), name='dispatch')
 class VehiculoCreateView(CreateView):
     model = Vehiculo
     fields = ["cliente", "placa", "marca", "modelo", "anio", "vin", "descripcion_motor"]
@@ -2151,6 +2093,8 @@ class VehiculoCreateView(CreateView):
         context['config'] = config
         return context
 
+@method_decorator(login_required, name='dispatch')
+@method_decorator(requiere_permiso('crear_vehiculos'), name='dispatch')
 class VehiculoUpdateView(UpdateView):
     model = Vehiculo
     fields = ["cliente", "placa", "marca", "modelo", "anio", "vin", "descripcion_motor"]
@@ -2164,6 +2108,8 @@ class VehiculoUpdateView(UpdateView):
         context['config'] = config
         return context
 
+@method_decorator(login_required, name='dispatch')
+@method_decorator(requiere_permiso('crear_vehiculos'), name='dispatch')
 class VehiculoDeleteView(DeleteView):
     model = Vehiculo
     template_name = "car/vehiculo_confirm_delete.html"
@@ -2480,7 +2426,8 @@ def guardar_aprobar_y_crear_ot(request):
             # 🚀 APROBAR Y CREAR TRABAJO
             # ====================================================
             if diagnostico.estado != "aprobado":
-                trabajo = diagnostico.aprobar_y_clonar()
+                from .services.diagnostics import aprobar_diagnostico
+                trabajo = aprobar_diagnostico(diagnostico)
                 
                 # Registrar evento de diagnóstico aprobado
                 registrar_diagnostico_aprobado(diagnostico, trabajo, request=request)
@@ -2527,7 +2474,8 @@ def aprobar_diagnostico(request, pk):
     diagnostico = get_object_or_404(Diagnostico, pk=pk)
 
     if diagnostico.estado != "aprobado":
-        trabajo = diagnostico.aprobar_y_clonar()
+        from .services.diagnostics import aprobar_diagnostico
+        trabajo = aprobar_diagnostico(diagnostico)
         
         # Registrar evento de diagnóstico aprobado (con días de diferencia)
         registrar_diagnostico_aprobado(diagnostico, trabajo, request=request)
@@ -2656,50 +2604,14 @@ def historial_trabajos(request):
     })
 
 
-def _descontar_stock_repuesto_trabajo(repuesto_trabajo):
-    """Descuenta del stock la cantidad del TrabajoRepuesto (inventario propio, bodega-principal)."""
-    if not repuesto_trabajo.repuesto:
-        return False
-    from .models import RepuestoEnStock
-    stock_item = RepuestoEnStock.objects.filter(
-        repuesto=repuesto_trabajo.repuesto,
-        deposito='bodega-principal'
-    ).first()
-    if not stock_item:
-        return False
-    cantidad = repuesto_trabajo.cantidad or 0
-    stock_item.stock = (stock_item.stock or 0) - cantidad
-    stock_item.save()
-    repuesto_obj = repuesto_trabajo.repuesto
-    repuesto_obj.stock = (repuesto_obj.stock or 0) - cantidad
-    repuesto_obj.save()
-    return True
-
-
-def _devolver_stock_repuesto_trabajo(repuesto_trabajo):
-    """Devuelve al stock la cantidad del TrabajoRepuesto (inventario propio, bodega-principal)."""
-    if not repuesto_trabajo.repuesto:
-        return False
-    from .models import RepuestoEnStock
-    stock_item = RepuestoEnStock.objects.filter(
-        repuesto=repuesto_trabajo.repuesto,
-        deposito='bodega-principal'
-    ).first()
-    if not stock_item:
-        return False
-    cantidad = repuesto_trabajo.cantidad or 0
-    stock_item.stock = (stock_item.stock or 0) + cantidad
-    stock_item.save()
-    repuesto_obj = repuesto_trabajo.repuesto
-    repuesto_obj.stock = (repuesto_obj.stock or 0) + cantidad
-    repuesto_obj.save()
-    return True
-
-
 @login_required
 @requiere_permiso('trabajos')
+@transaction.atomic
 def trabajo_detalle(request, pk):
-    trabajo = get_object_or_404(Trabajo, pk=pk)
+    trabajo_qs = Trabajo.objects.select_related('vehiculo', 'vehiculo__cliente')
+    if request.permisos.get('es_mecanico'):
+        trabajo_qs = trabajo_qs.filter(mecanicos__user=request.user)
+    trabajo = get_object_or_404(trabajo_qs, pk=pk)
     
     # 🔹 Helper para redirects con pestaña activa
     def redirect_with_tab(tab_name):
@@ -2835,12 +2747,11 @@ def trabajo_detalle(request, pk):
                     componente = Componente.objects.get(id=componente_id)
                     accion = Accion.objects.get(id=accion_id)
                     
-                    TrabajoAccion.objects.create(
-                        trabajo=trabajo,
-                        componente=componente,
-                        accion=accion,
-                        precio_mano_obra=precio_mano_obra or 0,
-                        cantidad=int(cantidad) if cantidad else 1
+                    from .services.work_stock import agregar_accion_trabajo
+                    agregar_accion_trabajo(
+                        trabajo, componente, accion,
+                        precio_mano_obra=Decimal(str(precio_mano_obra or 0)),
+                        cantidad=cantidad or 1,
                     )
                     config = AdministracionTaller.get_configuracion_activa()
                     if config.ver_mensajes:
@@ -2856,12 +2767,10 @@ def trabajo_detalle(request, pk):
             is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
             acciones_json = request.POST.get("acciones_json", "")
             
-            print(f"DEBUG: acciones_json recibido: {acciones_json}")
             
             if acciones_json:
                 try:
                     acciones_data = json.loads(acciones_json)
-                    print(f"DEBUG: acciones_data parseado: {acciones_data}")
                     acciones_creadas = 0
                     detalles = []
                     
@@ -2875,10 +2784,9 @@ def trabajo_detalle(request, pk):
                             # Convertir a Decimal de forma segura
                             try:
                                 precio_mano_obra = Decimal(str(precio_recibido))
-                            except:
+                            except (TypeError, ValueError, ArithmeticError):
                                 precio_mano_obra = Decimal('0')
                             
-                            print(f"DEBUG: Procesando - componente_id: {componente_id}, accion_id: {accion_id}, precio_recibido: {precio_recibido}, precio_decimal: {precio_mano_obra}, cantidad: {cantidad}")
                             
                             componente = Componente.objects.get(id=componente_id)
                             accion = Accion.objects.get(id=accion_id)
@@ -2892,23 +2800,19 @@ def trabajo_detalle(request, pk):
                                     ).first()
                                     if comp_accion and comp_accion.precio_mano_obra:
                                         precio_mano_obra = comp_accion.precio_mano_obra
-                                        print(f"DEBUG: ✅ Precio obtenido de ComponenteAccion: {precio_mano_obra}")
                                 except ComponenteAccion.DoesNotExist:
-                                    print(f"DEBUG: ⚠️ No se encontró ComponenteAccion para obtener precio")
+                                    pass
                             
-                            TrabajoAccion.objects.create(
-                                trabajo=trabajo,
-                                componente=componente,
-                                accion=accion,
+                            from .services.work_stock import agregar_accion_trabajo
+                            agregar_accion_trabajo(
+                                trabajo, componente, accion,
                                 precio_mano_obra=precio_mano_obra,
-                                cantidad=cantidad
+                                cantidad=cantidad,
                             )
                             acciones_creadas += 1
                             detalles.append(f"{componente.nombre} → {accion.nombre} (x{cantidad})")
-                            print(f"DEBUG: ✅ Acción creada exitosamente con precio: {precio_mano_obra}")
                                 
                         except (ValueError, Componente.DoesNotExist, Accion.DoesNotExist) as e:
-                            print(f"DEBUG: Error en acción individual: {str(e)}")
                             continue
                     
                     if acciones_creadas > 0:
@@ -2925,7 +2829,6 @@ def trabajo_detalle(request, pk):
                                     messages.warning(request, "No se agregaron acciones. Verifica la selección.")
                         
                 except json.JSONDecodeError as e:
-                    print(f"DEBUG: Error JSON: {str(e)}")
                     if is_ajax:
                         return JsonResponse({
                             "ok": False,
@@ -2935,7 +2838,6 @@ def trabajo_detalle(request, pk):
                     if config.ver_mensajes:
                         messages.error(request, f"Error al procesar las acciones: {str(e)}")
                 except Exception as e:
-                    print(f"DEBUG: Error general: {str(e)}")
                     if is_ajax:
                         return JsonResponse({
                             "ok": False,
@@ -2955,7 +2857,6 @@ def trabajo_detalle(request, pk):
                             "detalle": detalle
                         })
             else:
-                print("DEBUG: No se recibió acciones_json")
                 if is_ajax:
                     return JsonResponse({
                         "ok": False,
@@ -3083,14 +2984,10 @@ def trabajo_detalle(request, pk):
                     repuesto = Repuesto.objects.get(id=repuesto_id)
                     
                     precio_final = precio_unitario or repuesto.precio_venta or 0
-                    subtotal = float(precio_final) * int(cantidad)
-                    
-                    TrabajoRepuesto.objects.create(
-                        trabajo=trabajo,
-                        repuesto=repuesto,
-                        cantidad=cantidad,
+                    from .services.work_stock import agregar_repuesto_trabajo
+                    agregar_repuesto_trabajo(
+                        trabajo, repuesto=repuesto, cantidad=cantidad,
                         precio_unitario=precio_final,
-                        subtotal=subtotal
                     )
                     config = AdministracionTaller.get_configuracion_activa()
                     if config.ver_mensajes:
@@ -3112,15 +3009,10 @@ def trabajo_detalle(request, pk):
                     repuesto_externo = RepuestoExterno.objects.get(id=repuesto_externo_id)
                     
                     precio_unitario = repuesto_externo.precio_referencial
-                    subtotal = float(precio_unitario) * int(cantidad)
-                    
-                    TrabajoRepuesto.objects.create(
-                        trabajo=trabajo,
-                        repuesto=None,
-                        repuesto_externo=repuesto_externo,
-                        cantidad=cantidad,
-                        precio_unitario=precio_unitario,
-                        subtotal=subtotal
+                    from .services.work_stock import agregar_repuesto_trabajo
+                    agregar_repuesto_trabajo(
+                        trabajo, repuesto_externo=repuesto_externo,
+                        cantidad=cantidad, precio_unitario=precio_unitario,
                     )
                     
                     # Incrementar contador de uso
@@ -3145,7 +3037,8 @@ def trabajo_detalle(request, pk):
                 try:
                     rep = TrabajoRepuesto.objects.get(id=rep_id, trabajo=trabajo)
                     if rep.completado and rep.repuesto:
-                        _devolver_stock_repuesto_trabajo(rep)
+                        from .services.work_stock import devolver_repuesto_trabajo
+                        devolver_repuesto_trabajo(rep)
                     rep.delete()
                     ok_count += 1
                 except TrabajoRepuesto.DoesNotExist:
@@ -3161,7 +3054,8 @@ def trabajo_detalle(request, pk):
                         rep.fecha = timezone.now()
                         rep.save()
                         if rep.repuesto:
-                            _descontar_stock_repuesto_trabajo(rep)
+                            from .services.work_stock import descontar_repuesto_trabajo
+                            descontar_repuesto_trabajo(rep)
                         ok_count += 1
                 except TrabajoRepuesto.DoesNotExist:
                     pass
@@ -3173,7 +3067,8 @@ def trabajo_detalle(request, pk):
                     rep = TrabajoRepuesto.objects.get(id=rep_id, trabajo=trabajo)
                     if rep.completado:
                         if rep.repuesto:
-                            _devolver_stock_repuesto_trabajo(rep)
+                            from .services.work_stock import devolver_repuesto_trabajo
+                            devolver_repuesto_trabajo(rep)
                         rep.completado = False
                         rep.fecha = None
                         rep.save()
@@ -3187,17 +3082,9 @@ def trabajo_detalle(request, pk):
         # 🔹 Toggle repuesto completado / pendiente (CON ACTUALIZACIÓN DE STOCK)
         elif "toggle_repuesto" in request.POST:
             repuesto_id = request.POST.get("repuesto_id")
-            print(f"\n{'='*80}")
-            print(f"🔄 TOGGLE REPUESTO - ID: {repuesto_id}")
-            print(f"{'='*80}")
             
             try:
                 repuesto_trabajo = TrabajoRepuesto.objects.get(id=repuesto_id, trabajo=trabajo)
-                print(f"📦 Repuesto encontrado: {repuesto_trabajo}")
-                print(f"📦 Repuesto interno: {repuesto_trabajo.repuesto}")
-                print(f"📦 Repuesto externo: {repuesto_trabajo.repuesto_externo}")
-                print(f"📦 Estado anterior: {repuesto_trabajo.completado}")
-                print(f"📦 Cantidad: {repuesto_trabajo.cantidad}")
                 
                 # Guardar estado anterior para saber si aumentar o disminuir stock
                 estado_anterior = repuesto_trabajo.completado
@@ -3205,14 +3092,11 @@ def trabajo_detalle(request, pk):
                 # Cambiar el estado
                 repuesto_trabajo.completado = not repuesto_trabajo.completado
                 repuesto_trabajo.save()
-                print(f"✅ Nuevo estado guardado: {repuesto_trabajo.completado}")
                 
                 # ACTUALIZAR STOCK SOLO SI ES REPUESTO DEL INVENTARIO PROPIO
                 if repuesto_trabajo.repuesto:  # Solo si es del inventario, no externo
                     from .models import RepuestoEnStock
                     
-                    print(f"🔍 Buscando stock para repuesto ID: {repuesto_trabajo.repuesto.id}")
-                    print(f"🔍 Nombre del repuesto: {repuesto_trabajo.repuesto.nombre}")
                     
                     try:
                         # 🔥 BÚSQUEDA CONSISTENTE: Solo por repuesto y depósito principal
@@ -3221,33 +3105,21 @@ def trabajo_detalle(request, pk):
                             deposito='bodega-principal'
                         ).first()
                         
-                        print(f"🔍 Buscando stock en bodega-principal...")
-                        if stock_item:
-                            print(f"   ✅ Stock encontrado - ID: {stock_item.id}, Stock: {stock_item.stock}, Reservado: {stock_item.reservado}")
-                        
                         if stock_item:
                             stock_anterior = stock_item.stock
                             repuesto_stock_anterior = repuesto_trabajo.repuesto.stock
-                            print(f"✅ Stock encontrado - Depósito: {stock_item.deposito}")
-                            print(f"📊 Stock en RepuestoEnStock ANTES: {stock_anterior}")
-                            print(f"📊 Stock en Repuesto ANTES: {repuesto_stock_anterior}")
                             
                             cantidad = repuesto_trabajo.cantidad or 0
-                            print(f"📦 Cantidad a procesar: {cantidad}")
                             
                             if repuesto_trabajo.completado and not estado_anterior:
                                 # Se marcó como completado: DESCONTAR del stock
-                                stock_item.stock = (stock_item.stock or 0) - cantidad
-                                stock_item.save()
+                                from .services.stock import descontar_stock
+                                stock_item = descontar_stock(
+                                    stock_item, cantidad, request.user,
+                                    f"Trabajo #{trabajo.id} - instalación de repuesto {repuesto_trabajo.id}",
+                                )
+                                repuesto_obj = stock_item.repuesto
                                 
-                                # 🔥 SINCRONIZAR con Repuesto.stock
-                                repuesto_obj = repuesto_trabajo.repuesto
-                                repuesto_obj.stock = (repuesto_obj.stock or 0) - cantidad
-                                repuesto_obj.save()
-                                
-                                print(f"➖ DESCUENTO APLICADO en RepuestoEnStock: {stock_anterior} - {cantidad} = {stock_item.stock}")
-                                print(f"➖ DESCUENTO APLICADO en Repuesto: {repuesto_stock_anterior} - {cantidad} = {repuesto_obj.stock}")
-                                print(f"✅ Stock actualizado en AMBAS tablas (RepuestoEnStock Y Repuesto)")
                                 config = AdministracionTaller.get_configuracion_activa()
                                 if config.ver_mensajes:
                                     messages.success(
@@ -3256,17 +3128,15 @@ def trabajo_detalle(request, pk):
                                     )
                             elif not repuesto_trabajo.completado and estado_anterior:
                                 # Se desmarcó: DEVOLVER al stock
-                                stock_item.stock = (stock_item.stock or 0) + cantidad
-                                stock_item.save()
+                                from .services.stock import ajustar_stock
+                                stock_item = ajustar_stock(
+                                    stock_item, cantidad, 'entrada',
+                                    f"Devolución de trabajo #{trabajo.id}",
+                                    f"TRABAJO-{trabajo.id}-REPUESTO-{repuesto_trabajo.id}-DEVOLUCION",
+                                    request.user,
+                                )
+                                repuesto_obj = stock_item.repuesto
                                 
-                                # 🔥 SINCRONIZAR con Repuesto.stock
-                                repuesto_obj = repuesto_trabajo.repuesto
-                                repuesto_obj.stock = (repuesto_obj.stock or 0) + cantidad
-                                repuesto_obj.save()
-                                
-                                print(f"➕ DEVOLUCIÓN APLICADA en RepuestoEnStock: {stock_anterior} + {cantidad} = {stock_item.stock}")
-                                print(f"➕ DEVOLUCIÓN APLICADA en Repuesto: {repuesto_stock_anterior} + {cantidad} = {repuesto_obj.stock}")
-                                print(f"✅ Stock restaurado en AMBAS tablas (RepuestoEnStock Y Repuesto)")
                                 config = AdministracionTaller.get_configuracion_activa()
                                 if config.ver_mensajes:
                                     messages.success(
@@ -3274,7 +3144,6 @@ def trabajo_detalle(request, pk):
                                         f"↩️ Repuesto desmarcado. Stock restaurado: {stock_item.repuesto.nombre} (Stock anterior: {repuesto_stock_anterior}, Stock actual: {repuesto_obj.stock})"
                                     )
                             else:
-                                print(f"⚠️ No se requiere cambio de stock (estado no cambió de pendiente→completado o viceversa)")
                                 config = AdministracionTaller.get_configuracion_activa()
                                 if config.ver_mensajes:
                                     messages.info(
@@ -3283,7 +3152,6 @@ def trabajo_detalle(request, pk):
                                     )
                         else:
                             # No hay stock registrado, solo cambiar estado sin actualizar inventario
-                            print(f"⚠️ NO SE ENCONTRÓ STOCK para repuesto ID: {repuesto_trabajo.repuesto.id}")
                             config = AdministracionTaller.get_configuracion_activa()
                             if config.ver_mensajes:
                                 messages.warning(
@@ -3291,15 +3159,11 @@ def trabajo_detalle(request, pk):
                                     f"⚠️ Estado cambiado a {'completado' if repuesto_trabajo.completado else 'pendiente'}. No se encontró stock del repuesto '{repuesto_trabajo.repuesto.nombre}' en RepuestoEnStock."
                                 )
                     except Exception as e:
-                        print(f"❌ ERROR actualizando stock: {str(e)}")
-                        import traceback
-                        print(traceback.format_exc())
                         config = AdministracionTaller.get_configuracion_activa()
                         if config.ver_mensajes:
                             messages.error(request, f"❌ Error actualizando stock: {str(e)}")
                 else:
                     # Es un repuesto externo, solo cambiar estado
-                    print(f"🌐 Repuesto externo detectado: {repuesto_trabajo.repuesto_externo}")
                     config = AdministracionTaller.get_configuracion_activa()
                     if config.ver_mensajes:
                         messages.success(
@@ -3307,17 +3171,12 @@ def trabajo_detalle(request, pk):
                             f"🌐 Repuesto externo marcado como {'completado' if repuesto_trabajo.completado else 'pendiente'}: {repuesto_trabajo.repuesto_externo.nombre if repuesto_trabajo.repuesto_externo else 'Sin nombre'}"
                         )
                 
-                print(f"{'='*80}\n")
                     
             except TrabajoRepuesto.DoesNotExist:
-                print(f"❌ TrabajoRepuesto NO ENCONTRADO: ID {repuesto_id}")
                 config = AdministracionTaller.get_configuracion_activa()
                 if config.ver_mensajes:
                     messages.error(request, "Repuesto no encontrado.")
             except Exception as e:
-                print(f"❌ ERROR GENERAL en toggle_repuesto: {str(e)}")
-                import traceback
-                print(traceback.format_exc())
                 config = AdministracionTaller.get_configuracion_activa()
                 if config.ver_mensajes:
                     messages.error(request, f"❌ Error: {str(e)}")
@@ -3327,20 +3186,14 @@ def trabajo_detalle(request, pk):
         elif "eliminar_repuesto" in request.POST:
             config = AdministracionTaller.get_configuracion_activa()
             repuesto_id = request.POST.get("repuesto_id")
-            print(f"\n{'='*80}")
-            print(f"🗑️ ELIMINAR REPUESTO - ID: {repuesto_id}")
-            print(f"{'='*80}")
             
             try:
                 repuesto_trabajo = TrabajoRepuesto.objects.get(id=repuesto_id, trabajo=trabajo)
-                print(f"📦 Repuesto a eliminar: {repuesto_trabajo}")
-                print(f"📦 Estado completado: {repuesto_trabajo.completado}")
                 
                 # Si el repuesto estaba completado, devolver al stock antes de eliminar
                 if repuesto_trabajo.completado and repuesto_trabajo.repuesto:
                     from .models import RepuestoEnStock
                     
-                    print(f"↩️ Repuesto completado detectado, devolviendo stock...")
                     
                     try:
                         # 🔥 BÚSQUEDA CONSISTENTE: Solo por repuesto y depósito principal
@@ -3354,18 +3207,15 @@ def trabajo_detalle(request, pk):
                             stock_anterior_enstock = stock_item.stock
                             stock_anterior_repuesto = repuesto_trabajo.repuesto.stock
                             
-                            # Devolver a RepuestoEnStock
-                            stock_item.stock = (stock_item.stock or 0) + cantidad
-                            stock_item.save()
+                            from .services.stock import ajustar_stock
+                            stock_item = ajustar_stock(
+                                stock_item, cantidad, 'entrada',
+                                f"Devolución por eliminación de trabajo #{trabajo.id}",
+                                f"TRABAJO-{trabajo.id}-REPUESTO-{repuesto_trabajo.id}-ELIMINACION",
+                                request.user,
+                            )
+                            repuesto_obj = stock_item.repuesto
                             
-                            # 🔥 SINCRONIZAR con Repuesto.stock
-                            repuesto_obj = repuesto_trabajo.repuesto
-                            repuesto_obj.stock = (repuesto_obj.stock or 0) + cantidad
-                            repuesto_obj.save()
-                            
-                            print(f"➕ Stock devuelto en RepuestoEnStock: {stock_anterior_enstock} + {cantidad} = {stock_item.stock}")
-                            print(f"➕ Stock devuelto en Repuesto: {stock_anterior_repuesto} + {cantidad} = {repuesto_obj.stock}")
-                            print(f"✅ Stock restaurado en AMBAS tablas")
                             
                             if config.ver_mensajes:
                                 messages.success(
@@ -3373,27 +3223,20 @@ def trabajo_detalle(request, pk):
                                     f"🗑️ Repuesto eliminado. Stock devuelto: {stock_item.repuesto.nombre} (Stock: {repuesto_obj.stock})"
                                 )
                         else:
-                            print(f"⚠️ No se encontró stock para devolver")
                             if config.ver_mensajes:
                                 messages.success(request, "🗑️ Repuesto eliminado (sin stock para devolver).")
                     except Exception as e:
-                        print(f"❌ Error devolviendo stock: {str(e)}")
                         import traceback
-                        print(traceback.format_exc())
                         if config.ver_mensajes:
                             messages.error(request, f"Error devolviendo stock: {str(e)}")
                         # Aún así eliminar el repuesto
                 else:
-                    print(f"ℹ️ Repuesto NO estaba completado o es externo, no hay stock que devolver")
                     if config.ver_mensajes:
                         messages.success(request, "🗑️ Repuesto eliminado.")
                 
                 repuesto_trabajo.delete()
-                print(f"✅ Repuesto eliminado de la base de datos")
-                print(f"{'='*80}\n")
                 
             except TrabajoRepuesto.DoesNotExist:
-                print(f"❌ TrabajoRepuesto NO ENCONTRADO: ID {repuesto_id}")
                 config = AdministracionTaller.get_configuracion_activa()
                 if config.ver_mensajes:
                     messages.error(request, "Repuesto no encontrado.")
@@ -3404,12 +3247,10 @@ def trabajo_detalle(request, pk):
             import json
             repuestos_json = request.POST.get("repuestos_json", "")
             
-            print(f"DEBUG: repuestos_json recibido: {repuestos_json}")
             
             if repuestos_json:
                 try:
                     repuestos_data = json.loads(repuestos_json)
-                    print(f"DEBUG: repuestos_data parseado: {repuestos_data}")
                     repuestos_creados = 0
                     
                     for repuesto_data in repuestos_data:
@@ -3418,7 +3259,6 @@ def trabajo_detalle(request, pk):
                             cantidad = int(repuesto_data.get("cantidad", 1))
                             precio_unitario = float(repuesto_data.get("precio_unitario", 0))
                             
-                            print(f"DEBUG: Procesando - repuesto_id: {repuesto_id}, cantidad: {cantidad}, precio: {precio_unitario}")
                             
                             repuesto = Repuesto.objects.get(id=repuesto_id)
                             
@@ -3427,20 +3267,15 @@ def trabajo_detalle(request, pk):
                                 trabajo=trabajo,
                                 repuesto=repuesto
                             ).exists():
-                                TrabajoRepuesto.objects.create(
-                                    trabajo=trabajo,
-                                    repuesto=repuesto,
-                                    cantidad=cantidad,
+                                from .services.work_stock import agregar_repuesto_trabajo
+                                agregar_repuesto_trabajo(
+                                    trabajo, repuesto=repuesto, cantidad=cantidad,
                                     precio_unitario=precio_unitario,
-                                    subtotal=cantidad * precio_unitario
                                 )
                                 repuestos_creados += 1
-                                print(f"DEBUG: Repuesto creado exitosamente")
                             else:
-                                print(f"DEBUG: Repuesto ya existe, saltando")
-                                
+                                continue
                         except (ValueError, Repuesto.DoesNotExist) as e:
-                            print(f"DEBUG: Error en repuesto individual: {str(e)}")
                             continue
                     
                     config = AdministracionTaller.get_configuracion_activa()
@@ -3452,15 +3287,12 @@ def trabajo_detalle(request, pk):
                             messages.info(request, "No se agregaron repuestos nuevos (posiblemente ya existían).")
                         
                 except json.JSONDecodeError as e:
-                    print(f"DEBUG: Error JSON: {str(e)}")
                     if config.ver_mensajes:
                         messages.error(request, f"Error al procesar los repuestos: {str(e)}")
                 except Exception as e:
-                    print(f"DEBUG: Error general: {str(e)}")
                     if config.ver_mensajes:
                         messages.error(request, f"Error al agregar los repuestos: {str(e)}")
             else:
-                print("DEBUG: No se recibió repuestos_json")
                 config = AdministracionTaller.get_configuracion_activa()
                 if config.ver_mensajes:
                     messages.error(request, "No se recibieron repuestos para agregar.")
@@ -3472,12 +3304,10 @@ def trabajo_detalle(request, pk):
             import json
             insumos_json = request.POST.get("insumos_json", "")
             
-            print(f"DEBUG: insumos_json recibido: {insumos_json}")
             
             if insumos_json:
                 try:
                     insumos_data = json.loads(insumos_json)
-                    print(f"DEBUG: insumos_data parseado: {insumos_data}")
                     insumos_creados = 0
                     
                     for insumo_data in insumos_data:
@@ -3486,7 +3316,6 @@ def trabajo_detalle(request, pk):
                             cantidad = int(insumo_data.get("cantidad", 1))
                             precio_unitario = float(insumo_data.get("precio_unitario", 0))
                             
-                            print(f"DEBUG: Procesando insumo - repuesto_id: {repuesto_id}, cantidad: {cantidad}, precio: {precio_unitario}")
                             
                             repuesto = Repuesto.objects.get(id=repuesto_id)
                             
@@ -3495,20 +3324,15 @@ def trabajo_detalle(request, pk):
                                 trabajo=trabajo,
                                 repuesto=repuesto
                             ).exists():
-                                TrabajoRepuesto.objects.create(
-                                    trabajo=trabajo,
-                                    repuesto=repuesto,
-                                    cantidad=cantidad,
+                                from .services.work_stock import agregar_repuesto_trabajo
+                                agregar_repuesto_trabajo(
+                                    trabajo, repuesto=repuesto, cantidad=cantidad,
                                     precio_unitario=precio_unitario,
-                                    subtotal=cantidad * precio_unitario
                                 )
                                 insumos_creados += 1
-                                print(f"DEBUG: Insumo creado exitosamente")
                             else:
-                                print(f"DEBUG: Insumo ya existe, saltando")
-                                
+                                continue
                         except (ValueError, Repuesto.DoesNotExist) as e:
-                            print(f"DEBUG: Error en insumo individual: {str(e)}")
                             continue
                     
                     if insumos_creados > 0:
@@ -3521,17 +3345,14 @@ def trabajo_detalle(request, pk):
                             messages.info(request, "No se agregaron insumos nuevos (posiblemente ya existían).")
                         
                 except json.JSONDecodeError as e:
-                    print(f"DEBUG: Error JSON: {str(e)}")
                     config = AdministracionTaller.get_configuracion_activa()
                     if config.ver_mensajes:
                         messages.error(request, f"Error al procesar los insumos: {str(e)}")
                 except Exception as e:
-                    print(f"DEBUG: Error general: {str(e)}")
                     config = AdministracionTaller.get_configuracion_activa()
                     if config.ver_mensajes:
                         messages.error(request, f"Error al agregar los insumos: {str(e)}")
             else:
-                print("DEBUG: No se recibió insumos_json")
                 config = AdministracionTaller.get_configuracion_activa()
                 if config.ver_mensajes:
                     messages.error(request, "No se recibieron insumos para agregar.")
@@ -3574,14 +3395,13 @@ def trabajo_detalle(request, pk):
             nuevo_estado = request.POST.get("cambiar_estado")
             if nuevo_estado in dict(Trabajo.ESTADOS).keys():
                 estado_anterior = trabajo.estado
-                trabajo.estado = nuevo_estado
-                if nuevo_estado == "trabajando" and not trabajo.fecha_inicio:
-                    trabajo.fecha_inicio = timezone.now()
-                if nuevo_estado in ["completado", "entregado"]:
-                    trabajo.fecha_fin = timezone.now()
-                else:
-                    trabajo.fecha_fin = None
-                trabajo.save()
+                try:
+                    trabajo.cambiar_estado(nuevo_estado)
+                except ValueError:
+                    config = AdministracionTaller.get_configuracion_activa()
+                    if config.ver_mensajes:
+                        messages.error(request, "Transición de estado no permitida.")
+                    return redirect_with_tab("resumen")
                 
                 # Registrar evento de auditoría
                 registrar_cambio_estado(trabajo, estado_anterior, nuevo_estado, request=request)
@@ -4128,6 +3948,8 @@ def panel_principal(request):
     return render(request, "car/panel_definitivo.html", context)
 
 
+@login_required
+@requiere_permiso('pos')
 def venta_crear(request):
     today = datetime.date.today()
     fecha_str = request.GET.get("fecha")
@@ -4153,55 +3975,9 @@ def venta_crear(request):
             if config.ver_mensajes:
                 messages.error(request, "Corrige los datos del formulario.")
         else:
-            # Guardar la venta + items
-            with transaction.atomic():
-                venta = form.save(commit=False)
-                venta.usuario = request.user
-                venta.total = Decimal("0")
-                venta.save()
-
-                total = Decimal("0")
-                for idx, it in enumerate(cart):
-                    try:
-                        repuesto_stock_id = int(it.get("repuesto_stock_id"))
-                        cantidad = int(it.get("cantidad", 1))
-                        precio_unitario = round(Decimal(str(it.get("precio_unitario", "0"))))
-                    except (ValueError, TypeError, InvalidOperation) as e:
-                        raise ValueError(f"Datos inválidos en item #{idx+1}: {e}")
-
-                    rs = get_object_or_404(RepuestoEnStock, pk=repuesto_stock_id)
-
-                    # validar stock disponible
-                    if rs.disponible < cantidad:
-                        raise ValueError(f"Stock insuficiente para {rs.repuesto.nombre} (Disponible: {rs.disponible})")
-
-                    subtotal = precio_unitario * cantidad
-
-                    VentaItem.objects.create(
-                        venta=venta,
-                        repuesto_stock=rs,
-                        cantidad=cantidad,
-                        precio_unitario=precio_unitario,
-                        subtotal=subtotal
-                    )
-
-                    # actualizar stock y movimiento
-                    rs.stock = rs.stock - cantidad
-                    rs.save(update_fields=["stock", "ultima_actualizacion"])
-                    StockMovimiento.objects.create(
-                        repuesto_stock=rs,
-                        tipo="salida",
-                        cantidad=cantidad,
-                        motivo=f"Venta #{venta.id}",
-                        referencia=str(venta.id),
-                        usuario=request.user
-                    )
-
-                    total += subtotal
-
-                venta.total = total
-                venta.pagado = True
-                venta.save(update_fields=["total", "pagado"])
+            from .services.sales import crear_venta
+            venta = crear_venta(form, cart, request.user)
+            total = venta.total
 
             config = AdministracionTaller.get_configuracion_activa()
             if config.ver_mensajes:
@@ -4233,13 +4009,22 @@ def venta_crear(request):
 
 
 
+@login_required
+@requiere_permiso('pos')
 def venta_detalle(request, pk):
-    venta = get_object_or_404(Venta, pk=pk)
+    ventas_qs = Venta.objects.all()
+    if not request.permisos.get('es_admin'):
+        ventas_qs = ventas_qs.filter(usuario=request.user)
+    venta = get_object_or_404(ventas_qs, pk=pk)
     return render(request, "ventas/venta_detalle.html", {"venta": venta})
 
 
+@login_required
+@requiere_permiso('pos')
 def ventas_historial(request):
     ventas = Venta.objects.all().order_by("-fecha")
+    if not request.permisos.get('es_admin'):
+        ventas = ventas.filter(usuario=request.user)
     return render(request, "ventas/ventas_historial.html", {"ventas": ventas})
 
 
@@ -4286,7 +4071,6 @@ def repuesto_lookup(request):
                 "precio_venta": r.precio_venta
             })
 
-    print("results :",{"results": results})
     return JsonResponse({"results": results})
 
 
@@ -4370,7 +4154,6 @@ def buscar_insumos(request):
         return JsonResponse({'insumos': insumos})
         
     except Exception as e:
-        print(f"Error buscando insumos: {e}")
         return JsonResponse({'insumos': [], 'error': str(e)})
 
 
@@ -4482,7 +4265,7 @@ class RepuestoCreateView(CreateView):
             self.request.session['repuesto_created'] = True
         except Exception as e:
             # Log del error pero no interrumpir el flujo
-            print(f"Error creando clon en RepuestoEnStock: {e}")
+            pass
         
         return response
 
@@ -4515,7 +4298,7 @@ class RepuestoUpdateView(UpdateView):
             self.request.session['repuesto_updated'] = True
         except Exception as e:
             # Log del error pero no interrumpir el flujo
-            print(f"Error sincronizando con RepuestoEnStock: {e}")
+            pass
         
         return response
 
@@ -4672,14 +4455,11 @@ def sincronizar_stock_repuestos():
             if repuesto.stock != stock_total:
                 repuestos_con_stock_diferente.append(repuesto)
     
-    print(f"Repuestos sin registro en RepuestoEnStock: {repuestos_sin_stock.count()}")
-    print(f"Repuestos con stock desincronizado: {len(repuestos_con_stock_diferente)}")
     
     # Crear registros faltantes
     for repuesto in repuestos_sin_stock:
         if repuesto.stock and repuesto.stock > 0:
             clone_repuesto_to_stock(repuesto)
-            print(f"Creado RepuestoEnStock para: {repuesto.nombre} (stock: {repuesto.stock})")
     
     # Sincronizar stocks diferentes
     for repuesto in repuestos_con_stock_diferente:
@@ -4687,7 +4467,6 @@ def sincronizar_stock_repuestos():
         if stock_obj:
             stock_obj.stock = repuesto.stock
             stock_obj.save()
-            print(f"Sincronizado stock para: {repuesto.nombre} (stock: {repuesto.stock})")
 
 
 # === Vistas: crear/editar Repuesto clonando a RepuestoEnStock ===
@@ -4721,6 +4500,8 @@ def administracion_taller(request):
 # VISTAS PARA CLIENTE_TALLER
 # ======================
 
+@method_decorator(login_required, name='dispatch')
+@method_decorator(requiere_permiso('crear_clientes'), name='dispatch')
 class ClienteTallerListView(ListView):
     """Lista de clientes del taller con RUT como identificador único"""
     model = Cliente_Taller
@@ -4747,6 +4528,8 @@ class ClienteTallerListView(ListView):
         return context
 
 
+@method_decorator(login_required, name='dispatch')
+@method_decorator(requiere_permiso('crear_clientes'), name='dispatch')
 class ClienteTallerCreateView(CreateView):
     """Crear nuevo cliente del taller"""
     model = Cliente_Taller
@@ -4770,6 +4553,8 @@ class ClienteTallerCreateView(CreateView):
         return super().form_valid(form)
 
 
+@method_decorator(login_required, name='dispatch')
+@method_decorator(requiere_permiso('crear_clientes'), name='dispatch')
 class ClienteTallerUpdateView(UpdateView):
     """Editar cliente del taller existente"""
     model = Cliente_Taller
@@ -4792,6 +4577,8 @@ class ClienteTallerUpdateView(UpdateView):
         return super().form_valid(form)
 
 
+@method_decorator(login_required, name='dispatch')
+@method_decorator(requiere_permiso('crear_clientes'), name='dispatch')
 class ClienteTallerDeleteView(DeleteView):
     """Eliminar cliente del taller (soft delete)"""
     model = Cliente_Taller
@@ -5608,7 +5395,7 @@ def agregar_repuesto_externo(request):
             # Convertir precio
             try:
                 precio = Decimal(precio_referencial)
-            except:
+            except (TypeError, ValueError, ArithmeticError):
                 precio = Decimal('0')
             
             # Crear repuesto externo
@@ -5677,7 +5464,7 @@ def agregar_repuesto_externo_rapido(request):
             # Convertir precio
             try:
                 precio = Decimal(precio_referencial)
-            except:
+            except (TypeError, ValueError, ArithmeticError):
                 precio = Decimal('0')
             
             # Crear repuesto externo
@@ -5712,4 +5499,3 @@ def bookmarklet_info(request):
     Página de información del bookmarklet
     """
     return render(request, 'car/bookmarklet_repuestos.html')
-

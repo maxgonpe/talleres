@@ -7,6 +7,9 @@ from django.utils.crypto import get_random_string
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.utils.timezone import now
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Mecanico(models.Model):
     ROLES_CHOICES = [
@@ -424,6 +427,16 @@ class Diagnostico(models.Model):
                     precio_unitario=dr.precio_unitario or 0,
                     subtotal=dr.subtotal or 0,
                 )
+                if dr.reservado and dr.repuesto_stock_id:
+                    from .services.stock import liberar_reserva
+                    liberar_reserva(
+                        dr.repuesto_stock,
+                        dr.cantidad,
+                        'Liberación por aprobación de diagnóstico',
+                        f'DIAG-{self.pk}-REPUESTO-{dr.pk}',
+                    )
+                    dr.reservado = False
+                    dr.save(update_fields=['reservado'])
 
             # Cambiar estado del diagnóstico
             self.estado = "aprobado"
@@ -711,11 +724,11 @@ class Repuesto(models.Model):
         )
         
         if registros_existentes.count() > 1:
-            print(f"⚠️ Encontrados {registros_existentes.count()} registros duplicados para {self.nombre}")
+            logger.warning("Registros de stock duplicados para repuesto=%s", self.pk)
             # Mantener solo el más reciente y eliminar los duplicados
             registro_principal = registros_existentes.order_by('-id').first()
             registros_duplicados = registros_existentes.exclude(id=registro_principal.id)
-            print(f"🗑️ Eliminando {registros_duplicados.count()} duplicados...")
+            logger.warning("Eliminando %s registros de stock duplicados", registros_duplicados.count())
             registros_duplicados.delete()
         
         # 🔥 CAMBIO CLAVE: get_or_create solo por repuesto y deposito (no incluir proveedor)
@@ -732,7 +745,7 @@ class Repuesto(models.Model):
         )
         
         if created:
-            print(f"✅ Creado nuevo registro RepuestoEnStock para {self.nombre}")
+            logger.info("Registro de stock creado para repuesto=%s", self.pk)
         
         # Actualizar el stock detallado para que coincida con el stock maestro
         stock_principal.stock = self.stock
@@ -743,7 +756,7 @@ class Repuesto(models.Model):
             stock_principal.proveedor = proveedor
         stock_principal.save()
         
-        print(f"🔄 Stock sincronizado: Repuesto.stock={self.stock} → RepuestoEnStock.stock={stock_principal.stock}")
+        logger.info("Stock sincronizado: repuesto=%s stock=%s", self.pk, self.stock)
 
 
 
@@ -863,6 +876,30 @@ class Trabajo(models.Model):
 
     def __str__(self):
         return f"Trabajo #{self.id} - {self.vehiculo}"
+
+    def cambiar_estado(self, nuevo_estado, momento=None):
+        """Aplica transiciones válidas y mantiene fechas coherentes."""
+        estados_validos = dict(self.ESTADOS)
+        if nuevo_estado not in estados_validos:
+            raise ValueError("Estado de trabajo inválido")
+        transiciones = {
+            "iniciado": {"trabajando"},
+            "trabajando": {"completado"},
+            "completado": {"entregado"},
+            "entregado": set(),
+        }
+        if nuevo_estado == self.estado:
+            return False
+        if nuevo_estado not in transiciones.get(self.estado, set()):
+            raise ValueError(f"No se puede pasar de {self.estado} a {nuevo_estado}")
+        momento = momento or now()
+        if nuevo_estado == "trabajando" and not self.fecha_inicio:
+            self.fecha_inicio = momento
+        if nuevo_estado in {"completado", "entregado"}:
+            self.fecha_fin = momento
+        self.estado = nuevo_estado
+        self.save(update_fields=["estado", "fecha_inicio", "fecha_fin"])
+        return True
 
     # ========================
     # TOTALES PRESUPUESTADOS (TODO)
@@ -1191,24 +1228,14 @@ def actualizar_stock_venta(venta):
     Debe llamarse dentro de una transacción atómica.
     """
     if not venta.pagado:
-        return  # Solo actualizar stock si la venta está pagada
-    
-    for item in venta.items.all():
-        # Verificar stock disponible antes de descontar
-        if not item.repuesto_stock.repuesto.tiene_stock_suficiente(item.cantidad):
-            raise ValueError(f"Stock insuficiente para {item.repuesto_stock.repuesto.nombre}")
-        
-        # Descontar stock
-        item.repuesto_stock.stock -= item.cantidad
-        item.repuesto_stock.save()
-        
-        # Registrar movimiento
-        StockMovimiento.objects.create(
-            repuesto_stock=item.repuesto_stock,
-            tipo="salida",
-            cantidad=item.cantidad,
-            motivo=f"Venta #{venta.id}",
-            usuario=venta.usuario
+        return
+    from .services.stock import descontar_stock
+    for item in venta.items.select_related('repuesto_stock').all():
+        descontar_stock(
+            item.repuesto_stock,
+            item.cantidad,
+            venta.usuario,
+            f"Venta #{venta.id} - item {item.pk}",
         )
 
 # ========================
@@ -1285,41 +1312,8 @@ def actualizar_stock_venta_pos(venta_pos):
     Actualiza el stock de forma segura después de confirmar una venta POS.
     Debe llamarse dentro de una transacción atómica.
     """
-    if not venta_pos.pagado:
-        return  # Solo actualizar stock si la venta está pagada
-    
-    for item in venta_pos.items.all():
-        # Verificar stock disponible antes de descontar
-        if not item.repuesto.tiene_stock_suficiente(item.cantidad):
-            raise ValueError(f"Stock insuficiente para {item.repuesto.nombre}")
-        
-        # 🔥 BÚSQUEDA CONSISTENTE: Buscar en bodega-principal
-        stock_disponible = RepuestoEnStock.objects.filter(
-            repuesto=item.repuesto,
-            deposito='bodega-principal',
-            stock__gte=item.cantidad
-        ).first()
-        
-        if stock_disponible:
-            # Descontar stock en RepuestoEnStock
-            stock_disponible.stock -= item.cantidad
-            stock_disponible.save()
-            
-            # 🔥 SINCRONIZAR: Descontar también en Repuesto.stock
-            repuesto_obj = item.repuesto
-            repuesto_obj.stock = (repuesto_obj.stock or 0) - item.cantidad
-            repuesto_obj.save()
-            
-            # Registrar movimiento
-            StockMovimiento.objects.create(
-                repuesto_stock=stock_disponible,
-                tipo="salida",
-                cantidad=item.cantidad,
-                motivo=f"Venta POS #{venta_pos.id}",
-                usuario=venta_pos.usuario
-            )
-        else:
-            raise ValueError(f"No hay stock disponible para {item.repuesto.nombre}")
+    from .services.stock import descontar_stock_venta_pos
+    return descontar_stock_venta_pos(venta_pos)
 
 
 class ConfiguracionPOS(models.Model):
@@ -1632,56 +1626,10 @@ class CompraItem(models.Model):
     
     def recibir_item(self, usuario=None):
         """Marca el item como recibido y actualiza el stock usando precio promedio ponderado"""
-        if not self.recibido:
-            print(f"\n{'='*80}")
-            print(f"📦 RECIBIENDO COMPRA - Item: {self.repuesto.nombre} x{self.cantidad}")
-            print(f"{'='*80}")
-            
-            self.recibido = True
-            self.fecha_recibido = now()
-            self.save()
-            print(f"✅ Item marcado como recibido")
-            
-            # Actualizar stock del repuesto usando el nuevo sistema unificado
-            repuesto = self.repuesto
-            print(f"📊 Stock ANTES de actualizar:")
-            print(f"   - Repuesto.stock: {repuesto.stock}")
-            
-            # Usar el nuevo método de actualización con precio promedio ponderado
-            # Este método YA sincroniza con RepuestoEnStock internamente
-            resultado = repuesto.actualizar_stock_y_precio(
-                cantidad_entrada=self.cantidad,
-                precio_compra=self.precio_unitario,
-                proveedor=self.compra.proveedor
-            )
-            
-            print(f"📊 Stock DESPUÉS de actualizar:")
-            print(f"   - Stock anterior: {resultado['stock_anterior']}")
-            print(f"   - Stock nuevo: {resultado['stock_nuevo']}")
-            print(f"   - Precio costo: ${resultado['precio_costo_nuevo']}")
-            print(f"   - Precio venta: ${resultado['precio_venta_nuevo']}")
-            
-            # Crear movimiento de stock para auditoría
-            # 🔥 SIMPLIFICADO: Solo buscar por repuesto y deposito (ya sincronizado arriba)
-            stock_principal = RepuestoEnStock.objects.filter(
-                repuesto=self.repuesto,
-                deposito='bodega-principal'
-            ).first()
-            
-            if stock_principal:
-                StockMovimiento.objects.create(
-                    repuesto_stock=stock_principal,
-                    tipo='entrada',
-                    cantidad=self.cantidad,
-                    motivo=f'Compra #{self.compra.numero_compra}',
-                    referencia=f'COMPRA-{self.compra.id}',
-                    usuario=usuario
-                )
-                print(f"📝 Movimiento de stock registrado")
-            else:
-                print(f"⚠️ No se encontró RepuestoEnStock para registrar movimiento")
-            
-            print(f"{'='*80}\n")
+        from .services.purchases import recibir_item_compra
+        recibido = recibir_item_compra(self, usuario=usuario)
+        self.recibido = recibido.recibido
+        self.fecha_recibido = recibido.fecha_recibido
 
 
 # ========================
@@ -2567,4 +2515,3 @@ class CierrePeriodo(models.Model):
             self.save()
         
         self.calcular_totales()
-

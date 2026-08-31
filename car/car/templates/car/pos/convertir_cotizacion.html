@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+  <h1>Convertir cotización #{{ cotizacion.id }}</h1>
+  <p>Total: ${{ cotizacion.total|floatformat:0 }}</p>
+  <form method="post">
+    {% csrf_token %}
+    <button class="btn btn-success" type="submit">Convertir a venta</button>
+    <a class="btn btn-secondary" href="{% url 'pos_cotizacion_detalle' cotizacion.id %}">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

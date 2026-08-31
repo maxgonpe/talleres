@@ -20,22 +20,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-o0_e96a7(r7t@_j_c0=!jp*gg06ww!23otsr8!yeb^1&0zc2o*'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'local-development-only-key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DJANGO_DEBUG', 'true').lower() == 'true'
 
 
 #ALLOWED_HOSTS = ['94.72.119.222']
-ALLOWED_HOSTS = [
-    'netgogo.cl',
-    'www.netgogo.cl',
-    '.netgogo.cl',
-    '94.72.119.222',
-    'localhost',
-    '127.0.0.1',
+ALLOWED_HOSTS = [host.strip() for host in os.environ.get(
+    'DJANGO_ALLOWED_HOSTS',
+    'netgogo.cl,www.netgogo.cl,.netgogo.cl,localhost,127.0.0.1',
+).split(',') if host.strip()]
+ALLOWED_HOSTS += [
     '172.18.0.11',  # IP del contenedor Docker
-    '*'  # Para desarrollo - remover en producción
 ]
 
 
@@ -95,12 +92,14 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
+DATABASES = {'default': {
+    'ENGINE': os.environ.get('DB_ENGINE', 'django.db.backends.sqlite3'),
+    'NAME': os.environ.get('DB_NAME', BASE_DIR / 'db.sqlite3'),
+    'USER': os.environ.get('DB_USER', ''),
+    'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+    'HOST': os.environ.get('DB_HOST', ''),
+    'PORT': os.environ.get('DB_PORT', ''),
+}}
 
 
 # Password validation
@@ -178,3 +177,24 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:8000',
     'https://*.netgogo.cl',
 ]
+
+# Production security defaults. Local development remains available over HTTP.
+SECURE_SSL_REDIRECT = not DEBUG
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+SECURE_HSTS_SECONDS = 31536000 if not DEBUG else 0
+SECURE_HSTS_INCLUDE_SUBDOMAINS = not DEBUG
+SECURE_HSTS_PRELOAD = not DEBUG
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = 'same-origin'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {'standard': {
+        'format': '{levelname} {asctime} {name} {message}',
+        'style': '{',
+    }},
+    'handlers': {'console': {'class': 'logging.StreamHandler', 'formatter': 'standard'}},
+    'root': {'handlers': ['console'], 'level': os.environ.get('DJANGO_LOG_LEVEL', 'INFO')},
+}

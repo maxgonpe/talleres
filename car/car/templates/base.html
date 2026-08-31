@@ -11,7 +11,7 @@
 
   <!-- PWA Meta Tags -->
   <meta name="description" content="Sistema de gestión para talleres mecánicos. Control de trabajos, clientes, repuestos y más.">
-  <meta name="theme-color" content="#0d6efd">
+  <meta name="theme-color" content="#17221f">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -32,6 +32,7 @@
   
   <!-- Optimización móvil - Botones grandes, fácil uso con dedos -->
   <link rel="stylesheet" href="{% static 'css/mobile-optimized.css' %}">
+  <link rel="stylesheet" href="{% static 'css/app-shell.css' %}">
   
   <!-- Menú inferior y FAB (se incluyen en los templates que los necesiten) -->
 
@@ -49,7 +50,7 @@
 
 <body class="d-flex flex-column min-vh-100">
   <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg mb-3 shadow-sm">
+  <nav class="navbar navbar-expand-lg shadow-sm">
     <div class="container-fluid">
       <a class="navbar-brand fw-bold" href="{% url 'panel_principal' %}">
         {% if config %}
@@ -67,25 +68,34 @@
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
           <li class="nav-item">
             <a class="nav-link fw-bold" href="{% url 'panel_principal' %}">
-              🏠 Panel Principal
+              Panel principal
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link" href="{% url 'ingreso_rapido' %}">
-              🔧 Diagnóstico
+              Diagnóstico
             </a>
           </li>
-          <li class="nav-item">
+          {% if request.permisos.trabajos or request.permisos.es_admin %}<li class="nav-item">
             <a class="nav-link" href="{% url 'lista_trabajos' %}">
-              📋 Trabajos
+              Trabajos
             </a>
+          </li>{% endif %}
+          <li class="nav-item">
+            <a class="nav-link" href="{% url 'repuesto_list' %}">Inventario</a>
           </li>
+          {% if request.permisos.pos or request.permisos.es_admin %}<li class="nav-item">
+            <a class="nav-link" href="{% url 'pos_principal' %}">POS</a>
+          </li>{% endif %}
+          {% if request.permisos.compras or request.permisos.es_admin %}<li class="nav-item">
+            <a class="nav-link" href="{% url 'compra_dashboard' %}">Compras</a>
+          </li>{% endif %}
         </ul>
         
         <!-- Botones de tema -->
         <ul class="navbar-nav ms-auto">
           <li class="nav-item d-flex align-items-center">
-            <span class="me-2">🎨</span>
+            <span class="me-2 visually-hidden">Tema</span>
             <span class="theme-btn piedra" title="Piedra (oscuro)" onclick="setTheme('piedra')"></span>
             <span class="theme-btn sand" title="Sand (claro)" onclick="setTheme('sand')"></span>
           </li>
@@ -95,7 +105,7 @@
         <ul class="navbar-nav ms-auto">
           {% if user.is_authenticated %}
             <li class="nav-item d-flex align-items-center me-2">
-              <span class="fw-bold">👋 {{ user.username }}</span>
+              <span class="fw-bold text-light">{{ user.username }}</span>
             </li>
             <li class="nav-item">
               <a href="{% url 'logout' %}" class="btn btn-outline-danger btn-sm">Salir</a>

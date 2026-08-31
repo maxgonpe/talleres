@@ -33,6 +33,8 @@ class PermisosMiddleware:
         """
         Obtiene los permisos del usuario desde el modelo Mecanico
         """
+        from .models import Mecanico
+
         try:
             mecanico = user.mecanico
             return {
@@ -51,9 +53,8 @@ class PermisosMiddleware:
                 'es_vendedor': mecanico.rol == 'vendedor',
                 'es_admin': mecanico.rol == 'admin',
             }
-        except:
-            # Si no tiene perfil de mecánico, crear uno por defecto
-            from .models import Mecanico
+        except Mecanico.DoesNotExist:
+            # Un usuario nuevo recibe solo los permisos operativos básicos.
             mecanico = Mecanico.objects.create(
                 user=user,
                 rol='mecanico'  # Rol por defecto
@@ -61,20 +62,19 @@ class PermisosMiddleware:
             return {
                 'diagnosticos': True,
                 'trabajos': True,
-                'pos': True,  # ← CAMBIADO: Permitir POS por defecto
-                'compras': True,  # ← CAMBIADO: Permitir compras por defecto
-                'inventario': True,  # ← CAMBIADO: Permitir inventario por defecto
-                'administracion': True,  # ← CAMBIADO: Permitir administración por defecto
+                'pos': False,
+                'compras': False,
+                'inventario': False,
+                'administracion': False,
                 'crear_clientes': True,
                 'crear_vehiculos': True,
-                'aprobar_diagnosticos': True,  # ← CAMBIADO: Permitir aprobar diagnósticos
-                'gestionar_usuarios': True,  # ← CAMBIADO: Permitir gestionar usuarios
+                'aprobar_diagnosticos': False,
+                'gestionar_usuarios': False,
                 'rol': 'mecanico',
                 'es_mecanico': True,
                 'es_vendedor': False,
                 'es_admin': False,
             }
-
 
 
 

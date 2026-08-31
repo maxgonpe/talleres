@@ -454,7 +454,8 @@
 <div class="trabajo-movil-container">
     <!-- Header Fijo -->
     <div class="trabajo-header-movil">
-        <h3>🔧 Trabajo #{{ trabajo.id }}</h3>
+        <div class="eyebrow">MODO MECÁNICO / {{ trabajo.estado|upper }}</div>
+        <h3>Trabajo #{{ trabajo.id }}</h3>
         <p>{{ trabajo.vehiculo }}</p>
         <p style="font-size: 0.85rem;">{{ trabajo.vehiculo.cliente.nombre }}</p>
         
@@ -1477,4 +1478,3 @@ document.addEventListener('keydown', function(e) {
 });
 </script>
 {% endblock %}
-

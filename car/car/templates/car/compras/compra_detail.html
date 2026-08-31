@@ -10,13 +10,14 @@
 {% block title %}Compra {{ compra.numero_compra }}{% endblock %}
 
 {% block content %}
-<div class="container-fluid mt-4">
+<div class="container-fluid mt-4 compras-container">
     <!-- Header -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <h2 class="mb-0">🛒 Compra {{ compra.numero_compra }}</h2>
+                    <div class="eyebrow">ABASTECIMIENTO / DETALLE</div>
+                    <h2 class="mb-0">Compra {{ compra.numero_compra }}</h2>
                     <p class="text-secondary">{{ compra.proveedor }} • {{ compra.fecha_compra|date:"d/m/Y" }}</p>
                 </div>
                 <div>

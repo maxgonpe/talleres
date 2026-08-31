@@ -8,9 +8,11 @@ from django.db.models import Q, Sum
 from django.utils import timezone
 from .models import Compra, CompraItem, Repuesto, RepuestoEnStock, StockMovimiento
 from .forms import CompraForm, CompraItemForm
+from .decorators import requiere_permiso
 
 
 @login_required
+@requiere_permiso('compras')
 def compra_list(request):
     """Lista todas las compras"""
     compras = Compra.objects.all().order_by('-fecha_compra', '-creado_en')
@@ -39,6 +41,7 @@ def compra_list(request):
 
 
 @login_required
+@requiere_permiso('compras')
 def compra_create(request):
     """Crear nueva compra"""
     if request.method == 'POST':
@@ -62,41 +65,15 @@ def compra_create(request):
 
 
 @login_required
+@requiere_permiso('compras')
 def compra_detail(request, pk):
     """Detalle de una compra"""
     compra = get_object_or_404(Compra, pk=pk)
     items = compra.items.all().order_by('repuesto__nombre')
     
-    # DEBUG: Verificar items en la vista
-    print(f"DEBUG VISTA - Compra ID: {compra.id}")
-    print(f"DEBUG VISTA - Items count: {items.count()}")
-    print(f"DEBUG VISTA - Items: {list(items)}")
-    print(f"DEBUG VISTA - Items type: {type(items)}")
-    print(f"DEBUG VISTA - Items empty: {items.exists()}")
-    
-    # DEBUG: Verificar la consulta directamente
-    items_directos = CompraItem.objects.filter(compra=compra)
-    print(f"DEBUG VISTA - Items directos count: {items_directos.count()}")
-    print(f"DEBUG VISTA - Items directos: {list(items_directos)}")
-    
-    # DEBUG: Verificar si hay items en la base de datos
-    from django.db import connection
-    with connection.cursor() as cursor:
-        cursor.execute("SELECT COUNT(*) FROM car_compraitem WHERE compra_id = %s", [compra.id])
-        count_db = cursor.fetchone()[0]
-        print(f"DEBUG VISTA - Items en DB: {count_db}")
-    
-    # Usar items directos en lugar de la relación
-    items = items_directos.order_by('repuesto__nombre')
-    
     # Formulario para agregar items
     if request.method == 'POST':
-        print(f"DEBUG FORMULARIO - Método: {request.method}")
-        print(f"DEBUG FORMULARIO - POST data: {request.POST}")
         form = CompraItemForm(request.POST)
-        print(f"DEBUG FORMULARIO - Form válido: {form.is_valid()}")
-        if not form.is_valid():
-            print(f"DEBUG FORMULARIO - Errores: {form.errors}")
         if form.is_valid():
             repuesto = form.cleaned_data['repuesto']
             
@@ -135,6 +112,7 @@ def compra_detail(request, pk):
 
 
 @login_required
+@requiere_permiso('compras')
 def compra_edit(request, pk):
     """Editar compra"""
     compra = get_object_or_404(Compra, pk=pk)
@@ -159,6 +137,7 @@ def compra_edit(request, pk):
 
 
 @login_required
+@requiere_permiso('compras')
 def compra_item_delete(request, pk):
     """Eliminar item de compra"""
     from .models import AdministracionTaller
@@ -188,6 +167,7 @@ def compra_item_delete(request, pk):
 
 
 @login_required
+@requiere_permiso('compras')
 def compra_item_edit(request, pk):
     """Editar item de compra"""
     item = get_object_or_404(CompraItem, pk=pk)
@@ -214,6 +194,7 @@ def compra_item_edit(request, pk):
 
 
 @login_required
+@requiere_permiso('compras')
 def compra_recibir(request, pk):
     """Recibir items de una compra"""
     compra = get_object_or_404(Compra, pk=pk)
@@ -225,7 +206,8 @@ def compra_recibir(request, pk):
             items_recibidos = 0
             
             for item in items_pendientes:
-                item.recibir_item(usuario=request.user)
+                from .services.purchases import recibir_item_compra
+                recibir_item_compra(item, usuario=request.user)
                 items_recibidos += 1
             
             # Actualizar estado de la compra
@@ -251,6 +233,7 @@ def compra_recibir(request, pk):
 
 
 @login_required
+@requiere_permiso('compras')
 def compra_item_recibir(request, pk):
     """Recibir un item específico"""
     item = get_object_or_404(CompraItem, pk=pk)
@@ -259,7 +242,8 @@ def compra_item_recibir(request, pk):
     if request.method == 'POST':
         if not item.recibido:
             with transaction.atomic():
-                item.recibir_item(usuario=request.user)
+                from .services.purchases import recibir_item_compra
+                recibir_item_compra(item, usuario=request.user)
                 from .models import AdministracionTaller
                 config = AdministracionTaller.get_configuracion_activa()
                 if config.ver_mensajes:
@@ -279,6 +263,7 @@ def compra_item_recibir(request, pk):
 
 
 @login_required
+@requiere_permiso('compras')
 def compra_confirmar(request, pk):
     """Confirmar compra"""
     compra = get_object_or_404(Compra, pk=pk)
@@ -298,6 +283,7 @@ def compra_confirmar(request, pk):
 
 
 @login_required
+@requiere_permiso('compras')
 def compra_cancelar(request, pk):
     """Cancelar compra"""
     compra = get_object_or_404(Compra, pk=pk)
@@ -317,6 +303,7 @@ def compra_cancelar(request, pk):
 
 
 @login_required
+@requiere_permiso('compras')
 def buscar_repuestos_compra(request):
     """API para buscar repuestos al agregar a compra"""
     query = request.GET.get('q', '').strip()
@@ -356,6 +343,7 @@ def buscar_repuestos_compra(request):
 
 
 @login_required
+@requiere_permiso('compras')
 def compra_dashboard(request):
     """Dashboard de compras"""
     # Obtener configuración del taller

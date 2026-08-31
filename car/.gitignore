@@ -1,7 +1,10 @@
 db.sqlite3
+/modcar/
+/otros/
 views.api.py
 __pycache__/
 *.pyc
+staticfiles/
+backups/
 car/migrations/__pycache__/
 settings_local.py
-

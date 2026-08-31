@@ -21,7 +21,7 @@ def obtener_datos_vehiculo(trabajo):
             'vehiculo_modelo': vehiculo.modelo if hasattr(vehiculo, 'modelo') else None,
             'cliente_nombre': cliente.nombre if cliente and hasattr(cliente, 'nombre') else None,
         }
-    except Exception:
+    except (AttributeError, TypeError, ValueError):
         return {
             'vehiculo_id': trabajo.vehiculo_id if hasattr(trabajo, 'vehiculo_id') else None,
             'vehiculo_placa': 'N/A',
@@ -39,7 +39,7 @@ def obtener_totales_trabajo(trabajo):
             'total_repuestos': float(trabajo.total_repuestos or 0),
             'total_general': float(trabajo.total_general or 0),
         }
-    except Exception:
+    except (AttributeError, TypeError, ValueError):
         return {
             'total_mano_obra': 0,
             'total_repuestos': 0,
@@ -354,4 +354,3 @@ def obtener_trabajos_para_pizarra(dias_desde_entrega=3):
     
     trabajos = Trabajo.objects.select_related("vehiculo", "vehiculo__cliente")
     return filtrar_trabajos_entregados_por_dias(trabajos, dias_desde_entrega)
-

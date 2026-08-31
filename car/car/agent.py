@@ -456,7 +456,7 @@ class Agent:
                     
                     try:
                         args = json.loads(args_str) if isinstance(args_str, str) else args_str
-                    except:
+                    except (json.JSONDecodeError, TypeError):
                         args = {}
                     
                     called_tool = True
@@ -560,7 +560,6 @@ class Agent:
             "herramientas_disponibles": herramientas,
             "instrucciones": "Ahora puedes preguntarme sobre trabajos, mecánicos, clientes, vehículos, repuestos o estadísticas, y usaré las herramientas correspondientes."
         }
-
 
 
 

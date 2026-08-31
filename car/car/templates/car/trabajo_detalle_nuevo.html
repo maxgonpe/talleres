@@ -585,7 +585,8 @@
 <div class="trabajo-container">
     <!-- Header del Trabajo -->
     <div class="trabajo-header">
-        <h2>🔧 Trabajo #{{ trabajo.id }}</h2>
+        <div class="eyebrow">ORDEN DE TRABAJO / {{ trabajo.estado|upper }}</div>
+        <h2>Trabajo #{{ trabajo.id }}</h2>
         <h4>{{ trabajo.vehiculo }}</h4>
         <p class="mb-0">{{ trabajo.vehiculo.cliente.nombre }} - {{ trabajo.vehiculo.cliente.telefono }}</p>
     </div>

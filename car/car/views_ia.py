@@ -546,15 +546,15 @@ def listado_mecanicos_data(activo=None, limite=50):
             # Calcular estadísticas (con manejo de errores)
             try:
                 total_bonos = float(m.saldo_bonos_total) if hasattr(m, 'saldo_bonos_total') and m.saldo_bonos_total else 0.0
-            except:
+            except (TypeError, ValueError, AttributeError):
                 total_bonos = 0.0
             try:
                 bonos_pendientes = float(m.saldo_bonos_pendiente) if hasattr(m, 'saldo_bonos_pendiente') and m.saldo_bonos_pendiente else 0.0
-            except:
+            except (TypeError, ValueError, AttributeError):
                 bonos_pendientes = 0.0
             try:
                 total_pagado = sum([float(pago.monto) for pago in pagos])
-            except:
+            except (TypeError, ValueError, AttributeError):
                 total_pagado = 0.0
             saldo_actual = bonos_pendientes - total_pagado
             
@@ -1427,7 +1427,7 @@ def test2_function_call_data():
             with open(log_file_path, 'a', encoding='utf-8') as f:
                 f.write('\n'.join(log_entries))
                 f.write(f'\nERROR FINAL: {error_type}: {error_msg}\n\n')
-        except:
+        except OSError:
             pass
         
         logger.error(f"Error en test2_function_call_data: {error_type}: {error_msg}", exc_info=True)
@@ -1454,7 +1454,6 @@ def netgogo_console(request):
     return render(request, "car/netgogo_console.html")
 
 
-@csrf_exempt
 @ajax_login_required
 def netgogo_chat(request):
     """Vista para manejar las peticiones del chat de Netgogo - Solo accesible para maxgonpe temporalmente"""
@@ -1536,7 +1535,7 @@ def netgogo_chat(request):
                         try:
                             # Intentar parsear JSON si es string JSON
                             output_content = json.loads(output_content)
-                        except:
+                        except (json.JSONDecodeError, TypeError):
                             pass
                     
                     # Formato para mensaje de función
@@ -1607,7 +1606,7 @@ def netgogo_chat(request):
                         
                         try:
                             args = json.loads(args_str) if isinstance(args_str, str) else args_str
-                        except:
+                        except (json.JSONDecodeError, TypeError):
                             args = {}
                         
                         called_tool = True
@@ -1783,7 +1782,7 @@ def netgogo_chat(request):
                                             final_message = f"Se encontraron {result.get('total_encontrados', 0)} mecánicos."
                                         else:
                                             final_message = "Datos obtenidos correctamente."
-                                    except:
+                                    except (AttributeError, TypeError, KeyError):
                                         final_message = "Datos obtenidos correctamente."
                                 else:
                                     final_message = "Datos obtenidos correctamente."
@@ -1799,7 +1798,7 @@ def netgogo_chat(request):
                             tool_info['final_message'] = final_message
                             
                         except Exception as e:
-                            print(f"Error en continuación después de {fn_name}: {str(e)}")
+                            logger.warning("Error en continuación después de %s", fn_name, exc_info=True)
                             import traceback
                             traceback.print_exc()
                             final_message = f"Datos obtenidos. {json.dumps(result, indent=2, ensure_ascii=False)[:500]}..."
@@ -1965,7 +1964,6 @@ def netgogo2_console(request):
     })
 
 
-@csrf_exempt
 @ajax_login_required
 def netgogo2_chat(request):
     """Endpoint para Netgogo2 - Maneja interacciones con IA guiada para formulario con function calls"""
@@ -2134,7 +2132,7 @@ Responde de forma natural y amigable, no en formato JSON estructurado."""
                             
                             try:
                                 args = json.loads(args_str) if isinstance(args_str, str) else args_str
-                            except:
+                            except (json.JSONDecodeError, TypeError):
                                 args = {}
                             
                             tool_called = True
@@ -2281,7 +2279,7 @@ Responde de forma natural y amigable, no en formato JSON estructurado."""
                                                 final_message = f"Encontré {count} diagnóstico(s) similar(es) que pueden ayudarte."
                                             else:
                                                 final_message = "Información obtenida correctamente."
-                                        except:
+                                        except (AttributeError, TypeError, KeyError):
                                             final_message = "Información obtenida correctamente."
                                     else:
                                         final_message = "Información obtenida correctamente."
@@ -2658,9 +2656,4 @@ def sugerir_componentes_por_descripcion(descripcion, limite=20):
             "total_encontrados": 0,
             "componentes": []
         }
-
-
-
-
-
 

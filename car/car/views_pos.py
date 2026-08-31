@@ -71,6 +71,7 @@ def pos_principal(request):
     return render(request, 'car/pos/pos_principal.html', context)
 
 @login_required
+@requiere_permiso('pos')
 def buscar_repuestos_pos(request):
     """Búsqueda de repuestos para POS (AJAX) - Unificada con módulo de repuestos"""
     query = request.GET.get('q', '').strip()
@@ -140,14 +141,20 @@ def buscar_repuestos_pos(request):
     return JsonResponse({'repuestos': resultados})
 
 @login_required
+@requiere_permiso('pos')
 def agregar_al_carrito(request):
     """Agregar repuesto al carrito (AJAX)"""
     if request.method != 'POST':
         return JsonResponse({'error': 'Método no permitido'}, status=405)
     
     repuesto_id = request.POST.get('repuesto_id')
-    cantidad = int(request.POST.get('cantidad', 1))
-    precio_unitario = round(Decimal(request.POST.get('precio_unitario', 0)))
+    try:
+        cantidad = int(request.POST.get('cantidad', 1))
+        precio_unitario = Decimal(request.POST.get('precio_unitario', 0))
+    except (TypeError, ValueError, ArithmeticError):
+        return JsonResponse({'error': 'Cantidad o precio inválido'}, status=400)
+    if cantidad < 1 or precio_unitario < 0:
+        return JsonResponse({'error': 'Cantidad y precio deben ser válidos'}, status=400)
     
     try:
         repuesto = Repuesto.objects.get(id=repuesto_id)
@@ -184,10 +191,11 @@ def agregar_al_carrito(request):
         
     except Repuesto.DoesNotExist:
         return JsonResponse({'error': 'Repuesto no encontrado'}, status=404)
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+    except (TypeError, ValueError, ArithmeticError):
+        return JsonResponse({'error': 'Datos inválidos'}, status=400)
 
 @login_required
+@requiere_permiso('pos')
 def actualizar_carrito_item(request, item_id):
     """Actualizar cantidad o precio de un item del carrito (AJAX)"""
     if request.method != 'POST':
@@ -204,9 +212,15 @@ def actualizar_carrito_item(request, item_id):
         precio_unitario = request.POST.get('precio_unitario')
         
         if cantidad:
-            item.cantidad = int(cantidad)
+            cantidad = int(cantidad)
+            if cantidad < 1:
+                return JsonResponse({'error': 'La cantidad debe ser mayor que cero'}, status=400)
+            item.cantidad = cantidad
         if precio_unitario:
-            item.precio_unitario = round(Decimal(precio_unitario))
+            precio_unitario = Decimal(precio_unitario)
+            if precio_unitario < 0:
+                return JsonResponse({'error': 'El precio no puede ser negativo'}, status=400)
+            item.precio_unitario = precio_unitario
         
         item.save()
         
@@ -217,10 +231,11 @@ def actualizar_carrito_item(request, item_id):
         
     except CarritoItem.DoesNotExist:
         return JsonResponse({'error': 'Item no encontrado'}, status=404)
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+    except (TypeError, ValueError, ArithmeticError):
+        return JsonResponse({'error': 'Datos inválidos'}, status=400)
 
 @login_required
+@requiere_permiso('pos')
 def eliminar_carrito_item(request, item_id):
     """Eliminar item del carrito (AJAX)"""
     try:
@@ -237,6 +252,7 @@ def eliminar_carrito_item(request, item_id):
         return JsonResponse({'error': 'Item no encontrado'}, status=404)
 
 @login_required
+@requiere_permiso('pos')
 def limpiar_carrito(request):
     """Limpiar todo el carrito"""
     sesion = SesionVenta.objects.filter(
@@ -255,6 +271,7 @@ def limpiar_carrito(request):
     return redirect('pos_principal')
 
 @login_required
+@requiere_permiso('pos')
 def procesar_venta(request):
     """Procesar la venta del carrito"""
     sesion = SesionVenta.objects.filter(
@@ -286,7 +303,7 @@ def procesar_venta(request):
                 venta.total = subtotal - descuento
                 venta.save()
                 
-                # Crear items de la venta y actualizar stock
+                # Crear items; el servicio centraliza la operación de stock.
                 for carrito_item in sesion.carrito_items.all():
                     VentaPOSItem.objects.create(
                         venta=venta,
@@ -295,49 +312,8 @@ def procesar_venta(request):
                         precio_unitario=carrito_item.precio_unitario,
                         subtotal=carrito_item.subtotal
                     )
-                    
-                    # Actualizar stock usando el sistema unificado
-                    repuesto = carrito_item.repuesto
-                    
-                    # Verificar stock suficiente
-                    if repuesto.stock_total < carrito_item.cantidad:
-                        raise ValueError(f"Stock insuficiente para {repuesto.nombre}. Disponible: {repuesto.stock_total}, Solicitado: {carrito_item.cantidad}")
-                    
-                    # Actualizar stock en la tabla maestra
-                    repuesto.stock -= carrito_item.cantidad
-                    repuesto.save()
-                    
-                    # Sincronizar con RepuestoEnStock
-                    stock_disponible = RepuestoEnStock.objects.filter(
-                        repuesto=repuesto,
-                        deposito='bodega-principal'
-                    ).first()
-                    
-                    if stock_disponible:
-                        # Actualizar stock detallado para que coincida con el stock maestro
-                        stock_disponible.stock = repuesto.stock
-                        stock_disponible.save()
-                    else:
-                        # Crear registro si no existe
-                        RepuestoEnStock.objects.create(
-                            repuesto=repuesto,
-                            deposito='bodega-principal',
-                            stock=repuesto.stock,
-                            reservado=0,
-                            precio_compra=repuesto.precio_costo,
-                            precio_venta=repuesto.precio_venta,
-                            proveedor=''
-                        )
-                    
-                    # Registrar movimiento de stock
-                    StockMovimiento.objects.create(
-                        repuesto_stock=stock_disponible,
-                        tipo="salida",
-                        cantidad=carrito_item.cantidad,
-                        motivo=f"Venta POS #{venta.id}",
-                        referencia=str(venta.id),
-                        usuario=request.user
-                    )
+                from .services.stock import descontar_stock_venta_pos
+                descontar_stock_venta_pos(venta)
                 
                 # Limpiar carrito
                 sesion.carrito_items.all().delete()
@@ -371,6 +347,7 @@ def procesar_venta(request):
     return render(request, 'car/pos/procesar_venta.html', context)
 
 @login_required
+@requiere_permiso('pos')
 def pos_venta_detalle(request, venta_id):
     """Detalle de una venta POS"""
     venta = get_object_or_404(
@@ -403,6 +380,7 @@ def pos_venta_detalle(request, venta_id):
     return render(request, 'car/pos/venta_detalle.html', context)
 
 @login_required
+@requiere_permiso('pos')
 def anular_venta_pos(request, venta_id):
     """Anular una venta POS y revertir el stock"""
     if request.method != 'POST':
@@ -429,58 +407,29 @@ def anular_venta_pos(request, venta_id):
     
     try:
         with transaction.atomic():
+            reversa_ref = f"ANULACION-VENTA-POS-{venta.id}"
+            if StockMovimiento.objects.filter(referencia=reversa_ref).exists():
+                messages.info(request, 'Esta venta ya fue anulada.')
+                return redirect('pos_venta_detalle', venta_id=venta_id)
+
             # Revertir stock para cada item de la venta
             for item in venta.items.all():
-                repuesto = item.repuesto
                 cantidad = item.cantidad
-                
-                # Buscar RepuestoEnStock en bodega-principal
                 stock_disponible = RepuestoEnStock.objects.filter(
-                    repuesto=repuesto,
-                    deposito='bodega-principal'
+                    repuesto_id=item.repuesto_id,
+                    deposito='bodega-principal',
                 ).first()
-                
-                if stock_disponible:
-                    # Revertir stock en RepuestoEnStock
-                    stock_disponible.stock = (stock_disponible.stock or 0) + cantidad
-                    stock_disponible.save()
-                else:
-                    # Si no existe, crear el registro con el stock revertido
-                    stock_disponible = RepuestoEnStock.objects.create(
-                        repuesto=repuesto,
-                        deposito='bodega-principal',
-                        stock=cantidad,
-                        reservado=0,
-                        precio_compra=repuesto.precio_costo or 0,
-                        precio_venta=repuesto.precio_venta or 0,
-                        proveedor=''
-                    )
-                
-                # Revertir stock en Repuesto (tabla maestra)
-                repuesto.stock = (repuesto.stock or 0) + cantidad
-                repuesto.save()
-                
-                # Registrar movimiento de entrada para documentar la reversión
-                StockMovimiento.objects.create(
-                    repuesto_stock=stock_disponible,
-                    tipo="ingreso",
-                    cantidad=cantidad,
-                    motivo=f"Anulación de Venta POS #{venta.id}",
-                    referencia=str(venta.id),
-                    usuario=request.user
+                if not stock_disponible:
+                    raise ValueError(f"No existe stock para {item.repuesto.nombre}")
+                from .services.stock import ajustar_stock
+                ajustar_stock(
+                    stock_disponible,
+                    cantidad,
+                    'entrada',
+                    f"Anulación de Venta POS #{venta.id}",
+                    reversa_ref,
+                    request.user,
                 )
-            
-            # Eliminar movimientos de stock relacionados con la venta (tipo salida)
-            StockMovimiento.objects.filter(
-                motivo__contains=f"Venta POS #{venta.id}",
-                tipo="salida"
-            ).delete()
-            
-            # También eliminar por referencia si existe
-            StockMovimiento.objects.filter(
-                referencia=str(venta.id),
-                tipo="salida"
-            ).delete()
             
             # Actualizar estadísticas de la sesión
             sesion = venta.sesion
@@ -488,11 +437,11 @@ def anular_venta_pos(request, venta_id):
             sesion.numero_ventas = max(0, sesion.numero_ventas - 1)
             sesion.save()
             
-            # Guardar el ID de la venta antes de eliminarla para el mensaje
+            # Conservar la venta y sus movimientos para auditoría.
             venta_id_anulada = venta.id
-            
-            # Eliminar la venta (los items se eliminan automáticamente por CASCADE)
-            venta.delete()
+            venta.pagado = False
+            venta.observaciones = f"{venta.observaciones}\nAnulada por {request.user.username}.".strip()
+            venta.save(update_fields=['pagado', 'observaciones'])
             
             from .models import AdministracionTaller
             config = AdministracionTaller.get_configuracion_activa()
@@ -509,6 +458,7 @@ def anular_venta_pos(request, venta_id):
         return redirect('pos_venta_detalle', venta_id=venta_id)
 
 @login_required
+@requiere_permiso('pos')
 def pos_historial_ventas(request):
     """Historial de ventas del POS"""
     ventas = VentaPOS.objects.filter(
@@ -537,6 +487,7 @@ def pos_historial_ventas(request):
     return render(request, 'car/pos/historial_ventas.html', context)
 
 @login_required
+@requiere_permiso('pos')
 def pos_configuracion(request):
     """Configuración del sistema POS"""
     config = ConfiguracionPOS.objects.first()
@@ -564,6 +515,7 @@ def pos_configuracion(request):
     return render(request, 'car/pos/configuracion.html', context)
 
 @login_required
+@requiere_permiso('pos')
 def crear_cliente_rapido(request):
     """Crear cliente rápidamente desde POS (AJAX)"""
     if request.method != 'POST':
@@ -590,6 +542,7 @@ def crear_cliente_rapido(request):
         }, status=400)
 
 @login_required
+@requiere_permiso('pos')
 def cerrar_sesion_pos(request):
     """Cerrar sesión de venta actual"""
     sesion = SesionVenta.objects.filter(
@@ -610,6 +563,7 @@ def cerrar_sesion_pos(request):
     return redirect('pos_principal')
 
 @login_required
+@requiere_permiso('pos')
 def limpiar_sesiones_pos(request):
     """Limpiar todas las sesiones inactivas y crear una nueva sesión limpia"""
     # Cerrar todas las sesiones activas del usuario
@@ -644,6 +598,7 @@ def limpiar_sesiones_pos(request):
     return redirect('pos_principal')
 
 @login_required
+@requiere_permiso('pos')
 def pos_dashboard(request):
     """Dashboard con estadísticas del POS"""
     # Estadísticas del día
@@ -683,6 +638,7 @@ def pos_dashboard(request):
 # ========================
 
 @login_required
+@requiere_permiso('pos')
 def procesar_cotizacion(request):
     """Procesar una cotización desde el carrito"""
     sesion = SesionVenta.objects.filter(
@@ -753,6 +709,7 @@ def procesar_cotizacion(request):
     return render(request, 'car/pos/procesar_cotizacion.html', context)
 
 @login_required
+@requiere_permiso('pos')
 def pos_cotizacion_detalle(request, cotizacion_id):
     """Detalle de una cotización"""
     cotizacion = get_object_or_404(
@@ -776,8 +733,6 @@ def pos_cotizacion_detalle(request, cotizacion_id):
         logo_url = request.build_absolute_uri('/static/images/Logo1.svg')
     
     # Debug para verificar el nombre del taller
-    print(f"🔧 DEBUG COTIZACIÓN - Nombre del taller: '{config.nombre_taller}'")
-    print(f"🔧 DEBUG COTIZACIÓN - Logo URL: {logo_url}")
     
     context = {
         'cotizacion': cotizacion,
@@ -789,6 +744,7 @@ def pos_cotizacion_detalle(request, cotizacion_id):
     return render(request, 'car/pos/cotizacion_detalle.html', context)
 
 @login_required
+@requiere_permiso('pos')
 def pos_historial_cotizaciones(request):
     """Historial de cotizaciones"""
     cotizaciones = Cotizacion.objects.filter(
@@ -821,6 +777,7 @@ def pos_historial_cotizaciones(request):
     return render(request, 'car/pos/historial_cotizaciones.html', context)
 
 @login_required
+@requiere_permiso('pos')
 def convertir_cotizacion_a_venta(request, cotizacion_id):
     """Convertir una cotización en venta"""
     cotizacion = get_object_or_404(
@@ -831,87 +788,14 @@ def convertir_cotizacion_a_venta(request, cotizacion_id):
     )
     
     if request.method == 'POST':
-        with transaction.atomic():
-            # Crear la venta
-            venta = VentaPOS.objects.create(
-                sesion=cotizacion.sesion,
-                cliente=cotizacion.cliente,
-                usuario=request.user,
-                subtotal=cotizacion.subtotal,
-                descuento=cotizacion.descuento,
-                total=cotizacion.total,
-                observaciones=f"Convertida desde cotización #{cotizacion.id}",
-                metodo_pago='efectivo'  # Por defecto, se puede cambiar
-            )
+        from .services.sales import convertir_cotizacion
+        venta = convertir_cotizacion(cotizacion, request.user)
             
-            # Crear items de la venta y actualizar stock
-            for item in cotizacion.items.all():
-                VentaPOSItem.objects.create(
-                    venta=venta,
-                    repuesto=item.repuesto,
-                    cantidad=item.cantidad,
-                    precio_unitario=item.precio_unitario,
-                    subtotal=item.subtotal
-                )
-                
-                # Actualizar stock usando el sistema unificado
-                repuesto = item.repuesto
-                
-                # Verificar stock suficiente
-                if repuesto.stock_total < item.cantidad:
-                    raise ValueError(f"Stock insuficiente para {repuesto.nombre}. Disponible: {repuesto.stock_total}, Solicitado: {item.cantidad}")
-                
-                # Actualizar stock en la tabla maestra
-                repuesto.stock -= item.cantidad
-                repuesto.save()
-                
-                # Sincronizar con RepuestoEnStock
-                stock_disponible = RepuestoEnStock.objects.filter(
-                    repuesto=repuesto,
-                    deposito='bodega-principal'
-                ).first()
-                
-                if stock_disponible:
-                    # Actualizar stock detallado para que coincida con el stock maestro
-                    stock_disponible.stock = repuesto.stock
-                    stock_disponible.save()
-                else:
-                    # Crear registro si no existe
-                    RepuestoEnStock.objects.create(
-                        repuesto=repuesto,
-                        deposito='bodega-principal',
-                        stock=repuesto.stock,
-                        reservado=0,
-                        precio_compra=repuesto.precio_costo,
-                        precio_venta=repuesto.precio_venta,
-                        proveedor=''
-                    )
-                
-                # Registrar movimiento de stock
-                StockMovimiento.objects.create(
-                    repuesto_stock=stock_disponible,
-                    tipo="salida",
-                    cantidad=item.cantidad,
-                    motivo=f"Venta POS #{venta.id} (desde cotización #{cotizacion.id})",
-                    referencia=str(venta.id),
-                    usuario=request.user
-                )
-            
-            # Actualizar estado de la cotización
-            cotizacion.estado = 'convertida'
-            cotizacion.save()
-            
-            # Actualizar estadísticas de la sesión
-            sesion = cotizacion.sesion
-            sesion.total_ventas += venta.total
-            sesion.numero_ventas += 1
-            sesion.save()
-            
-            from .models import AdministracionTaller
-            config = AdministracionTaller.get_configuracion_activa()
-            if config.ver_mensajes:
-                messages.success(request, f'Cotización convertida a venta exitosamente. Venta #{venta.id}')
-            return redirect('pos_venta_detalle', venta_id=venta.id)
+        from .models import AdministracionTaller
+        config = AdministracionTaller.get_configuracion_activa()
+        if config.ver_mensajes:
+            messages.success(request, f'Cotización convertida a venta exitosamente. Venta #{venta.id}')
+        return redirect('pos_venta_detalle', venta_id=venta.id)
     
     context = {
         'cotizacion': cotizacion,

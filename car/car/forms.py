@@ -81,7 +81,7 @@ class ClienteTallerForm(forms.ModelForm):
                 dv_calculado = str(dv_calculado)
             
             return dv == dv_calculado
-        except:
+        except (TypeError, ValueError, IndexError):
             return False
 
 
@@ -475,6 +475,18 @@ class CompraItemForm(forms.ModelForm):
                 'placeholder': '0.00'
             }),
         }
+
+    def clean_cantidad(self):
+        cantidad = self.cleaned_data['cantidad']
+        if cantidad < 1:
+            raise forms.ValidationError('La cantidad debe ser mayor que cero.')
+        return cantidad
+
+    def clean_precio_unitario(self):
+        precio = self.cleaned_data['precio_unitario']
+        if precio < 0:
+            raise forms.ValidationError('El precio no puede ser negativo.')
+        return precio
 
 
 # ========================
