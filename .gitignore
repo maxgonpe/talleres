@@ -3,3 +3,9 @@ env/
 car/db.sqlite3
 car/car/migrations/
 car/car/views_api.py
+
+# Documentos generados por sesiones de agentes o asistentes IA
+*.md
+
+# Material de trabajo local de agentes
+/agentes/

@@ -8,3 +8,4 @@ staticfiles/
 backups/
 car/migrations/__pycache__/
 settings_local.py
+settings.py
