@@ -171,7 +171,6 @@ CSRF_COOKIE_NAME = 'talleres_csrftoken'  # Nombre único para talleres
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
     'http://127.0.0.1:8000',
-    'https://*.netgogo.cl',
 ]
 
 # Production security defaults. Local development remains available over HTTP.

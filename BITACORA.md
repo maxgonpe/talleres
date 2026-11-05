@@ -162,16 +162,14 @@ organizadas en estos grupos:
 - Bonos, pagos, excepciones y cierres de periodo.
 - Administracion, usuarios, permisos y estadisticas.
 - Tracking publico.
-- APIs de vehiculos, compras, compatibilidad, repuestos externos y OpenAI.
-- Consolas experimentales `netgogo` y `netgogo2`.
+- APIs de vehiculos, compras, compatibilidad y repuestos externos.
 
 ### Archivos Python con camino activo
 
 No se identificaron archivos `.py` claramente solitarios para mover:
 
-- `agent.py` es usado por `views_ia.py`.
 - `algoritmo_relacion.py` es usado por `views_algoritmo.py` y su URL.
-- `views_api.py`, `views_ia.py`, `views_vehiculos.py`, `views_compras.py`,
+- `views_vehicle_api.py`, `views_vehiculos.py`, `views_compras.py`,
   `views_estadisticas.py` y `views_bonos.py` estan conectados desde URLs.
 - `services/*.py` son usados por vistas, modelos o servicios relacionados.
 - `management/commands/*.py` son comandos Django invocables aunque no tengan
@@ -216,3 +214,56 @@ en codigo, templates, JavaScript y configuracion, ejecutar las pruebas y revisar
 el arbol en el navegador cuando el archivo sea visual. Los movimientos se
 haran en un cambio separado y reversible, registrando cada ruta original y
 nueva.
+
+## 2026-11-05 - Analisis de consumo de repuestos en OT
+
+### Diagnostico del problema
+
+El flujo actual no necesita crear una venta POS para consumir un repuesto en
+una orden de trabajo. La OT ya tiene `TrabajoRepuesto`, que es el registro
+correcto para la ejecucion, instalacion, precio, cantidad y estado del repuesto.
+
+La duplicidad real esta en el inventario: `Repuesto` mantiene un stock maestro y
+`RepuestoEnStock` mantiene otro saldo, ademas de deposito, proveedor, precios y
+reservas. El codigo intenta sincronizar ambos saldos. Por eso
+`RepuestoEnStock` funciona simultaneamente como clon y como existencia por
+deposito.
+
+### Modelo de flujo recomendado
+
+1. `Repuesto` representa la identidad comercial: SKU, nombre, precios y datos
+   tecnicos.
+2. `RepuestoEnStock` representa una existencia concreta por deposito. Se
+   conserva mientras exista la necesidad de depositos, reservas o kardex.
+3. `DiagnosticoRepuesto` representa el presupuesto y la reserva previa a la
+   aprobacion.
+4. `TrabajoRepuesto` representa la ejecucion de la OT. Al aprobar, conserva el
+   repuesto y el precio snapshot del diagnostico.
+5. Al marcar el repuesto como instalado, un servicio transaccional descuenta la
+   existencia y registra `StockMovimiento`. No se crea `VentaPOS` ni
+   `VentaPOSItem`.
+
+### Cambios recomendados antes de eliminar modelos
+
+- Agregar `repuesto_stock` a `TrabajoRepuesto` para conservar la existencia
+  concreta seleccionada.
+- Copiar esa referencia al pasar de `DiagnosticoRepuesto` a `TrabajoRepuesto`.
+- Centralizar consumo, devolucion y reserva en un unico servicio transaccional.
+- Marcar `TrabajoRepuesto.completado` solo despues de descontar stock con exito.
+- Hacer el consumo idempotente mediante una referencia unica por OT y repuesto.
+- Consolidar duplicados de `RepuestoEnStock` antes de imponer una existencia
+  unica por repuesto y deposito.
+- Mantener temporalmente `Repuesto.stock` como compatibilidad y eliminarlo solo
+  despues de migrar todas las lecturas y escrituras al stock por deposito.
+
+### Modelos que no deben eliminarse en esta etapa
+
+- `RepuestoEnStock`: sostiene depositos, reservas, ventas legacy y movimientos.
+- `StockMovimiento`: conserva la auditoria y permite detectar/revertir consumos.
+- `DiagnosticoRepuesto` y `TrabajoRepuesto`: son etapas distintas y necesarias
+  para separar presupuesto de ejecucion.
+- `Repuesto`: es la identidad comun usada por inventario, compatibilidad, POS,
+  diagnosticos y trabajos.
+
+La eliminacion de tablas queda condicionada a la migracion de datos, pruebas de
+stock y confirmacion de que no existen otros depositos ni dependencias legacy.

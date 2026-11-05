@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from decimal import Decimal, InvalidOperation
 from datetime import date, timedelta
 from django.conf import settings
@@ -52,7 +54,7 @@ from .models import Diagnostico, Cliente_Taller, Vehiculo,\
                     Componente, Accion, ComponenteAccion,\
                     DiagnosticoComponenteAccion, Repuesto, VehiculoVersion, RepuestoAplicacion,\
                     DiagnosticoRepuesto, Trabajo, Mecanico, TrabajoFoto,TrabajoRepuesto,\
-                    TrabajoAccion, Venta, VentaItem, RepuestoEnStock, StockMovimiento,\
+                     TrabajoAccion, Venta, VentaItem, StockMovimiento,\
                     VentaPOS, SesionVenta, CarritoItem, AdministracionTaller
 from django.contrib.auth.models import User
 from django.forms import modelformset_factory
@@ -277,21 +279,12 @@ def ingreso_view(request):
                             repuesto_id = int(r.get("id"))
                             repuesto = Repuesto.objects.get(pk=repuesto_id)
 
-                            stock_id_raw = r.get("repuesto_stock_id")
-                            repuesto_stock = None
-                            if stock_id_raw:
-                                try:
-                                    repuesto_stock = RepuestoEnStock.objects.get(pk=int(stock_id_raw))
-                                except (ValueError, RepuestoEnStock.DoesNotExist):
-                                    repuesto_stock = None
-
                             cantidad = int(r.get("cantidad", 1))
                             precio = float(r.get("precio_unitario", repuesto.precio_venta or 0))
 
                             DiagnosticoRepuesto.objects.create(
                                 diagnostico=diagnostico,
                                 repuesto=repuesto,
-                                repuesto_stock=repuesto_stock,
                                 cantidad=cantidad,
                                 precio_unitario=precio,
                                 subtotal=cantidad * precio
@@ -323,7 +316,6 @@ def ingreso_view(request):
                                 diagnostico=diagnostico,
                                 repuesto=None,  # Sin repuesto del inventario
                                 repuesto_externo=repuesto_externo,  # NUEVO: Referencia al repuesto externo
-                                repuesto_stock=None,
                                 cantidad=cantidad,
                                 precio_unitario=precio,
                                 subtotal=cantidad * precio
@@ -1164,9 +1156,9 @@ def eliminar_diagnostico(request, pk):
 
     def liberar_reservas():
         from .services.stock import liberar_reserva
-        for item in diagnostico.repuestos.filter(reservado=True, repuesto_stock__isnull=False):
+        for item in diagnostico.repuestos.filter(reservado=True, repuesto__isnull=False):
             liberar_reserva(
-                item.repuesto_stock,
+                item.repuesto,
                 item.cantidad,
                 'Liberación por eliminación de diagnóstico',
                 f'DIAG-{diagnostico.pk}-REPUESTO-{item.pk}',
@@ -1455,7 +1447,6 @@ def sugerir_repuestos2(request, diagnostico_id=None):
     # 3) enriquecer con stock y precio
     resultados = []
     for r in candidates.select_related().order_by("nombre")[:60]:
-        stock_obj = r.stocks.order_by('-ultima_actualizacion').first()
         resultados.append({
             "id": r.id,
             "sku": r.sku,
@@ -1463,9 +1454,9 @@ def sugerir_repuestos2(request, diagnostico_id=None):
             "nombre": r.nombre,
             "posicion": r.posicion,
             "precio_venta": float(r.precio_venta or 0),
-            "stock": stock_obj.stock if stock_obj else 0,
-            "disponible": stock_obj.disponible if stock_obj else 0,
-            "repuesto_stock_id": stock_obj.id if stock_obj else None,
+            "stock": r.stock_total,
+            "disponible": r.stock_disponible,
+            "repuesto_id": r.id,
         })
     return JsonResponse({"repuestos": resultados})
 
@@ -1476,7 +1467,7 @@ def sugerir_repuestos(request, diagnostico_id=None):
     1) Componentes seleccionados (ComponenteRepuesto)
     2) Compatibilidad exacta con la versión del vehículo (VehiculoVersion + RepuestoAplicacion)
     3) Filtro inteligente por características del vehículo (marca_veh, tipo_de_motor)
-    4) Priorizar filas con stock disponible en RepuestoEnStock
+    4) Priorizar repuestos con stock disponible
     """
     from django.db.models import Q
     
@@ -1581,11 +1572,6 @@ def sugerir_repuestos(request, diagnostico_id=None):
     # 4) Enriquecer con stock y calcular compatibilidad
     resultados = []
     for r in candidates.select_related().order_by("nombre")[:80]:
-        stock_obj = (
-            r.stocks.filter(stock__gt=0).order_by('-ultima_actualizacion').first()
-            or r.stocks.order_by('-ultima_actualizacion').first()
-        )
-        
         # Calcular nivel de compatibilidad
         compatibilidad = calcular_compatibilidad_repuesto(r, veh_marca, veh_motor)
         
@@ -1598,9 +1584,9 @@ def sugerir_repuestos(request, diagnostico_id=None):
             "marca_veh": r.marca_veh,
             "tipo_motor": r.tipo_de_motor,
             "precio_venta": float(r.precio_venta or 0),
-            "stock": stock_obj.stock if stock_obj else 0,
-            "disponible": stock_obj.disponible if stock_obj else 0,
-            "repuesto_stock_id": stock_obj.id if stock_obj else None,
+            "stock": r.stock_total,
+            "disponible": r.stock_disponible,
+            "repuesto_id": r.id,
             "compatibilidad": compatibilidad,
             "compatibilidad_texto": obtener_texto_compatibilidad(compatibilidad),
         })
@@ -1682,29 +1668,6 @@ def obtener_texto_compatibilidad(score):
 #        # Intersección: SOLO compatibles con la versión
 #        candidates = repuestos_comp.filter(aplicaciones__version=version).distinct()
 #
-# 3) enriquecer con stock y precio (prioriza disponibles)
-#resultados = []
-#for r in candidates.select_related().order_by("nombre")[:80]:
-#    stock_obj = (r.stocks
-#        .filter(stock__gt=0)         # preferir con stock > 0
-#        .order_by('-ultima_actualizacion')
-#        .first()
-#    ) or r.stocks.order_by('-ultima_actualizacion').first()  # fallback: aunque sea sin stock
-#
-#    resultados.append({
-#        "id": r.id,
-#        "sku": r.sku,
-#        "oem": r.oem,
-#        "nombre": r.nombre,
-#        "posicion": r.posicion,
-#        "precio_venta": float(r.precio_venta or 0),
-#        "stock": stock_obj.stock if stock_obj else 0,
-#        "disponible": stock_obj.disponible if stock_obj else 0,
-#        "repuesto_stock_id": stock_obj.id if stock_obj else None,
-#    })
-#return JsonResponse({"repuestos": resultados})
-#
-#
 ######################
 @login_required
 @requiere_permiso('diagnosticos')
@@ -1723,7 +1686,6 @@ def agregar_repuesto(request, diagnostico_id):
         return JsonResponse({"error": "JSON inválido"}, status=400)
 
     repuesto_id = data.get("repuesto_id")
-    stock_id = data.get("repuesto_stock_id")
     try:
         cantidad = int(data.get("cantidad", 1))
     except (TypeError, ValueError):
@@ -1734,9 +1696,8 @@ def agregar_repuesto(request, diagnostico_id):
     rep = get_object_or_404(Repuesto, pk=repuesto_id)
 
     with transaction.atomic():
-        repstk = None
-        if stock_id:
-            repstk = RepuestoEnStock.objects.select_for_update().get(pk=stock_id)
+        repstk = rep
+        if repstk:
             from .services.stock import reservar_stock
             try:
                 reservar_stock(repstk, cantidad, 'Reserva desde diagnóstico', f'DIAG-{diag.id}', request.user)
@@ -1746,11 +1707,10 @@ def agregar_repuesto(request, diagnostico_id):
         dr = DiagnosticoRepuesto.objects.create(
             diagnostico=diag,
             repuesto=rep,
-            repuesto_stock=repstk,
             cantidad=cantidad,
-            precio_unitario=repstk.precio_venta if repstk and repstk.precio_venta else rep.precio_venta,
-            subtotal=(repstk.precio_venta if repstk and repstk.precio_venta else rep.precio_venta or 0) * cantidad,
-            reservado=bool(repstk)
+            precio_unitario=rep.precio_venta,
+            subtotal=(rep.precio_venta or 0) * cantidad,
+            reservado=True
         )
 
     return JsonResponse({"ok": True, "dr_id": dr.id})
@@ -2376,21 +2336,12 @@ def guardar_aprobar_y_crear_ot(request):
                             repuesto_id = int(r.get("id"))
                             repuesto = Repuesto.objects.get(pk=repuesto_id)
                             
-                            stock_id_raw = r.get("repuesto_stock_id")
-                            repuesto_stock = None
-                            if stock_id_raw:
-                                try:
-                                    repuesto_stock = RepuestoEnStock.objects.get(pk=int(stock_id_raw))
-                                except (ValueError, RepuestoEnStock.DoesNotExist):
-                                    repuesto_stock = None
-                            
                             cantidad = int(r.get("cantidad", 1))
                             precio = float(r.get("precio_unitario", repuesto.precio_venta or 0))
                             
                             DiagnosticoRepuesto.objects.create(
                                 diagnostico=diagnostico,
                                 repuesto=repuesto,
-                                repuesto_stock=repuesto_stock,
                                 cantidad=cantidad,
                                 precio_unitario=precio,
                                 subtotal=cantidad * precio
@@ -2420,7 +2371,6 @@ def guardar_aprobar_y_crear_ot(request):
                                 diagnostico=diagnostico,
                                 repuesto=None,
                                 repuesto_externo=repuesto_externo,
-                                repuesto_stock=None,
                                 cantidad=cantidad,
                                 precio_unitario=precio,
                                 subtotal=cantidad * precio
@@ -3089,75 +3039,22 @@ def trabajo_detalle(request, pk):
                 repuesto_trabajo.completado = not repuesto_trabajo.completado
                 repuesto_trabajo.save()
                 
-                # ACTUALIZAR STOCK SOLO SI ES REPUESTO DEL INVENTARIO PROPIO
-                if repuesto_trabajo.repuesto:  # Solo si es del inventario, no externo
-                    from .models import RepuestoEnStock
-                    
-                    
+                if repuesto_trabajo.repuesto:
+                    from .services.work_stock import ajustar_stock_repuesto_trabajo
+                    delta = -1 if repuesto_trabajo.completado and not estado_anterior else 1
+                    if repuesto_trabajo.completado == estado_anterior:
+                        delta = 0
                     try:
-                        # 🔥 BÚSQUEDA CONSISTENTE: Solo por repuesto y depósito principal
-                        stock_item = RepuestoEnStock.objects.filter(
-                            repuesto=repuesto_trabajo.repuesto,
-                            deposito='bodega-principal'
-                        ).first()
-                        
-                        if stock_item:
-                            stock_anterior = stock_item.stock
-                            repuesto_stock_anterior = repuesto_trabajo.repuesto.stock
-                            
-                            cantidad = repuesto_trabajo.cantidad or 0
-                            
-                            if repuesto_trabajo.completado and not estado_anterior:
-                                # Se marcó como completado: DESCONTAR del stock
-                                from .services.stock import descontar_stock
-                                stock_item = descontar_stock(
-                                    stock_item, cantidad, request.user,
-                                    f"Trabajo #{trabajo.id} - instalación de repuesto {repuesto_trabajo.id}",
-                                )
-                                repuesto_obj = stock_item.repuesto
-                                
-                                config = AdministracionTaller.get_configuracion_activa()
-                                if config.ver_mensajes:
-                                    messages.success(
-                                        request, 
-                                        f"✅ Repuesto completado. Stock descontado: {stock_item.repuesto.nombre} (Stock anterior: {repuesto_stock_anterior}, Stock actual: {repuesto_obj.stock})"
-                                    )
-                            elif not repuesto_trabajo.completado and estado_anterior:
-                                # Se desmarcó: DEVOLVER al stock
-                                from .services.stock import ajustar_stock
-                                stock_item = ajustar_stock(
-                                    stock_item, cantidad, 'entrada',
-                                    f"Devolución de trabajo #{trabajo.id}",
-                                    f"TRABAJO-{trabajo.id}-REPUESTO-{repuesto_trabajo.id}-DEVOLUCION",
-                                    request.user,
-                                )
-                                repuesto_obj = stock_item.repuesto
-                                
-                                config = AdministracionTaller.get_configuracion_activa()
-                                if config.ver_mensajes:
-                                    messages.success(
-                                        request, 
-                                        f"↩️ Repuesto desmarcado. Stock restaurado: {stock_item.repuesto.nombre} (Stock anterior: {repuesto_stock_anterior}, Stock actual: {repuesto_obj.stock})"
-                                    )
-                            else:
-                                config = AdministracionTaller.get_configuracion_activa()
-                                if config.ver_mensajes:
-                                    messages.info(
-                                        request, 
-                                        f"Estado del repuesto actualizado."
-                                    )
-                        else:
-                            # No hay stock registrado, solo cambiar estado sin actualizar inventario
-                            config = AdministracionTaller.get_configuracion_activa()
-                            if config.ver_mensajes:
-                                messages.warning(
-                                    request, 
-                                    f"⚠️ Estado cambiado a {'completado' if repuesto_trabajo.completado else 'pendiente'}. No se encontró stock del repuesto '{repuesto_trabajo.repuesto.nombre}' en RepuestoEnStock."
-                                )
-                    except Exception as e:
+                        if delta and not ajustar_stock_repuesto_trabajo(repuesto_trabajo, delta):
+                            raise ValueError("No fue posible actualizar el stock")
                         config = AdministracionTaller.get_configuracion_activa()
                         if config.ver_mensajes:
-                            messages.error(request, f"❌ Error actualizando stock: {str(e)}")
+                            messages.success(request, "Estado del repuesto y stock actualizados.")
+                    except ValueError as exc:
+                        repuesto_trabajo.completado = estado_anterior
+                        repuesto_trabajo.save(update_fields=["completado"])
+                        if config.ver_mensajes:
+                            messages.error(request, str(exc))
                 else:
                     # Es un repuesto externo, solo cambiar estado
                     config = AdministracionTaller.get_configuracion_activa()
@@ -3188,44 +3085,15 @@ def trabajo_detalle(request, pk):
                 
                 # Si el repuesto estaba completado, devolver al stock antes de eliminar
                 if repuesto_trabajo.completado and repuesto_trabajo.repuesto:
-                    from .models import RepuestoEnStock
-                    
-                    
-                    try:
-                        # 🔥 BÚSQUEDA CONSISTENTE: Solo por repuesto y depósito principal
-                        stock_item = RepuestoEnStock.objects.filter(
-                            repuesto=repuesto_trabajo.repuesto,
-                            deposito='bodega-principal'
-                        ).first()
-                        
-                        if stock_item:
-                            cantidad = repuesto_trabajo.cantidad or 0
-                            stock_anterior_enstock = stock_item.stock
-                            stock_anterior_repuesto = repuesto_trabajo.repuesto.stock
-                            
-                            from .services.stock import ajustar_stock
-                            stock_item = ajustar_stock(
-                                stock_item, cantidad, 'entrada',
-                                f"Devolución por eliminación de trabajo #{trabajo.id}",
-                                f"TRABAJO-{trabajo.id}-REPUESTO-{repuesto_trabajo.id}-ELIMINACION",
-                                request.user,
-                            )
-                            repuesto_obj = stock_item.repuesto
-                            
-                            
-                            if config.ver_mensajes:
-                                messages.success(
-                                    request, 
-                                    f"🗑️ Repuesto eliminado. Stock devuelto: {stock_item.repuesto.nombre} (Stock: {repuesto_obj.stock})"
-                                )
-                        else:
-                            if config.ver_mensajes:
-                                messages.success(request, "🗑️ Repuesto eliminado (sin stock para devolver).")
-                    except Exception as e:
-                        import traceback
-                        if config.ver_mensajes:
-                            messages.error(request, f"Error devolviendo stock: {str(e)}")
-                        # Aún así eliminar el repuesto
+                    from .services.inventory import mover_stock
+                    mover_stock(
+                        repuesto_trabajo.repuesto_id,
+                        repuesto_trabajo.cantidad,
+                        "entrada",
+                        f"Devolución por eliminación de trabajo #{trabajo.id}",
+                        f"TRABAJO-{trabajo.id}-REPUESTO-{repuesto_trabajo.id}-ELIMINACION",
+                        request.user,
+                    )
                 else:
                     if config.ver_mensajes:
                         messages.success(request, "🗑️ Repuesto eliminado.")
@@ -4029,19 +3897,13 @@ def repuesto_lookup(request):
     results = []
 
     if q:
-        # Búsqueda básica
-        repuestos = RepuestoEnStock.objects.select_related("repuesto").filter(
-            Q(repuesto__nombre__icontains=q) |
-            Q(repuesto__sku__icontains=q) |
-            Q(repuesto__oem__icontains=q) |
-            Q(repuesto__codigo_barra__icontains=q) |
-            Q(repuesto__marca__icontains=q) |
-            Q(repuesto__descripcion__icontains=q) |
-            Q(repuesto__marca_veh__icontains=q) |
-            Q(repuesto__tipo_de_motor__icontains=q) |
-            Q(repuesto__cod_prov__icontains=q) |
-            Q(repuesto__origen_repuesto__icontains=q)
-        )[:20]  # limitar a 20 resultados para que sea rápido
+        repuestos = Repuesto.objects.filter(
+            Q(nombre__icontains=q) | Q(sku__icontains=q) |
+            Q(oem__icontains=q) | Q(codigo_barra__icontains=q) |
+            Q(marca__icontains=q) | Q(descripcion__icontains=q) |
+            Q(marca_veh__icontains=q) | Q(tipo_de_motor__icontains=q) |
+            Q(cod_prov__icontains=q) | Q(origen_repuesto__icontains=q)
+        )[:20]
         
         # Si no hay resultados y el término contiene guiones, buscar por partes del SKU
         if not repuestos.exists() and '-' in q:
@@ -4051,20 +3913,20 @@ def repuesto_lookup(request):
                 sku_filter = Q()
                 for parte in partes:
                     if parte.strip():  # Ignorar partes vacías
-                        sku_filter &= Q(repuesto__sku__icontains=parte.strip())
+                        sku_filter &= Q(sku__icontains=parte.strip())
                 
                 if sku_filter:
-                    repuestos = RepuestoEnStock.objects.select_related("repuesto").filter(sku_filter)[:20]
+                    repuestos = Repuesto.objects.filter(sku_filter)[:20]
 
         for r in repuestos:
-            text = f"{r.repuesto.sku or '-'} | {r.repuesto.nombre} | {r.repuesto.marca or ''} | Stock: {r.stock}"
+            text = f"{r.sku or '-'} | {r.nombre} | {r.marca or ''} | Stock: {r.stock_disponible}"
             results.append({
-                "id": r.id,   # ID de RepuestoEnStock
-                "repuesto_nombre": r.repuesto.nombre,  # Nombre del repuesto
-                "text": f"{r.repuesto.sku or '-'} | {r.repuesto.nombre} | {r.repuesto.marca or ''} | Stock: {r.stock}",
-                "stock": r.stock,  # Stock disponible
-                "deposito": r.deposito,  # Depósito
-                "precio_venta": r.precio_venta
+                "id": r.id,
+                "repuesto_nombre": r.nombre,
+                "text": text,
+                "stock": r.stock_disponible,
+                "deposito": "bodega-principal",
+                "precio_venta": r.precio_venta or 0,
             })
 
     return JsonResponse({"results": results})
@@ -4080,50 +3942,36 @@ def buscar_insumos(request):
     
     try:
         from django.db.models import Q
-        from .models import RepuestoEnStock
-        
-        # Búsqueda amplia en RepuestoEnStock (tabla por defecto)
-        repuestos_stock = RepuestoEnStock.objects.select_related("repuesto").filter(
-            Q(repuesto__nombre__icontains=query) |
-            Q(repuesto__sku__icontains=query) |
-            Q(repuesto__oem__icontains=query) |
-            Q(repuesto__codigo_barra__icontains=query) |
-            Q(repuesto__marca__icontains=query) |
-            Q(repuesto__descripcion__icontains=query) |
-            Q(repuesto__marca_veh__icontains=query) |
-            Q(repuesto__tipo_de_motor__icontains=query) |
-            Q(repuesto__cod_prov__icontains=query) |
-            Q(repuesto__origen_repuesto__icontains=query) |
-            Q(repuesto__carroceria__icontains=query) |
-            Q(repuesto__referencia__icontains=query)
+        repuestos = Repuesto.objects.filter(
+            Q(nombre__icontains=query) | Q(sku__icontains=query) |
+            Q(oem__icontains=query) | Q(codigo_barra__icontains=query) |
+            Q(marca__icontains=query) | Q(descripcion__icontains=query) |
+            Q(marca_veh__icontains=query) | Q(tipo_de_motor__icontains=query) |
+            Q(cod_prov__icontains=query) | Q(origen_repuesto__icontains=query) |
+            Q(carroceria__icontains=query) | Q(referencia__icontains=query)
         )
         
         # Si no hay resultados y el término contiene guiones, buscar por partes del SKU
-        if not repuestos_stock.exists() and '-' in query:
+        if not repuestos.exists() and '-' in query:
             partes = query.split('-')
             if len(partes) > 1:
                 # Buscar SKUs que contengan todas las partes
                 sku_filter = Q()
                 for parte in partes:
                     if parte.strip():  # Ignorar partes vacías
-                        sku_filter &= Q(repuesto__sku__icontains=parte.strip())
+                        sku_filter &= Q(sku__icontains=parte.strip())
                 
                 if sku_filter:
-                    repuestos_stock = RepuestoEnStock.objects.select_related("repuesto").filter(sku_filter)
+                    repuestos = Repuesto.objects.filter(sku_filter)
         
         # Ordenar por nombre y limitar resultados
-        repuestos_stock = repuestos_stock.order_by('repuesto__nombre')[:20]
+        repuestos = repuestos.order_by('nombre')[:20]
         
         # Convertir a formato JSON
         insumos = []
-        for stock_item in repuestos_stock:
-            repuesto = stock_item.repuesto
-            
-            # Stock disponible (stock - reservado)
-            stock_disponible = (stock_item.stock or 0) - (stock_item.reservado or 0)
-            
-            # Precio de venta desde RepuestoEnStock
-            precio_venta = stock_item.precio_venta or 0
+        for repuesto in repuestos:
+            stock_disponible = repuesto.stock_disponible
+            precio_venta = repuesto.precio_venta or 0
             
             # Incluir todos los repuestos (con o sin stock para insumos)
             insumos.append({
@@ -4141,8 +3989,8 @@ def buscar_insumos(request):
                 'marca_veh': repuesto.marca_veh or '',
                 'tipo_motor': repuesto.tipo_de_motor or '',
                 'carroceria': repuesto.carroceria or '',
-                'deposito': stock_item.deposito or '',
-                'proveedor': stock_item.proveedor or '',
+                'deposito': 'bodega-principal',
+                'proveedor': '',
                 'descripcion': repuesto.descripcion or '',
                 'medida': repuesto.medida or '',
             })
@@ -4171,7 +4019,7 @@ class RepuestoListView(ListView):
         
         # Estadísticas para las cards informativas
         from django.db.models import Sum, Max, Q
-        from .models import RepuestoEnStock, VentaItem, VentaPOSItem, StockMovimiento
+        from .models import VentaItem, VentaPOSItem, StockMovimiento
         
         # Total de repuestos
         total_repuestos = Repuesto.objects.count()
@@ -4181,7 +4029,7 @@ class RepuestoListView(ListView):
         
         # Último repuesto vendido (desde VentaItem o VentaPOSItem)
         ultimo_repuesto_vendido = None
-        ultima_venta_item = VentaItem.objects.select_related('repuesto_stock__repuesto', 'venta').order_by('-venta__fecha').first()
+        ultima_venta_item = VentaItem.objects.select_related('repuesto', 'venta').order_by('-venta__fecha').first()
         ultima_venta_pos_item = VentaPOSItem.objects.select_related('repuesto', 'venta').order_by('-venta__fecha').first()
         
         if ultima_venta_pos_item and (not ultima_venta_item or ultima_venta_pos_item.venta.fecha > ultima_venta_item.venta.fecha):
@@ -4192,36 +4040,27 @@ class RepuestoListView(ListView):
             }
         elif ultima_venta_item:
             ultimo_repuesto_vendido = {
-                'nombre': ultima_venta_item.repuesto_stock.repuesto.nombre,
+                'nombre': ultima_venta_item.repuesto.nombre,
                 'fecha': ultima_venta_item.venta.fecha,
                 'cantidad': ultima_venta_item.cantidad
             }
         
-        # Último repuesto ingresado/actualizado (desde StockMovimiento o RepuestoEnStock)
+        # Último repuesto ingresado/actualizado desde el kardex
         ultimo_repuesto_ingresado = None
         ultimo_movimiento_ingreso = StockMovimiento.objects.filter(
             tipo='ingreso'
-        ).select_related('repuesto_stock__repuesto').order_by('-fecha').first()
-        
-        ultimo_stock_actualizado = RepuestoEnStock.objects.select_related('repuesto').order_by('-ultima_actualizacion').first()
-        
-        if ultimo_movimiento_ingreso and (not ultimo_stock_actualizado or ultimo_movimiento_ingreso.fecha > ultimo_stock_actualizado.ultima_actualizacion):
+        ).select_related('repuesto').order_by('-fecha').first()
+
+        if ultimo_movimiento_ingreso:
             ultimo_repuesto_ingresado = {
-                'nombre': ultimo_movimiento_ingreso.repuesto_stock.repuesto.nombre,
+                'nombre': ultimo_movimiento_ingreso.repuesto.nombre,
                 'fecha': ultimo_movimiento_ingreso.fecha,
                 'cantidad': ultimo_movimiento_ingreso.cantidad
             }
-        elif ultimo_stock_actualizado:
-            ultimo_repuesto_ingresado = {
-                'nombre': ultimo_stock_actualizado.repuesto.nombre,
-                'fecha': ultimo_stock_actualizado.ultima_actualizacion,
-                'cantidad': None
-            }
         
-        # Total stock disponible (suma de todos los stocks)
-        total_stock_disponible = RepuestoEnStock.objects.aggregate(
-            total=Sum('stock')
-        )['total'] or 0
+        total_stock_disponible = sum(
+            repuesto.stock_disponible for repuesto in Repuesto.objects.only('stock', 'stock_reservado')
+        )
         
         context['stats'] = {
             'total_repuestos': total_repuestos,
@@ -4246,26 +4085,6 @@ class RepuestoCreateView(CreateView):
         context['config'] = config
         return context
     
-    def form_valid(self, form):
-        """Sobrescribir para crear clon en RepuestoEnStock al crear repuesto"""
-        response = super().form_valid(form)
-        
-        # Crear clon en RepuestoEnStock
-        try:
-            from .views import clone_repuesto_to_stock
-            clone_repuesto_to_stock(
-                repuesto=self.object,
-                deposito='bodega-principal',
-                proveedor=''
-            )
-            self.request.session['repuesto_created'] = True
-        except Exception as e:
-            # Log del error pero no interrumpir el flujo
-            pass
-        
-        return response
-
-
 class RepuestoUpdateView(UpdateView):
     model = Repuesto
     form_class = RepuestoForm
@@ -4279,25 +4098,6 @@ class RepuestoUpdateView(UpdateView):
         context['config'] = config
         return context
     
-    def form_valid(self, form):
-        """Sobrescribir para sincronizar con RepuestoEnStock al actualizar repuesto"""
-        response = super().form_valid(form)
-        
-        # Sincronizar con RepuestoEnStock
-        try:
-            from .views import clone_repuesto_to_stock
-            clone_repuesto_to_stock(
-                repuesto=self.object,
-                deposito='bodega-principal',
-                proveedor=''
-            )
-            self.request.session['repuesto_updated'] = True
-        except Exception as e:
-            # Log del error pero no interrumpir el flujo
-            pass
-        
-        return response
-
 class RepuestoDetailView(DetailView):
     model = Repuesto
     template_name = "repuestos/repuesto_detail.html"
@@ -4380,92 +4180,6 @@ def tracking_publico_preview(request):
     html = render_to_string("car/_tracking_card.html", {"trabajo": trabajo}, request=request)
     return JsonResponse({"html": html, "found": bool(trabajo)})
 
-
-
-# === Utilidad temporal: clonar Repuesto → RepuestoEnStock ===
-def clone_repuesto_to_stock(repuesto: Repuesto, deposito: str = "bodega-principal", proveedor: str = "") -> RepuestoEnStock:
-    """
-    Crea o actualiza una fila en RepuestoEnStock para el `repuesto` dado.
-    - depósito por defecto: "bodega-principal"
-    - proveedor por defecto: "" (vacío)
-    Copia: stock, precio_compra, precio_venta desde Repuesto.
-    Retorna la instancia de RepuestoEnStock creada/actualizada.
-    """
-    from django.db import transaction
-    
-    with transaction.atomic():
-        # Primero, eliminar cualquier registro duplicado existente
-        registros_existentes = RepuestoEnStock.objects.filter(
-            repuesto=repuesto,
-            deposito=deposito
-        )
-        
-        if registros_existentes.count() > 1:
-            # Mantener solo el más reciente y eliminar los duplicados
-            registro_principal = registros_existentes.order_by('-id').first()
-            registros_duplicados = registros_existentes.exclude(id=registro_principal.id)
-            registros_duplicados.delete()
-        
-        defaults = {
-            "stock": repuesto.stock or 0,  # Usar el stock del repuesto, o 0 si es None
-            "reservado": 0,
-            "precio_compra": repuesto.precio_costo or 0,
-            "precio_venta": repuesto.precio_venta or 0,
-        }
-
-        repstk, created = RepuestoEnStock.objects.get_or_create(
-            repuesto=repuesto,
-            deposito=deposito,
-            proveedor=proveedor,
-            defaults=defaults,
-        )
-
-        if not created:
-            # Actualizar precios si han cambiado
-            if repuesto.precio_costo is not None:
-                repstk.precio_compra = repuesto.precio_costo
-            if repuesto.precio_venta is not None:
-                repstk.precio_venta = repuesto.precio_venta
-            
-            # SIEMPRE sincronizar el stock - esto es lo que queremos para simplificar
-            if repuesto.stock is not None:
-                repstk.stock = repuesto.stock
-                
-            repstk.save()
-
-        return repstk
-
-
-def sincronizar_stock_repuestos():
-    """
-    Función para sincronizar el stock de repuestos existentes que no tienen
-    registro en RepuestoEnStock o que tienen stock diferente.
-    """
-    repuestos_sin_stock = Repuesto.objects.filter(stocks__isnull=True)
-    repuestos_con_stock_diferente = []
-    
-    for repuesto in Repuesto.objects.all():
-        if repuesto.stocks.exists():
-            from django.db.models import Sum
-            stock_total = repuesto.stocks.aggregate(total=Sum('stock'))['total'] or 0
-            if repuesto.stock != stock_total:
-                repuestos_con_stock_diferente.append(repuesto)
-    
-    
-    # Crear registros faltantes
-    for repuesto in repuestos_sin_stock:
-        if repuesto.stock and repuesto.stock > 0:
-            clone_repuesto_to_stock(repuesto)
-    
-    # Sincronizar stocks diferentes
-    for repuesto in repuestos_con_stock_diferente:
-        stock_obj = repuesto.stocks.first()
-        if stock_obj:
-            stock_obj.stock = repuesto.stock
-            stock_obj.save()
-
-
-# === Vistas: crear/editar Repuesto clonando a RepuestoEnStock ===
 
 
 @login_required

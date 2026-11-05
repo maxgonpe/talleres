@@ -15,7 +15,6 @@ from .models import (
     CompraItem,
     CarritoItem,
     Mecanico,
-    RepuestoEnStock,
     SesionVenta,
     StockMovimiento,
     TrabajoAbono,
@@ -27,12 +26,23 @@ from .models import (
     Vehiculo,
     actualizar_stock_venta_pos,
 )
+from .services.inventory import mover_stock
 from .forms import CompraItemForm
 from .services.work_stock import ajustar_stock_repuesto_trabajo
 from .services.stock import reservar_stock, liberar_reserva
 
 
 class TallerIntegrityTests(TestCase):
+    def test_inventory_movement_is_idempotent_and_master_based(self):
+        repuesto = Repuesto.objects.create(nombre="Filtro", stock=2)
+
+        mover_stock(repuesto.pk, 1, "salida", "Venta", "IDEMP-1")
+        mover_stock(repuesto.pk, 1, "salida", "Venta", "IDEMP-1")
+
+        repuesto.refresh_from_db()
+        self.assertEqual(repuesto.stock, 1)
+        self.assertEqual(StockMovimiento.objects.filter(referencia="IDEMP-1").count(), 1)
+
     def setUp(self):
         self.cliente = Cliente_Taller.objects.create(
             rut="12.345.678-k",
@@ -102,12 +112,10 @@ class TallerIntegrityTests(TestCase):
             precio_mano_obra=Decimal("30000"),
             cantidad=1,
         )
-        repuesto = Repuesto.objects.create(nombre="Pastilla reservada", stock=2)
-        stock = RepuestoEnStock.objects.create(repuesto=repuesto, stock=2, reservado=1)
+        repuesto = Repuesto.objects.create(nombre="Pastilla reservada", stock=2, stock_reservado=1)
         DiagnosticoRepuesto.objects.create(
             diagnostico=diagnostico,
             repuesto=repuesto,
-            repuesto_stock=stock,
             cantidad=1,
             precio_unitario=Decimal("1000"),
             subtotal=Decimal("1000"),
@@ -120,8 +128,8 @@ class TallerIntegrityTests(TestCase):
         self.assertEqual(Trabajo.objects.count(), 1)
         self.assertEqual(TrabajoAccion.objects.filter(trabajo=trabajo).count(), 1)
         self.assertEqual(list(trabajo.componentes.all()), [self.componente])
-        stock.refresh_from_db()
-        self.assertEqual(stock.reservado, 0)
+        repuesto.refresh_from_db()
+        self.assertEqual(repuesto.stock_reservado, 0)
 
     def test_generated_sku_is_unique_and_stock_is_available(self):
         repuesto = Repuesto.objects.create(
@@ -148,21 +156,14 @@ class TallerIntegrityTests(TestCase):
         item.recibir_item()
 
         repuesto.refresh_from_db()
-        stock = RepuestoEnStock.objects.get(repuesto=repuesto)
         self.assertTrue(item.recibido)
         self.assertEqual(repuesto.stock, 3)
-        self.assertEqual(stock.stock, 3)
         self.assertEqual(StockMovimiento.objects.filter(tipo="entrada").count(), 1)
 
     def test_paid_pos_sale_decreases_stock_and_records_movement(self):
         user = User.objects.create_user(username="caja", password="test-pass-123")
         repuesto = Repuesto.objects.create(
             nombre="Bujía",
-            stock=5,
-            precio_venta=Decimal("4000"),
-        )
-        stock = RepuestoEnStock.objects.create(
-            repuesto=repuesto,
             stock=5,
             precio_venta=Decimal("4000"),
         )
@@ -186,15 +187,12 @@ class TallerIntegrityTests(TestCase):
         actualizar_stock_venta_pos(venta)
 
         repuesto.refresh_from_db()
-        stock.refresh_from_db()
         self.assertEqual(repuesto.stock, 3)
-        self.assertEqual(stock.stock, 3)
         self.assertEqual(StockMovimiento.objects.filter(tipo="salida").count(), 1)
 
     def test_unpaid_pos_sale_does_not_change_stock(self):
         user = User.objects.create_user(username="vendedor", password="test-pass-123")
         repuesto = Repuesto.objects.create(nombre="Aceite", stock=4)
-        stock = RepuestoEnStock.objects.create(repuesto=repuesto, stock=4)
         sesion = SesionVenta.objects.create(usuario=user)
         venta = VentaPOS.objects.create(
             sesion=sesion,
@@ -213,16 +211,13 @@ class TallerIntegrityTests(TestCase):
         actualizar_stock_venta_pos(venta)
 
         repuesto.refresh_from_db()
-        stock.refresh_from_db()
         self.assertEqual(repuesto.stock, 4)
-        self.assertEqual(stock.stock, 4)
-        self.assertFalse(StockMovimiento.objects.filter(repuesto_stock=stock).exists())
+        self.assertFalse(StockMovimiento.objects.filter(repuesto=repuesto).exists())
 
     def test_cancelled_sale_is_kept_and_cannot_reverse_stock_twice(self):
         user = User.objects.create_user(username="caja-anula", password="test-pass-123")
         Mecanico.objects.create(user=user, rol="vendedor")
         repuesto = Repuesto.objects.create(nombre="Correa", stock=2)
-        stock = RepuestoEnStock.objects.create(repuesto=repuesto, stock=2)
         sesion = SesionVenta.objects.create(usuario=user)
         venta = VentaPOS.objects.create(
             sesion=sesion,
@@ -245,10 +240,8 @@ class TallerIntegrityTests(TestCase):
         self.client.post(f"/car/pos/venta/{venta.pk}/anular/")
 
         repuesto.refresh_from_db()
-        stock.refresh_from_db()
         venta.refresh_from_db()
         self.assertEqual(repuesto.stock, 2)
-        self.assertEqual(stock.stock, 2)
         self.assertFalse(venta.pagado)
         self.assertEqual(
             StockMovimiento.objects.filter(referencia=f"ANULACION-VENTA-POS-{venta.pk}").count(),
@@ -282,7 +275,6 @@ class TallerIntegrityTests(TestCase):
 
     def test_work_part_stock_service_install_and_return(self):
         repuesto = Repuesto.objects.create(nombre="Pastilla", stock=4)
-        RepuestoEnStock.objects.create(repuesto=repuesto, stock=4)
         diagnostico = Diagnostico.objects.create(
             vehiculo=self.vehiculo,
             descripcion_problema="Instalación",
@@ -308,7 +300,6 @@ class TallerIntegrityTests(TestCase):
 
     def test_work_part_stock_service_rejects_insufficient_stock(self):
         repuesto = Repuesto.objects.create(nombre="Filtro", stock=1)
-        RepuestoEnStock.objects.create(repuesto=repuesto, stock=1)
         diagnostico = Diagnostico.objects.create(
             vehiculo=self.vehiculo,
             descripcion_problema="Sin stock",
@@ -329,13 +320,11 @@ class TallerIntegrityTests(TestCase):
 
     def test_stock_reservation_can_be_released_once(self):
         repuesto = Repuesto.objects.create(nombre="Sensor", stock=3)
-        stock = RepuestoEnStock.objects.create(repuesto=repuesto, stock=3)
+        reservar_stock(repuesto, 2, "Reserva de prueba", "DIAG-TEST")
+        repuesto = liberar_reserva(repuesto, 2, "Liberación de prueba", "DIAG-TEST")
 
-        reservar_stock(stock, 2, "Reserva de prueba", "DIAG-TEST")
-        stock = liberar_reserva(stock, 2, "Liberación de prueba", "DIAG-TEST")
-
-        self.assertEqual(stock.reservado, 0)
-        self.assertEqual(StockMovimiento.objects.filter(repuesto_stock=stock).count(), 2)
+        self.assertEqual(repuesto.stock_reservado, 0)
+        self.assertEqual(StockMovimiento.objects.filter(repuesto=repuesto).count(), 2)
 
     def test_work_order_states_follow_the_operational_sequence(self):
         diagnostico = Diagnostico.objects.create(
@@ -427,15 +416,3 @@ class AuthenticationSmokeTests(TestCase):
         response = self.client.get("/car/compras/")
 
         self.assertRedirects(response, "/")
-
-    def test_ai_endpoint_is_unavailable_without_server_key(self):
-        user = User.objects.create_user(username="ia-user", password="test-pass-123")
-        self.client.force_login(user)
-
-        response = self.client.post(
-            "/car/api/openai/response/",
-            data='{"input":"hola"}',
-            content_type="application/json",
-        )
-
-        self.assertEqual(response.status_code, 503)

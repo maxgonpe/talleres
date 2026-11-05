@@ -15,7 +15,7 @@ from .decorators import (
 )
 
 from .models import (
-    Repuesto, RepuestoEnStock, Cliente, SesionVenta, 
+    Repuesto, Cliente, SesionVenta,
     CarritoItem, VentaPOS, VentaPOSItem, ConfiguracionPOS,
     Cotizacion, CotizacionItem, StockMovimiento
 )
@@ -415,17 +415,11 @@ def anular_venta_pos(request, venta_id):
             # Revertir stock para cada item de la venta
             for item in venta.items.all():
                 cantidad = item.cantidad
-                stock_disponible = RepuestoEnStock.objects.filter(
-                    repuesto_id=item.repuesto_id,
-                    deposito='bodega-principal',
-                ).first()
-                if not stock_disponible:
-                    raise ValueError(f"No existe stock para {item.repuesto.nombre}")
-                from .services.stock import ajustar_stock
-                ajustar_stock(
-                    stock_disponible,
+                from .services.inventory import mover_stock
+                mover_stock(
+                    item.repuesto_id,
                     cantidad,
-                    'entrada',
+                    "entrada",
                     f"Anulación de Venta POS #{venta.id}",
                     reversa_ref,
                     request.user,

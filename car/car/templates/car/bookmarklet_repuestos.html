@@ -234,13 +234,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const hostname = window.location.hostname;
         const protocol = window.location.protocol;
         
-        // Detectar si es un subdominio de .netgogo.cl
-        if (hostname.endsWith('.netgogo.cl') || hostname === 'netgogo.cl') {
-            // Si es subdominio, mantener el subdominio completo
-            return `${protocol}//${hostname}`;
-        }
-        
-        // Fallback: usar el dominio actual
         return `${protocol}//${hostname}`;
     }
     
@@ -385,5 +378,4 @@ function mostrarCodigoCompleto() {
 </script>
 
 {% endblock %}
-
 

@@ -58,6 +58,7 @@
         {% else %}
         <img src="{% static 'images/Logo2.png' %}" alt="Car Icon" style="height: 48px; width: auto;">
         {% endif %}
+        <span class="navbar-workshop-name">{{ config_taller.nombre_taller|default:"Taller Mecánico" }}</span>
       </a>
 
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#carNavbar" aria-controls="carNavbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,33 +66,6 @@
       </button>
 
       <div class="collapse navbar-collapse" id="carNavbar">
-        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-          <li class="nav-item">
-            <a class="nav-link fw-bold" href="{% url 'panel_principal' %}">
-              Panel principal
-            </a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'ingreso_rapido' %}">
-              Diagnóstico
-            </a>
-          </li>
-          {% if request.permisos.trabajos or request.permisos.es_admin %}<li class="nav-item">
-            <a class="nav-link" href="{% url 'lista_trabajos' %}">
-              Trabajos
-            </a>
-          </li>{% endif %}
-          <li class="nav-item">
-            <a class="nav-link" href="{% url 'repuesto_list' %}">Inventario</a>
-          </li>
-          {% if request.permisos.pos or request.permisos.es_admin %}<li class="nav-item">
-            <a class="nav-link" href="{% url 'pos_principal' %}">POS</a>
-          </li>{% endif %}
-          {% if request.permisos.compras or request.permisos.es_admin %}<li class="nav-item">
-            <a class="nav-link" href="{% url 'compra_dashboard' %}">Compras</a>
-          </li>{% endif %}
-        </ul>
-        
         <!-- Botones de tema -->
         <ul class="navbar-nav ms-auto">
           <li class="nav-item d-flex align-items-center">

@@ -29,7 +29,7 @@ body {
 }
 .navbar .container-fluid { max-width: 1500px; }
 .navbar-brand img { height: 38px !important; width: auto; filter: grayscale(1) brightness(0) invert(1); }
-.navbar-brand::after { content: 'WORKSHOP OS'; color: var(--signal); font: 500 .67rem 'DM Mono', monospace; margin-left: .75rem; letter-spacing: .12em; vertical-align: middle; }
+.navbar-workshop-name { color: var(--signal); font: 500 .67rem 'DM Mono', monospace; margin-left: .75rem; letter-spacing: .12em; vertical-align: middle; }
 .navbar .nav-link { color: #c8d1cc !important; font-size: .8rem; font-weight: 700; padding: .65rem .85rem !important; border-radius: 999px; }
 .navbar .nav-link:hover, .navbar .nav-link.active { color: var(--night) !important; background: var(--signal); }
 .navbar-toggler { border-color: #607069; }
@@ -103,7 +103,7 @@ footer { background: var(--night); color: #aebbb3; border: 0 !important; }
 footer .container { max-width: 1500px; }
 
 @media (max-width: 767.98px) {
-  .navbar-brand::after { display: none; }
+  .navbar-workshop-name { font-size: .58rem; letter-spacing: .08em; }
   .navbar-collapse { padding-top: .75rem; }
   main > .container { padding: 1rem .75rem 5rem; }
   .messages { top: auto; bottom: 1rem; }

@@ -233,7 +233,7 @@ class VentaForm(forms.ModelForm):
 class VentaItemForm(forms.ModelForm):
     class Meta:
         model = VentaItem
-        fields = ["repuesto_stock", "cantidad", "precio_unitario", "subtotal"]
+        fields = ["repuesto", "cantidad", "precio_unitario", "subtotal"]
 
 class RepuestoForm(forms.ModelForm):
     class Meta:

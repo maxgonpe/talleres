@@ -62,16 +62,6 @@ class Command(BaseCommand):
             Repuesto.objects.filter(tipo_de_motor__in=['zzzzzz', 'zzzz', '']).update(tipo_de_motor=None)
             Repuesto.objects.filter(marca__in=['general', '']).update(marca=None)
             
-            # Sincronizar stock con RepuestoEnStock
-            self.stdout.write("Sincronizando stock...")
-            repuestos_sin_stock_detallado = Repuesto.objects.filter(
-                stocks__isnull=True
-            ).exclude(stock=0)
-            
-            for repuesto in repuestos_sin_stock_detallado:
-                repuesto._sincronizar_con_stock_detallado(0, repuesto.precio_costo or 0)
-        
         self.stdout.write(self.style.SUCCESS('Limpieza completada exitosamente.'))
-
 
 

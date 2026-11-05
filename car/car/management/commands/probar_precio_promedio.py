@@ -88,13 +88,4 @@ class Command(BaseCommand):
         self.stdout.write(f"  Precio costo: ${repuesto.precio_costo}")
         self.stdout.write(f"  Precio venta: ${repuesto.precio_venta}")
         
-        # Verificar RepuestoEnStock
-        stock_detallado = repuesto.stocks.filter(deposito='bodega-principal').first()
-        if stock_detallado:
-            self.stdout.write("")
-            self.stdout.write("Estado de RepuestoEnStock:")
-            self.stdout.write(f"  Stock: {stock_detallado.stock}")
-            self.stdout.write(f"  Precio compra: ${stock_detallado.precio_compra}")
-            self.stdout.write(f"  Precio venta: ${stock_detallado.precio_venta}")
-        
         self.stdout.write(self.style.SUCCESS('Prueba completada exitosamente.'))

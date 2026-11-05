@@ -427,10 +427,10 @@ class Diagnostico(models.Model):
                     precio_unitario=dr.precio_unitario or 0,
                     subtotal=dr.subtotal or 0,
                 )
-                if dr.reservado and dr.repuesto_stock_id:
+                if dr.reservado and dr.repuesto_id:
                     from .services.stock import liberar_reserva
                     liberar_reserva(
-                        dr.repuesto_stock,
+                        dr.repuesto,
                         dr.cantidad,
                         'Liberación por aprobación de diagnóstico',
                         f'DIAG-{self.pk}-REPUESTO-{dr.pk}',
@@ -546,7 +546,8 @@ class Repuesto(models.Model):
     precio_costo = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     precio_venta = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     codigo_barra = models.CharField(max_length=100, blank=True, null=True, unique=True)
-    stock = models.IntegerField(default=0)  # Mantener para compatibilidad con datos existentes
+    stock = models.IntegerField(default=0)
+    stock_reservado = models.IntegerField(default=0)
     created = models.DateTimeField(auto_now_add=True)
     
     # Nuevos campos con nombres diferentes y valores por defecto
@@ -643,10 +644,8 @@ class Repuesto(models.Model):
     
     @property
     def stock_disponible(self):
-        """Obtiene el stock disponible (total - reservado)"""
-        from django.db.models import Sum
-        total_reservado = self.stocks.aggregate(total=Sum('reservado'))['total'] or 0
-        return self.stock_total - total_reservado
+        """Stock disponible desde la única fuente de inventario."""
+        return self.stock_total - (self.stock_reservado or 0)
     
     def tiene_stock_suficiente(self, cantidad):
         """Verifica si hay stock suficiente para la cantidad solicitada"""
@@ -698,9 +697,6 @@ class Repuesto(models.Model):
         self.precio_venta = nuevo_precio_venta
         self.save()
         
-        # Sincronizar con RepuestoEnStock
-        self._sincronizar_con_stock_detallado(cantidad_entrada, precio_compra, proveedor)
-        
         return {
             'stock_anterior': stock_anterior,
             'stock_nuevo': nuevo_stock,
@@ -712,55 +708,6 @@ class Repuesto(models.Model):
             'factor_margen_aplicado': float(nuevo_precio_venta / nuevo_precio_costo) if nuevo_precio_costo > 0 else 0
         }
     
-    def _sincronizar_con_stock_detallado(self, cantidad_entrada, precio_compra, proveedor=''):
-        """Sincroniza con RepuestoEnStock para mantener consistencia"""
-        # 🔥 SIMPLIFICADO: Buscar SOLO por repuesto y depósito (sin proveedor como clave)
-        # Esto evita crear múltiples registros por proveedor
-        
-        # Primero, eliminar cualquier registro duplicado existente
-        registros_existentes = RepuestoEnStock.objects.filter(
-            repuesto=self,
-            deposito='bodega-principal'
-        )
-        
-        if registros_existentes.count() > 1:
-            logger.warning("Registros de stock duplicados para repuesto=%s", self.pk)
-            # Mantener solo el más reciente y eliminar los duplicados
-            registro_principal = registros_existentes.order_by('-id').first()
-            registros_duplicados = registros_existentes.exclude(id=registro_principal.id)
-            logger.warning("Eliminando %s registros de stock duplicados", registros_duplicados.count())
-            registros_duplicados.delete()
-        
-        # 🔥 CAMBIO CLAVE: get_or_create solo por repuesto y deposito (no incluir proveedor)
-        stock_principal, created = RepuestoEnStock.objects.get_or_create(
-            repuesto=self,
-            deposito='bodega-principal',
-            defaults={
-                'stock': 0,
-                'reservado': 0,
-                'precio_compra': precio_compra,
-                'precio_venta': self.precio_venta,
-                'proveedor': proveedor  # Lo guardamos, pero no es clave de búsqueda
-            }
-        )
-        
-        if created:
-            logger.info("Registro de stock creado para repuesto=%s", self.pk)
-        
-        # Actualizar el stock detallado para que coincida con el stock maestro
-        stock_principal.stock = self.stock
-        stock_principal.precio_compra = self.precio_costo
-        stock_principal.precio_venta = self.precio_venta
-        # Actualizar proveedor si viene uno nuevo (pero sin crear registro duplicado)
-        if proveedor:
-            stock_principal.proveedor = proveedor
-        stock_principal.save()
-        
-        logger.info("Stock sincronizado: repuesto=%s stock=%s", self.pk, self.stock)
-
-
-
-
 class VehiculoVersion(models.Model):
     marca = models.CharField(max_length=80)
     modelo = models.CharField(max_length=120)
@@ -802,28 +749,8 @@ class RepuestoAplicacion(models.Model):
     class Meta:
         unique_together = ("repuesto", "version")
 
-class RepuestoEnStock(models.Model):
-    repuesto = models.ForeignKey(Repuesto, on_delete=models.CASCADE, related_name='stocks')
-    deposito = models.CharField(max_length=80, default='bodega-principal')  # o FK a un modelo Deposito
-    proveedor = models.CharField(max_length=120, blank=True)  # info del proveedor
-    stock = models.IntegerField(default=0)
-    reservado = models.IntegerField(default=0)  # cantidad reservada por diagnósticos pendientes
-    precio_compra = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    precio_venta = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)  # en este sitio
-    ultima_actualizacion = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        unique_together = ("repuesto", "deposito", "proveedor")
-
-    @property
-    def disponible(self):
-        return self.stock - (self.reservado or 0)
-
-    def __str__(self):
-        return f"{self.repuesto.nombre} (Stock: {self.stock})" 
-
 class StockMovimiento(models.Model):
-    repuesto_stock = models.ForeignKey(RepuestoEnStock, on_delete=models.CASCADE, related_name='movimientos')
+    repuesto = models.ForeignKey(Repuesto, on_delete=models.CASCADE, related_name='movimientos')
     tipo = models.CharField(max_length=20, choices=(('ingreso','ingreso'),('salida','salida'),('reserva','reserva'),('liberacion','liberacion')))
     cantidad = models.IntegerField()
     motivo = models.CharField(max_length=200, blank=True)
@@ -835,7 +762,6 @@ class DiagnosticoRepuesto(models.Model):
     diagnostico = models.ForeignKey('Diagnostico', on_delete=models.CASCADE, related_name='repuestos')
     repuesto = models.ForeignKey(Repuesto, on_delete=models.PROTECT, null=True, blank=True)  # Ahora puede ser NULL
     repuesto_externo = models.ForeignKey('RepuestoExterno', on_delete=models.SET_NULL, null=True, blank=True, related_name='diagnosticos')  # NUEVO
-    repuesto_stock = models.ForeignKey(RepuestoEnStock, on_delete=models.SET_NULL, null=True, blank=True)
     cantidad = models.IntegerField(default=1)
     precio_unitario = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     subtotal = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
@@ -1209,7 +1135,7 @@ class Venta(models.Model):
 
 class VentaItem(models.Model):
     venta = models.ForeignKey(Venta, related_name="items", on_delete=models.CASCADE)
-    repuesto_stock = models.ForeignKey(RepuestoEnStock, on_delete=models.PROTECT)
+    repuesto = models.ForeignKey(Repuesto, on_delete=models.PROTECT)
     cantidad = models.PositiveIntegerField(default=1)
     precio_unitario = models.DecimalField(max_digits=12, decimal_places=2)
     subtotal = models.DecimalField(max_digits=12, decimal_places=2)
@@ -1230,13 +1156,11 @@ def actualizar_stock_venta(venta):
     if not venta.pagado:
         return
     from .services.stock import descontar_stock
-    for item in venta.items.select_related('repuesto_stock').all():
-        descontar_stock(
-            item.repuesto_stock,
-            item.cantidad,
-            venta.usuario,
-            f"Venta #{venta.id} - item {item.pk}",
-        )
+    from .services.inventory import mover_stock
+    for item in venta.items.all():
+        mover_stock(item.repuesto_id, item.cantidad, "salida",
+                    f"Venta #{venta.id}", f"VENTA-{venta.id}-ITEM-{item.pk}",
+                    venta.usuario)
 
 # ========================
 # MÓDULO POS (Point of Sale)

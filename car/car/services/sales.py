@@ -8,7 +8,7 @@ from django.db import transaction
 def crear_venta(form, cart, usuario):
     """Crea una venta pagada y descuenta su inventario de forma centralizada."""
     from ..models import VentaItem
-    from .stock import descontar_stock
+    from .inventory import mover_stock
 
     venta = form.save(commit=False)
     venta.usuario = usuario
@@ -17,21 +17,22 @@ def crear_venta(form, cart, usuario):
     total = Decimal("0")
     for idx, item in enumerate(cart):
         try:
-            stock_id = int(item.get("repuesto_stock_id"))
+            repuesto_id = int(item.get("repuesto_id"))
             cantidad = int(item.get("cantidad", 1))
             precio = Decimal(str(item.get("precio_unitario", "0")))
         except (ValueError, TypeError, InvalidOperation) as exc:
             raise ValueError(f"Datos inválidos en item #{idx + 1}: {exc}") from exc
         if cantidad < 1 or precio < 0:
             raise ValueError(f"Cantidad o precio inválido en item #{idx + 1}")
-        from ..models import RepuestoEnStock
-        stock = RepuestoEnStock.objects.get(pk=stock_id)
+        from ..models import Repuesto
+        repuesto = Repuesto.objects.get(pk=repuesto_id)
         subtotal = precio * cantidad
         venta_item = VentaItem.objects.create(
-            venta=venta, repuesto_stock=stock, cantidad=cantidad,
+            venta=venta, repuesto=repuesto, cantidad=cantidad,
             precio_unitario=precio, subtotal=subtotal,
         )
-        descontar_stock(stock, cantidad, usuario, f"Venta #{venta.pk} - item {venta_item.pk}")
+        mover_stock(repuesto.pk, cantidad, "salida", f"Venta #{venta.pk}",
+                    f"VENTA-{venta.pk}-ITEM-{venta_item.pk}", usuario)
         total += subtotal
     venta.total = total
     venta.pagado = True

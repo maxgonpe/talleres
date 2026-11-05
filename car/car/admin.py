@@ -4,7 +4,7 @@ from .models import (
     Diagnostico, DiagnosticoComponenteAccion, DiagnosticoRepuesto,
     Trabajo, TrabajoAccion, TrabajoRepuesto, TrabajoFoto, TrabajoAbono, TrabajoAdicional,
     Componente, Accion, ComponenteAccion,
-    Repuesto, RepuestoEnStock, StockMovimiento, RepuestoExterno,
+    Repuesto, StockMovimiento, RepuestoExterno,
     VehiculoVersion, ComponenteRepuesto, RepuestoAplicacion,
     Venta, VentaItem, PrefijoRepuesto,
     # Modelos POS
@@ -289,29 +289,6 @@ class VehiculoVersionAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
-
-@admin.register(RepuestoEnStock)
-class RepuestoEnStockAdmin(admin.ModelAdmin):
-    list_display = ('id', 'repuesto', 'deposito', 'proveedor', 'stock', 'reservado', 'stock_disponible', 'precio_compra', 'precio_venta')
-    list_filter = ('deposito', 'proveedor', 'repuesto__marca_veh')
-    search_fields = ('repuesto__nombre', 'repuesto__sku', 'deposito', 'proveedor')
-    autocomplete_fields = ['repuesto']
-    
-    fieldsets = (
-        ('Información Básica', {
-            'fields': ('repuesto', 'deposito', 'proveedor')
-        }),
-        ('Stock', {
-            'fields': ('stock', 'reservado')
-        }),
-        ('Precios', {
-            'fields': ('precio_compra', 'precio_venta')
-        }),
-    )
-    
-    def stock_disponible(self, obj):
-        return obj.stock - obj.reservado
-    stock_disponible.short_description = 'Stock Disponible'
 
 admin.site.register(StockMovimiento)
 #admin.site.register(TrabajoAccion)

@@ -6,7 +6,7 @@ from django.db import transaction
 from django.core.paginator import Paginator
 from django.db.models import Q, Sum
 from django.utils import timezone
-from .models import Compra, CompraItem, Repuesto, RepuestoEnStock, StockMovimiento
+from .models import Compra, CompraItem, Repuesto, StockMovimiento
 from .forms import CompraForm, CompraItemForm
 from .decorators import requiere_permiso
 

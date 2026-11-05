@@ -4,7 +4,7 @@ from django.utils.timezone import now
 
 def recibir_item_compra(item, usuario=None):
     """Recibe un item de compra y registra una única entrada de stock."""
-    from ..models import RepuestoEnStock, StockMovimiento
+    from .inventory import mover_stock
 
     with transaction.atomic():
         locked = type(item).objects.select_for_update().select_related(
@@ -16,21 +16,9 @@ def recibir_item_compra(item, usuario=None):
         locked.fecha_recibido = now()
         locked.save()
         repuesto = locked.repuesto
-        repuesto.actualizar_stock_y_precio(
-            cantidad_entrada=locked.cantidad,
-            precio_compra=locked.precio_unitario,
-            proveedor=locked.compra.proveedor,
-        )
-        stock = RepuestoEnStock.objects.filter(
-            repuesto=repuesto, deposito="bodega-principal"
-        ).first()
-        if stock:
-            StockMovimiento.objects.create(
-                repuesto_stock=stock,
-                tipo="entrada",
-                cantidad=locked.cantidad,
-                motivo=f"Compra #{locked.compra.numero_compra}",
-                referencia=f"COMPRA-{locked.compra_id}-ITEM-{locked.pk}",
-                usuario=usuario,
-            )
+        repuesto.precio_costo = locked.precio_unitario
+        repuesto.save(update_fields=["precio_costo"])
+        mover_stock(repuesto.pk, locked.cantidad, "entrada",
+                    f"Compra #{locked.compra.numero_compra}",
+                    f"COMPRA-{locked.compra_id}-ITEM-{locked.pk}", usuario)
         return locked

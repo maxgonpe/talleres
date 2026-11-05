@@ -51,27 +51,21 @@ def ajustar_stock_repuesto_trabajo(repuesto_trabajo, delta):
     """Ajusta stock por instalación o devolución de un repuesto de trabajo."""
     if not repuesto_trabajo.repuesto:
         return False
-    from ..models import RepuestoEnStock
-    from .stock import ajustar_stock
+    from .inventory import mover_stock
 
     cantidad = repuesto_trabajo.cantidad or 0
     if cantidad < 1:
         return False
     with transaction.atomic():
-        stock = RepuestoEnStock.objects.filter(
-            repuesto_id=repuesto_trabajo.repuesto_id,
-            deposito='bodega-principal',
-        ).first()
-        if not stock:
-            return False
         try:
-            ajustar_stock(
-                stock,
-                cantidad,
-                'salida' if delta < 0 else 'liberacion',
-                f"{'Instalación' if delta < 0 else 'Devolución'} de repuesto en trabajo #{repuesto_trabajo.trabajo_id}",
-                f"TRABAJO-{repuesto_trabajo.trabajo_id}-REPUESTO-{repuesto_trabajo.pk}",
-            )
+            if delta < 0:
+                mover_stock(repuesto_trabajo.repuesto_id, cantidad, 'salida',
+                            f"Instalación en trabajo #{repuesto_trabajo.trabajo_id}",
+                            f"TRABAJO-{repuesto_trabajo.trabajo_id}-REPUESTO-{repuesto_trabajo.pk}")
+            else:
+                mover_stock(repuesto_trabajo.repuesto_id, cantidad, 'liberacion',
+                            f"Devolución de trabajo #{repuesto_trabajo.trabajo_id}",
+                            f"TRABAJO-DEV-{repuesto_trabajo.trabajo_id}-REPUESTO-{repuesto_trabajo.pk}")
         except ValueError:
             return False
     return True

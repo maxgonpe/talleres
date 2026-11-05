@@ -213,14 +213,14 @@ $(function() {
 
   // Función para agregar el producto al carrito
   function addProductToCart(selectedItem) {
-    const existing = cart.find(c => String(c.repuesto_stock_id) === String(selectedItem.id));
+        const existing = cart.find(c => String(c.repuesto_id) === String(selectedItem.id));
     if (existing) {
       existing.cantidad = (existing.cantidad || 0) + 1;
       existing.subtotal = Math.round(parseFloat(existing.precio_unitario) * existing.cantidad);
     } else {
       const precio = (selectedItem.precio_venta !== undefined) ? parseFloat(String(selectedItem.precio_venta)) : 0;
       cart.push({
-        repuesto_stock_id: selectedItem.id,
+            repuesto_id: selectedItem.id,
         cantidad: 1,
         precio_unitario: Math.round(precio),
         subtotal: Math.round(precio),

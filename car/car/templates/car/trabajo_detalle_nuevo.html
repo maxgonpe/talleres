@@ -2539,7 +2539,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <input type="checkbox"
                                    class="form-check-input repuesto-check"
                                    data-id="${r.id}"
-                                   data-stock-id="${r.repuesto_stock_id || ''}"
+                                    data-stock-id="${r.repuesto_id || r.id || ''}"
                                    data-precio="${r.precio_venta || 0}"
                                    data-nombre="${escapeHtml(r.nombre)}"
                                    data-oem="${escapeHtml(r.oem || '')}">
@@ -2600,7 +2600,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const cantidad = cantidadInput ? parseInt(cantidadInput.value) || 1 : 1;
             repuestos.push({
                 id: chk.dataset.id,
-                repuesto_stock_id: chk.dataset.stockId || null,
+                                repuesto_id: chk.dataset.stockId || null,
                 cantidad: cantidad,
                 precio_unitario: parseFloat(chk.dataset.precio) || 0
             });

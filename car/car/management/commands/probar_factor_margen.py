@@ -105,25 +105,7 @@ class Command(BaseCommand):
             factor_final = repuesto.precio_venta / repuesto.precio_costo
             self.stdout.write(f"  Factor de margen final: {factor_final:.2f}")
         
-        # Verificar sincronización con RepuestoEnStock
-        stock_detallado = repuesto.stocks.filter(deposito='bodega-principal').first()
-        if stock_detallado:
-            self.stdout.write("")
-            self.stdout.write("🔗 SINCRONIZACIÓN RepuestoEnStock:")
-            self.stdout.write(f"  Stock: {stock_detallado.stock}")
-            self.stdout.write(f"  Precio compra: ${stock_detallado.precio_compra}")
-            self.stdout.write(f"  Precio venta: ${stock_detallado.precio_venta}")
-            
-            # Verificar consistencia
-            if (stock_detallado.stock == repuesto.stock and 
-                stock_detallado.precio_compra == repuesto.precio_costo and
-                stock_detallado.precio_venta == repuesto.precio_venta):
-                self.stdout.write(self.style.SUCCESS("  ✅ Sincronización perfecta"))
-            else:
-                self.stdout.write(self.style.ERROR("  ❌ Inconsistencias detectadas"))
-        
         self.stdout.write("")
         self.stdout.write(self.style.SUCCESS('🎉 Prueba del factor de margen completada exitosamente.'))
-
 
 
