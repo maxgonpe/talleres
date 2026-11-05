@@ -6,6 +6,7 @@ car/car/views_api.py
 
 # Documentos generados por sesiones de agentes o asistentes IA
 *.md
+!BITACORA.md
 
 # Material de trabajo local de agentes
 /agentes/

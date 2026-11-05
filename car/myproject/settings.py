@@ -23,20 +23,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'local-development-only-key')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-#DEBUG = os.environ.get('DJANGO_DEBUG', 'true').lower() == 'true'
-DEBUG = True
+DEBUG = os.environ.get('DJANGO_DEBUG', 'true').strip().lower() in {
+    '1', 'true', 'yes', 'on'
+}
 
-#ALLOWED_HOSTS = ['94.72.119.222']
-ALLOWED_HOST = []
-'''
 ALLOWED_HOSTS = [host.strip() for host in os.environ.get(
     'DJANGO_ALLOWED_HOSTS',
-    'netgogo.cl,www.netgogo.cl,.netgogo.cl,localhost,127.0.0.1',
+    'localhost,127.0.0.1',
 ).split(',') if host.strip()]
-ALLOWED_HOSTS += [
-    '172.18.0.11',  # IP del contenedor Docker
-]
-'''
 
 # Application definition
 
