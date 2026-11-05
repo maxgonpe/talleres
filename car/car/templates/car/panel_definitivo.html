@@ -11,10 +11,199 @@
 {% block extra_css %}
   <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
 <style>
+    /* Segunda capa: cada espacio contiene su propio catalogo de accesos. */
+    #panelTabsContent {
+        padding: clamp(16px, 2.5vw, 34px);
+        border: 1px solid rgba(24, 33, 31, .08);
+        border-radius: 28px;
+        background: rgba(255, 255, 255, .52);
+        box-shadow: 0 20px 60px rgba(24, 33, 31, .08);
+    }
+
+    #panelTabsContent .pizarra-section {
+        margin: 0;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+    }
+
+    #panelTabsContent .pizarra-header {
+        margin-bottom: 24px;
+        padding: 0 0 16px;
+        border-bottom: 1px solid var(--line);
+    }
+
+    #panelTabsContent .pizarra-title {
+        font-size: clamp(1.35rem, 2.5vw, 2rem);
+        font-weight: 800;
+        letter-spacing: -.05em;
+    }
+
+    #panelTabsContent .actions-grid {
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: 16px;
+    }
+
+    #panelTabsContent .action-card {
+        position: relative;
+        min-height: 190px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: flex-end;
+        padding: 24px;
+        border: 1px solid rgba(24, 33, 31, .10);
+        border-radius: 22px;
+        background: linear-gradient(145deg, #ffffff 0%, #e8eee6 100%);
+        color: var(--ink) !important;
+        text-align: left;
+        box-shadow: 0 12px 28px rgba(24, 33, 31, .08);
+        isolation: isolate;
+    }
+
+    #panelTabsContent .action-card::before {
+        content: '';
+        position: absolute;
+        z-index: -1;
+        width: 135px;
+        height: 135px;
+        top: -42px;
+        right: -34px;
+        border: 25px solid rgba(145, 173, 25, .20);
+        border-radius: 50%;
+        transition: transform .3s ease, border-color .3s ease;
+    }
+
+    #panelTabsContent .action-card:hover {
+        transform: translateY(-6px) scale(1.01);
+        border-color: var(--signal-dark);
+        background: linear-gradient(145deg, #ffffff 0%, #dfeac2 100%);
+        color: var(--ink) !important;
+        box-shadow: 0 20px 38px rgba(24, 33, 31, .15);
+    }
+
+    #panelTabsContent .action-card:hover::before {
+        transform: scale(1.15) rotate(12deg);
+        border-color: rgba(145, 173, 25, .42);
+    }
+
+    #panelTabsContent .action-icon {
+        position: relative;
+        margin-bottom: auto;
+        font-size: 2.4rem;
+        filter: drop-shadow(0 5px 8px rgba(24, 33, 31, .12));
+    }
+
+    #panelTabsContent .action-title {
+        position: relative;
+        color: var(--ink) !important;
+        font-size: 1.08rem;
+        font-weight: 800;
+        letter-spacing: -.02em;
+    }
+
+    #panelTabsContent .action-description {
+        position: relative;
+        color: var(--muted) !important;
+        margin-top: 4px;
+    }
+
+    @media (max-width: 575px) {
+        #panelTabsContent { padding: 16px; border-radius: 22px; }
+        #panelTabsContent .actions-grid { grid-template-columns: 1fr; }
+        #panelTabsContent .action-card { min-height: 150px; }
+    }
+
     .panel-container {
         max-width: 100%;
         margin: 0;
         padding: var(--spacing-sm);
+    }
+
+    /* Launcher visual: las tabs se comportan como tarjetas de un catalogo. */
+    #panelTabs {
+        position: fixed;
+        top: 86px;
+        right: clamp(12px, 3vw, 46px);
+        z-index: 30;
+        display: flex;
+        gap: 6px;
+        border: 0;
+        margin: 0;
+        padding: 5px;
+        border: 1px solid rgba(24, 33, 31, .10);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, .82);
+        box-shadow: 0 12px 28px rgba(24, 33, 31, .12);
+        backdrop-filter: blur(14px);
+    }
+
+    #panelTabs .nav-item { min-width: 0; }
+    #panelTabs .nav-link {
+        position: relative;
+        display: block;
+        min-height: 0;
+        width: auto;
+        overflow: visible;
+        border: 0 !important;
+        border-radius: 999px !important;
+        padding: 8px 12px !important;
+        background: transparent !important;
+        color: var(--ink) !important;
+        font-size: .72rem;
+        font-weight: 800;
+        box-shadow: none;
+        transition: transform .22s ease, background .22s ease, color .22s ease !important;
+    }
+
+    #panelTabs .nav-link::before {
+        content: '';
+        position: absolute;
+        display: none;
+    }
+
+    #panelTabs .nav-link:hover,
+    #panelTabs .nav-link:focus-visible {
+        transform: translateY(-1px);
+        background: rgba(217, 243, 106, .35) !important;
+        color: var(--ink) !important;
+    }
+
+    #panelTabs .nav-link.active {
+        background: var(--night) !important;
+        color: var(--signal) !important;
+        box-shadow: 0 5px 12px rgba(23, 34, 31, .18);
+    }
+
+    .panel-clock-container {
+        display: flex;
+        justify-content: flex-end;
+        margin: -8px 0 18px;
+    }
+
+    .pizarra-clock {
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, .72);
+        box-shadow: 0 8px 20px rgba(24, 33, 31, .06);
+        padding: 8px 14px;
+    }
+
+    .pizarra-clock-time { color: var(--ink); font-weight: 800; }
+    .pizarra-clock-date { color: var(--muted); margin-left: 8px; font-size: .78rem; }
+
+    @media (max-width: 900px) {
+        #panelTabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 575px) {
+        #panelTabs { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+        #panelTabs .nav-link { min-height: 88px; padding: 14px !important; font-size: .88rem; }
+        .panel-clock-container { justify-content: flex-start; }
+        .pizarra-clock { width: 100%; text-align: center; }
     }
     
     .panel-header {
@@ -592,6 +781,28 @@
     .theme-oscuro ul#panelTabs .nav-link {
         color: #ffffff !important;
     }
+    /* Overrides finales para el launcher, despues de los estilos legacy. */
+    #panelTabs { border: 0 !important; }
+    #panelTabs .nav-link { border-bottom: 0 !important; }
+
+    .panel-container {
+        width: 100vw;
+        min-height: calc(100vh - 78px);
+        margin-left: calc(50% - 50vw);
+        padding: 22px clamp(16px, 3vw, 46px) 44px;
+        background:
+            radial-gradient(circle at 90% 0%, rgba(217, 243, 106, .16), transparent 28rem),
+            var(--paper);
+    }
+
+    #panelTabsContent { max-width: 1500px; margin: 0 auto; }
+    #panelTabsContent > .tab-pane { width: 100%; }
+
+    @media (max-width: 575px) {
+        .panel-container { padding-left: 12px; padding-right: 12px; }
+        #panelTabs { top: 74px; right: 10px; left: 10px; justify-content: center; overflow-x: auto; }
+        #panelTabs .nav-link { padding: 7px 9px !important; font-size: .65rem; white-space: nowrap; }
+    }
 </style>
 {% endblock %}
 
@@ -609,28 +820,28 @@
     <!-- Navegación por Tabs -->
     <ul class="nav nav-tabs" id="panelTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="pizarra-tab" data-bs-toggle="tab" data-bs-target="#pizarra" type="button" role="tab" aria-controls="pizarra" aria-selected="true">
-                📊 Pizarra
+            <button class="nav-link active" id="pizarra-tab" data-bs-toggle="tab" data-bs-target="#pizarra" type="button" role="tab" aria-controls="pizarra" aria-selected="true" aria-label="Pizarra" title="Pizarra">
+                📊
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="inicio-tab" data-bs-toggle="tab" data-bs-target="#inicio" type="button" role="tab" aria-controls="inicio" aria-selected="false">
-                🏠 Inicio
+            <button class="nav-link" id="inicio-tab" data-bs-toggle="tab" data-bs-target="#inicio" type="button" role="tab" aria-controls="inicio" aria-selected="false" aria-label="Inicio" title="Inicio">
+                🏠
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="taller-tab" data-bs-toggle="tab" data-bs-target="#taller" type="button" role="tab" aria-controls="taller" aria-selected="false">
-                🔧 Taller
+            <button class="nav-link" id="taller-tab" data-bs-toggle="tab" data-bs-target="#taller" type="button" role="tab" aria-controls="taller" aria-selected="false" aria-label="Taller" title="Taller">
+                🔧
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="pos-tab" data-bs-toggle="tab" data-bs-target="#pos" type="button" role="tab" aria-controls="pos" aria-selected="false">
-                🛒 POS
+            <button class="nav-link" id="pos-tab" data-bs-toggle="tab" data-bs-target="#pos" type="button" role="tab" aria-controls="pos" aria-selected="false" aria-label="Punto de venta" title="Punto de venta">
+                🛒
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="administracion-tab" data-bs-toggle="tab" data-bs-target="#administracion" type="button" role="tab" aria-controls="administracion" aria-selected="false">
-                ⚙️ Admin
+            <button class="nav-link" id="administracion-tab" data-bs-toggle="tab" data-bs-target="#administracion" type="button" role="tab" aria-controls="administracion" aria-selected="false" aria-label="Administración" title="Administración">
+                ⚙️
             </button>
         </li>
     </ul>
@@ -1039,7 +1250,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Aplicar tema automáticamente
     const saved = localStorage.getItem("theme") || "piedra";
     document.body.className = `theme-${saved}`;
-    
+
+    const initialSection = window.location.hash;
+    if (initialSection) {
+        const initialTab = document.querySelector(`#panelTabs [data-bs-target="${initialSection}"]`);
+        if (initialTab) {
+            bootstrap.Tab.getOrCreateInstance(initialTab).show();
+        }
+    }
+
     // Forzar visibilidad de las estadísticas
     setTimeout(function() {
         const statCards = document.querySelectorAll('.stat-card');

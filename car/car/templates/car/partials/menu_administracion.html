@@ -1,0 +1,12 @@
+{% if context_menu %}
+<nav class="context-menu context-menu-{{ context_menu.group }}" aria-label="Navegación contextual">
+    <a href="{{ context_menu.parent.url }}" class="context-menu-item context-menu-parent" title="{{ context_menu.parent.label }}" aria-label="Volver a {{ context_menu.parent.label }}">
+        <span aria-hidden="true">{{ context_menu.parent.icon }}</span>
+    </a>
+    {% for item in context_menu.items %}
+    <a href="{{ item.url }}" class="context-menu-item{% if item.active %} active{% endif %}" title="{{ item.label }}" aria-label="{{ item.label }}">
+        <span aria-hidden="true">{{ item.icon }}</span>
+    </a>
+    {% endfor %}
+</nav>
+{% endif %}

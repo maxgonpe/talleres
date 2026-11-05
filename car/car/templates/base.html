@@ -27,13 +27,6 @@
   <!-- FontAwesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-  <!-- Sistema de colores centralizado -->
-  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
-  
-  <!-- Optimización móvil - Botones grandes, fácil uso con dedos -->
-  <link rel="stylesheet" href="{% static 'css/mobile-optimized.css' %}">
-  <link rel="stylesheet" href="{% static 'css/app-shell.css' %}">
-  
   <!-- Menú inferior y FAB (se incluyen en los templates que los necesiten) -->
 
   <!-- Aplicación automática del tema -->
@@ -46,6 +39,9 @@
 
   {% block extra_css %}{% endblock %}
   {% block extra_head %}{% endblock %}
+
+  <!-- Autoridad visual final: se carga despues de los estilos locales legacy. -->
+  <link rel="stylesheet" href="{% static 'css/design-system.css' %}">
 </head>
 
 <body class="d-flex flex-column min-vh-100">
@@ -93,6 +89,8 @@
       </div>
     </div>
   </nav>
+
+  {% include 'car/partials/menu_administracion.html' %}
 
   <!-- Contenido -->
   <main class="flex-grow-1">

@@ -1,0 +1,158 @@
+/* Single visual entry point for the workshop application. */
+@import url('centralized-colors.css');
+@import url('mobile-optimized.css');
+@import url('app-shell.css');
+
+:root {
+  /* Merkato-inspired foundation. */
+  --ui-font: 'Manrope', system-ui, sans-serif;
+  --ui-mono: 'DM Mono', monospace;
+  --ui-bg: #f4f6f1;
+  --ui-surface: #ffffff;
+  --ui-surface-2: #e8eee6;
+  --ui-surface-3: #dfeac2;
+  --ui-ink: #18211f;
+  --ui-muted: #6a7772;
+  --ui-line: #dce3dc;
+  --ui-night: #17221f;
+  --ui-accent: #d9f36a;
+  --ui-accent-strong: #91ad19;
+  --ui-danger: #c2410c;
+  --ui-success: #15803d;
+  --ui-radius-sm: 10px;
+  --ui-radius-md: 18px;
+  --ui-radius-lg: 24px;
+  --ui-radius-pill: 999px;
+  --ui-space-1: 4px;
+  --ui-space-2: 8px;
+  --ui-space-3: 12px;
+  --ui-space-4: 16px;
+  --ui-space-5: 24px;
+  --ui-space-6: 32px;
+  --ui-shadow-1: 0 8px 26px rgba(24, 33, 31, .08);
+  --ui-shadow-2: 0 18px 50px rgba(24, 33, 31, .12);
+  --ui-focus: 0 0 0 3px rgba(145, 173, 25, .30);
+
+  /* Compatibility aliases for existing templates. */
+  --bg: var(--ui-bg);
+  --fg: var(--ui-ink);
+  --card-bg: var(--ui-surface);
+  --muted: var(--ui-muted);
+  --hover-bg: var(--ui-surface-2);
+  --btn-bg: var(--ui-night);
+  --btn-fg: #ffffff;
+  --bg-primary: var(--ui-bg);
+  --bg-secondary: var(--ui-surface-2);
+  --bg-card: var(--ui-surface);
+  --bg-input: var(--ui-surface);
+  --text-primary: var(--ui-ink);
+  --text-secondary: #34413c;
+  --text-muted: var(--ui-muted);
+  --border-color: var(--ui-line);
+  --accent: var(--ui-accent-strong);
+  --primary-600: var(--ui-accent-strong);
+  --primary-700: #708b0d;
+}
+
+html, body { min-height: 100%; }
+body {
+  background: var(--ui-bg);
+  color: var(--ui-ink);
+  font-family: var(--ui-font);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Layer 1: application shell. */
+main > .container { max-width: 1500px; }
+main > .container:not(.panel-container) { padding: clamp(16px, 3vw, 44px); }
+
+/* Layer 2: surfaces. */
+.card, .modal-content, .table-responsive, .config-card, .search-bar,
+.crear-usuario-card, .usuarios-table, .pizarra-section {
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-radius-md);
+  background: var(--ui-surface);
+  box-shadow: var(--ui-shadow-1);
+}
+.card-header { background: var(--ui-night); color: #fff; border: 0; }
+
+/* Layer 3: shared controls. */
+.btn {
+  border-radius: var(--ui-radius-sm);
+  font-family: var(--ui-font);
+  font-weight: 800;
+  transition: transform .2s ease, background .2s ease, box-shadow .2s ease;
+}
+.btn:hover { transform: translateY(-1px); box-shadow: var(--ui-shadow-1); }
+.btn-primary, .btn-success { background: var(--ui-night); border-color: var(--ui-night); color: #fff; }
+.btn-primary:hover, .btn-success:hover { background: #2b3d37; border-color: #2b3d37; }
+.form-control, .form-select, textarea, input[type="text"], input[type="email"],
+input[type="number"], input[type="password"], input[type="date"], input[type="file"] {
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-radius-sm);
+  background: var(--ui-surface);
+  color: var(--ui-ink);
+}
+.form-control:focus, .form-select:focus, textarea:focus, input:focus {
+  border-color: var(--ui-accent-strong);
+  box-shadow: var(--ui-focus);
+  outline: 0;
+}
+
+/* Layer 4: feedback and compact components. */
+.alert { border-radius: var(--ui-radius-sm); border: 1px solid var(--ui-line); }
+.badge { border-radius: var(--ui-radius-pill); font-weight: 800; }
+.table thead th { background: var(--ui-night); color: #dce7df; border: 0; }
+.table tbody tr { border-color: var(--ui-line); }
+.table-hover tbody tr:hover { background: var(--ui-surface-3); }
+
+/* Compatibility layer for existing modules. These classes are the shared
+   contract while legacy templates are progressively simplified. */
+.config-container, .usuarios-container, .compras-container, .pos-container,
+.repuestos-container, .diagnostico-container, .trabajo-container {
+  max-width: 1500px;
+  margin-inline: auto;
+  padding: clamp(16px, 3vw, 44px);
+}
+.config-header, .usuarios-header, .dashboard-header, .pos-header,
+.repuestos-header, .trabajo-header, .diagnostico-header {
+  border: 0;
+  border-radius: var(--ui-radius-lg);
+  background: var(--ui-night);
+  color: #fff;
+  box-shadow: var(--ui-shadow-2);
+  text-align: left;
+}
+.config-header h1, .usuarios-header h1, .dashboard-header h1,
+.pos-header h1, .repuestos-header h1, .trabajo-header h1,
+.diagnostico-header h1 { color: #fff; font-weight: 800; letter-spacing: -.05em; }
+.config-card, .crear-usuario-card, .search-bar, .usuarios-table,
+.stat-card, .diagnostico-card, .info-card, .section-card, .item-card {
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-radius-md);
+  background: var(--ui-surface);
+  color: var(--ui-ink);
+  box-shadow: var(--ui-shadow-1);
+}
+.config-card h2, .config-card h3, .crear-usuario-card h2,
+.card h2, .card h3, .card h4, .card h5 { color: var(--ui-ink); font-weight: 800; }
+.table-config, .usuarios-table .table { color: var(--ui-ink); }
+.table-config th, .usuarios-table .table th { background: var(--ui-night); color: #dce7df; border: 0; }
+.table-config td, .usuarios-table .table td { border-color: var(--ui-line); }
+.table-config tbody tr:hover, .usuarios-table .table tbody tr:hover { background: var(--ui-surface-3); }
+.btn-primary, .btn-success, .btn-info, .btn-secondary, .btn-warning, .btn-danger,
+.btn-editar, .btn-password, .btn-eliminar { border-radius: var(--ui-radius-sm); font-weight: 800; }
+.modal-content { overflow: hidden; }
+.modal-header { background: var(--ui-night); color: #fff; }
+.modal-footer { background: var(--ui-surface-2); border-top: 1px solid var(--ui-line); }
+label, .form-label, .form-group label { color: var(--ui-ink); font-weight: 700; }
+small, .text-muted, .action-description, .stat-label { color: var(--ui-muted) !important; }
+
+/* Layer markers for future templates. */
+.ui-layer-1 { background: var(--ui-bg); color: var(--ui-ink); }
+.ui-layer-2 { background: var(--ui-surface); border: 1px solid var(--ui-line); border-radius: var(--ui-radius-md); box-shadow: var(--ui-shadow-1); }
+.ui-layer-3 { background: var(--ui-surface-2); border: 1px solid var(--ui-line); border-radius: var(--ui-radius-sm); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
