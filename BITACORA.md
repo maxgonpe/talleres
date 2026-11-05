@@ -131,6 +131,18 @@ La bitacora se actualizara despues de cada bloque funcional o decision tecnica.
 - El proximo trabajo retomara desde la revision funcional y los cambios
   estructurales significativos, manteniendo esta linea base como referencia.
 
+## 2026-11-05 - Primer refactor del flujo de diagnostico
+
+- Se creo el commit de linea base `3fdd00e` antes de modificar la logica.
+- Se comprobo que la aprobacion ya delegaba la creacion del trabajo al servicio
+  `car/services/diagnostics.py`.
+- Se elimino la duplicacion de eventos y aprobacion entre
+  `guardar_aprobar_y_crear_ot` y `aprobar_diagnostico` mediante el helper privado
+  `_aprobar_diagnostico_y_registrar` en `car/views.py`.
+- No se modificaron middleware, modelos, rutas ni reglas de negocio.
+- `python manage.py check`: correcto.
+- `python manage.py test car`: 23 pruebas correctas.
+
 ## 2026-11-04 - Inventario inicial de rutas y limpieza
 
 ### Rutas revisadas

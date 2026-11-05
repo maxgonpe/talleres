@@ -2249,6 +2249,16 @@ class TrabajoDeleteView(DeleteView):
 @login_required
 @requiere_permiso('diagnosticos')
 @transaction.atomic
+def _aprobar_diagnostico_y_registrar(diagnostico, request):
+    """Aprueba un diagnostico y registra los eventos comunes del ingreso."""
+    from .services.diagnostics import aprobar_diagnostico
+
+    trabajo = aprobar_diagnostico(diagnostico)
+    registrar_diagnostico_aprobado(diagnostico, trabajo, request=request)
+    registrar_ingreso(trabajo, request=request)
+    return trabajo
+
+
 def guardar_aprobar_y_crear_ot(request):
     """
     Guarda el diagnóstico, lo aprueba y crea la Orden de Trabajo en una sola acción.
@@ -2426,14 +2436,7 @@ def guardar_aprobar_y_crear_ot(request):
             # 🚀 APROBAR Y CREAR TRABAJO
             # ====================================================
             if diagnostico.estado != "aprobado":
-                from .services.diagnostics import aprobar_diagnostico
-                trabajo = aprobar_diagnostico(diagnostico)
-                
-                # Registrar evento de diagnóstico aprobado
-                registrar_diagnostico_aprobado(diagnostico, trabajo, request=request)
-                
-                # Registrar evento de ingreso
-                registrar_ingreso(trabajo, request=request)
+                trabajo = _aprobar_diagnostico_y_registrar(diagnostico, request)
                 
                 if config.ver_mensajes:
                     messages.success(request, f"✅ Diagnóstico guardado, aprobado y trabajo #{trabajo.id} creado.")
@@ -2474,14 +2477,7 @@ def aprobar_diagnostico(request, pk):
     diagnostico = get_object_or_404(Diagnostico, pk=pk)
 
     if diagnostico.estado != "aprobado":
-        from .services.diagnostics import aprobar_diagnostico
-        trabajo = aprobar_diagnostico(diagnostico)
-        
-        # Registrar evento de diagnóstico aprobado (con días de diferencia)
-        registrar_diagnostico_aprobado(diagnostico, trabajo, request=request)
-        
-        # Registrar evento de ingreso
-        registrar_ingreso(trabajo, request=request)
+        trabajo = _aprobar_diagnostico_y_registrar(diagnostico, request)
         config = AdministracionTaller.get_configuracion_activa()
         if config.ver_mensajes:
             messages.success(request, f"✅ Diagnóstico aprobado y trabajo #{trabajo.id} creado.")
