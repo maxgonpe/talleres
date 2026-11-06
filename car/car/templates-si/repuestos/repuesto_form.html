@@ -1,0 +1,528 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ view.object|default:"Nuevo Repuesto" }}{% endblock %}
+
+{% block extra_css %}
+{% endblock %}
+
+{% block extra_head %}
+<style>
+    .form-container {
+        max-width: 100%;
+        margin: 0;
+        padding: var(--spacing-md);
+    }
+    
+    .form-header {
+        background: linear-gradient(135deg, var(--btn-bg) 0%, var(--muted) 100%);
+        color: var(--btn-fg);
+        padding: var(--spacing-md);
+        text-align: center;
+        border-radius: var(--border-radius-lg);
+        margin-bottom: 1rem;
+    }
+    
+    .form-card {
+        background: var(--card-bg);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-lg);
+        box-shadow: var(--shadow-md);
+        margin-bottom: 1rem;
+        border: 1px solid var(--muted);
+        transition: var(--transition);
+    }
+    
+    .form-card:hover {
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        transform: translateY(-2px);
+    }
+    
+    .form-section {
+        margin-bottom: 2rem;
+    }
+    
+    .form-section h5 {
+        color: var(--btn-bg);
+        border-bottom: 2px solid var(--muted);
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+        position: relative;
+    }
+    
+    .form-group:last-child {
+        margin-bottom: 0;
+    }
+    
+    .form-label {
+        color: var(--fg);
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        display: block;
+        transition: color 0.3s ease;
+    }
+    
+    .form-label:hover {
+        color: var(--btn-bg);
+    }
+    
+    .form-control, .form-select {
+        background: var(--card-bg) !important;
+        border: 2px solid var(--muted) !important;
+        color: var(--fg) !important;
+        border-radius: var(--border-radius-md) !important;
+        padding: 0.75rem 1rem !important;
+        font-size: 1rem !important;
+        transition: var(--transition) !important;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: var(--btn-bg) !important;
+        box-shadow: 0 0 0 0.2rem rgba(var(--btn-bg), 0.25) !important;
+        background: var(--card-bg) !important;
+        color: var(--fg) !important;
+        outline: none !important;
+    }
+    
+    .form-control:hover, .form-select:hover {
+        border-color: var(--btn-bg) !important;
+        background: var(--card-bg) !important;
+    }
+    
+    .form-control::placeholder {
+        color: var(--muted);
+    }
+    
+    .btn-save {
+        background: var(--btn-bg);
+        border: none;
+        color: var(--btn-fg);
+        padding: 0.75rem 2rem;
+        border-radius: var(--border-radius-full);
+        font-weight: 600;
+        transition: var(--transition);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .btn-cancel {
+        background: transparent;
+        border: 2px solid var(--muted);
+        color: var(--muted);
+        padding: 0.75rem 2rem;
+        border-radius: var(--border-radius-full);
+        font-weight: 600;
+        transition: var(--transition);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .btn-save:hover {
+        background: var(--hover-bg);
+        transform: translateY(-2px);
+    }
+    
+    .btn-cancel:hover {
+        border-color: var(--btn-bg);
+        color: var(--btn-bg);
+        transform: translateY(-2px);
+    }
+    
+    .help-text {
+        font-size: 0.8rem;
+        color: var(--muted);
+        margin-top: 0.25rem;
+    }
+    
+    /* ========================================
+       ESTILOS PARA CAMPOS DE COMPATIBILIDAD EN MODO CLARO
+       ======================================== */
+    
+    /* Campos de compatibilidad con fondo destacado en modo claro */
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_tipo_de_motor,
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_cilindrada,
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_nro_valvulas,
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_combustible,
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_otro_especial {
+        background-color: #f8f9fa !important;
+        border: 2px solid #dee2e6 !important;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_tipo_de_motor:focus,
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_cilindrada:focus,
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_nro_valvulas:focus,
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_combustible:focus,
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_otro_especial:focus {
+        background-color: #ffffff !important;
+        border-color: #4A90E2 !important;
+        box-shadow: 0 0 0 0.2rem rgba(74, 144, 226, 0.25), inset 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_tipo_de_motor:hover,
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_cilindrada:hover,
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_nro_valvulas:hover,
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_combustible:hover,
+    body:not(.theme-dark):not(.theme-piedra):not(.theme-charcoal):not(.theme-forest):not(.theme-plum) #id_otro_especial:hover {
+        background-color: #e9ecef !important;
+        border-color: #adb5bd !important;
+    }
+    
+    /* ========================================
+       ESTILOS ESPECÍFICOS PARA TEMAS OSCUROS
+       ======================================== */
+    
+    /* Mejorar contraste en temas oscuros */
+    .theme-piedra .form-control,
+    .theme-charcoal .form-control,
+    .theme-forest .form-control,
+    .theme-plum .form-control {
+        background-color: #34495e !important;
+        border-color: #2c3e50 !important;
+        color: #ffffff !important;
+    }
+    
+    .theme-piedra .form-control:focus,
+    .theme-charcoal .form-control:focus,
+    .theme-forest .form-control:focus,
+    .theme-plum .form-control:focus {
+        background-color: #34495e !important;
+        border-color: #3498db !important;
+        color: #ffffff !important;
+        box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25) !important;
+    }
+    
+    .theme-piedra .form-control:hover,
+    .theme-charcoal .form-control:hover,
+    .theme-forest .form-control:hover,
+    .theme-plum .form-control:hover {
+        background-color: #34495e !important;
+        border-color: #3498db !important;
+        color: #ffffff !important;
+    }
+    
+    .theme-piedra .form-select,
+    .theme-charcoal .form-select,
+    .theme-forest .form-select,
+    .theme-plum .form-select {
+        background-color: #34495e !important;
+        border-color: #2c3e50 !important;
+        color: #ffffff !important;
+    }
+    
+    .theme-piedra .form-select:focus,
+    .theme-charcoal .form-select:focus,
+    .theme-forest .form-select:focus,
+    .theme-plum .form-select:focus {
+        background-color: #34495e !important;
+        border-color: #3498db !important;
+        color: #ffffff !important;
+        box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25) !important;
+    }
+    
+    .theme-piedra .form-select:hover,
+    .theme-charcoal .form-select:hover,
+    .theme-forest .form-select:hover,
+    .theme-plum .form-select:hover {
+        background-color: #34495e !important;
+        border-color: #3498db !important;
+        color: #ffffff !important;
+    }
+    
+    /* Placeholder text en temas oscuros */
+    .theme-piedra .form-control::placeholder,
+    .theme-charcoal .form-control::placeholder,
+    .theme-forest .form-control::placeholder,
+    .theme-plum .form-control::placeholder {
+        color: #bdc3c7 !important;
+    }
+    
+    /* Labels en temas oscuros */
+    .theme-piedra .form-label,
+    .theme-charcoal .form-label,
+    .theme-forest .form-label,
+    .theme-plum .form-label {
+        color: #ecf0f1 !important;
+        font-weight: 600 !important;
+    }
+    
+    /* Help text en temas oscuros */
+    .theme-piedra .help-text,
+    .theme-charcoal .help-text,
+    .theme-forest .help-text,
+    .theme-plum .help-text {
+        color: #bdc3c7 !important;
+    }
+    
+    /* Form sections en temas oscuros */
+    .theme-piedra .form-section h5,
+    .theme-charcoal .form-section h5,
+    .theme-forest .form-section h5,
+    .theme-plum .form-section h5 {
+        color: #3498db !important;
+        border-bottom-color: #2c3e50 !important;
+    }
+    
+    @media (max-width: 768px) {
+        .form-container {
+            padding: var(--spacing-sm);
+        }
+        
+        .form-card {
+            padding: var(--spacing-md);
+        }
+        
+        .row {
+            margin: 0;
+        }
+        
+        .col-md-6 {
+            padding: var(--spacing-xs);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <!-- Header -->
+    <div class="form-header">
+        <h2 class="mb-0">
+            {% if view.object %}
+                ✏️ Editar Repuesto
+            {% else %}
+                ➕ Nuevo Repuesto
+            {% endif %}
+        </h2>
+        <small>Gestión de inventario de repuestos</small>
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <!-- Información Básica -->
+        <div class="form-card">
+            <div class="form-section">
+                <h5>📋 Información Básica</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Nombre del Repuesto *</label>
+                            {{ form.nombre }}
+                            {% if form.nombre.help_text %}
+                                <div class="help-text">{{ form.nombre.help_text }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Marca</label>
+                            {{ form.marca }}
+                            {% if form.marca.help_text %}
+                                <div class="help-text">{{ form.marca.help_text }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Descripción</label>
+                    {{ form.descripcion }}
+                    {% if form.descripcion.help_text %}
+                        <div class="help-text">{{ form.descripcion.help_text }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Códigos y Referencias -->
+        <div class="form-card">
+            <div class="form-section">
+                <h5>🔢 Códigos y Referencias</h5>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">SKU</label>
+                            {{ form.sku }}
+                            <div class="help-text">Se genera automáticamente si se deja vacío</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Código OEM</label>
+                            {{ form.oem }}
+                            <div class="help-text">Código del fabricante original</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Código de Barras</label>
+                            {{ form.codigo_barra }}
+                            <div class="help-text">Código de barras único</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Referencia</label>
+                            {{ form.referencia }}
+                            <div class="help-text">Referencia del proveedor</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Código Proveedor</label>
+                            {{ form.cod_prov }}
+                            <div class="help-text">Código específico del proveedor</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Especificaciones Técnicas -->
+        <div class="form-card">
+            <div class="form-section">
+                <h5>⚙️ Especificaciones Técnicas</h5>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Medida</label>
+                            {{ form.medida }}
+                            <div class="help-text">Ej: 258x22mm, 10x1.25</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Posición</label>
+                            {{ form.posicion }}
+                            <div class="help-text">Ej: freno delantero, motor</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Unidad</label>
+                            {{ form.unidad }}
+                            <div class="help-text">pieza, metro, litro, etc.</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Origen del Repuesto</label>
+                            {{ form.origen_repuesto }}
+                            <div class="help-text">Ej: Original, Alternativo, Reconstruido</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Marca Vehículo</label>
+                            {{ form.marca_veh }}
+                            <div class="help-text">Ej: Toyota, Honda, Ford</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Tipo de Motor</label>
+                    {{ form.tipo_de_motor }}
+                    <div class="help-text">Ej: 1.6L, 2.0L Turbo, V6, etc.</div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Carrocería</label>
+                            {{ form.carroceria }}
+                            <div class="help-text">Ej: Sedán, Hatchback, SUV, Pickup, etc.</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Cilindrada</label>
+                            {{ form.cilindrada }}
+                            <div class="help-text">Ej: 1.6L, 2000cc, 2.4L</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Número de Válvulas</label>
+                            {{ form.nro_valvulas }}
+                            <div class="help-text">Ej: 8, 16, 24</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Combustible</label>
+                            {{ form.combustible }}
+                            <div class="help-text">Ej: Gasolina, Diesel, Híbrido, Eléctrico</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Otro Especial</label>
+                            {{ form.otro_especial }}
+                            <div class="help-text">Información adicional especial</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Precios y Stock -->
+        <div class="form-card">
+            <div class="form-section">
+                <h5>💰 Precios y Stock</h5>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Precio Costo</label>
+                            {{ form.precio_costo }}
+                            <div class="help-text">Precio de compra</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Precio Venta</label>
+                            {{ form.precio_venta }}
+                            <div class="help-text">Precio de venta al público</div>
+                        </div>
+                    </div>
+                    <!-- Stock -->
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Stock</label>
+                            {{ form.stock }}
+                            <div class="help-text">Cantidad en inventario</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="form-card text-center">
+            <button type="submit" class="btn btn-save me-3">
+                {% if view.object %}
+                    💾 Actualizar Repuesto
+                {% else %}
+                    ➕ Crear Repuesto
+                {% endif %}
+            </button>
+            <a href="{% url 'repuesto_list' %}" class="btn btn-cancel">
+                ❌ Cancelar
+            </a>
+        </div>
+  </form>
+</div>
+{% endblock %}
+

@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block extra_css %}
+{% endblock %}
+
+{% block title %}Dashboard POS{% endblock %}
+
+{% block extra_head %}
+
+{% endblock %}
+
+{% block content %}
+<span hidden data-css004b="3c1fd716be"></span>
+<div class="dashboard-container">
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div class="eyebrow">CAJA / RENDIMIENTO</div>
+        <h4 class="mb-0">Rendimiento del POS</h4>
+        <small>Resumen de ventas y estadísticas del día</small>
+    </div>
+
+    <!-- Estadísticas principales -->
+    <div class="stats-grid">
+        <div class="stat-card success">
+            <div class="stat-number">${{ total_hoy|floatformat:0|intcomma }}</div>
+            <div class="stat-label">Ventas Hoy</div>
+        </div>
+        
+        <div class="stat-card primary">
+            <div class="stat-number">{{ cantidad_ventas_hoy }}</div>
+            <div class="stat-label">Transacciones</div>
+        </div>
+        
+        <div class="stat-card warning">
+            <div class="stat-number">
+                {% if cantidad_ventas_hoy > 0 %}
+                    ${{ promedio_venta|floatformat:0|intcomma }}
+                {% else %}
+                    $0
+                {% endif %}
+            </div>
+            <div class="stat-label">Promedio</div>
+        </div>
+        
+        <div class="stat-card info">
+            <div class="stat-number">{{ top_repuestos|length }}</div>
+            <div class="stat-label">Productos</div>
+        </div>
+    </div>
+
+    <!-- Acciones rápidas -->
+    <div class="quick-actions">
+        <h5 class="mb-3">⚡ Acciones Rápidas</h5>
+        
+        <div class="action-grid">
+            <a href="{% url 'pos_principal' %}" class="action-btn">
+                <div class="action-icon">🛒</div>
+                <div class="action-text">Nueva Venta</div>
+            </a>
+            
+            <a href="{% url 'pos_historial_ventas' %}" class="action-btn">
+                <div class="action-icon">📋</div>
+                <div class="action-text">Historial</div>
+            </a>
+            
+            <a href="{% url 'repuesto_list' %}" class="action-btn">
+                <div class="action-icon">📦</div>
+                <div class="action-text">Repuestos</div>
+            </a>
+            
+            <a href="{% url 'pos_configuracion' %}" class="action-btn">
+                <div class="action-icon">⚙️</div>
+                <div class="action-text">Configuración</div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Botones de navegación -->
+    <div class="d-grid gap-2 m-3">
+        <a href="{% url 'pos_principal' %}" class="btn btn-primary btn-lg">
+            🛒 Ir al Punto de Venta
+        </a>
+        <a href="{% url 'panel_principal' %}" class="btn btn-outline-secondary">
+            🏠 Panel Principal
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Animaciones para las tarjetas de estadísticas
+document.addEventListener('DOMContentLoaded', function() {
+    const statCards = document.querySelectorAll('.stat-card');
+    
+    statCards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(30px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.6s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 150);
+    });
+});
+</script>
+{% endblock %}

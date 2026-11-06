@@ -1,0 +1,391 @@
+{% extends "base.html" %}
+{% load static crispy_forms_tags humanize %}
+
+{% block title %}Ingreso de Diagnóstico por Voz{% endblock %}
+
+{% block extra_css %}
+  
+{% endblock %}
+
+{% block content %}
+<span hidden data-css004b="3754ba66e8"></span>
+<div class="container py-4" id="ingreso-voz-root"
+     data-acciones-template="{% url 'acciones_por_componente' 0 %}">
+
+  <div class="voice-help-card">
+    <h6>🎤 Control por Voz Activado</h6>
+    <p class="mb-2 small text-muted">Presiona el botón de micrófono una vez y sigue hablando. El micrófono permanecerá activo hasta que lo desactives.</p>
+    <p class="mb-2 small text-muted fw-bold">Comandos principales:</p>
+    <ul>
+      <li><strong>Control:</strong> "Desactivar micrófono", "Apagar micrófono", "Stop"</li>
+      <li><strong>Navegación:</strong> "Siguiente paso", "Paso anterior", "Ir a paso uno/dos/tres"</li>
+      <li><strong>Datos del cliente:</strong> "RUT [número]", "Nombre [nombre]", "Teléfono [número]", "Email [correo]", "Dirección [dirección]"</li>
+      <li><strong>Vehículo:</strong> "Placa [patente]" (busca automáticamente) o "Buscar" / "Buscar en API"</li>
+      <li><strong>Descripción:</strong> "Descripción [texto del problema]" o "Problema [texto]"</li>
+      <li><strong>Componentes:</strong> "Seleccionar motor", "Activar bujías", "Marcar frenos"</li>
+      <li><strong>Acciones:</strong> "Acción limpiar para bujías", "Para motor acción revisar"</li>
+      <li><strong>Finalizar:</strong> "Guardar diagnóstico", "Omitir repuestos", "Cancelar"</li>
+      <li><strong>Ayuda:</strong> Di "Mostrar comandos" o "Ayuda" para ver todos los comandos disponibles</li>
+    </ul>
+    <p class="mb-0 small text-warning fw-bold">💡 Tip: Di "Mostrar comandos" para ver la lista completa de comandos disponibles</p>
+  </div>
+
+  <h1 class="mb-4">🎤 Ingreso de Diagnóstico por Voz</h1>
+  <p class="text-muted mb-4">
+    Flujo optimizado para móvil con control por voz. Di tus comandos usando el botón de micrófono.
+  </p>
+
+  <div class="wizard-progress">
+    <div class="wizard-steps">
+      <div class="wizard-step active" data-step="1">
+        <div class="wizard-step-circle">1</div>
+        <div class="wizard-step-label">Cliente y Vehículo</div>
+      </div>
+      <div class="wizard-step" data-step="2">
+        <div class="wizard-step-circle">2</div>
+        <div class="wizard-step-label">Diagnóstico + Acciones</div>
+      </div>
+      <div class="wizard-step" data-step="3">
+        <div class="wizard-step-circle">3</div>
+        <div class="wizard-step-label">Repuestos y Resumen</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Banner de estado de voz -->
+  <div class="voice-status-banner" id="voice-status-banner">
+    <span id="voice-status-text">🎤 Di tu comando...</span>
+  </div>
+
+  <!-- Toast de feedback -->
+  <div class="voice-feedback-toast" id="voice-feedback-toast">
+    <div id="voice-feedback-text"></div>
+  </div>
+
+  <!-- Botón flotante de micrófono -->
+  <div class="voice-control-container">
+    <button class="voice-btn" id="voice-btn" aria-label="Activar micrófono">
+      🎤
+    </button>
+  </div>
+
+  <form id="form-ingreso" method="post" novalidate>
+    {% csrf_token %}
+
+    <!-- Paso 1 -->
+    <section class="wizard-pane active" data-step-pane="1">
+      <div class="row g-4">
+        <div class="col-lg-6">
+          <div class="resumen-card h-100">
+            <h5>👤 Cliente</h5>
+            <div class="mb-3">
+              <label class="form-label">Cliente existente</label>
+              <select id="cliente_existente" name="cliente_existente" class="form-select">
+                <option value="">-- Nuevo cliente --</option>
+                {% for cliente in clientes_existentes %}
+                  <option value="{{ cliente.rut }}"
+                    {% if selected_cliente and selected_cliente|stringformat:"s" == cliente.rut|stringformat:"s" %}selected{% endif %}>
+                    {{ cliente.nombre }} ({{ cliente.rut }}) – {{ cliente.telefono|default:"Sin teléfono" }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div id="nuevo_cliente_campos">
+              {{ cliente_form|crispy }}
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="resumen-card h-100">
+            <h5>🚘 Vehículo</h5>
+            <div class="mb-3">
+              <label class="form-label">Seleccionar vehículo existente</label>
+              <select id="vehiculo_select" name="vehiculo_existente" class="form-select"
+                      data-selected="{{ selected_vehiculo|default:'' }}">
+                <option value="">-- Nuevo vehículo --</option>
+              </select>
+            </div>
+            <div id="vehiculo_fields">
+              <div class="alert alert-info border border-primary border-3 rounded-3 p-4 mb-4 shadow-sm css004b-inline-2f4fff84a392" >
+                <div class="d-flex align-items-center mb-3">
+                  <div class="bg-primary text-white rounded-circle p-3 me-3 css004b-inline-0cd88ca1cfe5" >
+                    <i class="fas fa-search fa-lg"></i>
+                  </div>
+                  <div>
+                    <h6 class="mb-1 text-primary fw-bold">Buscar datos del vehículo</h6>
+                    <p class="mb-0 text-muted small">Introduce la placa y consulta la API para autocompletar los campos.</p>
+                  </div>
+                </div>
+                <label for="vehiculo-placa" class="form-label fw-semibold">Placa del vehículo</label>
+                <div class="input-group">
+                  <input type="text"
+                         id="vehiculo-placa"
+                         name="vehiculo-placa"
+                         class="form-control text-uppercase fw-semibold css004b-inline-67933cdd4ae8"
+                         placeholder="Ej: JGCX79"
+                         autocomplete="off"
+                         >
+                  <button type="button" class="btn btn-primary" id="btn-buscar-vehiculo">
+                    <i class="fas fa-search me-1"></i> Buscar en API
+                  </button>
+                </div>
+                <small class="text-muted d-block mt-2">
+                  Consejo: presiona Enter o sal del campo para buscar automáticamente.
+                </small>
+              </div>
+              {{ vehiculo_form|crispy }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Paso 2 -->
+    <section class="wizard-pane" data-step-pane="2">
+      <div class="row g-4">
+        <div class="col-xl-8">
+          <div class="resumen-card mb-4">
+            <h5>📝 Descripción del problema</h5>
+            {{ diagnostico_form|crispy }}
+          </div>
+
+          <div class="resumen-card">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+              <h5 class="mb-0">🔧 Componentes y Acciones</h5>
+              <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse"
+                      data-bs-target="#plano-colapsable" aria-expanded="false">
+                🗺️ Mostrar plano interactivo
+              </button>
+            </div>
+
+            <div class="accordion" id="componentesAccordion">
+              {% for padre in componentes %}
+                <div class="accordion-item mb-3">
+                  <h2 class="accordion-header" id="heading-{{ padre.id }}">
+                    <button class="accordion-button collapsed" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#collapse-{{ padre.id }}"
+                            aria-expanded="false" aria-controls="collapse-{{ padre.id }}">
+                      {{ padre.nombre }}
+                    </button>
+                  </h2>
+                  <div id="collapse-{{ padre.id }}" class="accordion-collapse collapse"
+                       aria-labelledby="heading-{{ padre.id }}" data-bs-parent="#componentesAccordion">
+                    <div class="accordion-body">
+                      {% for hijo in padre.hijos.all %}
+                        <div class="componente-item" data-componente-id="{{ hijo.id }}" data-componente-nombre="{{ hijo.nombre|lower }}">
+                          <div class="componente-header">
+                            <div>
+                              <div class="form-check form-switch mb-1">
+                                <input class="form-check-input componente-checkbox"
+                                       type="checkbox"
+                                       id="comp-{{ hijo.id }}"
+                                       name="componentes_seleccionados"
+                                       value="{{ hijo.id }}"
+                                       data-nombre="{{ hijo.nombre }}"
+                                       {% if hijo.id in selected_componentes_ids %}checked{% endif %}>
+                                <label class="form-check-label fw-semibold" for="comp-{{ hijo.id }}">
+                                  {{ hijo.nombre }}
+                                </label>
+                              </div>
+                              <small class="text-muted">ID: {{ hijo.id }} • Código: {{ hijo.codigo }}</small>
+                            </div>
+                            <div class="text-end">
+                              <span class="badge bg-secondary">Acciones sugeridas</span>
+                              <div class="small text-muted">Se cargan al activar el componente</div>
+                            </div>
+                          </div>
+                          <div class="acciones-panel" id="acciones-panel-{{ hijo.id }}">
+                            <div class="acciones-placeholder text-muted small">
+                              Activa el componente para ver las acciones disponibles.
+                            </div>
+                            <div class="acciones-contenido"></div>
+                          </div>
+                        </div>
+                      {% empty %}
+                        <p class="text-muted small">No hay subcomponentes registrados en este grupo.</p>
+                      {% endfor %}
+                    </div>
+                  </div>
+                </div>
+              {% empty %}
+                <div class="alert alert-info mb-0">No existen componentes disponibles.</div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="collapse mt-4" id="plano-colapsable">
+            <div class="resumen-card">
+              <h5 class="mb-3">🗺️ Plano interactivo</h5>
+              <div id="plano-container"
+                   
+                   data-inicial-url="{% static 'images/vehiculo-desde-abajo.svg' %}" class="css004b-inline-9fb7a5ee39d9">
+                <div  class="css004b-inline-d6284e638e20">
+                  {{ svg|safe }}
+                </div>
+              </div>
+              <button id="btn-reset-plano" type="button" class="btn btn-outline-secondary btn-sm mt-3">
+                ⬅️ Resetear plano
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-xl-4">
+          <div class="resumen-card mb-4">
+            <h5>✅ Componentes Seleccionados</h5>
+            <ul id="lista-seleccionados" class="list-unstyled mb-0">
+              <li class="text-muted">Aún no hay componentes seleccionados.</li>
+            </ul>
+          </div>
+
+          <div class="resumen-card">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h5 class="mb-0">⚡ Acciones Confirmadas</h5>
+              <span class="badge bg-primary-subtle text-primary-emphasis" id="acciones-count">0 acciones</span>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-sm align-middle mb-0" id="acciones-resumen-table">
+                <thead class="table-light">
+                  <tr>
+                    <th>Componente</th>
+                    <th>Acción</th>
+                    <th class="text-end">Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td colspan="3" class="text-muted text-center small">
+                      Selecciona acciones para ver el resumen.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="mt-3 text-end">
+              <div class="small text-muted">Total Mano de Obra</div>
+              <div class="total-mano-obra" id="total_mano_obra">$0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <input type="hidden" id="acciones_componentes_json" name="acciones_componentes_json" value="[]">
+    </section>
+
+    <!-- Paso 3 -->
+    <section class="wizard-pane" data-step-pane="3">
+      <div class="row g-4">
+        <div class="col-lg-7">
+          <div class="resumen-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="mb-0">📦 Repuestos sugeridos</h5>
+              <div>
+                <button type="button" class="btn btn-outline-primary btn-sm" onclick="cargarRepuestos()">
+                  📦 Inventario propio
+                </button>
+                <button type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="modal"
+                        data-bs-target="#modalRepuestosExternos">
+                  🌐 Proveedores externos
+                </button>
+              </div>
+            </div>
+
+            <div id="diagnostico-meta"
+                 data-diagnostico-id="{{ diagnostico.id|default:'' }}"
+                 data-csrf="{{ csrf_token }}">
+            </div>
+
+            <div id="repuestos-list"
+                 data-preview-url="{% url 'sugerir_repuestos_preview' %}"
+                 data-with-id-template="{% url 'sugerir_repuestos' 0 %}">
+              <p class="text-muted">Selecciona componentes para recibir sugerencias automáticas.</p>
+            </div>
+
+            <div class="mt-3 text-end">
+              <button class="btn btn-success" type="button" onclick="prepararRepuestosParaEnvio()">
+                💾 Guardar selección de repuestos
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-5">
+          <div class="resumen-card mb-4">
+            <h5>🧾 Resumen de repuestos/insumos</h5>
+            <div id="tabla-contenido">
+              <p class="text-muted">Los repuestos agregados aparecerán aquí.</p>
+            </div>
+          </div>
+
+          <div class="resumen-card">
+            <h5>🧰 Insumos rápidos</h5>
+            <div class="mb-2">
+              <label for="buscar-insumo" class="form-label small">Buscar insumo</label>
+              <div class="input-group input-group-sm">
+                <input type="text" id="buscar-insumo" class="form-control"
+                       placeholder="Nombre, SKU, código…">
+                <button class="btn btn-outline-primary" type="button" onclick="buscarInsumos()">Buscar</button>
+              </div>
+              <small class="text-muted">La búsqueda inicia con 2 caracteres.</small>
+            </div>
+            <div id="insumos-disponibles" class="mb-3">
+              <div class="list-group" id="lista-insumos-disponibles">
+                <div class="alert alert-info small mb-0">Escribe para ver insumos disponibles.</div>
+              </div>
+            </div>
+            <button class="btn btn-success w-100" type="button" onclick="agregarInsumos()">
+              ➕ Agregar insumos seleccionados
+            </button>
+            <div class="alert alert-success mt-3 small css004b-inline-8f51ae06be8d" id="insumos-agregados-mensaje" >
+              ✅ Insumos agregados. Revisa la tabla de repuestos.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <input type="hidden" name="repuestos_json" id="repuestos-json">
+      <input type="hidden" name="repuestos_externos_json" id="repuestos-externos-json">
+      <input type="hidden" name="insumos_json" id="insumos-json">
+    </section>
+
+    <div class="wizard-navigation">
+      <div class="container">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+          <button type="button" class="btn btn-outline-secondary css004b-inline-8f51ae06be8d" id="wizard-prev" >
+            ← Anterior
+          </button>
+          <div class="flex-grow-1"></div>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-primary" id="wizard-next">
+              Siguiente →
+            </button>
+            <button type="submit" class="btn btn-success css004b-inline-8f51ae06be8d" id="wizard-submit" >
+              💾 Guardar diagnóstico
+            </button>
+            <button type="button" class="btn btn-outline-warning css004b-inline-8f51ae06be8d" id="wizard-skip" 
+                    onclick="skipRepuestosAndSubmit()">
+              ⏭️ Omitir repuestos y guardar
+            </button>
+          </div>
+          <a href="javascript:history.back()" class="btn btn-secondary">
+            Cancelar
+          </a>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <div id="acciones-endpoints" data-acciones-url-template="{% url 'acciones_por_componente' 0 %}"></div>
+  <div id="componentes-endpoints" data-lookup-url="{% url 'componentes_lookup' %}"></div>
+  <div id="repuestos-endpoints"
+       data-preview-url="{% url 'sugerir_repuestos_preview' %}"
+       data-with-id-template="{% url 'sugerir_repuestos' 0 %}"></div>
+</div>
+
+{% include "car/partials/repuestos_externos_modal.html" %}
+{% endblock %}
+
+{% block extra_js %}
+  <script src="{% static 'js/ingreso_fusionado.js' %}"></script>
+  <script src="{% static 'js/ingreso_movil_voz.js' %}"></script>
+{% endblock %}
+

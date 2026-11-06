@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Registrar Pago - {{ mecanico }}{% endblock %}
+
+{% block extra_css %}
+
+{% endblock %}
+
+{% block content %}
+<span hidden data-css004b="9df57decfb"></span>
+<div class="pago-container">
+    <div class="pago-header">
+        <h1>💵 Registrar Pago a Mecánico</h1>
+        <p>{{ mecanico }}</p>
+    </div>
+    
+    <div class="saldo-info">
+        <h3>💰 Saldo Pendiente: ${{ saldo_pendiente|floatformat:0|intcomma }}</h3>
+        <p  class="css004b-inline-bf414afc5b00">Total de bonos pendientes de pago</p>
+    </div>
+    
+    <div class="pago-card">
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="monto">Monto a Pagar:</label>
+                <input type="number" name="monto" id="monto" class="form-control" 
+                       step="0.01" min="0.01" max="{{ saldo_pendiente }}" 
+                       value="{{ saldo_pendiente }}" required>
+                <small  class="css004b-inline-ce554494cf7c">Máximo disponible: ${{ saldo_pendiente|floatformat:0|intcomma }}</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="metodo_pago">Método de Pago:</label>
+                <select name="metodo_pago" id="metodo_pago" class="form-control" required>
+                    <option value="efectivo">Efectivo</option>
+                    <option value="transferencia">Transferencia</option>
+                    <option value="cheque">Cheque</option>
+                    <option value="otro">Otro</option>
+                </select>
+            </div>
+            
+            {% if bonos_pendientes %}
+            <div class="form-group">
+                <label>Bonos a Aplicar (opcional):</label>
+                <div class="checkbox-group">
+                    <p  class="css004b-inline-7e868fcef022">Selecciona los bonos que se están pagando con este pago:</p>
+                    {% for bono in bonos_pendientes %}
+                    <label>
+                        <input type="checkbox" name="bonos_seleccionados" value="{{ bono.id }}">
+                        <span>
+                            Trabajo #{{ bono.trabajo.id }} - 
+                            ${{ bono.monto|floatformat:0|intcomma }} - 
+                            {{ bono.fecha_generacion|date:"d/m/Y" }}
+                        </span>
+                    </label>
+                    {% endfor %}
+                </div>
+                <small  class="css004b-inline-ce554494cf7c">
+                    Si no seleccionas bonos específicos, el pago se aplicará automáticamente a los bonos más antiguos.
+                </small>
+            </div>
+            {% endif %}
+            
+            <div class="form-group">
+                <label for="notas">Notas (opcional):</label>
+                <textarea name="notas" id="notas" class="form-control" rows="3" 
+                          placeholder="Notas adicionales sobre este pago"></textarea>
+            </div>
+            
+            <div  class="css004b-inline-7e9324683cbf">
+                <button type="submit" class="btn-primary">💾 Registrar Pago</button>
+                <a href="{% url 'cuenta_mecanico' mecanico.id %}" class="btn-secondary">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Resumen de Bonos - Mecánicos{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+<style>
+    .lista-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: var(--spacing-md);
+    }
+    
+    .lista-header {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+        padding: var(--spacing-xl);
+        border-radius: var(--border-radius-lg);
+        margin-bottom: 2rem;
+        text-align: center;
+        box-shadow: var(--card-shadow);
+    }
+    
+    .table-mecanicos {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--card-bg);
+        border-radius: var(--border-radius-lg);
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+    }
+    
+    .table-mecanicos th,
+    .table-mecanicos td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .table-mecanicos th {
+        background: var(--bg-secondary);
+        font-weight: 600;
+        color: var(--fg);
+    }
+    
+    .table-mecanicos tbody tr:hover {
+        background: var(--hover-bg);
+    }
+    
+    .saldo-pendiente {
+        font-weight: 700;
+        color: #ffc107;
+        font-size: 1.1rem;
+    }
+    
+    .saldo-total {
+        color: #28a745;
+    }
+    
+    .saldo-pagado {
+        color: #17a2b8;
+    }
+    
+    .btn-primary {
+        background: var(--accent);
+        color: white;
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .badge-config {
+        background: #28a745;
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: var(--border-radius-xl);
+        font-size: 0.85rem;
+    }
+    
+    .badge-sin-config {
+        background: #dc3545;
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: var(--border-radius-xl);
+        font-size: 0.85rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="lista-container">
+    <div class="lista-header">
+        <h1>💰 Resumen de Bonos - Mecánicos</h1>
+        <p>Vista general de bonos y saldos de todos los mecánicos</p>
+    </div>
+    
+    <div style="margin-bottom: 2rem; text-align: center;">
+        <a href="{% url 'configuracion_bonos' %}" class="btn-primary" style="padding: 0.75rem 1.5rem;">
+            ⚙️ Configurar Bonos
+        </a>
+    </div>
+    
+    {% if mecanicos_con_saldos %}
+    <table class="table-mecanicos">
+        <thead>
+            <tr>
+                <th>Mecánico</th>
+                <th>Configuración</th>
+                <th>Saldo Pendiente</th>
+                <th>Total Generado</th>
+                <th>Total Pagado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in mecanicos_con_saldos %}
+            <tr>
+                <td><strong>{{ item.mecanico }}</strong></td>
+                <td>
+                    {% if item.tiene_config %}
+                    <span class="badge-config">Configurado</span>
+                    {% else %}
+                    <span class="badge-sin-config">Sin Config</span>
+                    {% endif %}
+                </td>
+                <td class="saldo-pendiente">${{ item.saldo_pendiente|floatformat:0|intcomma }}</td>
+                <td class="saldo-total">${{ item.total_generado|floatformat:0|intcomma }}</td>
+                <td class="saldo-pagado">${{ item.total_pagado|floatformat:0|intcomma }}</td>
+                <td>
+                    <a href="{% url 'cuenta_mecanico' item.mecanico.id %}" class="btn-primary">
+                        Ver Cuenta
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div style="background: var(--card-bg); padding: 2rem; border-radius: var(--border-radius-lg); text-align: center; box-shadow: var(--card-shadow);">
+        <p style="color: var(--muted);">No hay mecánicos registrados</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

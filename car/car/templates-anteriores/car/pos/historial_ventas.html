@@ -1,0 +1,353 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+{% endblock %}
+
+{% block title %}Historial de Ventas - POS{% endblock %}
+
+{% block extra_head %}
+<style>
+    .historial-container {
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .historial-header {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: var(--text-inverse);
+        padding: var(--spacing-md);
+        text-align: center;
+    }
+    
+    .filtros-container {
+        background-color: var(--bg-card);
+        border-radius: var(--border-radius-lg);
+        margin: var(--spacing-md);
+        padding: var(--spacing-md);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .venta-card {
+        background-color: var(--bg-card);
+        border-radius: var(--border-radius-lg);
+        margin: var(--spacing-sm) 1rem;
+        padding: var(--spacing-md);
+        box-shadow: var(--shadow-md);
+        border-left: 4px solid #28a745;
+    }
+    
+    .venta-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    
+    .venta-numero {
+        font-weight: bold;
+        color: var(--success-600);
+        font-size: 1.1rem;
+    }
+    
+    .venta-fecha {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+    
+    .venta-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    
+    .venta-cliente {
+        font-weight: 500;
+    }
+    
+    .venta-total {
+        font-weight: bold;
+        color: var(--success-600);
+        font-size: 1.2rem;
+    }
+    
+    .venta-metodo {
+        background: #e3f2fd;
+        color: #1976d2;
+        padding: var(--spacing-xs) 0.5rem;
+        border-radius: var(--border-radius-lg);
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .btn-ver {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        border: none;
+        border-radius: var(--border-radius-xl);
+        padding: var(--spacing-sm) 1rem;
+        color: var(--text-inverse);
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .btn-ver:hover {
+        color: var(--text-inverse);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    
+    .pagination-container {
+        background-color: var(--bg-card);
+        border-radius: var(--border-radius-lg);
+        margin: var(--spacing-md);
+        padding: var(--spacing-md);
+        box-shadow: var(--shadow-md);
+        text-align: center;
+    }
+    
+    .stats-container {
+        background-color: var(--bg-card);
+        border-radius: var(--border-radius-lg);
+        margin: var(--spacing-md);
+        padding: var(--spacing-md);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: var(--spacing-md);
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--success-600);
+    }
+    
+    .stat-label {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: var(--text-muted);
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    @media (max-width: 768px) {
+        .historial-container {
+            padding: 0;
+        }
+        
+        .filtros-container,
+        .venta-card,
+        .pagination-container,
+        .stats-container {
+            margin: var(--spacing-sm);
+        }
+        
+        .venta-header,
+        .venta-info {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+        
+        .venta-total {
+            font-size: 1.1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="historial-container">
+    <!-- Header -->
+    <div class="historial-header">
+        <h4 class="mb-0">📋 Historial de Ventas</h4>
+        <small>Todas las ventas realizadas desde el POS</small>
+    </div>
+
+    <!-- Estadísticas rápidas -->
+    <div class="stats-container">
+        <div class="row">
+            <div class="col-4">
+                <div class="stat-item">
+                    <div class="stat-number">{{ page_obj.paginator.count }}</div>
+                    <div class="stat-label">Total Ventas</div>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="stat-item">
+                    <div class="stat-number">${{ page_obj|length|floatformat:0|intcomma }}</div>
+                    <div class="stat-label">Esta Página</div>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="stat-item">
+                    <div class="stat-number">{{ page_obj.number }}</div>
+                    <div class="stat-label">Página</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filtros-container">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Fecha Desde</label>
+                <input type="date" class="form-control" name="fecha_desde" value="{{ fecha_desde }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Fecha Hasta</label>
+                <input type="date" class="form-control" name="fecha_hasta" value="{{ fecha_hasta }}">
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary me-2">🔍 Filtrar</button>
+                <a href="{% url 'pos_historial_ventas' %}" class="btn btn-outline-secondary">Limpiar</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Lista de ventas -->
+    {% if page_obj %}
+        {% for venta in page_obj %}
+            <div class="venta-card">
+                <div class="venta-header">
+                    <div class="venta-numero">#{{ venta.id }}</div>
+                    <div class="venta-fecha">{{ venta.fecha|date:"d/m/Y H:i" }}</div>
+                </div>
+                
+                <div class="venta-info">
+                    <div>
+                        <div class="venta-cliente">
+                            {{ venta.cliente.nombre|default:"Cliente General" }}
+                        </div>
+                        <div class="venta-metodo">{{ venta.get_metodo_pago_display }}</div>
+                    </div>
+                    <div class="venta-total">${{ venta.total|floatformat:0|intcomma }}</div>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-secondary">
+                        {% if venta.descuento > 0 %}
+                            Descuento: ${{ venta.descuento|floatformat:0|intcomma }}
+                        {% endif %}
+                    </small>
+                    <a href="{% url 'pos_venta_detalle' venta.id %}" class="btn-ver">
+                        👁️ Ver Detalle
+                    </a>
+                </div>
+            </div>
+        {% endfor %}
+
+        <!-- Paginación -->
+        {% if page_obj.has_other_pages %}
+            <div class="pagination-container">
+                <nav aria-label="Paginación de ventas">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if fecha_desde %}&fecha_desde={{ fecha_desde }}{% endif %}{% if fecha_hasta %}&fecha_hasta={{ fecha_hasta }}{% endif %}">Primera</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if fecha_desde %}&fecha_desde={{ fecha_desde }}{% endif %}{% if fecha_hasta %}&fecha_hasta={{ fecha_hasta }}{% endif %}">Anterior</a>
+                            </li>
+                        {% endif %}
+
+                        <li class="page-item active">
+                            <span class="page-link">
+                                Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                            </span>
+                        </li>
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if fecha_desde %}&fecha_desde={{ fecha_desde }}{% endif %}{% if fecha_hasta %}&fecha_hasta={{ fecha_hasta }}{% endif %}">Siguiente</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if fecha_desde %}&fecha_desde={{ fecha_desde }}{% endif %}{% if fecha_hasta %}&fecha_hasta={{ fecha_hasta }}{% endif %}">Última</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-receipt"></i>
+            <h5>No hay ventas registradas</h5>
+            <p>Las ventas realizadas desde el POS aparecerán aquí</p>
+            <a href="{% url 'pos_principal' %}" class="btn btn-primary">
+                🛒 Ir al POS
+            </a>
+        </div>
+    {% endif %}
+
+    <!-- Botones de navegación -->
+    <div class="d-grid gap-2 m-3">
+        <a href="{% url 'pos_principal' %}" class="btn btn-primary">
+            🛒 Volver al POS
+        </a>
+        <a href="{% url 'pos_dashboard' %}" class="btn btn-outline-secondary">
+            📊 Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-submit del formulario de filtros cuando cambian las fechas
+document.querySelectorAll('input[type="date"]').forEach(input => {
+    input.addEventListener('change', function() {
+        // Opcional: auto-submit cuando cambian las fechas
+        // this.form.submit();
+    });
+});
+
+// Resaltar ventas del día actual
+document.addEventListener('DOMContentLoaded', function() {
+    const hoy = new Date().toISOString().split('T')[0];
+    const fechaInputs = document.querySelectorAll('input[type="date"]');
+    
+    fechaInputs.forEach(input => {
+        if (!input.value) {
+            input.value = hoy;
+        }
+    });
+});
+
+// Animación para las tarjetas de venta
+document.addEventListener('DOMContentLoaded', function() {
+    const ventaCards = document.querySelectorAll('.venta-card');
+    
+    ventaCards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.3s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
+</script>
+{% endblock %}
+

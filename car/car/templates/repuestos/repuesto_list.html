@@ -5,424 +5,11 @@
 {% block title %}NetGoGo - Inventario de Repuestos{% endblock %}
 
 {% block extra_css %}
-  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
-<style>
-    .repuestos-container {
-        max-width: 100%;
-        margin: 0;
-        padding: var(--spacing-md);
-    }
-    
-    .repuestos-header {
-        background: var(--gradient);
-        color: var(--btn-fg);
-        padding: var(--spacing-xl);
-        text-align: center;
-        border-radius: var(--border-radius-lg);
-        margin-bottom: 2rem;
-        box-shadow: var(--card-shadow);
-    }
-    
-    .repuestos-header h2 {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    }
-    
-    .search-container {
-        background: var(--card-bg);
-        border-radius: var(--border-radius-lg);
-        padding: var(--spacing-lg);
-        margin-bottom: 2rem;
-        box-shadow: var(--card-shadow);
-    }
-    
-    .search-input {
-        border-radius: var(--border-radius);
-        border: 2px solid var(--muted);
-        background: var(--bg);
-        color: var(--fg);
-        padding: var(--spacing-md);
-        font-size: 1.1rem;
-        transition: var(--transition);
-    }
-    
-    .search-input:focus {
-        border-color: var(--accent);
-        box-shadow: 0 0 0 0.2rem rgba(var(--accent), 0.25);
-        outline: none;
-    }
-    
-    .search-input::placeholder {
-        color: var(--muted);
-    }
-    
-    .table-container {
-        background: var(--card-bg);
-        border-radius: var(--border-radius-lg);
-        padding: var(--spacing-lg);
-        box-shadow: var(--card-shadow);
-        overflow: hidden;
-    }
-    
-    .table {
-        color: var(--fg);
-        margin-bottom: 0;
-        border-radius: var(--border-radius);
-        overflow: hidden;
-    }
-    
-    .table thead th {
-        background: var(--gradient);
-        color: var(--btn-fg);
-        border: none;
-        font-weight: 600;
-        padding: var(--spacing-md);
-        text-align: center;
-    }
-    
-    .table tbody tr {
-        border-bottom: 1px solid var(--muted);
-        transition: var(--transition);
-    }
-    
-    .table tbody tr:hover {
-        background-color: var(--hover-bg);
-        transform: scale(1.01);
-    }
-    
-    .btn-action {
-        border-radius: var(--border-radius);
-        padding: var(--spacing-sm) 0.75rem;
-        font-size: 0.85rem;
-        margin: 0 0.15rem;
-        min-width: 38px;
-        height: 38px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        transition: var(--transition);
-        border: none;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    
-    .btn-action:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-    }
-    
-    .btn-group .btn-action {
-        margin: 0;
-        border-radius: 0;
-        border-right: 1px solid rgba(255,255,255,0.2);
-    }
-    
-    .btn-group .btn-action:first-child {
-        border-top-left-radius: 8px;
-        border-bottom-left-radius: 8px;
-    }
-    
-    .btn-group .btn-action:last-child {
-        border-top-right-radius: 8px;
-        border-bottom-right-radius: 8px;
-        border-right: none;
-    }
-    
-    
-    .table th, .table td {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 150px;
-    }
-    
-    .table th:nth-child(3), .table td:nth-child(3) { /* Nombre */
-        max-width: 200px;
-        white-space: normal;
-    }
-    
-    .table th:nth-child(7), .table td:nth-child(7) { /* Marca Vehículo */
-        max-width: 120px;
-    }
-    
-    .table th:nth-child(8), .table td:nth-child(8) { /* Acciones */
-        max-width: 200px;
-    }
-    
-    /* Cards informativas */
-    .stat-card {
-        border-radius: var(--border-radius-lg);
-        box-shadow: var(--shadow-md);
-        transition: var(--transition);
-        border: none;
-    }
-    
-    .stat-card:hover {
-        transform: translateY(-3px);
-        box-shadow: var(--shadow-lg);
-    }
-    
-    .stat-card .card-body {
-        padding: var(--spacing-md);
-    }
-    
-    /* Filtros de stock */
-    #custom-stock-filter {
-        padding: var(--spacing-sm);
-        background: var(--hover-bg);
-        border-radius: var(--border-radius-md);
-        border: 1px solid var(--border-color);
-    }
-    
-    #filtro-activo-indicador {
-        font-weight: 600;
-        font-size: 0.9rem;
-    }
-    
-    .btn.active {
-        transform: scale(1.05);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    }
-        min-width: 180px;
-    }
-    
-    
-    .ficha-modal {
-        display: none !important;
-        position: fixed;
-        z-index: 9999 !important;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0,0,0,0.5);
-    }
-    
-    .ficha-modal.show {
-        display: block !important;
-    }
-    
-    .ficha-content {
-        background-color: var(--card-bg);
-        margin: 2% auto;
-        padding: 20px;
-        border-radius: var(--border-radius-xl);
-        width: 95%;
-        max-width: 1200px;
-        max-height: 90vh;
-        overflow-y: auto;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-    }
-    
-    .ficha-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        padding-bottom: 10px;
-        border-bottom: 2px solid #4A90E2;
-    }
-    
-    .ficha-title {
-        color: #4A90E2;
-        font-size: 1.5rem;
-        font-weight: bold;
-        margin: 0;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-    }
-    
-    .ficha-close {
-        color: #FF6B6B;
-        font-size: 28px;
-        font-weight: bold;
-        cursor: pointer;
-        background: none;
-        border: none;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-    }
-    
-    .ficha-close:hover {
-        color: #FF5252;
-        transform: scale(1.1);
-        transition: all 0.2s ease;
-    }
-    
-    .ficha-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 12px;
-    }
-    
-    .ficha-field {
-        background: var(--hover-bg);
-        padding: 8px;
-        border-radius: 6px;
-        border-left: 3px solid #4A90E2;
-        min-height: 60px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    
-    .ficha-label {
-        font-weight: bold;
-        color: #4A90E2;
-        font-size: 0.8rem;
-        margin-bottom: 3px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-    }
-    
-    /* Color por defecto: oscuro para modo claro */
-    .ficha-value {
-        color: #212529;
-        font-size: 0.9rem;
-        word-break: break-word;
-        line-height: 1.2;
-        font-weight: 500;
-    }
-    
-    .ficha-value.empty {
-        color: #6c757d;
-        font-style: italic;
-        opacity: 0.8;
-    }
-    
-    /* Ajustes para esquemas oscuros */
-    @media (prefers-color-scheme: dark) {
-        .ficha-value {
-            color: #FFFFFF;
-        }
-        
-        .ficha-value.empty {
-            color: #CCCCCC;
-        }
-    }
-    
-    /* Ajustes adicionales basados en variables CSS del tema */
-    /* Modo oscuro - texto blanco */
-    .ficha-modal[data-theme="dark"] .ficha-value,
-    .ficha-modal.dark-theme .ficha-value,
-    .theme-dark .ficha-modal .ficha-value,
-    .theme-piedra .ficha-modal .ficha-value {
-        color: #FFFFFF !important;
-    }
-    
-    .ficha-modal[data-theme="dark"] .ficha-value.empty,
-    .ficha-modal.dark-theme .ficha-value.empty,
-    .theme-dark .ficha-modal .ficha-value.empty,
-    .theme-piedra .ficha-modal .ficha-value.empty {
-        color: #CCCCCC !important;
-    }
-    
-    /* Modo claro - texto oscuro (asegurar que se aplique) */
-    .ficha-modal[data-theme="light"] .ficha-value,
-    .ficha-modal.light-theme .ficha-value,
-    .theme-light .ficha-modal .ficha-value,
-    body:not(.theme-dark):not(.theme-piedra) .ficha-modal .ficha-value {
-        color: #212529 !important;
-    }
-    
-    .ficha-modal[data-theme="light"] .ficha-value.empty,
-    .ficha-modal.light-theme .ficha-value.empty,
-    .theme-light .ficha-modal .ficha-value.empty,
-    body:not(.theme-dark):not(.theme-piedra) .ficha-modal .ficha-value.empty {
-        color: #6c757d !important;
-    }
-    
-    /* Media queries para diferentes tamaños de pantalla */
-    @media (max-width: 1200px) {
-        .ficha-grid {
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-        }
-        .ficha-content {
-            max-width: 1000px;
-        }
-    }
-    
-    @media (max-width: 992px) {
-        .ficha-grid {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-        }
-        .ficha-content {
-            max-width: 800px;
-        }
-    }
-    
-    @media (max-width: 768px) {
-        .ficha-grid {
-            grid-template-columns: 1fr;
-            gap: 10px;
-        }
-        .ficha-content {
-            width: 95%;
-            margin: 2% auto;
-            padding: 15px;
-        }
-    }
-    
-    @media (max-width: 768px) {
-        .repuestos-container {
-            padding: var(--spacing-xs);
-        }
-        
-        .search-container,
-        .table-container {
-            margin: var(--spacing-xs);
-            padding: 0.75rem;
-        }
-        
-        .stats-row {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 0.5rem;
-        }
-        
-        .table-responsive {
-            font-size: 0.7rem;
-        }
-        
-        .table th, .table td {
-            max-width: 80px;
-            font-size: 0.7rem;
-        }
-        
-        .table th:nth-child(3), .table td:nth-child(3) { /* Nombre */
-            max-width: 120px;
-        }
-        
-        .btn-action {
-            padding: 0.2rem 0.4rem;
-            font-size: 0.65rem;
-            min-width: 32px;
-            height: 32px;
-        }
-        
-        .table th:nth-child(8), .table td:nth-child(8) { /* Acciones en móvil */
-            max-width: 140px;
-            min-width: 120px;
-        }
-        
-        .ficha-field {
-            padding: 8px;
-        }
-        
-        .ficha-label {
-            font-size: 0.8rem;
-        }
-        
-        .ficha-value {
-            font-size: 0.85rem;
-        }
-    }
-</style>
+
 {% endblock %}
 
 {% block content %}
+<span hidden data-css004b="1b6ee25136"></span>
 <div class="repuestos-container">
     <!-- Header -->
     <div class="repuestos-header">
@@ -461,43 +48,43 @@
     <!-- Cards Informativas -->
     <div class="row mb-4" id="stats-cards">
         <div class="col-md-3 col-sm-6 mb-3">
-            <div class="card stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+            <div class="card stat-card css004b-inline-8c8e26ee51a9" >
                 <div class="card-body text-center">
                     <h5 class="card-title mb-2">📦 Total Repuestos</h5>
-                    <h2 class="mb-0" style="font-size: 2.5rem; font-weight: bold;">{{ stats.total_repuestos|default:0 }}</h2>
+                    <h2 class="mb-0 css004b-inline-a6fc84e42964" >{{ stats.total_repuestos|default:0 }}</h2>
                 </div>
             </div>
         </div>
         <div class="col-md-3 col-sm-6 mb-3">
-            <div class="card stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border: none;">
+            <div class="card stat-card css004b-inline-503653a4763f" >
                 <div class="card-body text-center">
                     <h5 class="card-title mb-2">⚠️ Sin Stock</h5>
-                    <h2 class="mb-0" style="font-size: 2.5rem; font-weight: bold;">{{ stats.repuestos_stock_cero|default:0 }}</h2>
+                    <h2 class="mb-0 css004b-inline-a6fc84e42964" >{{ stats.repuestos_stock_cero|default:0 }}</h2>
                 </div>
             </div>
         </div>
         <div class="col-md-3 col-sm-6 mb-3">
-            <div class="card stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; border: none;">
+            <div class="card stat-card css004b-inline-a335f918555e" >
                 <div class="card-body text-center">
                     <h5 class="card-title mb-2">🛒 Último Vendido</h5>
                     {% if stats.ultimo_repuesto_vendido %}
-                        <p class="mb-1" style="font-size: 0.9rem; opacity: 0.9;">{{ stats.ultimo_repuesto_vendido.nombre|truncatewords:4 }}</p>
-                        <small style="opacity: 0.8;">{{ stats.ultimo_repuesto_vendido.fecha|date:"d/m/Y H:i" }}</small>
+                        <p class="mb-1 css004b-inline-d22e46473947" >{{ stats.ultimo_repuesto_vendido.nombre|truncatewords:4 }}</p>
+                        <small  class="css004b-inline-26f70cca2ccf">{{ stats.ultimo_repuesto_vendido.fecha|date:"d/m/Y H:i" }}</small>
                     {% else %}
-                        <p class="mb-0" style="opacity: 0.8;">N/A</p>
+                        <p class="mb-0 css004b-inline-26f70cca2ccf" >N/A</p>
                     {% endif %}
                 </div>
             </div>
         </div>
         <div class="col-md-3 col-sm-6 mb-3">
-            <div class="card stat-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; border: none;">
+            <div class="card stat-card css004b-inline-b900f3a49e25" >
                 <div class="card-body text-center">
                     <h5 class="card-title mb-2">📥 Último Ingresado</h5>
                     {% if stats.ultimo_repuesto_ingresado %}
-                        <p class="mb-1" style="font-size: 0.9rem; opacity: 0.9;">{{ stats.ultimo_repuesto_ingresado.nombre|truncatewords:4 }}</p>
-                        <small style="opacity: 0.8;">{{ stats.ultimo_repuesto_ingresado.fecha|date:"d/m/Y H:i" }}</small>
+                        <p class="mb-1 css004b-inline-d22e46473947" >{{ stats.ultimo_repuesto_ingresado.nombre|truncatewords:4 }}</p>
+                        <small  class="css004b-inline-26f70cca2ccf">{{ stats.ultimo_repuesto_ingresado.fecha|date:"d/m/Y H:i" }}</small>
                     {% else %}
-                        <p class="mb-0" style="opacity: 0.8;">N/A</p>
+                        <p class="mb-0 css004b-inline-26f70cca2ccf" >N/A</p>
                     {% endif %}
                 </div>
             </div>
@@ -519,13 +106,13 @@
                     <button type="button" class="btn btn-outline-info" id="filter-stock-custom" onclick="mostrarFiltroPersonalizado()">
                         🔢 Stock ≤ [Personalizado]
                     </button>
-                    <div id="custom-stock-filter" style="display: none;" class="d-flex align-items-center gap-2">
+                    <div id="custom-stock-filter"  class="d-flex align-items-center gap-2 css004b-inline-9969d39a9960">
                         <input type="number" 
                                id="stock-custom-value" 
-                               class="form-control" 
+                               class="form-control css004b-inline-bd2b218ea4d6" 
                                placeholder="Cantidad"
                                min="0"
-                               style="width: 100px;"
+                               
                                onkeypress="if(event.key === 'Enter') aplicarFiltroPersonalizado()">
                         <button type="button" class="btn btn-primary btn-sm" onclick="aplicarFiltroPersonalizado()">
                             Aplicar

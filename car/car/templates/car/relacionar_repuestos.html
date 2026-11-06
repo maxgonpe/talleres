@@ -3,7 +3,6 @@
 {% load humanize %}
 
 {% block extra_css %}
-  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
 {% endblock %}
 
 {% block title %}Algoritmo de Relación Inteligente{% endblock %}
@@ -164,7 +163,7 @@
                                 <i class="fas fa-check"></i>
                                 Relaciones Encontradas ({{ resultados.relaciones_encontradas|length }})
                             </h6>
-                            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                            <div class="table-responsive css004b-inline-62224b836cc1" >
                                 <table class="table table-sm table-hover">
                                     <thead class="table-light sticky-top">
                                         <tr>
@@ -211,7 +210,7 @@
                                 <i class="fas fa-exclamation-triangle"></i>
                                 Repuestos Sin Relación ({{ resultados.relaciones_no_encontradas|length }})
                             </h6>
-                            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                            <div class="table-responsive css004b-inline-a215dcc7f50e" >
                                 <table class="table table-sm table-hover">
                                     <thead class="table-light sticky-top">
                                         <tr>

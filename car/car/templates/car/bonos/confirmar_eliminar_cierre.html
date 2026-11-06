@@ -5,77 +5,29 @@
 {% block title %}Eliminar Cierre de Período{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
-<style>
-    .confirm-container {
-        max-width: 600px;
-        margin: 0 auto;
-        padding: var(--spacing-md);
-    }
-    
-    .confirm-box {
-        background: var(--card-bg);
-        border-radius: var(--border-radius-lg);
-        padding: var(--spacing-xl);
-        box-shadow: var(--card-shadow);
-        text-align: center;
-    }
-    
-    .warning-box {
-        background: #fff3cd;
-        border-left: 4px solid #ffc107;
-        padding: 1rem;
-        border-radius: var(--border-radius);
-        margin: 1.5rem 0;
-        text-align: left;
-    }
-    
-    .btn-danger {
-        background: #dc3545;
-        color: white;
-        padding: 0.75rem 1.5rem;
-        border: none;
-        border-radius: var(--border-radius);
-        cursor: pointer;
-        font-weight: 600;
-        text-decoration: none;
-        display: inline-block;
-        margin-right: 1rem;
-    }
-    
-    .btn-secondary {
-        background: #6c757d;
-        color: white;
-        padding: 0.75rem 1.5rem;
-        border: none;
-        border-radius: var(--border-radius);
-        cursor: pointer;
-        font-weight: 600;
-        text-decoration: none;
-        display: inline-block;
-    }
-</style>
+
 {% endblock %}
 
 {% block content %}
+<span hidden data-css004b="f3de79b5b8"></span>
 <div class="confirm-container">
     <div class="confirm-box">
         <h1>⚠️ Eliminar Cierre de Período</h1>
-        <p style="font-size: 1.2rem; margin: 1rem 0;">
+        <p  class="css004b-inline-66ab0cb6625c">
             <strong>{{ cierre.mecanico }}</strong><br>
             <strong>{{ cierre.periodo_texto }}</strong>
         </p>
         
         <div class="warning-box">
             <p><strong>⚠️ Atención:</strong> Al eliminar este cierre:</p>
-            <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+            <ul  class="css004b-inline-bd0008baf52e">
                 <li>Los bonos del período dejarán de estar marcados como cerrados</li>
                 <li>El registro del cierre será eliminado permanentemente</li>
                 <li>Los bonos y pagos no se eliminarán</li>
             </ul>
         </div>
         
-        <div style="margin: 2rem 0;">
+        <div  class="css004b-inline-37a38ca6a5c2">
             <p><strong>Resumen del cierre:</strong></p>
             <p>
                 Total Bonos: ${{ cierre.total_bonos|floatformat:0|intcomma }}<br>
@@ -84,7 +36,7 @@
             </p>
         </div>
         
-        <form method="post" style="display: inline;">
+        <form method="post"  class="css004b-inline-0b61568e4711">
             {% csrf_token %}
             <button type="submit" class="btn-danger" onclick="{% if ver_mensajes %}return confirm('¿Está completamente seguro de eliminar este cierre?');{% else %}return true;{% endif %}">
                 🗑️ Sí, Eliminar Cierre

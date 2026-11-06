@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Configuración de Bonos para Mecánicos - NetGoGo{% endblock %}
+
+{% block extra_css %}
+
+{% endblock %}
+
+{% block content %}
+<span hidden data-css004b="6f1bb22f90"></span>
+<div class="config-container">
+    <div class="config-header">
+        <h1>💰 Configuración de Bonos para Mecánicos</h1>
+        <p>Gestiona los bonos e incentivos para los mecánicos del taller</p>
+    </div>
+    
+    <!-- Formulario para nueva configuración -->
+    <div class="config-card">
+        <h2>➕ Agregar/Editar Configuración de Bono</h2>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="mecanico_id">Mecánico:</label>
+                <select name="mecanico_id" id="mecanico_id" class="form-control" required>
+                    <option value="">Seleccionar mecánico...</option>
+                    {% for mecanico in mecanicos_sin_config %}
+                    <option value="{{ mecanico.id }}">{{ mecanico }}</option>
+                    {% endfor %}
+                    {% for config in configuraciones %}
+                    <option value="{{ config.mecanico.id }}">{{ config.mecanico }} (Editar)</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" name="activo" checked> Bonos activos para este mecánico
+                </label>
+            </div>
+            
+            <div class="form-group">
+                <label for="tipo_bono">Tipo de Bono:</label>
+                <select name="tipo_bono" id="tipo_bono" class="form-control" required onchange="toggleTipoBono()">
+                    <option value="porcentaje">Porcentaje de Mano de Obra</option>
+                    <option value="fijo">Cantidad Fija</option>
+                </select>
+            </div>
+            
+            <div class="form-group" id="grupo_porcentaje">
+                <label for="porcentaje">Porcentaje (%):</label>
+                <input type="number" name="porcentaje" id="porcentaje" class="form-control" 
+                       step="0.01" min="0" max="100" placeholder="Ej: 10.00 para 10%">
+            </div>
+            
+            <div class="form-group css004b-inline-7a7c4c5fc14f" id="grupo_fijo" >
+                <label for="cantidad_fija">Cantidad Fija:</label>
+                <input type="number" name="cantidad_fija" id="cantidad_fija" class="form-control" 
+                       step="0.01" min="0" placeholder="Ej: 5000.00">
+            </div>
+            
+            <div class="form-group">
+                <label for="notas">Notas (opcional):</label>
+                <textarea name="notas" id="notas" class="form-control" rows="3" 
+                          placeholder="Notas adicionales sobre esta configuración"></textarea>
+            </div>
+            
+            <button type="submit" class="btn-primary">💾 Guardar Configuración</button>
+        </form>
+    </div>
+    
+    <!-- Lista de configuraciones existentes -->
+    <div class="config-card">
+        <h2>📋 Configuraciones Existentes</h2>
+        {% if configuraciones %}
+        <table class="table-config">
+            <thead>
+                <tr>
+                    <th>Mecánico</th>
+                    <th>Estado</th>
+                    <th>Tipo</th>
+                    <th>Valor</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for config in configuraciones %}
+                <tr>
+                    <td><strong>{{ config.mecanico }}</strong></td>
+                    <td>
+                        {% if config.activo %}
+                        <span class="badge-activo">Activo</span>
+                        {% else %}
+                        <span class="badge-inactivo">Inactivo</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="tipo-bono">
+                            {% if config.tipo_bono == 'porcentaje' %}
+                            Porcentaje
+                            {% else %}
+                            Fijo
+                            {% endif %}
+                        </span>
+                    </td>
+                    <td>
+                        {% if config.tipo_bono == 'porcentaje' %}
+                        {{ config.porcentaje_mano_obra }}%
+                        {% else %}
+                        ${{ config.cantidad_fija|floatformat:0|intcomma }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'editar_configuracion_bono' config.pk %}" class="btn-primary css004b-inline-5ddba83777a6" >
+                            ✏️ Editar
+                        </a>
+                        <a href="{% url 'cuenta_mecanico' config.mecanico.id %}" class="btn-primary css004b-inline-5907bd2c974e" >
+                            💰 Ver Cuenta
+                        </a>
+                        <a href="{% url 'eliminar_configuracion_bono' config.pk %}" class="btn-primary css004b-inline-ef4c620f9415"  onclick="{% if ver_mensajes %}return confirm('¿Estás seguro de eliminar esta configuración de bono? Los bonos ya generados no se verán afectados.');{% else %}return true;{% endif %}">
+                            🗑️ Eliminar
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p  class="css004b-inline-5391c02b6eae">
+            No hay configuraciones de bonos registradas aún.
+        </p>
+        {% endif %}
+    </div>
+    
+    <div  class="css004b-inline-ebe5324ecdf3">
+        <a href="{% url 'lista_mecanicos_bonos' %}" class="btn-primary css004b-inline-4b39e24c7c4c" >
+            📊 Ver Resumen de Bonos de Todos los Mecánicos
+        </a>
+    </div>
+</div>
+
+<script>
+function toggleTipoBono() {
+    const tipo = document.getElementById('tipo_bono').value;
+    const grupoPorcentaje = document.getElementById('grupo_porcentaje');
+    const grupoFijo = document.getElementById('grupo_fijo');
+    
+    if (tipo === 'porcentaje') {
+        grupoPorcentaje.style.display = 'block';
+        grupoFijo.style.display = 'none';
+        document.getElementById('cantidad_fija').value = '';
+    } else {
+        grupoPorcentaje.style.display = 'none';
+        grupoFijo.style.display = 'block';
+        document.getElementById('porcentaje').value = '';
+    }
+}
+</script>
+{% endblock %}

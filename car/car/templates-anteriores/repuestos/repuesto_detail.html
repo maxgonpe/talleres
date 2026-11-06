@@ -1,0 +1,362 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}{{ repuesto.nombre }} - Ficha del Repuesto - NetGoGo{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+<style>
+    .detail-container {
+        max-width: 1200px;
+        margin: var(--spacing-xl) auto;
+        padding: var(--spacing-xl);
+        background: var(--card-bg);
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--card-shadow);
+    }
+    
+    .detail-header {
+        background: var(--gradient);
+        color: var(--btn-fg);
+        padding: var(--spacing-xl);
+        text-align: center;
+        border-radius: var(--border-radius-lg);
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .detail-header h2 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .detail-header .sku-badge {
+        background: rgba(255,255,255,0.2);
+        color: var(--text-inverse);
+        padding: var(--spacing-sm) 1rem;
+        border-radius: var(--border-radius-xl);
+        font-size: 1.1rem;
+        font-weight: 600;
+        display: inline-block;
+        margin-top: 0.5rem;
+    }
+    
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .info-card {
+        background: var(--hover-bg);
+        padding: var(--spacing-lg);
+        border-radius: var(--border-radius);
+        border-left: 4px solid var(--accent);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .info-card h5 {
+        color: var(--accent);
+        margin-bottom: 1rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+    }
+    
+    .info-card h5 i {
+        margin-right: 0.5rem;
+    }
+    
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--spacing-sm) 0;
+        border-bottom: 1px solid var(--muted);
+    }
+    
+    .info-item:last-child {
+        border-bottom: none;
+    }
+    
+    .info-label {
+        color: var(--muted);
+        font-weight: 500;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+    }
+    
+    .info-value {
+        color: var(--fg);
+        font-weight: 600;
+        text-align: right;
+    }
+    
+    .info-value.empty {
+        color: var(--muted);
+        font-style: italic;
+    }
+    
+    .stock-badge {
+        padding: 0.5rem 1rem;
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        display: inline-block;
+    }
+    
+    .stock-badge.success {
+        background: var(--success-600);
+        color: white;
+    }
+    
+    .stock-badge.danger {
+        background: var(--danger-600);
+        color: white;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 2rem;
+        flex-wrap: wrap;
+    }
+    
+    .btn-action-detail {
+        padding: var(--spacing-md) var(--spacing-lg);
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: var(--transition);
+    }
+    
+    .btn-action-detail:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    
+    @media (max-width: 768px) {
+        .detail-container {
+            padding: var(--spacing-md);
+        }
+        
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+        
+        .btn-action-detail {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="detail-container">
+    <!-- Header -->
+    <div class="detail-header">
+        <h2 class="mb-0">📦 {{ repuesto.nombre }}</h2>
+        {% if repuesto.sku %}
+        <div class="sku-badge">SKU: {{ repuesto.sku }}</div>
+        {% endif %}
+    </div>
+
+    <!-- Información del repuesto -->
+    <div class="info-grid">
+        <!-- Información General -->
+        <div class="info-card">
+            <h5><i class="fas fa-info-circle"></i>Información General</h5>
+            <div class="info-item">
+                <span class="info-label">ID</span>
+                <span class="info-value">{{ repuesto.id }}</span>
+            </div>
+            {% if repuesto.sku %}
+            <div class="info-item">
+                <span class="info-label">SKU</span>
+                <span class="info-value">{{ repuesto.sku }}</span>
+            </div>
+            {% endif %}
+            {% if repuesto.oem %}
+            <div class="info-item">
+                <span class="info-label">OEM</span>
+                <span class="info-value">{{ repuesto.oem }}</span>
+            </div>
+            {% endif %}
+            {% if repuesto.referencia %}
+            <div class="info-item">
+                <span class="info-label">Referencia</span>
+                <span class="info-value">{{ repuesto.referencia }}</span>
+            </div>
+            {% endif %}
+            {% if repuesto.marca %}
+            <div class="info-item">
+                <span class="info-label">Marca</span>
+                <span class="info-value">{{ repuesto.marca }}</span>
+            </div>
+            {% endif %}
+            {% if repuesto.descripcion %}
+            <div class="info-item">
+                <span class="info-label">Descripción</span>
+                <span class="info-value">{{ repuesto.descripcion }}</span>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Especificaciones Técnicas -->
+        <div class="info-card">
+            <h5><i class="fas fa-cog"></i>Especificaciones Técnicas</h5>
+            {% if repuesto.medida %}
+            <div class="info-item">
+                <span class="info-label">Medida</span>
+                <span class="info-value">{{ repuesto.medida }}</span>
+            </div>
+            {% endif %}
+            {% if repuesto.posicion %}
+            <div class="info-item">
+                <span class="info-label">Posición</span>
+                <span class="info-value">{{ repuesto.posicion }}</span>
+            </div>
+            {% endif %}
+            {% if repuesto.unidad %}
+            <div class="info-item">
+                <span class="info-label">Unidad</span>
+                <span class="info-value">{{ repuesto.unidad }}</span>
+            </div>
+            {% endif %}
+            {% if repuesto.codigo_barra %}
+            <div class="info-item">
+                <span class="info-label">Código de Barras</span>
+                <span class="info-value">{{ repuesto.codigo_barra }}</span>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Información Comercial -->
+        <div class="info-card">
+            <h5><i class="fas fa-dollar-sign"></i>Información Comercial</h5>
+            <div class="info-item">
+                <span class="info-label">Precio Costo</span>
+                <span class="info-value">${{ repuesto.precio_costo|default:"0"|floatformat:0|intcomma }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Precio Venta</span>
+                <span class="info-value">${{ repuesto.precio_venta|default:"0"|floatformat:0|intcomma }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Stock Total</span>
+                <span class="info-value">
+                    <span class="stock-badge {% if repuesto.stock_total > 0 %}success{% else %}danger{% endif %}">
+                        {{ repuesto.stock_total|default:0 }}
+                    </span>
+                </span>
+            </div>
+        </div>
+        
+        <!-- Información de Proveedor -->
+        <div class="info-card">
+            <h5><i class="fas fa-truck"></i>Información de Proveedor</h5>
+            {% if repuesto.origen_repuesto %}
+            <div class="info-item">
+                <span class="info-label">Origen</span>
+                <span class="info-value">{{ repuesto.origen_repuesto }}</span>
+            </div>
+            {% endif %}
+            {% if repuesto.cod_prov %}
+            <div class="info-item">
+                <span class="info-label">Código Proveedor</span>
+                <span class="info-value">{{ repuesto.cod_prov }}</span>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Compatibilidad Vehículo -->
+        <div class="info-card">
+            <h5><i class="fas fa-car"></i>Compatibilidad Vehículo</h5>
+            {% if repuesto.marca_veh %}
+            <div class="info-item">
+                <span class="info-label">Marca Vehículo</span>
+                <span class="info-value">{{ repuesto.marca_veh }}</span>
+            </div>
+            {% endif %}
+            {% if repuesto.tipo_de_motor %}
+            <div class="info-item">
+                <span class="info-label">Tipo de Motor</span>
+                <span class="info-value">{{ repuesto.tipo_de_motor }}</span>
+            </div>
+            {% endif %}
+            {% if repuesto.carroceria %}
+            <div class="info-item">
+                <span class="info-label">Carrocería</span>
+                <span class="info-value">{{ repuesto.carroceria }}</span>
+            </div>
+            {% endif %}
+            {% if repuesto.cilindrada %}
+            <div class="info-item">
+                <span class="info-label">Cilindrada</span>
+                <span class="info-value">{{ repuesto.cilindrada }}</span>
+            </div>
+            {% endif %}
+            {% if repuesto.nro_valvulas %}
+            <div class="info-item">
+                <span class="info-label">Número de Válvulas</span>
+                <span class="info-value">{{ repuesto.nro_valvulas }}</span>
+            </div>
+            {% endif %}
+            {% if repuesto.combustible %}
+            <div class="info-item">
+                <span class="info-label">Combustible</span>
+                <span class="info-value">{{ repuesto.combustible }}</span>
+            </div>
+            {% endif %}
+            {% if repuesto.otro_especial %}
+            <div class="info-item">
+                <span class="info-label">Otro Especial</span>
+                <span class="info-value">{{ repuesto.otro_especial }}</span>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Información del Sistema -->
+        <div class="info-card">
+            <h5><i class="fas fa-database"></i>Información del Sistema</h5>
+            <div class="info-item">
+                <span class="info-label">Fecha Creación</span>
+                <span class="info-value">{{ repuesto.created|date:"d/m/Y H:i" }}</span>
+            </div>
+            {% if repuesto.updated %}
+            <div class="info-item">
+                <span class="info-label">Última Actualización</span>
+                <span class="info-value">{{ repuesto.updated|date:"d/m/Y H:i" }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Botones de Acción -->
+    <div class="action-buttons">
+        <a href="{% url 'repuesto_list' %}" class="btn btn-secondary btn-action-detail">
+            <i class="fas fa-arrow-left"></i>Volver a la Lista
+        </a>
+        <a href="{% url 'repuesto_update' repuesto.pk %}" class="btn btn-warning btn-action-detail">
+            <i class="fas fa-edit"></i>Editar Repuesto
+        </a>
+        <a href="{% url 'repuesto_compatibilidad' repuesto.pk %}" class="btn btn-success btn-action-detail">
+            <i class="fas fa-link"></i>Ver Compatibilidad
+        </a>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,327 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Cuenta de {{ mecanico }} - Bonos{% endblock %}
+
+{% block extra_css %}
+
+{% endblock %}
+
+{% block content %}
+<span hidden data-css004b="8e024d1c19"></span>
+<div class="cuenta-container">
+    <div class="cuenta-header">
+        <h1>💰 Cuenta de Bonos - {{ mecanico }}</h1>
+        <p>{{ mecanico.user.email|default:"Sin email" }}</p>
+    </div>
+    
+    <!-- Selector de período y controles -->
+    <div  class="css004b-inline-62e39832f686">
+        <div  class="css004b-inline-7452612966b5">
+            <div>
+                <h3  class="css004b-inline-3152a5512334">📅 Filtrar por Período</h3>
+                <form method="get"  class="css004b-inline-2c531195cda8">
+                    <select name="mes"  class="css004b-inline-afbe4626372d">
+                        <option value="">Todos los meses</option>
+                        <option value="1" {% if periodo_mes == 1 %}selected{% endif %}>Enero</option>
+                        <option value="2" {% if periodo_mes == 2 %}selected{% endif %}>Febrero</option>
+                        <option value="3" {% if periodo_mes == 3 %}selected{% endif %}>Marzo</option>
+                        <option value="4" {% if periodo_mes == 4 %}selected{% endif %}>Abril</option>
+                        <option value="5" {% if periodo_mes == 5 %}selected{% endif %}>Mayo</option>
+                        <option value="6" {% if periodo_mes == 6 %}selected{% endif %}>Junio</option>
+                        <option value="7" {% if periodo_mes == 7 %}selected{% endif %}>Julio</option>
+                        <option value="8" {% if periodo_mes == 8 %}selected{% endif %}>Agosto</option>
+                        <option value="9" {% if periodo_mes == 9 %}selected{% endif %}>Septiembre</option>
+                        <option value="10" {% if periodo_mes == 10 %}selected{% endif %}>Octubre</option>
+                        <option value="11" {% if periodo_mes == 11 %}selected{% endif %}>Noviembre</option>
+                        <option value="12" {% if periodo_mes == 12 %}selected{% endif %}>Diciembre</option>
+                    </select>
+                    <input type="number" name="anio" placeholder="Año (ej: 2025)" value="{{ periodo_anio }}" 
+                            class="css004b-inline-5f2220c6942f">
+                    <button type="submit" class="btn-primary css004b-inline-898b68a5ac4d" >Filtrar</button>
+                    {% if periodo_mes or periodo_anio %}
+                    <a href="{% url 'cuenta_mecanico' mecanico.id %}" class="btn-primary css004b-inline-b290e6bafad9" >
+                        Limpiar Filtro
+                    </a>
+                    {% endif %}
+                </form>
+            </div>
+            {% if periodo_mes and periodo_anio %}
+            <div  class="css004b-inline-513cfdd157b0">
+                <p  class="css004b-inline-3152a5512334"><strong>Período actual:</strong> 
+                    {% if periodo_mes == 1 %}Enero{% elif periodo_mes == 2 %}Febrero{% elif periodo_mes == 3 %}Marzo{% elif periodo_mes == 4 %}Abril{% elif periodo_mes == 5 %}Mayo{% elif periodo_mes == 6 %}Junio{% elif periodo_mes == 7 %}Julio{% elif periodo_mes == 8 %}Agosto{% elif periodo_mes == 9 %}Septiembre{% elif periodo_mes == 10 %}Octubre{% elif periodo_mes == 11 %}Noviembre{% elif periodo_mes == 12 %}Diciembre{% endif %} {{ periodo_anio }}
+                </p>
+                {% if cierre_actual %}
+                <span class="badge-pagado">✅ Período Cerrado</span>
+                <a href="{% url 'eliminar_cierre_periodo' cierre_actual.id %}" 
+                   class="btn-primary css004b-inline-358cb8d4e5af" 
+                   
+                   onclick="{% if ver_mensajes %}return confirm('¿Está seguro de eliminar el cierre de este período?');{% else %}return true;{% endif %}">
+                    Eliminar Cierre
+                </a>
+                {% else %}
+                <a href="{% url 'crear_cierre_periodo' mecanico.id periodo_mes periodo_anio %}" 
+                   class="btn-success">
+                    🔒 Cerrar Período
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Cierres de períodos recientes -->
+    {% if cierres %}
+    <div  class="css004b-inline-f3c4862ca8e0">
+        <h3>📋 Cierres de Períodos Recientes</h3>
+        <div  class="css004b-inline-41a5d10601f3">
+            {% for cierre in cierres %}
+            <div  class="css004b-inline-7187600f2314">
+                <strong>{{ cierre.periodo_texto }}</strong>
+                <p  class="css004b-inline-10fba52f86c9">
+                    Total: ${{ cierre.total_bonos|floatformat:0|intcomma }}<br>
+                    Pagado: ${{ cierre.total_pagado|floatformat:0|intcomma }}<br>
+                    Pendiente: ${{ cierre.saldo_pendiente|floatformat:0|intcomma }}
+                </p>
+                <a href="{% url 'cuenta_mecanico' mecanico.id %}?mes={{ cierre.periodo_mes }}&anio={{ cierre.periodo_anio }}" 
+                    class="css004b-inline-a4cf4a0cd40d">Ver detalles</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Tarjetas de saldo -->
+    <div class="saldo-cards">
+        <div class="saldo-card pendiente">
+            <h3>Saldo Pendiente</h3>
+            <div class="valor">${{ saldo_pendiente|floatformat:0|intcomma }}</div>
+            <p  class="css004b-inline-ff51ce01a889">
+                Bonos generados sin pagar
+            </p>
+        </div>
+        
+        <div class="saldo-card total">
+            <h3>Total Generado</h3>
+            <div class="valor">${{ total_generado|floatformat:0|intcomma }}</div>
+            <p  class="css004b-inline-ff51ce01a889">
+                Bonos generados en total
+            </p>
+        </div>
+        
+        <div class="saldo-card pagado">
+            <h3>Total Pagado</h3>
+            <div class="valor">${{ total_pagado|floatformat:0|intcomma }}</div>
+            <p  class="css004b-inline-ff51ce01a889">
+                Pagos realizados
+            </p>
+        </div>
+    </div>
+    
+    <!-- Información de configuración -->
+    {% if config_bono %}
+    <div  class="css004b-inline-f3c4862ca8e0">
+        <h3>⚙️ Configuración de Bonos</h3>
+        <p>
+            <strong>Tipo:</strong> 
+            {% if config_bono.tipo_bono == 'porcentaje' %}
+            Porcentaje ({{ config_bono.porcentaje_mano_obra }}%)
+            {% else %}
+            Cantidad Fija (${{ config_bono.cantidad_fija|floatformat:0|intcomma }})
+            {% endif %}
+            | 
+            <strong>Estado:</strong> 
+            {% if config_bono.activo %}
+            <span class="badge-pagado">Activo</span>
+            {% else %}
+            <span class="badge-pendiente">Inactivo</span>
+            {% endif %}
+        </p>
+    </div>
+    {% else %}
+    <div  class="css004b-inline-24e1daed6a96">
+        <p><strong>⚠️ Atención:</strong> Este mecánico no tiene configuración de bonos. 
+        <a href="{% url 'configuracion_bonos' %}">Configurar bonos</a></p>
+    </div>
+    {% endif %}
+    
+    <!-- Botón para registrar pago -->
+    {% if saldo_pendiente > 0 %}
+    <div  class="css004b-inline-fa0f1711304a">
+        <a href="{% url 'registrar_pago_mecanico' mecanico.id %}" class="btn-success">
+            💵 Registrar Pago
+        </a>
+    </div>
+    {% endif %}
+    
+    <!-- Bonos pendientes -->
+    <h2>📋 Bonos Pendientes</h2>
+    {% if bonos_pendientes %}
+    <table class="table-bonos">
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Período</th>
+                <th>Trabajo</th>
+                <th>Tipo</th>
+                <th>Mano de Obra</th>
+                <th>Monto del Bono</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for bono in bonos_pendientes %}
+            <tr>
+                <td>{{ bono.fecha_generacion|date:"d/m/Y H:i" }}</td>
+                <td>
+                    {% if bono.periodo_mes and bono.periodo_anio %}
+                    {{ bono.periodo_texto }}
+                    {% if bono.cerrado %}
+                    <br><small  class="css004b-inline-86c1a9116d85">[Cerrado]</small>
+                    {% endif %}
+                    {% else %}
+                    <small  class="css004b-inline-bde184a1b183">Sin período</small>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'trabajo_detalle' bono.trabajo.id %}"  class="css004b-inline-2e4c43b74282">
+                        Trabajo #{{ bono.trabajo.id }} - {{ bono.trabajo.vehiculo }}
+                    </a>
+                </td>
+                <td>
+                    {% if bono.tipo_bono == 'porcentaje' %}
+                    Porcentaje ({{ bono.porcentaje_aplicado }}%)
+                    {% else %}
+                    Cantidad Fija
+                    {% endif %}
+                </td>
+                <td>${{ bono.total_mano_obra|floatformat:0|intcomma }}</td>
+                <td><strong  class="css004b-inline-93ade3ca8f30">${{ bono.monto|floatformat:0|intcomma }}</strong></td>
+                <td><span class="badge-pendiente">Pendiente</span></td>
+                <td>
+                    {% if not bono.pagado and not bono.cerrado %}
+                    <a href="{% url 'eliminar_bono' bono.id %}" 
+                       
+                       onclick="{% if ver_mensajes %}return confirm('¿Está seguro de eliminar este bono?');{% else %}return true;{% endif %}" class="css004b-inline-145e197fd423">
+                        🗑️ Eliminar
+                    </a>
+                    {% else %}
+                    <small  class="css004b-inline-bde184a1b183">-</small>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div  class="css004b-inline-471ea7584ef7">
+        <p  class="css004b-inline-bde184a1b183">No hay bonos pendientes</p>
+    </div>
+    {% endif %}
+    
+    <!-- Bonos pagados (últimos 20) -->
+    <h2  class="css004b-inline-e8f12fa21d0a">✅ Bonos Pagados (Últimos 20)</h2>
+    {% if bonos_pagados %}
+    <table class="table-bonos">
+        <thead>
+            <tr>
+                <th>Fecha Generación</th>
+                <th>Período</th>
+                <th>Fecha Pago</th>
+                <th>Trabajo</th>
+                <th>Monto</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for bono in bonos_pagados %}
+            <tr>
+                <td>{{ bono.fecha_generacion|date:"d/m/Y" }}</td>
+                <td>
+                    {% if bono.periodo_mes and bono.periodo_anio %}
+                    {{ bono.periodo_texto }}
+                    {% else %}
+                    <small  class="css004b-inline-bde184a1b183">Sin período</small>
+                    {% endif %}
+                </td>
+                <td>{{ bono.fecha_pago|date:"d/m/Y"|default:"-" }}</td>
+                <td>
+                    <a href="{% url 'trabajo_detalle' bono.trabajo.id %}"  class="css004b-inline-2e4c43b74282">
+                        Trabajo #{{ bono.trabajo.id }}
+                    </a>
+                </td>
+                <td>${{ bono.monto|floatformat:0|intcomma }}</td>
+                <td><span class="badge-pagado">Pagado</span></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div  class="css004b-inline-471ea7584ef7">
+        <p  class="css004b-inline-bde184a1b183">No hay bonos pagados aún</p>
+    </div>
+    {% endif %}
+    
+    <!-- Historial de pagos -->
+    <h2  class="css004b-inline-e8f12fa21d0a">💵 Historial de Pagos</h2>
+    {% if pagos %}
+    <table class="table-bonos">
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Período</th>
+                <th>Monto</th>
+                <th>Método</th>
+                <th>Bonos Aplicados</th>
+                <th>Notas</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pago in pagos %}
+            <tr>
+                <td>{{ pago.fecha_pago|date:"d/m/Y H:i" }}</td>
+                <td>
+                    {% if pago.periodo_mes and pago.periodo_anio %}
+                    {{ pago.periodo_texto }}
+                    {% else %}
+                    <small  class="css004b-inline-bde184a1b183">Sin período</small>
+                    {% endif %}
+                </td>
+                <td><strong>${{ pago.monto|floatformat:0|intcomma }}</strong></td>
+                <td>{{ pago.get_metodo_pago_display }}</td>
+                <td>{{ pago.bonos_aplicados.count }} bono(s)</td>
+                <td>{{ pago.notas|default:"-" }}</td>
+                <td>
+                    <a href="{% url 'eliminar_pago' pago.id %}" 
+                       
+                       onclick="{% if ver_mensajes %}return confirm('¿Está seguro de eliminar este pago? Esto marcará los bonos asociados como pendientes.');{% else %}return true;{% endif %}" class="css004b-inline-145e197fd423">
+                        🗑️ Eliminar
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div  class="css004b-inline-471ea7584ef7">
+        <p  class="css004b-inline-bde184a1b183">No hay pagos registrados</p>
+    </div>
+    {% endif %}
+    
+    <div  class="css004b-inline-4391944fc6a7">
+        <a href="{% url 'lista_mecanicos_bonos' %}" class="btn-primary">
+            ← Volver a Lista de Mecánicos
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Variable global para ver_mensajes (disponible para todos los scripts)
+window.ver_mensajes = {% if ver_mensajes %}true{% else %}false{% endif %};
+</script>
+{% endblock %}

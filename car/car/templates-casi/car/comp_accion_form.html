@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if modo == 'editar' %}Editar{% else %}Crear{% endif %} Precio de Mano de Obra{% endblock %}
+
+{% block extra_css %}
+{% endblock %}
+
+{% block extra_head %}
+
+{% endblock %}
+
+{% block content %}
+<span hidden data-css004b="aa34db7949"></span>
+<div class="form-container">
+    <div class="form-header">
+        <h3 class="mb-0">
+            {% if modo == 'editar' %}
+                ✏️ Editar Precio de Mano de Obra
+            {% else %}
+                ➕ Crear Precio de Mano de Obra
+            {% endif %}
+        </h3>
+    </div>
+
+    <div class="form-card">
+        {% if modo == 'editar' and obj %}
+        <div class="current-value">
+            <strong>📋 Editando:</strong> {{ obj.componente.nombre }} - {{ obj.accion.nombre }}
+            <br>
+            <small class="text-secondary">Precio actual: ${{ obj.precio_mano_obra|floatformat:0 }}</small>
+        </div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label class="form-label">Componente *</label>
+                {{ form.componente }}
+                {% if form.componente.errors %}
+                    <div class="text-danger mt-1">{{ form.componente.errors }}</div>
+                {% endif %}
+                <small class="help-text">Selecciona el componente del vehículo</small>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Acción *</label>
+                {{ form.accion }}
+                {% if form.accion.errors %}
+                    <div class="text-danger mt-1">{{ form.accion.errors }}</div>
+                {% endif %}
+                <small class="help-text">Selecciona la acción a realizar</small>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Precio de Mano de Obra *</label>
+                {{ form.precio_mano_obra }}
+                {% if form.precio_mano_obra.errors %}
+                    <div class="text-danger mt-1">{{ form.precio_mano_obra.errors }}</div>
+                {% endif %}
+                <small class="help-text">Ingresa el precio en pesos (sin puntos ni comas)</small>
+            </div>
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <div class="btn-group-custom">
+                <button type="submit" class="btn-action btn-primary-custom">
+                    {% if modo == 'editar' %}
+                        💾 Guardar Cambios
+                    {% else %}
+                        ➕ Crear Precio
+                    {% endif %}
+                </button>
+                <a href="{% url 'comp_accion_list' %}" class="btn-action btn-secondary-custom">
+                    ← Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Aplicar tema automáticamente
+document.addEventListener('DOMContentLoaded', function() {
+    const saved = localStorage.getItem("theme") || "piedra";
+    document.body.className = `theme-${saved}`;
+});
+</script>
+{% endblock %}
+
+

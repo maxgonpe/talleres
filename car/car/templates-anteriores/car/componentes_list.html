@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+  <style>
+    .container {
+      background: var(--bg-card);
+      border-radius: var(--border-radius-lg);
+      padding: var(--spacing-lg);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .btn {
+      border-radius: var(--border-radius-sm);
+      font-weight: 500;
+      transition: var(--transition);
+    }
+    
+    .btn-success {
+      background: var(--success-600);
+      border-color: var(--success-600);
+    }
+    
+    .btn-success:hover {
+      background: var(--success-700);
+      border-color: var(--success-700);
+    }
+    
+    .btn-info {
+      background: var(--info-600);
+      border-color: var(--info-600);
+    }
+    
+    .btn-info:hover {
+      background: var(--info-700);
+      border-color: var(--info-700);
+    }
+    
+    .btn-danger {
+      background: var(--danger-600);
+      border-color: var(--danger-600);
+    }
+    
+    .btn-danger:hover {
+      background: var(--danger-700);
+      border-color: var(--danger-700);
+    }
+    
+    .btn-warning {
+      background: var(--warning-600);
+      border-color: var(--warning-600);
+    }
+    
+    .btn-warning:hover {
+      background: var(--warning-700);
+      border-color: var(--warning-700);
+    }
+    
+    .form-control {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      border-radius: var(--border-radius-sm);
+    }
+    
+    .form-control:focus {
+      background: var(--bg-card);
+      border-color: var(--primary-600);
+      color: var(--text-primary);
+      box-shadow: 0 0 0 0.2rem var(--primary-200);
+    }
+    
+    .input-group {
+      border-radius: var(--border-radius-sm);
+    }
+    
+    h4 {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+    
+    #componentes-container {
+      background: var(--bg-card);
+      border-radius: var(--border-radius-lg);
+      padding: var(--spacing-md);
+      margin-top: var(--spacing-md);
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+
+<div class="container py-4">
+  
+    <div class="d-flex gap-2 mb-2">
+    <h4>🧩 Componentes</h4>
+
+    <a href="{% url 'componente_create' %}" class="btn btn-success btn-sm mb-3">+ Nuevo</a>
+    <a href="{% url 'exportar_componentes_excel' %}" class="btn btn-info btn-sm mb-3">📊 Excel</a>
+    <a href="{% url 'exportar_componentes_pdf' %}" class="btn btn-danger btn-sm mb-3">📄 PDF</a>
+    <a href="javascript:history.back()" class="btn btn-sm btn-warning mb-3">⬅️ Volver al panel</a>
+  </div>
+
+  <form class="mb-3">
+    <div class="input-group">
+      <input type="text" class="form-control" id="searchBox" placeholder="Buscar componente...">
+    </div>
+  </form>
+
+  <div id="componentes-container">
+    {% include 'car/componentes_tree.html' with componentes=componentes %}
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const searchBox = document.getElementById('searchBox');
+  const container = document.getElementById('componentes-container');
+
+  searchBox.addEventListener('keyup', function () {
+    const query = this.value;
+    fetch(`?q=${encodeURIComponent(query)}`, {
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      container.innerHTML = data.html;
+
+      // Re-activar los colapsables de Bootstrap
+      container.querySelectorAll('[data-bs-toggle="collapse"]').forEach(el => {
+        new bootstrap.Collapse(el, { toggle: false });
+      });
+    });
+  });
+});
+</script>
+
+
+{% endblock %}

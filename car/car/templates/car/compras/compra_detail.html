@@ -4,7 +4,6 @@
 {% load humanize %}
 
 {% block extra_css %}
-  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
 {% endblock %}
 
 {% block title %}Compra {{ compra.numero_compra }}{% endblock %}
@@ -235,10 +234,10 @@
                                placeholder="Escriba nombre, SKU, código de barras o escanee..."
                                autocomplete="off">
                         <input type="hidden" id="id_repuesto" name="repuesto" value="">
-                        <div id="repuesto_suggestions" class="list-group" style="display: none; position: absolute; z-index: 1000; width: 100%; max-height: 300px; overflow-y: auto;"></div>
+                        <div id="repuesto_suggestions" class="list-group css004b-inline-c6c21bad7836" ></div>
                         
                         <!-- Información del producto seleccionado -->
-                        <div id="producto_info" class="mt-2" style="display: none;">
+                        <div id="producto_info" class="mt-2 css004b-inline-f3652384a04a" >
                             <div class="alert alert-info">
                                 <div class="row">
                                     <div class="col-md-6">

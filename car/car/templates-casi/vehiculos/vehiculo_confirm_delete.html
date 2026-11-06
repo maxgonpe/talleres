@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Eliminar Vehículo Compatible - NetGoGo{% endblock %}
+
+{% block extra_css %}
+
+{% endblock %}
+
+{% block content %}
+<span hidden data-css004b="fca6d2d277"></span>
+<div class="delete-container">
+    <!-- Header -->
+    <div class="delete-header">
+        <h2 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación</h2>
+        <p class="mb-0">Esta acción no se puede deshacer</p>
+    </div>
+
+    <!-- Información del vehículo -->
+    <div class="vehiculo-info">
+        <h4><i class="fas fa-car me-2"></i>Vehículo Compatible a Eliminar</h4>
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">ID</div>
+                <div class="info-value">{{ vehiculo.id }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Marca</div>
+                <div class="info-value">{{ vehiculo.marca }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Modelo</div>
+                <div class="info-value">{{ vehiculo.modelo }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Años</div>
+                <div class="info-value">{{ vehiculo.anio_desde }}-{{ vehiculo.anio_hasta }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advertencia -->
+    <div class="warning-box">
+        <h5><i class="fas fa-exclamation-triangle me-2"></i>¡Atención!</h5>
+        <p>Estás a punto de eliminar permanentemente este vehículo de la base de datos de compatibilidad. Esta acción afectará:</p>
+    </div>
+
+    <!-- Impacto -->
+    <div class="impact-list">
+        <h6><i class="fas fa-list me-2"></i>Impacto de la Eliminación</h6>
+        <ul>
+            <li><strong>Compatibilidad de Repuestos:</strong> Se eliminarán todas las relaciones de compatibilidad con repuestos</li>
+            <li><strong>Filtros Inteligentes:</strong> Este vehículo ya no aparecerá en las sugerencias de diagnósticos y trabajos</li>
+            <li><strong>Historial:</strong> Se perderá el historial de compatibilidad asociado</li>
+            <li><strong>Reportes:</strong> Los reportes futuros no incluirán este vehículo</li>
+        </ul>
+    </div>
+
+    <!-- Formulario de confirmación -->
+    <form method="post" id="deleteForm">
+        {% csrf_token %}
+        
+        <div class="delete-actions">
+            <button type="submit" class="btn btn-danger btn-delete">
+                <i class="fas fa-trash me-2"></i>Eliminar Definitivamente
+            </button>
+            <a href="{% url 'vehiculo_list' %}" class="btn btn-secondary btn-delete">
+                <i class="fas fa-times me-2"></i>Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Si ver_avisos = False, auto-enviar el formulario sin confirmación
+    {% if not ver_avisos %}
+        document.getElementById('deleteForm').submit();
+    {% else %}
+        // Confirmación adicional con JavaScript solo si ver_avisos = True
+        const deleteButton = document.querySelector('.btn-danger');
+        const form = document.querySelector('form');
+        
+        if (deleteButton && form) {
+            deleteButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const vehiculoInfo = "{{ vehiculo.marca }} {{ vehiculo.modelo }} ({{ vehiculo.anio_desde }}-{{ vehiculo.anio_hasta }})";
+                const confirmMessage = `¿Estás completamente seguro de que quieres eliminar el vehículo "${vehiculoInfo}"?\n\nEsta acción es IRREVERSIBLE y afectará:\n• Compatibilidad de repuestos\n• Filtros inteligentes\n• Historial de datos\n\nEscribe "ELIMINAR" para confirmar:`;
+                
+                const userInput = prompt(confirmMessage);
+                
+                if (userInput === "ELIMINAR") {
+                    // Mostrar loading en el botón
+                    deleteButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Eliminando...';
+                    deleteButton.disabled = true;
+                    
+                    // Enviar formulario
+                    form.submit();
+                } else if (userInput !== null) {
+                    alert('❌ Confirmación incorrecta. La eliminación ha sido cancelada.');
+                }
+            });
+        }
+        
+        // Prevenir envío accidental con teclado
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.target.tagName !== 'INPUT') {
+                e.preventDefault();
+            }
+        });
+    {% endif %}
+});
+</script>
+{% endblock %}

@@ -1,0 +1,30 @@
+{# Modal simplificado para proveedores externos (flujo fusionado) #}
+<div class="modal fade" id="modalRepuestosExternos" tabindex="-1" aria-labelledby="modalRepuestosExternosLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content shadow-lg border-0">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title" id="modalRepuestosExternosLabel">🌐 Proveedores externos</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-info mb-3">
+          <strong>En desarrollo:</strong> Próximamente se integrará la misma búsqueda avanzada de proveedores externos
+          que existe en el flujo principal. Por ahora, usa el buscador del layout clásico para registrar referencias externas.
+        </div>
+        <p class="text-muted mb-0">
+          Este modal se incluye únicamente para que el botón de la interfaz no genere errores durante las pruebas del flujo fusionado.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Entendido</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    console.info('ℹ️ Modal simplificado de proveedores externos listo (layout fusionado).');
+  });
+</script>
+

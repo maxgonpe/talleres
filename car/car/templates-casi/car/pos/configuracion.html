@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+{% endblock %}
+
+{% block title %}Configuración POS{% endblock %}
+
+{% block extra_head %}
+
+{% endblock %}
+
+{% block content %}
+<span hidden data-css004b="a9613072cc"></span>
+<div class="config-container">
+    <!-- Header -->
+    <div class="config-header">
+        <h4 class="mb-0">⚙️ Configuración del Sistema POS</h4>
+        <small>Personaliza el comportamiento del punto de venta</small>
+    </div>
+
+    <!-- Formulario de configuración -->
+    <div class="config-form">
+        <form method="post">
+            {% csrf_token %}
+            
+            <!-- Información de la empresa -->
+            <div class="form-section">
+                <h5 class="section-title">🏢 Información de la Empresa</h5>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Nombre de la Empresa</label>
+                        {{ form.nombre_empresa }}
+                        <div class="help-text">Aparecerá en los tickets y reportes</div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">RUC</label>
+                        {{ form.ruc }}
+                        <div class="help-text">Número de identificación fiscal</div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Dirección</label>
+                    {{ form.direccion }}
+                    <div class="help-text">Dirección completa de la empresa</div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Teléfono</label>
+                        {{ form.telefono }}
+                        <div class="help-text">Número de contacto</div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Margen de Ganancia (%)</label>
+                        {{ form.margen_ganancia_default }}
+                        <div class="help-text">Margen por defecto para nuevos repuestos</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuración de ventas -->
+            <div class="form-section">
+                <h5 class="section-title">💰 Configuración de Ventas</h5>
+                
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="form-check">
+                            {{ form.imprimir_ticket }}
+                            <label class="form-check-label">
+                                Imprimir Ticket Automáticamente
+                            </label>
+                            <div class="help-text">Imprime el ticket después de cada venta</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <div class="form-check">
+                            {{ form.mostrar_descuentos }}
+                            <label class="form-check-label">
+                                Permitir Descuentos
+                            </label>
+                            <div class="help-text">Habilita la opción de descuentos en ventas</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <div class="form-check">
+                            {{ form.permitir_venta_sin_stock }}
+                            <label class="form-check-label">
+                                Vender Sin Stock
+                            </label>
+                            <div class="help-text">Permite vender aunque no haya stock disponible</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vista previa -->
+            <div class="config-preview">
+                <div class="preview-title">📄 Vista Previa del Ticket</div>
+                <div class="text-secondary">
+                    <div><strong id="preview-nombre">{{ config.nombre_empresa|default:"Taller Mecánico" }}</strong></div>
+                    <div id="preview-direccion">{{ config.direccion|default:"Dirección de la empresa" }}</div>
+                    <div id="preview-telefono">Tel: {{ config.telefono|default:"(000) 000-0000" }}</div>
+                    <div id="preview-ruc">RUC: {{ config.ruc|default:"00000000000" }}</div>
+                </div>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="d-flex gap-3 justify-content-center mt-4">
+                <button type="submit" class="btn btn-save">
+                    💾 Guardar Configuración
+                </button>
+                <a href="{% url 'pos_principal' %}" class="btn btn-cancel">
+                    ← Volver al POS
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Información adicional -->
+    <div class="config-form">
+        <h5 class="section-title">ℹ️ Información del Sistema</h5>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Funcionalidades Disponibles</h6>
+                <ul class="list-unstyled">
+                    <li>✅ Búsqueda rápida de repuestos</li>
+                    <li>✅ Escáner de código de barras</li>
+                    <li>✅ Gestión de carrito de compras</li>
+                    <li>✅ Múltiples métodos de pago</li>
+                    <li>✅ Descuentos y promociones</li>
+                    <li>✅ Historial de ventas</li>
+                    <li>✅ Reportes y estadísticas</li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <h6>Próximas Mejoras</h6>
+                <ul class="list-unstyled">
+                    <li>🔄 Integración con APIs de repuestos</li>
+                    <li>📱 Aplicación móvil nativa</li>
+                    <li>🔔 Notificaciones en tiempo real</li>
+                    <li>📊 Gráficos avanzados</li>
+                    <li>💳 Integración con pasarelas de pago</li>
+                    <li>📧 Reportes automáticos por email</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Actualizar vista previa en tiempo real
+document.addEventListener('DOMContentLoaded', function() {
+    const nombreInput = document.getElementById('id_nombre_empresa');
+    const direccionInput = document.getElementById('id_direccion');
+    const telefonoInput = document.getElementById('id_telefono');
+    const rucInput = document.getElementById('id_ruc');
+    
+    const previewNombre = document.getElementById('preview-nombre');
+    const previewDireccion = document.getElementById('preview-direccion');
+    const previewTelefono = document.getElementById('preview-telefono');
+    const previewRuc = document.getElementById('preview-ruc');
+    
+    function updatePreview() {
+        previewNombre.textContent = nombreInput.value || 'Taller Mecánico';
+        previewDireccion.textContent = direccionInput.value || 'Dirección de la empresa';
+        previewTelefono.textContent = 'Tel: ' + (telefonoInput.value || '(000) 000-0000');
+        previewRuc.textContent = 'RUC: ' + (rucInput.value || '00000000000');
+    }
+    
+    nombreInput.addEventListener('input', updatePreview);
+    direccionInput.addEventListener('input', updatePreview);
+    telefonoInput.addEventListener('input', updatePreview);
+    rucInput.addEventListener('input', updatePreview);
+    
+    // Validación del formulario
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const margen = parseFloat(document.getElementById('id_margen_ganancia_default').value);
+        
+        if (margen < 0 || margen > 100) {
+            e.preventDefault();
+            alert('El margen de ganancia debe estar entre 0 y 100%');
+            return false;
+        }
+        
+        {% if ver_avisos %}
+        if (!confirm('¿Guardar la configuración?')) {
+        {% else %}
+        if (false) {
+        {% endif %}
+            e.preventDefault();
+            return false;
+        }
+    });
+    
+    // Auto-guardar borrador (opcional)
+    let saveTimeout;
+    const inputs = document.querySelectorAll('input, textarea, select');
+    
+    inputs.forEach(input => {
+        input.addEventListener('input', function() {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                // Opcional: guardar borrador en localStorage
+                const formData = new FormData(document.querySelector('form'));
+                const data = {};
+                for (let [key, value] of formData.entries()) {
+                    data[key] = value;
+                }
+                localStorage.setItem('pos_config_draft', JSON.stringify(data));
+            }, 2000);
+        });
+    });
+    
+    // Cargar borrador guardado
+    const draft = localStorage.getItem('pos_config_draft');
+    if (draft) {
+        try {
+            const data = JSON.parse(draft);
+            Object.keys(data).forEach(key => {
+                const input = document.getElementById(`id_${key}`);
+                if (input) {
+                    input.value = data[key];
+                }
+            });
+            updatePreview();
+        } catch (e) {
+            console.log('No se pudo cargar el borrador');
+        }
+    }
+});
+
+// Limpiar borrador al guardar exitosamente
+document.querySelector('form').addEventListener('submit', function() {
+    localStorage.removeItem('pos_config_draft');
+});
+</script>
+{% endblock %}
+

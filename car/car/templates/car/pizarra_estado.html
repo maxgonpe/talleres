@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ estado_nombre }} | Pizarra{% endblock %}
+
+{% block content %}
+<main class="ui-layer-1 state-workspace">
+    <header class="workspace-heading">
+        <div>
+            <div class="eyebrow">PIZARRA / ESTADO</div>
+            <h1>{{ estado_icono }} {{ estado_nombre }}</h1>
+            <p>{{ trabajos|length }} trabajo{{ trabajos|length|pluralize }} en este estado</p>
+        </div>
+        <a class="btn btn-secondary" href="{% url 'panel_principal' %}#pizarra">← Pizarra</a>
+    </header>
+
+    <section class="workspace-grid" aria-label="Trabajos {{ estado_nombre|lower }}">
+        {% for trabajo in trabajos %}
+        <a class="workspace-card ui-layer-2" href="{% url 'trabajo_detalle' trabajo.pk %}">
+            <span class="workspace-card-icon" aria-hidden="true">🚗</span>
+            <span class="workspace-card-title">{{ trabajo.vehiculo.placa|default:"Sin patente" }}</span>
+            <span class="workspace-card-meta">{{ trabajo.vehiculo.cliente.nombre }}</span>
+            <span class="workspace-card-meta">{{ trabajo.vehiculo.marca }} {{ trabajo.vehiculo.modelo }}</span>
+            <span class="workspace-card-action">Abrir trabajo →</span>
+        </a>
+        {% empty %}
+        <div class="workspace-empty ui-layer-2">
+            <span aria-hidden="true">📭</span>
+            <h2>No hay trabajos en este estado</h2>
+            <p>Cuando aparezcan, estarán disponibles en este espacio.</p>
+        </div>
+        {% endfor %}
+    </section>
+</main>
+{% endblock %}

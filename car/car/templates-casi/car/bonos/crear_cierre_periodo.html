@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Cerrar Período - {{ mecanico }}{% endblock %}
+
+{% block extra_css %}
+
+{% endblock %}
+
+{% block content %}
+<span hidden data-css004b="08460397c8"></span>
+<div class="cierre-container">
+    <div class="cierre-header">
+        <h1>🔒 Cerrar Período de Bonos</h1>
+        <p>{{ mecanico }} - {{ periodo_texto }}</p>
+    </div>
+    
+    <div class="resumen-box">
+        <h3  class="css004b-inline-9ca154c26495">📊 Resumen del Período</h3>
+        <div class="resumen-item">
+            <span class="resumen-label">Total de Bonos:</span>
+            <span class="resumen-valor">${{ total_bonos|floatformat:0|intcomma }}</span>
+        </div>
+        <div class="resumen-item">
+            <span class="resumen-label">Total Pagado:</span>
+            <span class="resumen-valor css004b-inline-f0996cec2cd2" >${{ total_pagado|floatformat:0|intcomma }}</span>
+        </div>
+        <div class="resumen-item">
+            <span class="resumen-label">Saldo Pendiente:</span>
+            <span class="resumen-valor css004b-inline-75b494374907" >${{ saldo_pendiente|floatformat:0|intcomma }}</span>
+        </div>
+        <div class="resumen-item">
+            <span class="resumen-label">Cantidad de Bonos:</span>
+            <span class="resumen-valor">{{ cantidad_bonos }}</span>
+        </div>
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="notas">Notas (opcional):</label>
+            <textarea name="notas" id="notas" placeholder="Notas adicionales sobre el cierre de este período..."></textarea>
+        </div>
+        
+        <div  class="css004b-inline-4f831f62e460">
+            <button type="submit" class="btn-primary">
+                ✅ Confirmar Cierre de Período
+            </button>
+            <a href="{% url 'cuenta_mecanico' mecanico.id %}?mes={{ mes }}&anio={{ anio }}" class="btn-secondary">
+                Cancelar
+            </a>
+        </div>
+    </form>
+    
+    <div  class="css004b-inline-b240ccb20f24">
+        <p  class="css004b-inline-6e2906e95541"><strong>⚠️ Nota:</strong> Al cerrar este período, todos los bonos del período quedarán marcados como cerrados. 
+        Podrás eliminar el cierre más adelante si es necesario, lo que desmarcará los bonos.</p>
+    </div>
+</div>
+{% endblock %}

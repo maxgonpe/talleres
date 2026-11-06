@@ -1,0 +1,475 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ view.object|default:"Nuevo Vehículo" }}{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+{% endblock %}
+
+{% block extra_head %}
+<style>
+    .vehiculo-container {
+        max-width: 100%;
+        margin: 0;
+        padding: var(--spacing-md);
+    }
+    
+    .vehiculo-header {
+        background: linear-gradient(135deg, var(--btn-bg) 0%, var(--muted) 100%);
+        color: var(--btn-fg);
+        padding: var(--spacing-md);
+        text-align: center;
+        border-radius: var(--border-radius-lg);
+        margin-bottom: 1rem;
+    }
+    
+    .form-card {
+        background: var(--card-bg);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-lg);
+        box-shadow: var(--shadow-md);
+        margin-bottom: 1rem;
+    }
+    
+    .form-section {
+        margin-bottom: 2rem;
+    }
+    
+    .form-section h5 {
+        color: var(--btn-bg);
+        border-bottom: 2px solid var(--muted);
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    
+    .form-label {
+        color: var(--fg);
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-control, .form-select {
+        background: var(--card-bg);
+        border: 2px solid var(--muted);
+        color: var(--fg);
+        border-radius: var(--border-radius-md);
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: var(--btn-bg);
+        box-shadow: 0 0 0 0.2rem rgba(var(--btn-bg), 0.25);
+        background: var(--card-bg);
+        color: var(--fg);
+    }
+    
+    .form-control::placeholder {
+        color: var(--muted);
+    }
+    
+    .btn-buscar {
+        background: var(--btn-bg);
+        border: none;
+        color: var(--btn-fg);
+        padding: var(--spacing-sm) 1rem;
+        border-radius: var(--border-radius-md);
+        font-weight: 600;
+    }
+    
+    .btn-buscar:hover {
+        background: var(--hover-bg);
+        transform: translateY(-1px);
+    }
+    
+    .btn-buscar:disabled {
+        background: var(--muted);
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    .btn-save {
+        background: var(--btn-bg);
+        border: none;
+        color: var(--btn-fg);
+        padding: 0.75rem 2rem;
+        border-radius: var(--border-radius-full);
+        font-weight: 600;
+    }
+    
+    .btn-cancel {
+        background: transparent;
+        border: 2px solid var(--muted);
+        color: var(--muted);
+        padding: 0.75rem 2rem;
+        border-radius: var(--border-radius-full);
+        font-weight: 600;
+    }
+    
+    .btn-save:hover {
+        background: var(--hover-bg);
+        transform: translateY(-2px);
+    }
+    
+    .btn-cancel:hover {
+        border-color: var(--btn-bg);
+        color: var(--btn-bg);
+        transform: translateY(-2px);
+    }
+    
+    .loading-spinner {
+        display: none;
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--muted);
+        border-top: 2px solid var(--btn-bg);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .api-status {
+        margin-top: 0.5rem;
+        padding: var(--spacing-sm);
+        border-radius: var(--border-radius-sm);
+        font-size: 0.9rem;
+        display: none;
+    }
+    
+    .api-status.success {
+        background: rgba(40, 167, 69, 0.1);
+        color: #28a745;
+        border: 1px solid rgba(40, 167, 69, 0.3);
+    }
+    
+    .api-status.error {
+        background: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+        border: 1px solid rgba(220, 53, 69, 0.3);
+    }
+    
+    .api-status.info {
+        background: rgba(23, 162, 184, 0.1);
+        color: #17a2b8;
+        border: 1px solid rgba(23, 162, 184, 0.3);
+    }
+    
+    .field-filled {
+        background: rgba(40, 167, 69, 0.1) !important;
+        border-color: #28a745 !important;
+    }
+    
+    @media (max-width: 768px) {
+        .vehiculo-container {
+            padding: var(--spacing-sm);
+        }
+        
+        .form-card {
+            padding: var(--spacing-md);
+        }
+        
+        .row {
+            margin: 0;
+        }
+        
+        .col-md-6 {
+            padding: var(--spacing-xs);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="vehiculo-container">
+    <!-- Header -->
+    <div class="vehiculo-header">
+        <h2 class="mb-0">
+            {% if view.object %}
+                ✏️ Editar Vehículo
+            {% else %}
+                🚗 Nuevo Vehículo
+            {% endif %}
+        </h2>
+        <small>Registro de vehículos con búsqueda automática por placa</small>
+    </div>
+
+    <form method="post" id="vehiculo-form">
+        {% csrf_token %}
+        
+        <!-- Búsqueda por Placa -->
+        <div class="form-card">
+            <div class="form-section">
+                <h5>🔍 Búsqueda Automática por Placa</h5>
+                <div class="form-group">
+                    <label class="form-label">Placa del Vehículo *</label>
+                    <div class="input-group">
+                        <input type="text" 
+                               id="id_placa" 
+                               name="placa" 
+                               class="form-control" 
+                               placeholder="Ej: ABC123 o ABC-123"
+                               value="{{ form.placa.value|default:'' }}"
+                               maxlength="10"
+                               style="text-transform: uppercase;">
+                        <button type="button" 
+                                id="btn-buscar-placa" 
+                                class="btn btn-buscar">
+                            <span id="btn-text">🔍 Buscar</span>
+                            <div class="loading-spinner" id="loading-spinner"></div>
+                        </button>
+                    </div>
+                    <div id="api-status" class="api-status"></div>
+                    <small class="text-muted">
+                        Ingresa la placa del vehículo y presiona "Buscar" para llenar automáticamente los datos
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información del Vehículo -->
+        <div class="form-card">
+            <div class="form-section">
+                <h5>🚗 Información del Vehículo</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Marca *</label>
+                            <input type="text" 
+                                   id="id_marca" 
+                                   name="marca" 
+                                   class="form-control" 
+                                   placeholder="Ej: Toyota, Ford, Chevrolet"
+                                   value="{{ form.marca.value|default:'' }}"
+                                   maxlength="50">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Modelo *</label>
+                            <input type="text" 
+                                   id="id_modelo" 
+                                   name="modelo" 
+                                   class="form-control" 
+                                   placeholder="Ej: Corolla, Focus, Cruze"
+                                   value="{{ form.modelo.value|default:'' }}"
+                                   maxlength="50">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Año *</label>
+                            <input type="number" 
+                                   id="id_anio" 
+                                   name="anio" 
+                                   class="form-control" 
+                                   placeholder="Ej: 2020"
+                                   value="{{ form.anio.value|default:'' }}"
+                                   min="1900" 
+                                   max="2030">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">VIN (Número de Chasis)</label>
+                            <input type="text" 
+                                   id="id_vin" 
+                                   name="vin" 
+                                   class="form-control" 
+                                   placeholder="Número de identificación del vehículo"
+                                   value="{{ form.vin.value|default:'' }}"
+                                   maxlength="17"
+                                   style="text-transform: uppercase;">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Descripción del Motor</label>
+                    <input type="text" 
+                           id="id_descripcion_motor" 
+                           name="descripcion_motor" 
+                           class="form-control" 
+                           placeholder="Ej: Motor 1.6L • Versión XE"
+                           value="{{ form.descripcion_motor.value|default:'' }}"
+                           maxlength="100">
+                </div>
+            </div>
+        </div>
+
+        <!-- Cliente -->
+        <div class="form-card">
+            <div class="form-section">
+                <h5>👤 Cliente Propietario</h5>
+                <div class="form-group">
+                    <label class="form-label">Cliente *</label>
+                    <select id="id_cliente" 
+                            name="cliente" 
+                            class="form-select">
+                        <option value="">Selecciona un cliente...</option>
+                        {% for choice in form.cliente.field.queryset %}
+                            <option value="{{ choice.pk }}" 
+                                    {% if form.cliente.value == choice.pk %}selected{% endif %}>
+                                {{ choice.nombre }} - {{ choice.telefono }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="form-card text-center">
+            <button type="submit" class="btn btn-save me-3">
+                {% if view.object %}
+                    💾 Actualizar Vehículo
+                {% else %}
+                    ➕ Crear Vehículo
+                {% endif %}
+            </button>
+            <a href="{% url 'vehiculo_list' %}" class="btn btn-cancel">
+                ❌ Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const placaInput = document.getElementById('id_placa');
+    const buscarBtn = document.getElementById('btn-buscar-placa');
+    const btnText = document.getElementById('btn-text');
+    const loadingSpinner = document.getElementById('loading-spinner');
+    const apiStatus = document.getElementById('api-status');
+    
+    // Auto-focus en el campo de placa
+    placaInput.focus();
+    
+    // Convertir a mayúsculas automáticamente
+    placaInput.addEventListener('input', function() {
+        this.value = this.value.toUpperCase();
+    });
+    
+    // Buscar al presionar Enter
+    placaInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            buscarVehiculo();
+        }
+    });
+    
+    // Botón de búsqueda
+    buscarBtn.addEventListener('click', buscarVehiculo);
+    
+    function buscarVehiculo() {
+        const placa = placaInput.value.trim();
+        
+        if (!placa) {
+            mostrarStatus('error', 'Por favor ingresa una placa');
+            return;
+        }
+        
+        // Validar formato de placa (básico)
+        if (placa.length < 4) {
+            mostrarStatus('error', 'La placa debe tener al menos 4 caracteres');
+            return;
+        }
+        
+        // Mostrar loading
+        buscarBtn.disabled = true;
+        btnText.style.display = 'none';
+        loadingSpinner.style.display = 'inline-block';
+        apiStatus.style.display = 'none';
+        
+        // Llamar a la API
+        fetch(`{% url 'vehiculo_lookup' %}?placa=${encodeURIComponent(placa)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    mostrarStatus('error', data.error);
+                } else {
+                    // Rellenar campos con los datos de la API
+                    rellenarCampos(data);
+                    mostrarStatus('success', 'Datos del vehículo cargados exitosamente');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                mostrarStatus('error', 'Error al consultar la API. Intenta nuevamente.');
+            })
+            .finally(() => {
+                // Ocultar loading
+                buscarBtn.disabled = false;
+                btnText.style.display = 'inline';
+                loadingSpinner.style.display = 'none';
+            });
+    }
+    
+    function rellenarCampos(data) {
+        // Rellenar campos si tienen datos
+        if (data.marca) {
+            document.getElementById('id_marca').value = data.marca;
+            document.getElementById('id_marca').classList.add('field-filled');
+        }
+        
+        if (data.modelo) {
+            document.getElementById('id_modelo').value = data.modelo;
+            document.getElementById('id_modelo').classList.add('field-filled');
+        }
+        
+        if (data.anio) {
+            document.getElementById('id_anio').value = data.anio;
+            document.getElementById('id_anio').classList.add('field-filled');
+        }
+        
+        if (data.vin) {
+            document.getElementById('id_vin').value = data.vin;
+            document.getElementById('id_vin').classList.add('field-filled');
+        }
+        
+        if (data.descripcion_motor) {
+            document.getElementById('id_descripcion_motor').value = data.descripcion_motor;
+            document.getElementById('id_descripcion_motor').classList.add('field-filled');
+        }
+        
+        // Actualizar placa si es diferente
+        if (data.placa && data.placa !== placaInput.value) {
+            placaInput.value = data.placa;
+        }
+    }
+    
+    function mostrarStatus(tipo, mensaje) {
+        apiStatus.className = `api-status ${tipo}`;
+        apiStatus.textContent = mensaje;
+        apiStatus.style.display = 'block';
+        
+        // Auto-ocultar después de 5 segundos
+        setTimeout(() => {
+            apiStatus.style.display = 'none';
+        }, 5000);
+    }
+    
+    // Limpiar estilos de campos cuando el usuario los edita
+    const campos = ['id_marca', 'id_modelo', 'id_anio', 'id_vin', 'id_descripcion_motor'];
+    campos.forEach(campoId => {
+        const campo = document.getElementById(campoId);
+        if (campo) {
+            campo.addEventListener('input', function() {
+                this.classList.remove('field-filled');
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

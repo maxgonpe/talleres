@@ -40,19 +40,22 @@
   {% block extra_css %}{% endblock %}
   {% block extra_head %}{% endblock %}
 
-  <!-- Autoridad visual final: se carga despues de los estilos locales legacy. -->
-  <link rel="stylesheet" href="{% static 'css/design-system.css' %}">
+  <!-- Archivo CSS propio único. Bootstrap y FontAwesome permanecen como dependencias externas. -->
+  <link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20261106-1">
 </head>
 
 <body class="d-flex flex-column min-vh-100">
+  <script>
+    document.body.classList.add(document.documentElement.className.match(/theme-\w+/)?.[0] || 'theme-piedra');
+  </script>
   <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg shadow-sm">
+  <nav class="navbar navbar-expand-lg shadow-sm ui-shell-nav">
     <div class="container-fluid">
       <a class="navbar-brand fw-bold" href="{% url 'panel_principal' %}">
         {% if config %}
-          <img src="{{ config.logo_principal_url }}" alt="Logo" style="height: 48px; width: auto;">
+          <img class="ui-brand-logo" src="{{ config.logo_principal_url }}" alt="Logo">
         {% else %}
-        <img src="{% static 'images/Logo2.png' %}" alt="Car Icon" style="height: 48px; width: auto;">
+        <img class="ui-brand-logo" src="{% static 'images/Logo2.png' %}" alt="Car Icon">
         {% endif %}
         <span class="navbar-workshop-name">{{ config_taller.nombre_taller|default:"Taller Mecánico" }}</span>
       </a>
@@ -259,5 +262,23 @@
   <script src="{% static 'js/pull-to-refresh.js' %}"></script>
 
   {% block extra_js %}{% endblock %}
+
+  <script>
+    document.querySelectorAll('.workspace-menu-panel [data-bs-target]').forEach(function(button) {
+      button.addEventListener('click', function() {
+        const target = document.querySelector(button.dataset.bsTarget);
+        if (!target) return;
+
+        document.querySelectorAll('.workspace-menu-panel [data-bs-target]').forEach(function(item) {
+          item.classList.toggle('active', item === button);
+          item.setAttribute('aria-selected', item === button ? 'true' : 'false');
+        });
+        document.querySelectorAll('.panel-container .tab-pane').forEach(function(pane) {
+          pane.classList.toggle('show', pane === target);
+          pane.classList.toggle('active', pane === target);
+        });
+      });
+    });
+  </script>
 </body>
 </html>

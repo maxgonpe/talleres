@@ -1,0 +1,297 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Compatibilidad - NetGoGo{% endblock %}
+
+{% block extra_css %}
+
+{% endblock %}
+
+{% block content %}
+<span hidden data-css004b="c8cd0a1bbe"></span>
+<div class="form-container">
+    <!-- Header -->
+    <div class="form-header">
+        <h2 class="mb-0">{{ title }}</h2>
+        <p class="mb-0">Gestiona la información del vehículo</p>
+    </div>
+
+    <!-- Ayuda -->
+    <div class="help-text">
+        <h6><i class="fas fa-info-circle me-2"></i>Vehículo para Compatibilidad de Repuestos</h6>
+        <p>Completa los siguientes campos para registrar un vehículo en la base de datos de compatibilidad:</p>
+        <ul>
+            <li><strong>Marca:</strong> Fabricante del vehículo (ej: Toyota, Honda, Nissan)</li>
+            <li><strong>Modelo:</strong> Modelo específico (ej: Corolla, Civic, Sentra)</li>
+            <li><strong>Año desde:</strong> Año de inicio de producción</li>
+            <li><strong>Año hasta:</strong> Año final de producción</li>
+            <li><strong>Motor:</strong> Tipo de motor (ej: 1.6L, 2.0L Turbo, V6) - Opcional</li>
+            <li><strong>Carrocería:</strong> Tipo de carrocería (ej: Sedán, Hatchback, SUV) - Opcional</li>
+            <li><strong>Cilindrada:</strong> Cilindrada del motor (ej: 1.6L, 2000cc, 2.4L) - Opcional</li>
+            <li><strong>Número de Válvulas:</strong> Cantidad de válvulas (ej: 8, 16, 24) - Opcional</li>
+            <li><strong>Combustible:</strong> Tipo de combustible (ej: Gasolina, Diesel, Híbrido) - Opcional</li>
+            <li><strong>Otro Especial:</strong> Información adicional especial - Opcional</li>
+        </ul>
+        <p><strong>Nota:</strong> Este vehículo se usará para determinar qué repuestos son compatibles, no es un vehículo de cliente del taller.</p>
+    </div>
+
+    <!-- Formulario -->
+    <form method="post" novalidate>
+        {% csrf_token %}
+        
+        <!-- Mostrar errores generales -->
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                {{ form.non_field_errors.0 }}
+            </div>
+        {% endif %}
+        
+        <!-- Marca y Modelo -->
+        <div class="form-row">
+            <div class="form-group">
+                <label for="{{ form.marca.id_for_label }}" class="form-label">
+                    <i class="fas fa-car me-2"></i>{{ form.marca.label }}
+                </label>
+                {{ form.marca }}
+                {% if form.marca.help_text %}
+                    <div class="form-text">{{ form.marca.help_text }}</div>
+                {% endif %}
+                {% if form.marca.errors %}
+                    <div class="text-danger mt-1">
+                        {% for error in form.marca.errors %}
+                            <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.modelo.id_for_label }}" class="form-label">
+                    <i class="fas fa-tag me-2"></i>{{ form.modelo.label }}
+                </label>
+                {{ form.modelo }}
+                {% if form.modelo.help_text %}
+                    <div class="form-text">{{ form.modelo.help_text }}</div>
+                {% endif %}
+                {% if form.modelo.errors %}
+                    <div class="text-danger mt-1">
+                        {% for error in form.modelo.errors %}
+                            <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Años -->
+        <div class="form-row">
+            <div class="form-group">
+                <label for="{{ form.anio_desde.id_for_label }}" class="form-label">
+                    <i class="fas fa-calendar-alt me-2"></i>{{ form.anio_desde.label }}
+                </label>
+                {{ form.anio_desde }}
+                {% if form.anio_desde.help_text %}
+                    <div class="form-text">{{ form.anio_desde.help_text }}</div>
+                {% endif %}
+                {% if form.anio_desde.errors %}
+                    <div class="text-danger mt-1">
+                        {% for error in form.anio_desde.errors %}
+                            <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.anio_hasta.id_for_label }}" class="form-label">
+                    <i class="fas fa-calendar-check me-2"></i>{{ form.anio_hasta.label }}
+                </label>
+                {{ form.anio_hasta }}
+                {% if form.anio_hasta.help_text %}
+                    <div class="form-text">{{ form.anio_hasta.help_text }}</div>
+                {% endif %}
+                {% if form.anio_hasta.errors %}
+                    <div class="text-danger mt-1">
+                        {% for error in form.anio_hasta.errors %}
+                            <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Motor y Carrocería -->
+        <div class="form-row">
+            <div class="form-group">
+                <label for="{{ form.motor.id_for_label }}" class="form-label">
+                    <i class="fas fa-cog me-2"></i>{{ form.motor.label }}
+                </label>
+                {{ form.motor }}
+                {% if form.motor.help_text %}
+                    <div class="form-text">{{ form.motor.help_text }}</div>
+                {% endif %}
+                {% if form.motor.errors %}
+                    <div class="text-danger mt-1">
+                        {% for error in form.motor.errors %}
+                            <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.carroceria.id_for_label }}" class="form-label">
+                    <i class="fas fa-car-side me-2"></i>{{ form.carroceria.label }}
+                </label>
+                {{ form.carroceria }}
+                {% if form.carroceria.help_text %}
+                    <div class="form-text">{{ form.carroceria.help_text }}</div>
+                {% endif %}
+                {% if form.carroceria.errors %}
+                    <div class="text-danger mt-1">
+                        {% for error in form.carroceria.errors %}
+                            <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Cilindrada y Número de Válvulas -->
+        <div class="form-row">
+            <div class="form-group">
+                <label for="{{ form.cilindrada.id_for_label }}" class="form-label">
+                    <i class="fas fa-tachometer-alt me-2"></i>{{ form.cilindrada.label }}
+                </label>
+                {{ form.cilindrada }}
+                {% if form.cilindrada.help_text %}
+                    <div class="form-text">{{ form.cilindrada.help_text }}</div>
+                {% endif %}
+                {% if form.cilindrada.errors %}
+                    <div class="text-danger mt-1">
+                        {% for error in form.cilindrada.errors %}
+                            <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.nro_valvulas.id_for_label }}" class="form-label">
+                    <i class="fas fa-sliders-h me-2"></i>{{ form.nro_valvulas.label }}
+                </label>
+                {{ form.nro_valvulas }}
+                {% if form.nro_valvulas.help_text %}
+                    <div class="form-text">{{ form.nro_valvulas.help_text }}</div>
+                {% endif %}
+                {% if form.nro_valvulas.errors %}
+                    <div class="text-danger mt-1">
+                        {% for error in form.nro_valvulas.errors %}
+                            <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Combustible y Otro Especial -->
+        <div class="form-row">
+            <div class="form-group">
+                <label for="{{ form.combustible.id_for_label }}" class="form-label">
+                    <i class="fas fa-gas-pump me-2"></i>{{ form.combustible.label }}
+                </label>
+                {{ form.combustible }}
+                {% if form.combustible.help_text %}
+                    <div class="form-text">{{ form.combustible.help_text }}</div>
+                {% endif %}
+                {% if form.combustible.errors %}
+                    <div class="text-danger mt-1">
+                        {% for error in form.combustible.errors %}
+                            <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.otro_especial.id_for_label }}" class="form-label">
+                    <i class="fas fa-info-circle me-2"></i>{{ form.otro_especial.label }}
+                </label>
+                {{ form.otro_especial }}
+                {% if form.otro_especial.help_text %}
+                    <div class="form-text">{{ form.otro_especial.help_text }}</div>
+                {% endif %}
+                {% if form.otro_especial.errors %}
+                    <div class="text-danger mt-1">
+                        {% for error in form.otro_especial.errors %}
+                            <small><i class="fas fa-exclamation-circle me-1"></i>{{ error }}</small>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Acciones -->
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-form">
+                <i class="fas fa-save me-2"></i>{{ action }}
+            </button>
+            <a href="{% url 'vehiculo_compatibilidad_list' %}" class="btn btn-secondary btn-form">
+                <i class="fas fa-times me-2"></i>Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-focus en el primer campo
+    const firstInput = document.querySelector('input[type="text"]');
+    if (firstInput) {
+        firstInput.focus();
+    }
+    
+    // Validación en tiempo real para años
+    const anioDesde = document.getElementById('{{ form.anio_desde.id_for_label }}');
+    const anioHasta = document.getElementById('{{ form.anio_hasta.id_for_label }}');
+    
+    function validarAnios() {
+        if (anioDesde.value && anioHasta.value) {
+            if (parseInt(anioDesde.value) > parseInt(anioHasta.value)) {
+                anioHasta.setCustomValidity('El año final debe ser mayor o igual al año inicial');
+            } else {
+                anioHasta.setCustomValidity('');
+            }
+        }
+    }
+    
+    if (anioDesde && anioHasta) {
+        anioDesde.addEventListener('input', validarAnios);
+        anioHasta.addEventListener('input', validarAnios);
+    }
+    
+    // Auto-completar sugerencias para marcas comunes
+    const marcaInput = document.getElementById('{{ form.marca.id_for_label }}');
+    const marcasComunes = [
+        'Toyota', 'Honda', 'Nissan', 'Chevrolet', 'Ford', 'Volkswagen',
+        'Hyundai', 'Kia', 'Mazda', 'Subaru', 'Mitsubishi', 'Suzuki',
+        'BMW', 'Mercedes-Benz', 'Audi', 'Volvo', 'Peugeot', 'Renault'
+    ];
+    
+    if (marcaInput) {
+        marcaInput.addEventListener('input', function() {
+            const valor = this.value.toLowerCase();
+            const sugerencias = marcasComunes.filter(marca => 
+                marca.toLowerCase().includes(valor)
+            );
+            
+            // Aquí podrías implementar un dropdown de sugerencias
+            // Por ahora solo validamos que sea una marca conocida
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,3 +1,4 @@
+<span hidden data-css004b="6a4399eb2e"></span>
 {% load static %}
 {# Componente de Búsqueda Externa de Repuestos #}
 {# Versión optimizada con apertura de ventanas organizadas #}
@@ -11,7 +12,7 @@
 <div class="modal fade" id="modalBusquedaExterna" tabindex="-1" aria-labelledby="modalBusquedaExternaLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header bg-gradient text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <div class="modal-header bg-gradient text-white css004b-inline-5e350dca127e" >
                 <h5 class="modal-title" id="modalBusquedaExternaLabel">
                     🌐 Buscar Repuestos en Proveedores Chilenos
                 </h5>
@@ -75,9 +76,9 @@
                 <div class="d-grid mb-4">
                     <button 
                         type="button" 
-                        class="btn btn-warning btn-lg shadow-sm" 
+                        class="btn btn-warning btn-lg shadow-sm css004b-inline-9cbd4f2b10c5" 
                         onclick="buscarEnAmbos()"
-                        style="border: 3px solid #ff9800;"
+                        
                     >
                         <div class="d-flex align-items-center justify-content-center">
                             <span class="fs-4 me-2">⚡</span>
@@ -90,7 +91,7 @@
                 </div>
 
                 <!-- Historial de búsquedas recientes -->
-                <div id="historialContainer" style="display: none;">
+                <div id="historialContainer"  class="css004b-inline-9acf304d8aba">
                     <hr class="my-3">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <h6 class="mb-0 fw-bold">📋 Búsquedas Recientes</h6>
@@ -122,151 +123,7 @@
 </div>
 
 <!-- Estilos mejorados -->
-<style>
-    /* Botón flotante con animación */
-    .btn-external-search {
-        position: fixed;
-        bottom: 80px;
-        right: 20px;
-        z-index: 999;
-        padding: 15px 25px;
-        font-size: 1rem;
-        font-weight: bold;
-        border-radius: 50px;
-        box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
-        animation: pulse-float 2s ease-in-out infinite;
-        border: none;
-    }
 
-    @keyframes pulse-float {
-        0%, 100% { 
-            transform: translateY(0) scale(1);
-            box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
-        }
-        50% { 
-            transform: translateY(-5px) scale(1.05);
-            box-shadow: 0 10px 30px rgba(0, 123, 255, 0.6);
-        }
-    }
-
-    .btn-external-search:hover {
-        transform: scale(1.1) !important;
-        box-shadow: 0 8px 25px rgba(0, 123, 255, 0.6) !important;
-    }
-
-    /* Modal personalizado */
-    #modalBusquedaExterna .modal-content {
-        border: none;
-        border-radius: 20px;
-        overflow: hidden;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    }
-
-    #modalBusquedaExterna .modal-body {
-        background: var(--bs-body-bg);
-        color: var(--bs-body-color);
-    }
-
-    /* Botones de proveedores */
-    .btn-proveedor {
-        border: none;
-        border-radius: 15px;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        position: relative;
-        overflow: hidden;
-    }
-
-    .btn-proveedor::before {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 0;
-        height: 0;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.2);
-        transform: translate(-50%, -50%);
-        transition: width 0.6s, height 0.6s;
-    }
-
-    .btn-proveedor:hover::before {
-        width: 300px;
-        height: 300px;
-    }
-
-    .btn-proveedor:hover {
-        transform: translateY(-5px) scale(1.02);
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
-    }
-
-    .btn-proveedor:active {
-        transform: translateY(0) scale(0.98);
-    }
-
-    .btn-mundo {
-        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-        color: white;
-    }
-
-    .btn-autoplanet {
-        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        color: white;
-    }
-
-    /* Campo de búsqueda */
-    #terminoBusquedaExterna {
-        border: 2px solid #e0e0e0;
-        font-size: 1.1rem;
-        padding: 0.75rem 1rem;
-    }
-
-    #terminoBusquedaExterna:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-    }
-
-    /* Historial badges */
-    .badge-historial {
-        cursor: pointer;
-        transition: all 0.2s ease;
-        padding: 0.5rem 1rem;
-        font-size: 0.9rem;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border: none;
-    }
-
-    .badge-historial:hover {
-        transform: translateY(-2px) scale(1.05);
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-        .btn-external-search {
-            bottom: 70px;
-            right: 15px;
-            padding: 12px 20px;
-            font-size: 0.9rem;
-        }
-
-        #modalBusquedaExterna .modal-dialog {
-            margin: 0.5rem;
-        }
-
-        .btn-proveedor {
-            margin-bottom: 0.5rem;
-        }
-    }
-
-    /* Toast de confirmación */
-    .toast-busqueda {
-        position: fixed;
-        bottom: 100px;
-        right: 20px;
-        z-index: 9999;
-        min-width: 300px;
-    }
-</style>
 
 <!-- JavaScript optimizado -->
 <script>

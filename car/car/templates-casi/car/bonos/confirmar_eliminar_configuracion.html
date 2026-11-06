@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Eliminar Configuración de Bono - NetGoGo{% endblock %}
+
+{% block extra_css %}
+
+{% endblock %}
+
+{% block content %}
+<span hidden data-css004b="1fe3c6ec91"></span>
+<div class="confirm-container">
+    <div class="confirm-header">
+        <h2>🗑️ Eliminar Configuración de Bono</h2>
+    </div>
+    
+    <div class="info-box">
+        <h4>⚠️ Importante</h4>
+        <p><strong>Esta acción eliminará la configuración de bono para {{ config.mecanico }}.</strong></p>
+        <p>Los bonos ya generados y registrados <strong>NO se verán afectados</strong> y permanecerán en el sistema.</p>
+        {% if bonos_pendientes > 0 %}
+        <p  class="css004b-inline-005e3feec851">
+            Este mecánico tiene <strong>{{ bonos_pendientes }}</strong> bono(s) pendiente(s) que seguirán siendo válidos.
+        </p>
+        {% endif %}
+    </div>
+    
+    <div class="config-details">
+        <h4  class="css004b-inline-f2739e6c6041">Detalles de la Configuración:</h4>
+        <p><strong>Mecánico:</strong> {{ config.mecanico }}</p>
+        <p><strong>Estado:</strong> 
+            {% if config.activo %}
+                <span  class="css004b-inline-28125467e35d">Activo</span>
+            {% else %}
+                <span  class="css004b-inline-fc8e82cdffac">Inactivo</span>
+            {% endif %}
+        </p>
+        <p><strong>Tipo de Bono:</strong> 
+            {% if config.tipo_bono == 'porcentaje' %}
+                Porcentaje ({{ config.porcentaje_mano_obra }}%)
+            {% else %}
+                Cantidad Fija (${{ config.cantidad_fija|floatformat:0|intcomma }})
+            {% endif %}
+        </p>
+        {% if config.notas %}
+        <p><strong>Notas:</strong> {{ config.notas }}</p>
+        {% endif %}
+        <p><strong>Total de bonos generados:</strong> {{ bonos_total }}</p>
+        <p><strong>Bonos pendientes:</strong> {{ bonos_pendientes }}</p>
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        <div class="btn-group">
+            <button type="submit" class="btn btn-danger">
+                🗑️ Sí, Eliminar Configuración
+            </button>
+            <a href="{% url 'configuracion_bonos' %}" class="btn btn-secondary">
+                ❌ Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

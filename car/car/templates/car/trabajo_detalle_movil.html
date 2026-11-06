@@ -8,456 +8,23 @@
 {% endblock %}
 
 {% block extra_css %}
-  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
 {% endblock %}
 
 {% block title %}Trabajo #{{ trabajo.id }} - Móvil{% endblock %}
 
 {% block extra_head %}
-<style>
-    /* ==================== ESTILOS MÓVILES ==================== */
-    body {
-        padding-bottom: 80px; /* Espacio para navegación inferior */
-    }
-    
-    .trabajo-movil-container {
-        max-width: 100%;
-        margin: 0;
-        padding: 0.5rem;
-    }
-    
-    /* Header fijo */
-    .trabajo-header-movil {
-        background: linear-gradient(135deg, var(--accent) 0%, var(--primary-600) 100%);
-        color: white;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        margin-bottom: 0.75rem;
-        position: sticky;
-        top: 0;
-        z-index: 100;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    
-    .trabajo-header-movil h3 {
-        font-size: 1.3rem;
-        font-weight: 700;
-        margin: 0;
-        margin-bottom: 0.25rem;
-    }
-    
-    .trabajo-header-movil p {
-        font-size: 0.9rem;
-        margin: 0;
-        opacity: 0.95;
-    }
-    
-    /* Estado badge */
-    .estado-badge-movil {
-        display: inline-block;
-        padding: 0.5rem 1rem;
-        border-radius: 1.5rem;
-        font-weight: 600;
-        font-size: 0.9rem;
-        margin-top: 0.5rem;
-    }
-    
-    .estado-iniciado { background: #ffc107; color: #000; }
-    .estado-trabajando { background: #0d6efd; color: #fff; }
-    .estado-completado { background: #198754; color: #fff; }
-    .estado-entregado { background: #6c757d; color: #fff; }
-    
-    /* Barra de progreso */
-    .progress-movil {
-        width: 100%;
-        height: 1.5rem;
-        background: rgba(255,255,255,0.3);
-        border-radius: 1rem;
-        margin-top: 0.5rem;
-        overflow: hidden;
-        position: relative;
-    }
-    
-    .progress-fill-movil {
-        height: 100%;
-        background: rgba(255,255,255,0.9);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 600;
-        font-size: 0.85rem;
-        color: #000;
-        transition: width 0.3s ease;
-    }
-    
-    /* Navegación rápida - botones grandes */
-    .nav-rapida {
-        display: none; /* Oculto - no se usa */
-        grid-template-columns: repeat(2, 1fr);
-        gap: 0.5rem;
-        margin-bottom: 1rem;
-    }
-    
-    .nav-btn {
-        background: var(--card-bg);
-        border: 2px solid var(--border-color);
-        border-radius: 0.75rem;
-        padding: 1rem;
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: var(--fg);
-        cursor: pointer;
-        transition: all 0.2s;
-        text-align: center;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    
-    .nav-btn:active {
-        transform: scale(0.98);
-        background: var(--hover-bg);
-    }
-    
-    /* Cards de sección - estilo acordeón */
-    .section-card {
-        background: var(--card-bg);
-        border-radius: 0.75rem;
-        margin-bottom: 1rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        border: 1px solid var(--border-color);
-        overflow: hidden;
-    }
-    
-    .section-header {
-        padding: 1rem;
-        background: var(--bg-secondary);
-        border-bottom: 2px solid var(--border-color);
-        cursor: pointer;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-weight: 600;
-        font-size: 1.1rem;
-    }
-    
-    .section-header:active {
-        background: var(--hover-bg);
-    }
-    
-    .section-icon {
-        font-size: 1.5rem;
-        margin-right: 0.5rem;
-    }
-    
-    .section-toggle {
-        font-size: 1.2rem;
-        transition: transform 0.3s;
-    }
-    
-    .section-card.expanded .section-toggle {
-        transform: rotate(180deg);
-    }
-    
-    .section-content {
-        display: none;
-        padding: 1rem;
-    }
-    
-    .section-card.expanded .section-content {
-        display: block;
-    }
-    
-    /* Item cards - acciones y repuestos */
-    .item-card-movil {
-        background: var(--muted);
-        border-radius: 0.5rem;
-        padding: 0.75rem;
-        margin-bottom: 0.5rem;
-        border-left: 4px solid var(--accent);
-    }
-    
-    .item-card-movil.completado {
-        background: #d4edda;
-        border-left-color: #198754;
-    }
-    
-    .item-card-movil.pendiente {
-        background: #fff3cd;
-        border-left-color: #ffc107;
-    }
-    
-    .item-header-movil {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 0.5rem;
-    }
-    
-    .item-title-movil {
-        font-weight: 600;
-        font-size: 1rem;
-        flex: 1;
-    }
-    
-    .item-status-movil {
-        font-size: 0.85rem;
-        padding: 0.25rem 0.5rem;
-        border-radius: 0.5rem;
-        font-weight: 600;
-    }
-    
-    .item-details-movil {
-        font-size: 0.9rem;
-        color: var(--muted);
-        margin-top: 0.25rem;
-    }
-    
-    .item-price-movil {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: #198754;
-        margin-top: 0.5rem;
-    }
-    
-    /* Botones de acción grandes */
-    .btn-action-movil {
-        width: 100%;
-        padding: 1rem;
-        font-size: 1.1rem;
-        font-weight: 600;
-        border-radius: 0.75rem;
-        margin-bottom: 0.5rem;
-        border: 2px solid;
-        transition: all 0.2s;
-    }
-    
-    .btn-action-movil:active {
-        transform: scale(0.98);
-    }
-    
-    .btn-toggle-movil {
-        min-width: 80px;
-        padding: 0.75rem;
-        font-size: 1rem;
-        font-weight: 600;
-        border-radius: 0.5rem;
-        border: 2px solid;
-    }
-    
-    .btn-toggle-movil.completado {
-        background: #198754;
-        border-color: #198754;
-        color: white;
-    }
-    
-    .btn-toggle-movil.pendiente {
-        background: #ffc107;
-        border-color: #ffc107;
-        color: #000;
-    }
-    
-    /* Formularios móviles */
-    .form-group-movil {
-        margin-bottom: 1rem;
-    }
-    
-    .form-label-movil {
-        font-weight: 600;
-        font-size: 1rem;
-        margin-bottom: 0.5rem;
-        display: block;
-        color: var(--fg);
-    }
-    
-    .form-control-movil {
-        width: 100%;
-        padding: 0.75rem;
-        font-size: 1rem;
-        border: 2px solid var(--border-color);
-        border-radius: 0.5rem;
-        background: var(--bg);
-        color: var(--fg);
-    }
-    
-    .form-control-movil:focus {
-        outline: none;
-        border-color: var(--accent);
-        box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
-    }
-    
-    /* Info rows */
-    .info-row-movil {
-        padding: 0.75rem 0;
-        border-bottom: 1px solid var(--border-color);
-    }
-    
-    .info-row-movil:last-child {
-        border-bottom: none;
-    }
-    
-    .info-label-movil {
-        font-weight: 600;
-        color: var(--accent);
-        font-size: 0.9rem;
-    }
-    
-    .info-value-movil {
-        color: var(--fg);
-        font-size: 1rem;
-        margin-top: 0.25rem;
-    }
-    
-    /* Grid de fotos */
-    .fotos-grid-movil {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 0.5rem;
-        margin-top: 1rem;
-    }
-    
-    .foto-item-movil {
-        border-radius: 0.5rem;
-        overflow: hidden;
-        position: relative;
-        background: var(--bg-secondary);
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    
-    .foto-item-movil img {
-        width: 100%;
-        aspect-ratio: 1;
-        object-fit: cover;
-        display: block;
-    }
-    
-    .foto-descripcion-movil {
-        padding: 0.5rem;
-        font-size: 0.85rem;
-        color: var(--fg);
-        background: var(--bg-secondary);
-        border-top: 1px solid var(--border-color);
-    }
-    
-    .foto-item-movil img {
-        cursor: pointer;
-    }
-    
-    /* Modal para fotos expandidas (móvil) */
-    .foto-modal {
-        display: none;
-        position: fixed;
-        z-index: 9999;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0,0,0,0.95);
-        overflow: auto;
-    }
-    
-    .foto-modal.active {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    .foto-modal-content {
-        position: relative;
-        max-width: 95%;
-        max-height: 95%;
-        margin: auto;
-        padding: 1rem;
-    }
-    
-    .foto-modal-content img {
-        width: 100%;
-        height: auto;
-        max-height: 85vh;
-        object-fit: contain;
-        border-radius: 0.5rem;
-    }
-    
-    .foto-modal-close {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        color: #fff;
-        font-size: 2rem;
-        font-weight: bold;
-        cursor: pointer;
-        background: rgba(0,0,0,0.7);
-        border: none;
-        border-radius: 50%;
-        width: 45px;
-        height: 45px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 10000;
-    }
-    
-    .foto-modal-close:hover {
-        background: rgba(0,0,0,0.9);
-    }
-    
-    .foto-modal-descripcion {
-        color: #fff;
-        text-align: center;
-        padding: 1rem;
-        font-size: 1rem;
-        background: rgba(0,0,0,0.7);
-        border-radius: 0.5rem;
-        margin-top: 1rem;
-    }
-    
-    /* Badges de estado botones */
-    .estado-btn-movil {
-        width: 100%;
-        padding: 1rem;
-        font-size: 1rem;
-        font-weight: 600;
-        border-radius: 0.75rem;
-        margin-bottom: 0.5rem;
-        border: 3px solid;
-        transition: all 0.2s;
-    }
-    
-    .estado-btn-movil.active {
-        background: var(--btn-bg);
-        color: white;
-        border-color: var(--btn-bg);
-    }
-    
-    /* Botón flotante para scroll arriba */
-    .scroll-top-btn {
-        position: fixed;
-        bottom: 90px;
-        right: 1rem;
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        background: var(--accent);
-        color: white;
-        border: none;
-        font-size: 1.5rem;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        z-index: 99;
-        display: none;
-    }
-    
-    .scroll-top-btn.show {
-        display: block;
-    }
-</style>
+
 {% endblock %}
 
 {% block content %}
+<span hidden data-css004b="38bdac455b"></span>
 <div class="trabajo-movil-container">
     <!-- Header Fijo -->
     <div class="trabajo-header-movil">
         <div class="eyebrow">MODO MECÁNICO / {{ trabajo.estado|upper }}</div>
         <h3>Trabajo #{{ trabajo.id }}</h3>
         <p>{{ trabajo.vehiculo }}</p>
-        <p style="font-size: 0.85rem;">{{ trabajo.vehiculo.cliente.nombre }}</p>
+        <p  class="css004b-inline-aab853a36cfa">{{ trabajo.vehiculo.cliente.nombre }}</p>
         
         <div class="estado-badge-movil estado-{{ trabajo.estado }}">
             {% if trabajo.estado == 'iniciado' %}🟡 Iniciado
@@ -518,35 +85,35 @@
                 <div class="info-value-movil">{{ trabajo.fecha_fin|date:"d/m/Y H:i"|default:"En progreso" }}</div>
             </div>
             
-            <hr style="margin: 1rem 0;">
+            <hr  class="css004b-inline-f5aa68d7a82d">
             
             <!-- Resumen Financiero -->
-            <h5 style="font-weight: 600; margin-bottom: 0.75rem;">💰 Resumen Financiero</h5>
+            <h5  class="css004b-inline-c4e78f452cec">💰 Resumen Financiero</h5>
             <div class="info-row-movil">
-                <div class="info-label-movil" style="font-size: 0.9rem; color: #6c757d;">Mano de Obra:</div>
+                <div class="info-label-movil css004b-inline-d7cb394355ed" >Mano de Obra:</div>
                 <div class="info-value-movil">${{ trabajo.total_mano_obra|default:0|floatformat:0|intcomma }}</div>
             </div>
             <div class="info-row-movil">
-                <div class="info-label-movil" style="font-size: 0.9rem; color: #6c757d;">Repuestos:</div>
+                <div class="info-label-movil css004b-inline-d7cb394355ed" >Repuestos:</div>
                 <div class="info-value-movil">${{ trabajo.total_repuestos|default:0|floatformat:0|intcomma }}</div>
             </div>
             {% if trabajo.total_adicionales > 0 %}
             <div class="info-row-movil">
-                <div class="info-label-movil" style="font-size: 0.9rem; color: #6c757d;">Adicionales:</div>
+                <div class="info-label-movil css004b-inline-d7cb394355ed" >Adicionales:</div>
                 <div class="info-value-movil">${{ trabajo.total_adicionales|default:0|floatformat:0|intcomma }}</div>
             </div>
             {% endif %}
-            <div class="info-row-movil" style="border-top: 2px solid #dee2e6; padding-top: 0.5rem; margin-top: 0.5rem;">
+            <div class="info-row-movil css004b-inline-258e3445ca40" >
                 <div class="info-label-movil">Total Presupuesto:</div>
-                <div class="info-value-movil" style="color: #0d6efd; font-weight: 700;">${{ trabajo.total_presupuesto|default:0|floatformat:0|intcomma }}</div>
+                <div class="info-value-movil css004b-inline-e3e21a827802" >${{ trabajo.total_presupuesto|default:0|floatformat:0|intcomma }}</div>
             </div>
             <div class="info-row-movil">
                 <div class="info-label-movil">Total Ejecutado:</div>
-                <div class="info-value-movil" style="color: #198754; font-weight: 700;">${{ trabajo.total_realizado|default:0|floatformat:0|intcomma }}</div>
+                <div class="info-value-movil css004b-inline-97b2a0c62332" >${{ trabajo.total_realizado|default:0|floatformat:0|intcomma }}</div>
             </div>
             <div class="info-row-movil">
                 <div class="info-label-movil">Total Abonos:</div>
-                <div class="info-value-movil" style="color: #ffc107; font-weight: 700;">${{ trabajo.total_abonos|default:0|floatformat:0|intcomma }}</div>
+                <div class="info-value-movil css004b-inline-9fdcc3176269" >${{ trabajo.total_abonos|default:0|floatformat:0|intcomma }}</div>
             </div>
             <div class="info-row-movil" style="background: {% if trabajo.saldo_pendiente > 0 %}#fff3cd{% else %}#d1e7dd{% endif %}; padding: 0.75rem; border-radius: 0.5rem; margin-top: 0.5rem;">
                 <div class="info-label-movil" style="font-size: 1.1rem; color: {% if trabajo.saldo_pendiente > 0 %}#dc3545{% else %}#198754{% endif %};">
@@ -557,10 +124,10 @@
                 </div>
             </div>
             
-            <hr style="margin: 1rem 0;">
+            <hr  class="css004b-inline-f5aa68d7a82d">
             
             <!-- Observaciones -->
-            <h5 style="font-weight: 600; margin-bottom: 0.75rem;">📝 Observaciones</h5>
+            <h5  class="css004b-inline-c4e78f452cec">📝 Observaciones</h5>
             <form method="post">
                 {% csrf_token %}
                 <textarea name="observaciones" class="form-control-movil" rows="4" 
@@ -571,7 +138,7 @@
             </form>
             
             <!-- Kilometraje -->
-            <h5 style="font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.75rem;">🚗 Kilometraje</h5>
+            <h5  class="css004b-inline-c785becde42c">🚗 Kilometraje</h5>
             <form method="post">
                 {% csrf_token %}
                 <div class="form-group-movil">
@@ -587,21 +154,21 @@
             </form>
             
             <!-- Mecánicos -->
-            <h5 style="font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.75rem;">👷 Mecánicos</h5>
+            <h5  class="css004b-inline-c785becde42c">👷 Mecánicos</h5>
             {% if trabajo.mecanicos.exists %}
                 {% for mec in trabajo.mecanicos.all %}
-                    <div class="item-card-movil" style="margin-bottom: 0.5rem;">
+                    <div class="item-card-movil css004b-inline-ed60bb7ce420" >
                         <strong>{{ mec.user.get_full_name|default:mec.user.first_name }}</strong>
                         {% if mec.especialidad %}
-                            <div style="font-size: 0.9rem; color: var(--muted);">{{ mec.especialidad }}</div>
+                            <div  class="css004b-inline-0c65deedc909">{{ mec.especialidad }}</div>
                         {% endif %}
                     </div>
                 {% endfor %}
             {% else %}
-                <p style="color: var(--muted);">No hay mecánicos asignados</p>
+                <p  class="css004b-inline-882d6bc4b5d7">No hay mecánicos asignados</p>
             {% endif %}
             
-            <form method="post" style="margin-top: 1rem;">
+            <form method="post"  class="css004b-inline-4ada01692e49">
                 {% csrf_token %}
                 <div class="form-group-movil">
                     <label class="form-label-movil">Asignar Mecánicos:</label>
@@ -621,7 +188,7 @@
             <span class="section-toggle">▼</span>
         </div>
         <div class="section-content">
-            <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1rem;">
+            <p  class="css004b-inline-3aa72e468151">
                 Total: {{ trabajo.acciones.count }} | 
                 Completadas: {{ trabajo.acciones.filter.completado|length }} | 
                 Pendientes: {{ trabajo.acciones.exclude.completado|length }}
@@ -636,7 +203,7 @@
                             <div class="item-details-movil">
                                 {{ accion.accion.nombre }}
                                 {% if accion.cantidad > 1 %}
-                                    <span class="badge bg-info" style="margin-left: 0.5rem;">Cant: {{ accion.cantidad }}</span>
+                                    <span class="badge bg-info css004b-inline-5659351e7fbd" >Cant: {{ accion.cantidad }}</span>
                                 {% endif %}
                             </div>
                         </div>
@@ -645,57 +212,57 @@
                         </span>
                     </div>
                     {% if accion.cantidad > 1 %}
-                    <div style="font-size: 0.85rem; color: var(--muted); margin-top: 0.25rem;">
+                    <div  class="css004b-inline-954c60e82220">
                         Unitario: ${{ accion.precio_mano_obra|default:0|floatformat:0|intcomma }} × {{ accion.cantidad }} =
                     </div>
                     {% endif %}
                     <div class="item-price-movil">
                         💰 ${{ accion.subtotal|default:0|floatformat:0|intcomma }}
                         {% if accion.cantidad == 1 %}
-                            <small style="color: var(--muted); font-size: 0.8rem;">(unitario)</small>
+                            <small  class="css004b-inline-f4c93ba02fce">(unitario)</small>
                         {% endif %}
                     </div>
                     <!-- Formulario para editar cantidad -->
-                    <form method="post" style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.5rem; margin-bottom: 0.5rem;" onsubmit="{% if ver_avisos %}return confirm('¿Actualizar cantidad?');{% else %}return true;{% endif %}">
+                    <form method="post"  onsubmit="{% if ver_avisos %}return confirm('¿Actualizar cantidad?');{% else %}return true;{% endif %}" class="css004b-inline-2f0a588a1aae">
                         {% csrf_token %}
                         <input type="hidden" name="accion_id" value="{{ accion.id }}">
-                        <label style="font-size: 0.85rem; color: var(--muted); white-space: nowrap;">Cantidad:</label>
+                        <label  class="css004b-inline-e4cb5d5124c9">Cantidad:</label>
                         <input type="number" 
                                name="cantidad_accion" 
                                value="{{ accion.cantidad }}" 
                                min="1" 
                                step="1"
-                               style="flex: 1; max-width: 80px; padding: 0.5rem; text-align: center; border: 1px solid var(--border-color); border-radius: 0.5rem;"
-                               required>
-                        <button type="submit" name="editar_cantidad_accion" class="btn btn-sm btn-outline-primary" style="padding: 0.5rem 1rem;">
+                               
+                               required class="css004b-inline-7c6c6034a5cb">
+                        <button type="submit" name="editar_cantidad_accion" class="btn btn-sm btn-outline-primary css004b-inline-f3a1ea46daf5" >
                             ✏️
                         </button>
                     </form>
                     <!-- Formulario para editar precio -->
-                    <form method="post" style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.5rem; margin-bottom: 0.5rem;" onsubmit="{% if ver_avisos %}return confirm('¿Actualizar precio? Este cambio solo afectará a este trabajo.');{% else %}return true;{% endif %}">
+                    <form method="post"  onsubmit="{% if ver_avisos %}return confirm('¿Actualizar precio? Este cambio solo afectará a este trabajo.');{% else %}return true;{% endif %}" class="css004b-inline-2f0a588a1aae">
                         {% csrf_token %}
                         <input type="hidden" name="accion_id" value="{{ accion.id }}">
-                        <label style="font-size: 0.85rem; color: var(--muted); white-space: nowrap;">Precio:</label>
+                        <label  class="css004b-inline-e4cb5d5124c9">Precio:</label>
                         <input type="number" 
                                name="precio_accion" 
                                value="{{ accion.precio_mano_obra|default:0|floatformat:0 }}" 
                                min="0" 
                                step="0.01"
-                               style="flex: 1; max-width: 100px; padding: 0.5rem; text-align: center; border: 1px solid var(--border-color); border-radius: 0.5rem;"
-                               required>
-                        <button type="submit" name="editar_precio_accion" class="btn btn-sm btn-outline-success" style="padding: 0.5rem 1rem;">
+                               
+                               required class="css004b-inline-3b5b0459fc6b">
+                        <button type="submit" name="editar_precio_accion" class="btn btn-sm btn-outline-success css004b-inline-f3a1ea46daf5" >
                             💰
                         </button>
                     </form>
-                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
-                        <form method="post" style="flex: 1;">
+                    <div  class="css004b-inline-02d1c65d67a6">
+                        <form method="post"  class="css004b-inline-81172b395217">
                             {% csrf_token %}
                             <input type="hidden" name="accion_toggle" value="{{ accion.id }}">
                             <button type="submit" class="btn-toggle-movil {% if accion.completado %}completado{% else %}pendiente{% endif %}">
                                 {% if accion.completado %}✅ Completado{% else %}⏳ Pendiente{% endif %}
                             </button>
                         </form>
-                        <form method="post" style="flex: 1;">
+                        <form method="post"  class="css004b-inline-81172b395217">
                             {% csrf_token %}
                             <input type="hidden" name="eliminar_accion" value="{{ accion.id }}">
                             <button type="submit" class="btn-action-movil btn btn-danger" 
@@ -706,14 +273,14 @@
                     </div>
                 </div>
             {% empty %}
-                <p style="color: var(--muted); text-align: center; padding: 2rem;">
+                <p  class="css004b-inline-d5dfc2ebca95">
                     No hay acciones registradas
                 </p>
             {% endfor %}
             
             <!-- Botón para agregar acciones (simplificado en móvil) -->
-            <div style="margin-top: 1rem; padding: 1rem; background: var(--bg-secondary); border-radius: 0.5rem;">
-                <p style="font-size: 0.9rem; color: var(--muted); margin-bottom: 0.5rem;">
+            <div  class="css004b-inline-97ba0288acce">
+                <p  class="css004b-inline-85fa363331c0">
                     Para agregar acciones, usa la versión de escritorio o contacta al administrador.
                 </p>
                 <a href="{% url 'trabajo_detalle' trabajo.pk %}" class="btn-action-movil btn btn-secondary">
@@ -730,7 +297,7 @@
             <span class="section-toggle">▼</span>
         </div>
         <div class="section-content">
-            <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 1rem;">
+            <p  class="css004b-inline-3aa72e468151">
                 Total: {{ trabajo.repuestos.count }} | 
                 Instalados: {{ trabajo.repuestos.filter.completado|length }} | 
                 Pendientes: {{ trabajo.repuestos.exclude.completado|length }}
@@ -766,15 +333,15 @@
                             💰 Total: ${{ repuesto.subtotal|floatformat:0|intcomma }}
                         </div>
                     {% endif %}
-                    <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
-                        <form method="post" style="flex: 1;">
+                    <div  class="css004b-inline-02d1c65d67a6">
+                        <form method="post"  class="css004b-inline-81172b395217">
                             {% csrf_token %}
                             <input type="hidden" name="repuesto_toggle" value="{{ repuesto.id }}">
                             <button type="submit" class="btn-toggle-movil {% if repuesto.completado %}completado{% else %}pendiente{% endif %}">
                                 {% if repuesto.completado %}✅ Instalado{% else %}⏳ Pendiente{% endif %}
                             </button>
                         </form>
-                        <form method="post" style="flex: 1;">
+                        <form method="post"  class="css004b-inline-81172b395217">
                             {% csrf_token %}
                             <input type="hidden" name="eliminar_repuesto" value="{{ repuesto.id }}">
                             <button type="submit" class="btn-action-movil btn btn-danger" 
@@ -785,14 +352,14 @@
                     </div>
                 </div>
             {% empty %}
-                <p style="color: var(--muted); text-align: center; padding: 2rem;">
+                <p  class="css004b-inline-d5dfc2ebca95">
                     No hay repuestos registrados
                 </p>
             {% endfor %}
             
             <!-- Botón para agregar repuestos -->
-            <div style="margin-top: 1rem; padding: 1rem; background: var(--bg-secondary); border-radius: 0.5rem;">
-                <p style="font-size: 0.9rem; color: var(--muted); margin-bottom: 0.5rem;">
+            <div  class="css004b-inline-97ba0288acce">
+                <p  class="css004b-inline-85fa363331c0">
                     Para agregar repuestos, usa la versión de escritorio.
                 </p>
                 <a href="{% url 'trabajo_detalle' trabajo.pk %}" class="btn-action-movil btn btn-secondary">
@@ -809,8 +376,8 @@
             <span class="section-toggle">▼</span>
         </div>
         <div class="section-content">
-            <div style="padding: 0.75rem; background: var(--warning-100); border-radius: 0.5rem; margin-bottom: 1rem;">
-                <small style="color: var(--warning-800);">
+            <div  class="css004b-inline-dbbfe3b2c1b5">
+                <small  class="css004b-inline-7d2951a66547">
                     <strong>🔍 Filtro Amplio:</strong> 
                     Aquí puedes agregar cualquier insumo del inventario sin restricciones de compatibilidad.
                 </small>
@@ -819,43 +386,43 @@
             <!-- Búsqueda de insumos -->
             <div class="form-group-movil">
                 <label class="form-label-movil">🔍 Buscar Insumo:</label>
-                <div style="display: flex; gap: 0.5rem;">
-                    <input type="text" id="buscar-insumo" class="form-control-movil" 
+                <div  class="css004b-inline-ab2235461b47">
+                    <input type="text" id="buscar-insumo" class="form-control-movil css004b-inline-81172b395217" 
                            placeholder="Buscar por nombre, SKU, código... (mínimo 2 caracteres)"
-                           style="flex: 1;">
-                    <button class="btn-action-movil btn btn-primary" type="button" onclick="buscarInsumos()" 
-                            style="width: auto; padding: 0.75rem 1rem;">
+                           >
+                    <button class="btn-action-movil btn btn-primary css004b-inline-78d9551f461c" type="button" onclick="buscarInsumos()" 
+                            >
                         🔍
                     </button>
                 </div>
-                <small style="color: var(--muted); font-size: 0.8rem; display: block; margin-top: 0.25rem;">
+                <small  class="css004b-inline-4a9643f96366">
                     La búsqueda se realiza automáticamente mientras escribes
                 </small>
             </div>
             
             <!-- Lista de insumos disponibles -->
-            <div id="insumos-disponibles" style="margin-top: 1rem;">
-                <h6 style="font-weight: 600; margin-bottom: 0.5rem;">📋 Insumos Disponibles:</h6>
-                <div id="lista-insumos-disponibles" style="max-height: 400px; overflow-y: auto;">
-                    <div style="padding: 1rem; text-align: center; color: var(--muted);">
+            <div id="insumos-disponibles"  class="css004b-inline-4ada01692e49">
+                <h6  class="css004b-inline-9f15d1e54741">📋 Insumos Disponibles:</h6>
+                <div id="lista-insumos-disponibles"  class="css004b-inline-eb1a4eaaafbc">
+                    <div  class="css004b-inline-5894a274b9ca">
                         Escribe al menos 2 caracteres para buscar insumos
                     </div>
                 </div>
             </div>
             
             <!-- Botón para agregar insumos -->
-            <button class="btn-action-movil btn btn-success" onclick="agregarInsumos()" style="margin-top: 1rem;">
+            <button class="btn-action-movil btn btn-success css004b-inline-4ada01692e49" onclick="agregarInsumos()" >
                 📦 Agregar Insumos al Trabajo
             </button>
             
             <!-- Formulario oculto para enviar datos -->
-            <form method="post" id="form-insumos" style="display: none;">
+            <form method="post" id="form-insumos"  class="css004b-inline-90e6d4f56d23">
                 {% csrf_token %}
                 <input type="hidden" name="insumos_json" id="insumos-json-trabajo">
             </form>
             
-            <div style="margin-top: 1rem; padding: 0.75rem; background: var(--bg-secondary); border-radius: 0.5rem;">
-                <small style="color: var(--muted);">
+            <div  class="css004b-inline-6f5c2297b46f">
+                <small  class="css004b-inline-882d6bc4b5d7">
                     <strong>ℹ️ Nota:</strong> Los insumos agregados aparecerán automáticamente en la sección "Repuestos" del trabajo.
                 </small>
             </div>
@@ -870,8 +437,8 @@
         </div>
         <div class="section-content">
             <!-- Formulario para Agregar Adicional -->
-            <div style="margin-bottom: 1.5rem;">
-                <h6 style="font-weight: 600; margin-bottom: 0.75rem;">➕ Registrar Concepto Adicional</h6>
+            <div  class="css004b-inline-5c82bb3769d8">
+                <h6  class="css004b-inline-c4e78f452cec">➕ Registrar Concepto Adicional</h6>
                 <form method="post">
                     {% csrf_token %}
                     <div class="form-group-movil">
@@ -898,7 +465,7 @@
                                    type="checkbox" 
                                    name="es_descuento" 
                                    id="es_descuento_movil">
-                            <label class="form-check-label" for="es_descuento_movil" style="font-size: 0.9rem;">
+                            <label class="form-check-label css004b-inline-22f9a272a297" for="es_descuento_movil" >
                                 🏷️ Es Descuento (restará del total)
                             </label>
                         </div>
@@ -911,7 +478,7 @@
 
             <!-- Lista de Adicionales y Descuentos -->
             <div>
-                <h6 style="font-weight: 600; margin-bottom: 0.75rem;">📋 Conceptos Adicionales y Descuentos</h6>
+                <h6  class="css004b-inline-c4e78f452cec">📋 Conceptos Adicionales y Descuentos</h6>
                 
                 {% if trabajo.adicionales.all %}
                     {% regroup trabajo.adicionales.all by descuento as adicionales_grouped %}
@@ -919,9 +486,9 @@
                     <!-- Adicionales -->
                     {% for group in adicionales_grouped %}
                         {% if not group.grouper %}
-                        <h6 style="font-weight: 600; margin-top: 1rem; margin-bottom: 0.5rem; color: #198754;">➕ Conceptos Adicionales</h6>
+                        <h6  class="css004b-inline-eefe6632032a">➕ Conceptos Adicionales</h6>
                         {% for adicional in group.list %}
-                            <div class="item-card-movil" style="margin-bottom: 0.75rem;">
+                            <div class="item-card-movil css004b-inline-c5a03e7a5ece" >
                                 <div class="item-header-movil">
                                     <div class="item-title-movil">
                                         <strong>{{ adicional.concepto }}</strong>
@@ -929,24 +496,24 @@
                                     <form method="post" class="d-inline" onsubmit="{% if ver_avisos %}return confirm('¿Eliminar este concepto adicional?');{% else %}return true;{% endif %}">
                                         {% csrf_token %}
                                         <input type="hidden" name="adicional_id" value="{{ adicional.id }}">
-                                        <button type="submit" name="eliminar_adicional" class="btn btn-outline-danger btn-sm" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                                        <button type="submit" name="eliminar_adicional" class="btn btn-outline-danger btn-sm css004b-inline-9017d351ea13" >
                                             🗑️
                                         </button>
                                     </form>
                                 </div>
-                                <div style="margin-top: 0.5rem;">
-                                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                                        <small style="color: var(--muted);">Fecha: {{ adicional.fecha|date:"d/m/Y H:i" }}</small>
-                                        <strong style="color: #198754; font-size: 1.1rem;">${{ adicional.monto|floatformat:0|intcomma }}</strong>
+                                <div  class="css004b-inline-6c8d28e8671a">
+                                    <div  class="css004b-inline-6de4e3218eda">
+                                        <small  class="css004b-inline-882d6bc4b5d7">Fecha: {{ adicional.fecha|date:"d/m/Y H:i" }}</small>
+                                        <strong  class="css004b-inline-076b3996cb12">${{ adicional.monto|floatformat:0|intcomma }}</strong>
                                     </div>
-                                    <small style="color: var(--muted);">Registrado por: {{ adicional.usuario.username|default:"Sistema" }}</small>
+                                    <small  class="css004b-inline-882d6bc4b5d7">Registrado por: {{ adicional.usuario.username|default:"Sistema" }}</small>
                                 </div>
                             </div>
                         {% endfor %}
-                        <div class="info-row-movil" style="background: #d1e7dd; padding: 0.75rem; border-radius: 0.5rem; margin-top: 0.5rem;">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div class="info-row-movil css004b-inline-35cc2c9c1642" >
+                            <div  class="css004b-inline-6de4e3218eda">
                                 <strong>TOTAL ADICIONALES:</strong>
-                                <strong style="color: #198754; font-size: 1.1rem;">${{ trabajo.total_adicionales|floatformat:0|intcomma }}</strong>
+                                <strong  class="css004b-inline-076b3996cb12">${{ trabajo.total_adicionales|floatformat:0|intcomma }}</strong>
                             </div>
                         </div>
                         {% endif %}
@@ -955,9 +522,9 @@
                     <!-- Descuentos -->
                     {% for group in adicionales_grouped %}
                         {% if group.grouper %}
-                        <h6 style="font-weight: 600; margin-top: 1rem; margin-bottom: 0.5rem; color: #dc3545;">🏷️ Descuentos Aplicados</h6>
+                        <h6  class="css004b-inline-a8ad6f10ce2c">🏷️ Descuentos Aplicados</h6>
                         {% for adicional in group.list %}
-                            <div class="item-card-movil" style="margin-bottom: 0.75rem;">
+                            <div class="item-card-movil css004b-inline-c5a03e7a5ece" >
                                 <div class="item-header-movil">
                                     <div class="item-title-movil">
                                         <strong>{{ adicional.concepto }}</strong>
@@ -965,30 +532,30 @@
                                     <form method="post" class="d-inline" onsubmit="{% if ver_avisos %}return confirm('¿Eliminar este descuento?');{% else %}return true;{% endif %}">
                                         {% csrf_token %}
                                         <input type="hidden" name="adicional_id" value="{{ adicional.id }}">
-                                        <button type="submit" name="eliminar_adicional" class="btn btn-outline-danger btn-sm" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">
+                                        <button type="submit" name="eliminar_adicional" class="btn btn-outline-danger btn-sm css004b-inline-9017d351ea13" >
                                             🗑️
                                         </button>
                                     </form>
                                 </div>
-                                <div style="margin-top: 0.5rem;">
-                                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                                        <small style="color: var(--muted);">Fecha: {{ adicional.fecha|date:"d/m/Y H:i" }}</small>
-                                        <strong style="color: #dc3545; font-size: 1.1rem;">-${{ adicional.monto|floatformat:0|intcomma }}</strong>
+                                <div  class="css004b-inline-6c8d28e8671a">
+                                    <div  class="css004b-inline-6de4e3218eda">
+                                        <small  class="css004b-inline-882d6bc4b5d7">Fecha: {{ adicional.fecha|date:"d/m/Y H:i" }}</small>
+                                        <strong  class="css004b-inline-082131780848">-${{ adicional.monto|floatformat:0|intcomma }}</strong>
                                     </div>
-                                    <small style="color: var(--muted);">Registrado por: {{ adicional.usuario.username|default:"Sistema" }}</small>
+                                    <small  class="css004b-inline-882d6bc4b5d7">Registrado por: {{ adicional.usuario.username|default:"Sistema" }}</small>
                                 </div>
                             </div>
                         {% endfor %}
-                        <div class="info-row-movil" style="background: #f8d7da; padding: 0.75rem; border-radius: 0.5rem; margin-top: 0.5rem;">
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div class="info-row-movil css004b-inline-e904c3782fe4" >
+                            <div  class="css004b-inline-6de4e3218eda">
                                 <strong>TOTAL DESCUENTOS:</strong>
-                                <strong style="color: #dc3545; font-size: 1.1rem;">-${{ trabajo.total_descuentos|floatformat:0|intcomma }}</strong>
+                                <strong  class="css004b-inline-082131780848">-${{ trabajo.total_descuentos|floatformat:0|intcomma }}</strong>
                             </div>
                         </div>
                         {% endif %}
                     {% endfor %}
                 {% else %}
-                    <div style="padding: 2rem; text-align: center; color: var(--muted);">
+                    <div  class="css004b-inline-75d683390da3">
                         <p>No hay conceptos adicionales registrados para este trabajo</p>
                     </div>
                 {% endif %}
@@ -1009,12 +576,11 @@
                         <div class="foto-item-movil">
                             <img src="{{ foto.imagen.url }}" alt="Foto {{ foto.id }}" 
                                  onclick="abrirFotoModal('{{ foto.imagen.url }}', '{{ foto.descripcion|default:""|escapejs }}')">
-                            <form method="post" style="position: absolute; top: 2px; right: 2px;">
+                            <form method="post"  class="css004b-inline-f7327bf42b1e">
                                 {% csrf_token %}
                                 <input type="hidden" name="eliminar_foto" value="{{ foto.id }}">
                                 <button type="submit" onclick="{% if ver_avisos %}return confirm('¿Eliminar esta foto?');{% else %}return true;{% endif %}"
-                                        style="background: rgba(220,53,69,0.9); color: white; border: none; 
-                                               border-radius: 50%; width: 30px; height: 30px; font-size: 0.9rem;">
+                                         class="css004b-inline-5c25f919f595">
                                     🗑️
                                 </button>
                             </form>
@@ -1027,19 +593,19 @@
                     {% endfor %}
                 </div>
             {% else %}
-                <p style="color: var(--muted); text-align: center; padding: 2rem;">
+                <p  class="css004b-inline-d5dfc2ebca95">
                     No hay fotos registradas
                 </p>
             {% endif %}
             
             <!-- Formulario para subir foto -->
-            <form method="post" enctype="multipart/form-data" style="margin-top: 1rem;">
+            <form method="post" enctype="multipart/form-data"  class="css004b-inline-4ada01692e49">
                 {% csrf_token %}
                 <div class="form-group-movil">
                     <label class="form-label-movil">Agregar Foto:</label>
                     <input type="file" name="imagen" accept="image/*" class="form-control-movil" required>
-                    <textarea name="descripcion" class="form-control-movil" rows="2" 
-                              placeholder="Descripción (opcional)" style="margin-top: 0.5rem;"></textarea>
+                    <textarea name="descripcion" class="form-control-movil css004b-inline-6c8d28e8671a" rows="2" 
+                              placeholder="Descripción (opcional)" ></textarea>
                 </div>
                 <button type="submit" name="subir_foto" class="btn-action-movil btn btn-primary">
                     📷 Subir Foto
@@ -1064,16 +630,16 @@
             <span class="section-toggle">▼</span>
         </div>
         <div class="section-content">
-            <div class="info-row-movil" style="background: var(--bg-secondary); padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+            <div class="info-row-movil css004b-inline-e079a5123187" >
                 <div class="info-label-movil">Total Abonos:</div>
-                <div class="info-value-movil" style="font-size: 1.2rem; font-weight: 700; color: #ffc107;">
+                <div class="info-value-movil css004b-inline-183cf95c9d85" >
                     ${{ trabajo.total_abonos|default:0|floatformat:0|intcomma }}
                 </div>
             </div>
             
             <!-- Lista de abonos -->
             {% for abono in trabajo.abonos.all %}
-                <div class="item-card-movil" style="background: var(--bg-secondary);">
+                <div class="item-card-movil css004b-inline-1935ec740356" >
                     <div class="item-header-movil">
                         <div class="item-title-movil">
                             <strong>${{ abono.monto|floatformat:0|intcomma }}</strong>
@@ -1082,7 +648,7 @@
                                 {{ abono.fecha|date:"d/m/Y H:i" }}
                             </div>
                             {% if abono.descripcion %}
-                                <div class="item-details-movil" style="margin-top: 0.25rem;">
+                                <div class="item-details-movil css004b-inline-76a32c5063d6" >
                                     {{ abono.descripcion }}
                                 </div>
                             {% endif %}
@@ -1092,21 +658,20 @@
                             <input type="hidden" name="abono_id" value="{{ abono.id }}">
                             <button type="submit" name="eliminar_abono" 
                                     onclick="{% if ver_avisos %}return confirm('¿Eliminar este abono?');{% else %}return true;{% endif %}"
-                                    style="background: #dc3545; color: white; border: none; 
-                                           border-radius: 0.5rem; padding: 0.5rem; font-size: 0.9rem;">
+                                     class="css004b-inline-e63bbd285d1b">
                                 🗑️
                             </button>
                         </form>
                     </div>
                 </div>
             {% empty %}
-                <p style="color: var(--muted); text-align: center; padding: 2rem;">
+                <p  class="css004b-inline-d5dfc2ebca95">
                     No hay abonos registrados
                 </p>
             {% endfor %}
             
             <!-- Formulario para agregar abono -->
-            <form method="post" style="margin-top: 1rem;">
+            <form method="post"  class="css004b-inline-4ada01692e49">
                 {% csrf_token %}
                 <div class="form-group-movil">
                     <label class="form-label-movil">Monto:</label>
@@ -1142,7 +707,7 @@
             <span class="section-toggle">▼</span>
         </div>
         <div class="section-content">
-            <h5 style="font-weight: 600; margin-bottom: 1rem;">Estado Actual: 
+            <h5  class="css004b-inline-7553b6b0c3b6">Estado Actual: 
                 <span class="estado-badge-movil estado-{{ trabajo.estado }}">
                     {{ trabajo.get_estado_display }}
                 </span>
@@ -1181,27 +746,27 @@
             </form>
             
             <!-- Botones de Acción Adicionales -->
-            <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
-                <h6 style="font-weight: 600; margin-bottom: 1rem;">📄 Acciones Adicionales</h6>
+            <div  class="css004b-inline-bf3a6dce1d93">
+                <h6  class="css004b-inline-7553b6b0c3b6">📄 Acciones Adicionales</h6>
                 
-                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <div  class="css004b-inline-af334239f2eb">
                     <a href="{% url 'trabajo_pdf' trabajo.pk %}" 
-                       class="btn-action-movil btn btn-info" 
-                       style="width: 100%; text-align: center;"
+                       class="btn-action-movil btn btn-info css004b-inline-fde86539b8f6" 
+                       
                        title="Se abrirá en el navegador"
                        onclick="verificarPDF(this.href); return false;">
                         📄 Generar Orden de Trabajo
                     </a>
                     
                     <a href="{% url 'panel_principal' %}" 
-                       class="btn-action-movil btn btn-secondary" 
-                       style="width: 100%; text-align: center;">
+                       class="btn-action-movil btn btn-secondary css004b-inline-fde86539b8f6" 
+                       >
                         🏠 Volver a la Pizarra
                     </a>
                     
                     <a href="javascript:history.back()" 
-                       class="btn-action-movil btn btn-outline-secondary" 
-                       style="width: 100%; text-align: center;">
+                       class="btn-action-movil btn btn-outline-secondary css004b-inline-fde86539b8f6" 
+                       >
                         ← Regresar
                     </a>
                 </div>

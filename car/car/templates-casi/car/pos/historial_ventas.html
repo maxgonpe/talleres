@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block extra_css %}
+{% endblock %}
+
+{% block title %}Historial de Ventas - POS{% endblock %}
+
+{% block extra_head %}
+
+{% endblock %}
+
+{% block content %}
+<span hidden data-css004b="e775ace6dc"></span>
+<div class="historial-container">
+    <!-- Header -->
+    <div class="historial-header">
+        <h4 class="mb-0">📋 Historial de Ventas</h4>
+        <small>Todas las ventas realizadas desde el POS</small>
+    </div>
+
+    <!-- Estadísticas rápidas -->
+    <div class="stats-container">
+        <div class="row">
+            <div class="col-4">
+                <div class="stat-item">
+                    <div class="stat-number">{{ page_obj.paginator.count }}</div>
+                    <div class="stat-label">Total Ventas</div>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="stat-item">
+                    <div class="stat-number">${{ page_obj|length|floatformat:0|intcomma }}</div>
+                    <div class="stat-label">Esta Página</div>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="stat-item">
+                    <div class="stat-number">{{ page_obj.number }}</div>
+                    <div class="stat-label">Página</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filtros-container">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Fecha Desde</label>
+                <input type="date" class="form-control" name="fecha_desde" value="{{ fecha_desde }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Fecha Hasta</label>
+                <input type="date" class="form-control" name="fecha_hasta" value="{{ fecha_hasta }}">
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary me-2">🔍 Filtrar</button>
+                <a href="{% url 'pos_historial_ventas' %}" class="btn btn-outline-secondary">Limpiar</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Lista de ventas -->
+    {% if page_obj %}
+        {% for venta in page_obj %}
+            <div class="venta-card">
+                <div class="venta-header">
+                    <div class="venta-numero">#{{ venta.id }}</div>
+                    <div class="venta-fecha">{{ venta.fecha|date:"d/m/Y H:i" }}</div>
+                </div>
+                
+                <div class="venta-info">
+                    <div>
+                        <div class="venta-cliente">
+                            {{ venta.cliente.nombre|default:"Cliente General" }}
+                        </div>
+                        <div class="venta-metodo">{{ venta.get_metodo_pago_display }}</div>
+                    </div>
+                    <div class="venta-total">${{ venta.total|floatformat:0|intcomma }}</div>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-secondary">
+                        {% if venta.descuento > 0 %}
+                            Descuento: ${{ venta.descuento|floatformat:0|intcomma }}
+                        {% endif %}
+                    </small>
+                    <a href="{% url 'pos_venta_detalle' venta.id %}" class="btn-ver">
+                        👁️ Ver Detalle
+                    </a>
+                </div>
+            </div>
+        {% endfor %}
+
+        <!-- Paginación -->
+        {% if page_obj.has_other_pages %}
+            <div class="pagination-container">
+                <nav aria-label="Paginación de ventas">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if fecha_desde %}&fecha_desde={{ fecha_desde }}{% endif %}{% if fecha_hasta %}&fecha_hasta={{ fecha_hasta }}{% endif %}">Primera</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if fecha_desde %}&fecha_desde={{ fecha_desde }}{% endif %}{% if fecha_hasta %}&fecha_hasta={{ fecha_hasta }}{% endif %}">Anterior</a>
+                            </li>
+                        {% endif %}
+
+                        <li class="page-item active">
+                            <span class="page-link">
+                                Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                            </span>
+                        </li>
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if fecha_desde %}&fecha_desde={{ fecha_desde }}{% endif %}{% if fecha_hasta %}&fecha_hasta={{ fecha_hasta }}{% endif %}">Siguiente</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if fecha_desde %}&fecha_desde={{ fecha_desde }}{% endif %}{% if fecha_hasta %}&fecha_hasta={{ fecha_hasta }}{% endif %}">Última</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-receipt"></i>
+            <h5>No hay ventas registradas</h5>
+            <p>Las ventas realizadas desde el POS aparecerán aquí</p>
+            <a href="{% url 'pos_principal' %}" class="btn btn-primary">
+                🛒 Ir al POS
+            </a>
+        </div>
+    {% endif %}
+
+    <!-- Botones de navegación -->
+    <div class="d-grid gap-2 m-3">
+        <a href="{% url 'pos_principal' %}" class="btn btn-primary">
+            🛒 Volver al POS
+        </a>
+        <a href="{% url 'pos_dashboard' %}" class="btn btn-outline-secondary">
+            📊 Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-submit del formulario de filtros cuando cambian las fechas
+document.querySelectorAll('input[type="date"]').forEach(input => {
+    input.addEventListener('change', function() {
+        // Opcional: auto-submit cuando cambian las fechas
+        // this.form.submit();
+    });
+});
+
+// Resaltar ventas del día actual
+document.addEventListener('DOMContentLoaded', function() {
+    const hoy = new Date().toISOString().split('T')[0];
+    const fechaInputs = document.querySelectorAll('input[type="date"]');
+    
+    fechaInputs.forEach(input => {
+        if (!input.value) {
+            input.value = hoy;
+        }
+    });
+});
+
+// Animación para las tarjetas de venta
+document.addEventListener('DOMContentLoaded', function() {
+    const ventaCards = document.querySelectorAll('.venta-card');
+    
+    ventaCards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.3s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
+</script>
+{% endblock %}
+

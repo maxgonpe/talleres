@@ -1,0 +1,1227 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}NetGoGo - Inventario de Repuestos{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+<style>
+    .repuestos-container {
+        max-width: 100%;
+        margin: 0;
+        padding: var(--spacing-md);
+    }
+    
+    .repuestos-header {
+        background: var(--gradient);
+        color: var(--btn-fg);
+        padding: var(--spacing-xl);
+        text-align: center;
+        border-radius: var(--border-radius-lg);
+        margin-bottom: 2rem;
+        box-shadow: var(--card-shadow);
+    }
+    
+    .repuestos-header h2 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .search-container {
+        background: var(--card-bg);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-lg);
+        margin-bottom: 2rem;
+        box-shadow: var(--card-shadow);
+    }
+    
+    .search-input {
+        border-radius: var(--border-radius);
+        border: 2px solid var(--muted);
+        background: var(--bg);
+        color: var(--fg);
+        padding: var(--spacing-md);
+        font-size: 1.1rem;
+        transition: var(--transition);
+    }
+    
+    .search-input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 0.2rem rgba(var(--accent), 0.25);
+        outline: none;
+    }
+    
+    .search-input::placeholder {
+        color: var(--muted);
+    }
+    
+    .table-container {
+        background: var(--card-bg);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-lg);
+        box-shadow: var(--card-shadow);
+        overflow: hidden;
+    }
+    
+    .table {
+        color: var(--fg);
+        margin-bottom: 0;
+        border-radius: var(--border-radius);
+        overflow: hidden;
+    }
+    
+    .table thead th {
+        background: var(--gradient);
+        color: var(--btn-fg);
+        border: none;
+        font-weight: 600;
+        padding: var(--spacing-md);
+        text-align: center;
+    }
+    
+    .table tbody tr {
+        border-bottom: 1px solid var(--muted);
+        transition: var(--transition);
+    }
+    
+    .table tbody tr:hover {
+        background-color: var(--hover-bg);
+        transform: scale(1.01);
+    }
+    
+    .btn-action {
+        border-radius: var(--border-radius);
+        padding: var(--spacing-sm) 0.75rem;
+        font-size: 0.85rem;
+        margin: 0 0.15rem;
+        min-width: 38px;
+        height: 38px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: var(--transition);
+        border: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    }
+    
+    .btn-group .btn-action {
+        margin: 0;
+        border-radius: 0;
+        border-right: 1px solid rgba(255,255,255,0.2);
+    }
+    
+    .btn-group .btn-action:first-child {
+        border-top-left-radius: 8px;
+        border-bottom-left-radius: 8px;
+    }
+    
+    .btn-group .btn-action:last-child {
+        border-top-right-radius: 8px;
+        border-bottom-right-radius: 8px;
+        border-right: none;
+    }
+    
+    
+    .table th, .table td {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 150px;
+    }
+    
+    .table th:nth-child(3), .table td:nth-child(3) { /* Nombre */
+        max-width: 200px;
+        white-space: normal;
+    }
+    
+    .table th:nth-child(7), .table td:nth-child(7) { /* Marca Vehículo */
+        max-width: 120px;
+    }
+    
+    .table th:nth-child(8), .table td:nth-child(8) { /* Acciones */
+        max-width: 200px;
+    }
+    
+    /* Cards informativas */
+    .stat-card {
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow-md);
+        transition: var(--transition);
+        border: none;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .stat-card .card-body {
+        padding: var(--spacing-md);
+    }
+    
+    /* Filtros de stock */
+    #custom-stock-filter {
+        padding: var(--spacing-sm);
+        background: var(--hover-bg);
+        border-radius: var(--border-radius-md);
+        border: 1px solid var(--border-color);
+    }
+    
+    #filtro-activo-indicador {
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    .btn.active {
+        transform: scale(1.05);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+        min-width: 180px;
+    }
+    
+    
+    .ficha-modal {
+        display: none !important;
+        position: fixed;
+        z-index: 9999 !important;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+    }
+    
+    .ficha-modal.show {
+        display: block !important;
+    }
+    
+    .ficha-content {
+        background-color: var(--card-bg);
+        margin: 2% auto;
+        padding: 20px;
+        border-radius: var(--border-radius-xl);
+        width: 95%;
+        max-width: 1200px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    
+    .ficha-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #4A90E2;
+    }
+    
+    .ficha-title {
+        color: #4A90E2;
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin: 0;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+    
+    .ficha-close {
+        color: #FF6B6B;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+        background: none;
+        border: none;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+    
+    .ficha-close:hover {
+        color: #FF5252;
+        transform: scale(1.1);
+        transition: all 0.2s ease;
+    }
+    
+    .ficha-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+    }
+    
+    .ficha-field {
+        background: var(--hover-bg);
+        padding: 8px;
+        border-radius: 6px;
+        border-left: 3px solid #4A90E2;
+        min-height: 60px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .ficha-label {
+        font-weight: bold;
+        color: #4A90E2;
+        font-size: 0.8rem;
+        margin-bottom: 3px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+    
+    /* Color por defecto: oscuro para modo claro */
+    .ficha-value {
+        color: #212529;
+        font-size: 0.9rem;
+        word-break: break-word;
+        line-height: 1.2;
+        font-weight: 500;
+    }
+    
+    .ficha-value.empty {
+        color: #6c757d;
+        font-style: italic;
+        opacity: 0.8;
+    }
+    
+    /* Ajustes para esquemas oscuros */
+    @media (prefers-color-scheme: dark) {
+        .ficha-value {
+            color: #FFFFFF;
+        }
+        
+        .ficha-value.empty {
+            color: #CCCCCC;
+        }
+    }
+    
+    /* Ajustes adicionales basados en variables CSS del tema */
+    /* Modo oscuro - texto blanco */
+    .ficha-modal[data-theme="dark"] .ficha-value,
+    .ficha-modal.dark-theme .ficha-value,
+    .theme-dark .ficha-modal .ficha-value,
+    .theme-piedra .ficha-modal .ficha-value {
+        color: #FFFFFF !important;
+    }
+    
+    .ficha-modal[data-theme="dark"] .ficha-value.empty,
+    .ficha-modal.dark-theme .ficha-value.empty,
+    .theme-dark .ficha-modal .ficha-value.empty,
+    .theme-piedra .ficha-modal .ficha-value.empty {
+        color: #CCCCCC !important;
+    }
+    
+    /* Modo claro - texto oscuro (asegurar que se aplique) */
+    .ficha-modal[data-theme="light"] .ficha-value,
+    .ficha-modal.light-theme .ficha-value,
+    .theme-light .ficha-modal .ficha-value,
+    body:not(.theme-dark):not(.theme-piedra) .ficha-modal .ficha-value {
+        color: #212529 !important;
+    }
+    
+    .ficha-modal[data-theme="light"] .ficha-value.empty,
+    .ficha-modal.light-theme .ficha-value.empty,
+    .theme-light .ficha-modal .ficha-value.empty,
+    body:not(.theme-dark):not(.theme-piedra) .ficha-modal .ficha-value.empty {
+        color: #6c757d !important;
+    }
+    
+    /* Media queries para diferentes tamaños de pantalla */
+    @media (max-width: 1200px) {
+        .ficha-grid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+        .ficha-content {
+            max-width: 1000px;
+        }
+    }
+    
+    @media (max-width: 992px) {
+        .ficha-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        .ficha-content {
+            max-width: 800px;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .ficha-grid {
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+        .ficha-content {
+            width: 95%;
+            margin: 2% auto;
+            padding: 15px;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .repuestos-container {
+            padding: var(--spacing-xs);
+        }
+        
+        .search-container,
+        .table-container {
+            margin: var(--spacing-xs);
+            padding: 0.75rem;
+        }
+        
+        .stats-row {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+        }
+        
+        .table-responsive {
+            font-size: 0.7rem;
+        }
+        
+        .table th, .table td {
+            max-width: 80px;
+            font-size: 0.7rem;
+        }
+        
+        .table th:nth-child(3), .table td:nth-child(3) { /* Nombre */
+            max-width: 120px;
+        }
+        
+        .btn-action {
+            padding: 0.2rem 0.4rem;
+            font-size: 0.65rem;
+            min-width: 32px;
+            height: 32px;
+        }
+        
+        .table th:nth-child(8), .table td:nth-child(8) { /* Acciones en móvil */
+            max-width: 140px;
+            min-width: 120px;
+        }
+        
+        .ficha-field {
+            padding: 8px;
+        }
+        
+        .ficha-label {
+            font-size: 0.8rem;
+        }
+        
+        .ficha-value {
+            font-size: 0.85rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="repuestos-container">
+    <!-- Header -->
+    <div class="repuestos-header">
+        <div class="eyebrow">INVENTARIO / CONTROL</div>
+        <h2 class="mb-0">Inventario de repuestos</h2>
+        <p class="mb-0">Gestiona tu inventario de repuestos automotrices</p>
+    </div>
+
+
+    <!-- Barra de búsqueda -->
+    <div class="search-container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" 
+                           id="search-repuestos" 
+                           class="form-control search-input" 
+                           placeholder="🔍 Buscar por nombre, SKU, código de barras, marca, OEM, origen, marca vehículo, tipo motor, carrocería, cilindrada, válvulas, combustible..."
+                           autocomplete="off">
+                </div>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'repuesto_create' %}" class="btn btn-primary btn-action">
+                    <i class="fas fa-plus me-2"></i>Nuevo Repuesto
+                </a>
+                <a href="javascript:history.back()" class="btn btn-outline-secondary btn-action">
+                    <i class="fas fa-arrow-left me-2"></i>Volver
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cards Informativas -->
+    <div class="row mb-4" id="stats-cards">
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+                <div class="card-body text-center">
+                    <h5 class="card-title mb-2">📦 Total Repuestos</h5>
+                    <h2 class="mb-0" style="font-size: 2.5rem; font-weight: bold;">{{ stats.total_repuestos|default:0 }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border: none;">
+                <div class="card-body text-center">
+                    <h5 class="card-title mb-2">⚠️ Sin Stock</h5>
+                    <h2 class="mb-0" style="font-size: 2.5rem; font-weight: bold;">{{ stats.repuestos_stock_cero|default:0 }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; border: none;">
+                <div class="card-body text-center">
+                    <h5 class="card-title mb-2">🛒 Último Vendido</h5>
+                    {% if stats.ultimo_repuesto_vendido %}
+                        <p class="mb-1" style="font-size: 0.9rem; opacity: 0.9;">{{ stats.ultimo_repuesto_vendido.nombre|truncatewords:4 }}</p>
+                        <small style="opacity: 0.8;">{{ stats.ultimo_repuesto_vendido.fecha|date:"d/m/Y H:i" }}</small>
+                    {% else %}
+                        <p class="mb-0" style="opacity: 0.8;">N/A</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card stat-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; border: none;">
+                <div class="card-body text-center">
+                    <h5 class="card-title mb-2">📥 Último Ingresado</h5>
+                    {% if stats.ultimo_repuesto_ingresado %}
+                        <p class="mb-1" style="font-size: 0.9rem; opacity: 0.9;">{{ stats.ultimo_repuesto_ingresado.nombre|truncatewords:4 }}</p>
+                        <small style="opacity: 0.8;">{{ stats.ultimo_repuesto_ingresado.fecha|date:"d/m/Y H:i" }}</small>
+                    {% else %}
+                        <p class="mb-0" style="opacity: 0.8;">N/A</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros de Stock -->
+    <div class="search-container mb-3">
+        <div class="row align-items-center">
+            <div class="col-md-12">
+                <label class="form-label mb-2"><strong>🔽 Filtros de Stock:</strong></label>
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <button type="button" class="btn btn-outline-danger" id="filter-stock-zero" onclick="filtrarPorStock(0)">
+                        ⚠️ Stock = 0
+                    </button>
+                    <button type="button" class="btn btn-outline-warning" id="filter-stock-low" onclick="filtrarPorStock(5)">
+                        📉 Stock ≤ 5
+                    </button>
+                    <button type="button" class="btn btn-outline-info" id="filter-stock-custom" onclick="mostrarFiltroPersonalizado()">
+                        🔢 Stock ≤ [Personalizado]
+                    </button>
+                    <div id="custom-stock-filter" style="display: none;" class="d-flex align-items-center gap-2">
+                        <input type="number" 
+                               id="stock-custom-value" 
+                               class="form-control" 
+                               placeholder="Cantidad"
+                               min="0"
+                               style="width: 100px;"
+                               onkeypress="if(event.key === 'Enter') aplicarFiltroPersonalizado()">
+                        <button type="button" class="btn btn-primary btn-sm" onclick="aplicarFiltroPersonalizado()">
+                            Aplicar
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="ocultarFiltroPersonalizado()">
+                            Cancelar
+                        </button>
+                    </div>
+                    <button type="button" class="btn btn-outline-secondary" id="filter-stock-all" onclick="limpiarFiltroStock()">
+                        🔄 Mostrar Todos
+                    </button>
+                    <span class="ms-auto text-muted" id="filtro-activo-indicador"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de repuestos -->
+    <div class="table-container">
+        <div class="table-responsive">
+            <table class="table" id="repuestos-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>SKU</th>
+                        <th>Nombre</th>
+                        <th>Marca</th>
+                        <th>Marca Vehículo</th>
+                        <th>Stock</th>
+                        <th>Precio Venta</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="repuestos-tbody">
+                    {% for repuesto in repuestos %}
+                    <tr class="repuesto-row" 
+                        data-id="{{ repuesto.id }}"
+                        data-sku="{{ repuesto.sku|default:'' }}"
+                        data-nombre="{{ repuesto.nombre|lower }}"
+                        data-marca="{{ repuesto.marca|lower }}"
+                        data-oem="{{ repuesto.oem|default:''|lower }}"
+                        data-codigo-barra="{{ repuesto.codigo_barra|default:''|lower }}"
+                        data-origen="{{ repuesto.origen_repuesto|default:''|lower }}"
+                        data-codigo-proveedor="{{ repuesto.cod_prov|default:''|lower }}"
+                        data-marca-vehiculo="{{ repuesto.marca_veh|default:''|lower }}"
+                        data-tipo-motor="{{ repuesto.tipo_de_motor|default:''|lower }}"
+                        data-carroceria="{{ repuesto.carroceria|default:''|lower }}"
+                        data-cilindrada="{{ repuesto.cilindrada|default:''|lower }}"
+                        data-nro-valvulas="{{ repuesto.nro_valvulas|default:'' }}"
+                        data-combustible="{{ repuesto.combustible|default:''|lower }}"
+                        data-otro-especial="{{ repuesto.otro_especial|default:''|lower }}"
+                        data-stock="{{ repuesto.stock_total|default:0 }}">
+                        <td>{{ repuesto.id }}</td>
+                        <td>{{ repuesto.sku|default:"-" }}</td>
+                        <td>{{ repuesto.nombre }}</td>
+                        <td>{{ repuesto.marca|default:"-" }}</td>
+                        <td>{{ repuesto.marca_veh|default:"-" }}</td>
+                        <td>
+                            <span class="badge {% if repuesto.stock_total > 0 %}bg-success text-inverse{% else %}bg-danger text-inverse{% endif %}">
+                                {{ repuesto.stock_total }}
+                            </span>
+                        </td>
+                        <td>${{ repuesto.precio_venta|default:"0"|floatformat:0|intcomma }}</td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'repuesto_update' repuesto.pk %}" class="btn btn-warning btn-action" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'repuesto_detail' repuesto.pk %}" class="btn btn-info btn-action" title="Ver Ficha">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'repuesto_compatibilidad' repuesto.pk %}" class="btn btn-success btn-action" title="Compatibilidad">
+                                    <i class="fas fa-link"></i>
+                                </a>
+                                <a href="{% url 'repuesto_delete' repuesto.pk %}" class="btn btn-danger btn-action" title="Eliminar" onclick="{% if ver_avisos %}return confirm('¿Estás seguro de eliminar este repuesto?');{% else %}return true;{% endif %}">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center text-secondary">No hay repuestos registrados.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Ficha de Repuesto -->
+<div id="ficha-modal" class="ficha-modal">
+    <div class="ficha-content">
+        <div class="ficha-header">
+            <h3 class="ficha-title">📦 Ficha del Repuesto</h3>
+            <button type="button" class="ficha-close" onclick="window.cerrarFicha()">&times;</button>
+        </div>
+        <div id="ficha-content-body">
+            <!-- El contenido se llenará dinámicamente -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Datos de repuestos para el modal de ficha
+let repuestosData = {};
+try {
+    repuestosData = {
+        {% for repuesto in repuestos %}
+        {{ repuesto.id }}: {
+            id: {{ repuesto.id }},
+            sku: "{{ repuesto.sku|default:'-'|escapejs }}",
+            oem: "{{ repuesto.oem|default:'-'|escapejs }}",
+            referencia: "{{ repuesto.referencia|default:'-'|escapejs }}",
+            nombre: "{{ repuesto.nombre|escapejs }}",
+            marca: "{{ repuesto.marca|default:'-'|escapejs }}",
+            descripcion: "{{ repuesto.descripcion|default:'-'|escapejs }}",
+            medida: "{{ repuesto.medida|default:'-'|escapejs }}",
+            posicion: "{{ repuesto.posicion|default:'-'|escapejs }}",
+            unidad: "{{ repuesto.unidad|default:'-'|escapejs }}",
+            precio_costo: "{{ repuesto.precio_costo|default:'0'|floatformat:0|intcomma|escapejs }}",
+            precio_venta: "{{ repuesto.precio_venta|default:'0'|floatformat:0|intcomma|escapejs }}",
+            codigo_barra: "{{ repuesto.codigo_barra|default:'-'|escapejs }}",
+            origen_repuesto: "{{ repuesto.origen_repuesto|default:'-'|escapejs }}",
+            cod_prov: "{{ repuesto.cod_prov|default:'-'|escapejs }}",
+            marca_veh: "{{ repuesto.marca_veh|default:'-'|escapejs }}",
+            tipo_de_motor: "{{ repuesto.tipo_de_motor|default:'-'|escapejs }}",
+            carroceria: "{{ repuesto.carroceria|default:'-'|escapejs }}",
+            cilindrada: "{{ repuesto.cilindrada|default:'-'|escapejs }}",
+            nro_valvulas: {{ repuesto.nro_valvulas|default:"null" }},
+            combustible: "{{ repuesto.combustible|default:'-'|escapejs }}",
+            otro_especial: "{{ repuesto.otro_especial|default:'-'|escapejs }}",
+            stock_total: {{ repuesto.stock_total|default:0 }},
+            created: "{{ repuesto.created|date:'d/m/Y H:i'|escapejs }}"
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    };
+} catch (e) {
+    console.error('❌ Error cargando datos de repuestos para el modal:', e);
+    repuestosData = {};
+}
+
+// Función para detectar el tema actual
+function detectarTema() {
+    const body = document.body;
+    
+    // Primero verificar clases del body (más confiable)
+    if (body.classList.contains('theme-dark') || body.classList.contains('theme-piedra')) {
+        return 'dark';
+    }
+    if (body.classList.contains('theme-light') || body.classList.contains('theme-sand')) {
+        return 'light';
+    }
+    
+    // Si no hay clases, intentar detectar por color de fondo
+    const computedStyle = getComputedStyle(body);
+    const bgColor = computedStyle.backgroundColor;
+    
+    // Convertir RGB a HSL para detectar si es oscuro
+    const rgb = bgColor.match(/\d+/g);
+    if (rgb) {
+        const r = parseInt(rgb[0]) / 255;
+        const g = parseInt(rgb[1]) / 255;
+        const b = parseInt(rgb[2]) / 255;
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        const lightness = (max + min) / 2;
+        
+        return lightness < 0.5 ? 'dark' : 'light';
+    }
+    
+    return 'light'; // Por defecto
+}
+
+// Función para mostrar ficha del repuesto (scope global)
+window.mostrarFicha = function(repuestoId) {
+    try {
+        console.log('🔍 [mostrarFicha] Iniciando con ID:', repuestoId);
+        
+        // Convertir a número si es necesario
+        repuestoId = parseInt(repuestoId);
+        if (isNaN(repuestoId)) {
+            console.error('❌ ID inválido:', repuestoId);
+            alert('Error: ID de repuesto inválido');
+            return;
+        }
+        
+        console.log('📦 [mostrarFicha] Buscando repuesto en datos...');
+        const repuesto = repuestosData[repuestoId];
+        if (!repuesto) {
+            console.error('❌ No se encontró el repuesto con ID:', repuestoId);
+            console.log('📋 Repuestos disponibles:', Object.keys(repuestosData));
+            console.log('📊 Total de repuestos en datos:', Object.keys(repuestosData).length);
+            alert('No se pudo cargar la información del repuesto con ID: ' + repuestoId);
+            return;
+        }
+        
+        console.log('✅ [mostrarFicha] Repuesto encontrado:', repuesto);
+        
+        const modal = document.getElementById('ficha-modal');
+        const contentBody = document.getElementById('ficha-content-body');
+        
+        if (!modal) {
+            console.error('❌ No se encontró el elemento modal con id "ficha-modal"');
+            alert('Error: No se encontró el modal en el DOM');
+            return;
+        }
+        
+        if (!contentBody) {
+            console.error('❌ No se encontró el elemento contentBody con id "ficha-content-body"');
+            alert('Error: No se encontró el contenedor del modal');
+            return;
+        }
+        
+        console.log('✅ [mostrarFicha] Elementos del modal encontrados');
+        
+        // Detectar y aplicar tema
+        const tema = detectarTema();
+        modal.setAttribute('data-theme', tema);
+        if (tema === 'dark') {
+            modal.classList.add('dark-theme');
+            modal.classList.remove('light-theme');
+        } else {
+            modal.classList.add('light-theme');
+            modal.classList.remove('dark-theme');
+        }
+        
+        // Crear contenido de la ficha
+        console.log('📝 [mostrarFicha] Generando contenido HTML...');
+        contentBody.innerHTML = `
+        <div class="ficha-grid">
+            <div class="ficha-field">
+                <div class="ficha-label">ID</div>
+                <div class="ficha-value">${repuesto.id}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">SKU</div>
+                <div class="ficha-value ${repuesto.sku === '-' ? 'empty' : ''}">${repuesto.sku}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">OEM</div>
+                <div class="ficha-value ${repuesto.oem === '-' ? 'empty' : ''}">${repuesto.oem}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Referencia</div>
+                <div class="ficha-value ${repuesto.referencia === '-' ? 'empty' : ''}">${repuesto.referencia}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Nombre</div>
+                <div class="ficha-value">${repuesto.nombre}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Marca</div>
+                <div class="ficha-value ${repuesto.marca === '-' ? 'empty' : ''}">${repuesto.marca}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Descripción</div>
+                <div class="ficha-value ${repuesto.descripcion === '-' ? 'empty' : ''}">${repuesto.descripcion}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Medida</div>
+                <div class="ficha-value ${repuesto.medida === '-' ? 'empty' : ''}">${repuesto.medida}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Posición</div>
+                <div class="ficha-value ${repuesto.posicion === '-' ? 'empty' : ''}">${repuesto.posicion}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Unidad</div>
+                <div class="ficha-value ${repuesto.unidad === '-' ? 'empty' : ''}">${repuesto.unidad}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Precio Costo</div>
+                <div class="ficha-value">$${repuesto.precio_costo}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Precio Venta</div>
+                <div class="ficha-value">$${repuesto.precio_venta}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Código de Barras</div>
+                <div class="ficha-value ${repuesto.codigo_barra === '-' ? 'empty' : ''}">${repuesto.codigo_barra}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Origen</div>
+                <div class="ficha-value ${repuesto.origen_repuesto === '-' ? 'empty' : ''}">${repuesto.origen_repuesto}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Código Proveedor</div>
+                <div class="ficha-value ${repuesto.cod_prov === '-' ? 'empty' : ''}">${repuesto.cod_prov}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Marca Vehículo</div>
+                <div class="ficha-value ${repuesto.marca_veh === '-' ? 'empty' : ''}">${repuesto.marca_veh}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Tipo de Motor</div>
+                <div class="ficha-value ${repuesto.tipo_de_motor === '-' ? 'empty' : ''}">${repuesto.tipo_de_motor}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Carrocería</div>
+                <div class="ficha-value ${repuesto.carroceria === '-' ? 'empty' : ''}">${repuesto.carroceria}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Cilindrada</div>
+                <div class="ficha-value ${repuesto.cilindrada === '-' ? 'empty' : ''}">${repuesto.cilindrada}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Número de Válvulas</div>
+                <div class="ficha-value ${repuesto.nro_valvulas === null || repuesto.nro_valvulas === undefined ? 'empty' : ''}">${repuesto.nro_valvulas !== null && repuesto.nro_valvulas !== undefined ? repuesto.nro_valvulas : '-'}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Combustible</div>
+                <div class="ficha-value ${repuesto.combustible === '-' ? 'empty' : ''}">${repuesto.combustible}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Otro Especial</div>
+                <div class="ficha-value ${repuesto.otro_especial === '-' ? 'empty' : ''}">${repuesto.otro_especial}</div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Stock Total</div>
+                <div class="ficha-value">
+                    <span class="badge ${repuesto.stock_total > 0 ? 'bg-success text-inverse' : 'bg-danger text-inverse'}">
+                        ${repuesto.stock_total}
+                    </span>
+                </div>
+            </div>
+            <div class="ficha-field">
+                <div class="ficha-label">Fecha Creación</div>
+                <div class="ficha-value">${repuesto.created}</div>
+            </div>
+        </div>
+    `;
+    
+        // Mostrar el modal usando múltiples métodos para asegurar que se muestre
+        console.log('👁️ [mostrarFicha] Mostrando modal...');
+        modal.style.display = 'block';
+        modal.classList.add('show');
+        modal.style.visibility = 'visible';
+        modal.style.opacity = '1';
+        
+        console.log('✅ [mostrarFicha] Modal mostrado. Display:', modal.style.display, 'Class:', modal.className);
+    } catch (error) {
+        console.error('❌ Error mostrando ficha del repuesto:', error);
+        console.error('Stack trace:', error.stack);
+        alert('Error al mostrar la información del repuesto: ' + error.message);
+    }
+};
+
+// Función para cerrar ficha (scope global)
+window.cerrarFicha = function() {
+    const modal = document.getElementById('ficha-modal');
+    if (modal) {
+        modal.style.display = 'none';
+        modal.classList.remove('show');
+        modal.style.visibility = 'hidden';
+        console.log('🔒 Modal cerrado');
+    }
+};
+
+// Event listeners para los botones "Ver Ficha" usando delegación de eventos
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Inicializando event listeners para botones Ver Ficha...');
+    
+    // Usar delegación de eventos para manejar clics en botones "Ver Ficha"
+    document.addEventListener('click', function(event) {
+        const btn = event.target.closest('.btn-ver-ficha');
+        if (btn) {
+            event.preventDefault();
+            event.stopPropagation();
+            const repuestoId = btn.getAttribute('data-repuesto-id');
+            if (repuestoId) {
+                console.log('🖱️ Click en botón Ver Ficha, ID:', repuestoId);
+                window.mostrarFicha(repuestoId);
+            } else {
+                console.error('❌ No se encontró data-repuesto-id en el botón');
+            }
+        }
+    });
+    
+    // También mantener el onclick inline como respaldo
+    const verFichaButtons = document.querySelectorAll('.btn-ver-ficha');
+    verFichaButtons.forEach(function(btn) {
+        const repuestoId = btn.getAttribute('data-repuesto-id');
+        if (repuestoId) {
+            btn.setAttribute('onclick', 'window.mostrarFicha(' + repuestoId + '); return false;');
+        }
+    });
+    
+    console.log('✅ Event listeners inicializados. Botones encontrados:', verFichaButtons.length);
+});
+
+// Cerrar modal al hacer clic fuera de él (sin sobrescribir otros handlers)
+document.addEventListener('click', function(event) {
+    const modal = document.getElementById('ficha-modal');
+    if (modal && event.target === modal && modal.style.display === 'block') {
+        window.cerrarFicha();
+    }
+});
+
+// Función de búsqueda en tiempo real
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        const searchInput = document.getElementById('search-repuestos');
+        if (!searchInput) {
+            console.error('❌ No se encontró el input de búsqueda');
+            return;
+        }
+        
+        const repuestosRows = document.querySelectorAll('.repuesto-row');
+        const tbody = document.getElementById('repuestos-tbody');
+        
+        if (!tbody) {
+            console.error('❌ No se encontró el tbody de la tabla');
+            return;
+        }
+        
+        console.log('✅ Búsqueda inicializada. Repuestos encontrados:', repuestosRows.length);
+        
+        // Función para filtrar repuestos
+        function filtrarRepuestos(termino) {
+            try {
+                console.log('🔍 Buscando:', termino);
+                const terminoLower = termino.toLowerCase();
+                let repuestosVisibles = 0;
+                
+                repuestosRows.forEach(row => {
+                    try {
+                        const id = row.dataset.id || '';
+                        const sku = row.dataset.sku || '';
+                        const nombre = row.dataset.nombre || '';
+                        const marca = row.dataset.marca || '';
+                        const oem = row.dataset.oem || '';
+                        const codigoBarra = row.dataset.codigoBarra || '';
+                        const origen = row.dataset.origen || '';
+                        const codigoProveedor = row.dataset.codigoProveedor || '';
+                        const marcaVehiculo = row.dataset.marcaVehiculo || '';
+                        const tipoMotor = row.dataset.tipoMotor || '';
+                        const carroceria = row.dataset.carroceria || '';
+                        const cilindrada = row.dataset.cilindrada || '';
+                        const nroValvulas = row.dataset.nroValvulas || '';
+                        const combustible = row.dataset.combustible || '';
+                        const otroEspecial = row.dataset.otroEspecial || '';
+                        
+                        // Búsqueda simple y directa (case-insensitive)
+                        const coincide = (id && id.toLowerCase().includes(terminoLower)) || 
+                                       (sku && sku.toLowerCase().includes(terminoLower)) || 
+                                       (nombre && nombre.toLowerCase().includes(terminoLower)) || 
+                                       (marca && marca.toLowerCase().includes(terminoLower)) ||
+                                       (oem && oem.toLowerCase().includes(terminoLower)) ||
+                                       (codigoBarra && codigoBarra.toLowerCase().includes(terminoLower)) ||
+                                       (origen && origen.toLowerCase().includes(terminoLower)) ||
+                                       (codigoProveedor && codigoProveedor.toLowerCase().includes(terminoLower)) ||
+                                       (marcaVehiculo && marcaVehiculo.toLowerCase().includes(terminoLower)) ||
+                                       (tipoMotor && tipoMotor.toLowerCase().includes(terminoLower)) ||
+                                       (carroceria && carroceria.toLowerCase().includes(terminoLower)) ||
+                                       (cilindrada && cilindrada.toLowerCase().includes(terminoLower)) ||
+                                       (nroValvulas && nroValvulas.includes(terminoLower)) ||
+                                       (combustible && combustible.toLowerCase().includes(terminoLower)) ||
+                                       (otroEspecial && otroEspecial.toLowerCase().includes(terminoLower));
+                        
+                        if (coincide) {
+                            row.style.display = '';
+                            repuestosVisibles++;
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    } catch (rowError) {
+                        console.error('Error procesando fila:', rowError);
+                        row.style.display = 'none';
+                    }
+                });
+                
+                console.log('📊 Repuestos visibles:', repuestosVisibles);
+                
+                // Mostrar mensaje si no hay resultados
+                if (repuestosVisibles === 0 && termino.length > 0) {
+                    if (!document.getElementById('no-results-message')) {
+                        const noResultsRow = document.createElement('tr');
+                        noResultsRow.id = 'no-results-message';
+                        noResultsRow.innerHTML = `
+                            <td colspan="8" class="text-center text-secondary">
+                                🔍 No se encontraron repuestos que coincidan con "${termino.replace(/"/g, '&quot;')}"
+                            </td>
+                        `;
+                        tbody.appendChild(noResultsRow);
+                    }
+                } else {
+                    const noResultsMessage = document.getElementById('no-results-message');
+                    if (noResultsMessage) {
+                        noResultsMessage.remove();
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Error en filtrarRepuestos:', error);
+            }
+        }
+        
+        // ========================================
+        // FILTROS DE STOCK
+        // ========================================
+        let filtroStockActivo = null;
+        
+        // Función unificada para aplicar todos los filtros (texto + stock)
+        function aplicarTodosLosFiltros() {
+            const termino = searchInput.value.trim().toLowerCase();
+            let repuestosVisibles = 0;
+            
+            repuestosRows.forEach(row => {
+                // Verificar filtro de texto
+                let coincideTexto = true;
+                if (termino) {
+                    const id = row.dataset.id || '';
+                    const sku = row.dataset.sku || '';
+                    const nombre = row.dataset.nombre || '';
+                    const marca = row.dataset.marca || '';
+                    const oem = row.dataset.oem || '';
+                    const codigoBarra = row.dataset.codigoBarra || '';
+                    const origen = row.dataset.origen || '';
+                    const codigoProveedor = row.dataset.codigoProveedor || '';
+                    const marcaVehiculo = row.dataset.marcaVehiculo || '';
+                    const tipoMotor = row.dataset.tipoMotor || '';
+                    const carroceria = row.dataset.carroceria || '';
+                    const cilindrada = row.dataset.cilindrada || '';
+                    const nroValvulas = row.dataset.nroValvulas || '';
+                    const combustible = row.dataset.combustible || '';
+                    const otroEspecial = row.dataset.otroEspecial || '';
+                    
+                    coincideTexto = (id && id.toLowerCase().includes(termino)) || 
+                                   (sku && sku.toLowerCase().includes(termino)) || 
+                                   (nombre && nombre.toLowerCase().includes(termino)) || 
+                                   (marca && marca.toLowerCase().includes(termino)) ||
+                                   (oem && oem.toLowerCase().includes(termino)) ||
+                                   (codigoBarra && codigoBarra.toLowerCase().includes(termino)) ||
+                                   (origen && origen.toLowerCase().includes(termino)) ||
+                                   (codigoProveedor && codigoProveedor.toLowerCase().includes(termino)) ||
+                                   (marcaVehiculo && marcaVehiculo.toLowerCase().includes(termino)) ||
+                                   (tipoMotor && tipoMotor.toLowerCase().includes(termino)) ||
+                                   (carroceria && carroceria.toLowerCase().includes(termino)) ||
+                                   (cilindrada && cilindrada.toLowerCase().includes(termino)) ||
+                                   (nroValvulas && nroValvulas.includes(termino)) ||
+                                   (combustible && combustible.toLowerCase().includes(termino)) ||
+                                   (otroEspecial && otroEspecial.toLowerCase().includes(termino));
+                }
+                
+                // Verificar filtro de stock
+                let coincideStock = true;
+                if (filtroStockActivo !== null) {
+                    const stock = parseInt(row.dataset.stock) || 0;
+                    coincideStock = stock <= filtroStockActivo;
+                }
+                
+                // Mostrar solo si coincide con ambos filtros
+                if (coincideTexto && coincideStock) {
+                    row.style.display = '';
+                    repuestosVisibles++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            // Actualizar indicador de filtro activo
+            const indicador = document.getElementById('filtro-activo-indicador');
+            if (indicador) {
+                if (filtroStockActivo !== null) {
+                    indicador.textContent = `📊 Mostrando ${repuestosVisibles} repuestos${termino ? ' (filtrados)' : ''} con stock ≤ ${filtroStockActivo}`;
+                } else {
+                    indicador.textContent = '';
+                }
+            }
+            
+            // Mostrar mensaje si no hay resultados
+            const noResultsMessage = document.getElementById('no-results-message');
+            if (repuestosVisibles === 0 && (termino || filtroStockActivo !== null)) {
+                if (!noResultsMessage) {
+                    const noResultsRow = document.createElement('tr');
+                    noResultsRow.id = 'no-results-message';
+                    let mensaje = '🔍 No se encontraron repuestos';
+                    if (termino && filtroStockActivo !== null) {
+                        mensaje += ` que coincidan con "${termino.replace(/"/g, '&quot;')}" y tengan stock ≤ ${filtroStockActivo}`;
+                    } else if (termino) {
+                        mensaje += ` que coincidan con "${termino.replace(/"/g, '&quot;')}"`;
+                    } else if (filtroStockActivo !== null) {
+                        mensaje += ` con stock ≤ ${filtroStockActivo}`;
+                    }
+                    noResultsRow.innerHTML = `<td colspan="8" class="text-center text-secondary">${mensaje}</td>`;
+                    tbody.appendChild(noResultsRow);
+                }
+            } else {
+                if (noResultsMessage) {
+                    noResultsMessage.remove();
+                }
+            }
+        }
+        
+        // Función para filtrar por stock
+        window.filtrarPorStock = function(maxStock) {
+            filtroStockActivo = maxStock;
+            aplicarTodosLosFiltros();
+            
+            // Actualizar estado de botones
+            document.querySelectorAll('[id^="filter-stock"]').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            const btnActivo = document.getElementById(maxStock === 0 ? 'filter-stock-zero' : 
+                                                      maxStock === 5 ? 'filter-stock-low' : 
+                                                      'filter-stock-custom');
+            if (btnActivo) {
+                btnActivo.classList.add('active');
+            }
+        };
+        
+        // Función para mostrar filtro personalizado
+        window.mostrarFiltroPersonalizado = function() {
+            const customFilter = document.getElementById('custom-stock-filter');
+            if (customFilter) {
+                customFilter.style.display = 'flex';
+                document.getElementById('stock-custom-value').focus();
+            }
+        };
+        
+        // Función para ocultar filtro personalizado
+        window.ocultarFiltroPersonalizado = function() {
+            const customFilter = document.getElementById('custom-stock-filter');
+            if (customFilter) {
+                customFilter.style.display = 'none';
+                document.getElementById('stock-custom-value').value = '';
+            }
+        };
+        
+        // Función para aplicar filtro personalizado
+        window.aplicarFiltroPersonalizado = function() {
+            const input = document.getElementById('stock-custom-value');
+            if (input && input.value !== '') {
+                const valor = parseInt(input.value);
+                if (!isNaN(valor) && valor >= 0) {
+                    filtrarPorStock(valor);
+                    ocultarFiltroPersonalizado();
+                } else {
+                    alert('Por favor, ingresa un número válido (mayor o igual a 0)');
+                }
+            }
+        };
+        
+        // Función para limpiar filtro de stock
+        window.limpiarFiltroStock = function() {
+            filtroStockActivo = null;
+            aplicarTodosLosFiltros();
+            
+            // Actualizar estado de botones
+            document.querySelectorAll('[id^="filter-stock"]').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Ocultar filtro personalizado si está visible
+            ocultarFiltroPersonalizado();
+        };
+        
+        // Event listener para la búsqueda con debounce (usando función unificada)
+        let searchTimeout;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                aplicarTodosLosFiltros();
+            }, 150); // Debounce de 150ms
+        });
+        
+        // Limpiar búsqueda con Escape
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                this.value = '';
+                limpiarFiltroStock();
+                this.blur();
+            }
+        });
+        
+        // Permitir Enter en el filtro personalizado
+        const stockCustomInput = document.getElementById('stock-custom-value');
+        if (stockCustomInput) {
+            stockCustomInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    aplicarFiltroPersonalizado();
+                }
+            });
+        }
+        
+        // Auto-focus en la búsqueda
+        searchInput.focus();
+        
+    } catch (error) {
+        console.error('❌ Error inicializando búsqueda:', error);
+    }
+});
+
+</script>
+{% endblock %}

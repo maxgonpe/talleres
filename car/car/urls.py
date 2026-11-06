@@ -129,6 +129,7 @@ urlpatterns = [
     path("bonos/pago/<int:pago_id>/eliminar/", views_bonos.eliminar_pago, name="eliminar_pago"),
     # Pizarra
     path("pizarra/", views.pizarra_view, name="pizarra"),
+    path("pizarra/estado/<str:estado>/", views.pizarra_estado, name="pizarra_estado"),
     # Ventas
     path("crear/", views.venta_crear, name="venta_crear"),
     path("<int:pk>/", views.venta_detalle, name="venta_detalle"),
@@ -215,4 +216,3 @@ if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 #if settings.DEBUG:
 #    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-

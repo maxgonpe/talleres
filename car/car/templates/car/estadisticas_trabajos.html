@@ -5,236 +5,11 @@
 {% block title %}Estadísticas de Trabajos - NetGoGo{% endblock %}
 
 {% block extra_css %}
-  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
-  <style>
-    .estadisticas-container {
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: var(--spacing-md);
-    }
-    
-    .estadisticas-header {
-        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
-        color: white;
-        padding: var(--spacing-xl);
-        border-radius: var(--border-radius-lg);
-        margin-bottom: 2rem;
-        text-align: center;
-        box-shadow: var(--card-shadow);
-    }
-    
-    .estadisticas-header h1 {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin-bottom: 0.5rem;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    }
-    
-    .estadisticas-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 1.5rem;
-        margin-bottom: 2rem;
-    }
-    
-    .stat-card {
-        background: var(--card-bg);
-        border-radius: var(--border-radius-lg);
-        padding: var(--spacing-lg);
-        box-shadow: var(--card-shadow);
-        border-left: 4px solid var(--accent);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    
-    .stat-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
-    }
-    
-    .stat-card-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 1rem;
-    }
-    
-    .stat-card-title {
-        font-size: 0.9rem;
-        color: var(--muted);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        font-weight: 600;
-    }
-    
-    .stat-card-icon {
-        font-size: 2rem;
-        opacity: 0.3;
-    }
-    
-    .stat-card-value {
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: var(--accent);
-        margin-bottom: 0.5rem;
-    }
-    
-    .stat-card-subtitle {
-        font-size: 0.85rem;
-        color: var(--muted);
-    }
-    
-    .stat-card.primary {
-        border-left-color: #17a2b8;
-    }
-    
-    .stat-card.primary .stat-card-value {
-        color: #17a2b8;
-    }
-    
-    .stat-card.success {
-        border-left-color: #28a745;
-    }
-    
-    .stat-card.success .stat-card-value {
-        color: #28a745;
-    }
-    
-    .stat-card.warning {
-        border-left-color: #ffc107;
-    }
-    
-    .stat-card.warning .stat-card-value {
-        color: #ffc107;
-    }
-    
-    .stat-card.danger {
-        border-left-color: #dc3545;
-    }
-    
-    .stat-card.danger .stat-card-value {
-        color: #dc3545;
-    }
-    
-    .stat-card.info {
-        border-left-color: #17a2b8;
-    }
-    
-    .stat-card.info .stat-card-value {
-        color: #17a2b8;
-    }
-    
-    .section-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--fg);
-        margin-bottom: 1.5rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 3px solid var(--accent);
-    }
-    
-    .progress-bar-container {
-        background: var(--bg-secondary);
-        border-radius: var(--border-radius);
-        height: 30px;
-        margin: 0.5rem 0;
-        overflow: hidden;
-        position: relative;
-    }
-    
-    .progress-bar-fill {
-        height: 100%;
-        background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-weight: 600;
-        font-size: 0.85rem;
-        transition: width 0.5s ease;
-    }
-    
-    .table-stats {
-        width: 100%;
-        background: var(--card-bg);
-        border-radius: var(--border-radius-lg);
-        overflow: hidden;
-        box-shadow: var(--card-shadow);
-    }
-    
-    .table-stats thead {
-        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
-        color: white;
-    }
-    
-    .table-stats th,
-    .table-stats td {
-        padding: 1rem;
-        text-align: left;
-    }
-    
-    .table-stats tbody tr {
-        border-bottom: 1px solid var(--border-color);
-    }
-    
-    .table-stats tbody tr:hover {
-        background: var(--hover-bg);
-    }
-    
-    .badge-estado {
-        padding: 0.25rem 0.75rem;
-        border-radius: var(--border-radius-xl);
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-    }
-    
-    .badge-iniciado {
-        background: #ffc107;
-        color: #000;
-    }
-    
-    .badge-trabajando {
-        background: #17a2b8;
-        color: white;
-    }
-    
-    .badge-completado {
-        background: #28a745;
-        color: white;
-    }
-    
-    .badge-entregado {
-        background: #6c757d;
-        color: white;
-    }
-    
-    .badge-warning {
-        background: #ffc107;
-        color: #000;
-    }
-    
-    .badge-info {
-        background: #17a2b8;
-        color: white;
-    }
-    
-    @media (max-width: 768px) {
-        .estadisticas-grid {
-            grid-template-columns: 1fr;
-        }
-        
-        .estadisticas-header h1 {
-            font-size: 1.8rem;
-        }
-        
-        .stat-card-value {
-            font-size: 2rem;
-        }
-    }
-  </style>
+  
 {% endblock %}
 
 {% block content %}
+<span hidden data-css004b="72801eac3e"></span>
 <div class="estadisticas-container">
     <!-- Header -->
     <div class="estadisticas-header">
@@ -426,13 +201,13 @@
             <div class="stat-card-subtitle">Porcentaje promedio de avance de todos los trabajos</div>
         </div>
         
-        <div class="stat-card" style="grid-column: span 2;">
+        <div class="stat-card css004b-inline-9082f1af6e59" >
             <div class="stat-card-header">
                 <div class="stat-card-title">Distribución por Rango de Avance</div>
             </div>
-            <div style="margin-top: 1rem;">
-                <div style="margin-bottom: 0.5rem;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+            <div  class="css004b-inline-41c5c7d689d3">
+                <div  class="css004b-inline-466d966d5e7d">
+                    <div  class="css004b-inline-28263b531880">
                         <span>0% - 25%</span>
                         <strong>{{ avance_0_25 }} trabajos</strong>
                     </div>
@@ -442,8 +217,8 @@
                         </div>
                     </div>
                 </div>
-                <div style="margin-bottom: 0.5rem;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                <div  class="css004b-inline-466d966d5e7d">
+                    <div  class="css004b-inline-28263b531880">
                         <span>25% - 50%</span>
                         <strong>{{ avance_25_50 }} trabajos</strong>
                     </div>
@@ -453,8 +228,8 @@
                         </div>
                     </div>
                 </div>
-                <div style="margin-bottom: 0.5rem;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                <div  class="css004b-inline-466d966d5e7d">
+                    <div  class="css004b-inline-28263b531880">
                         <span>50% - 75%</span>
                         <strong>{{ avance_50_75 }} trabajos</strong>
                     </div>
@@ -465,7 +240,7 @@
                     </div>
                 </div>
                 <div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                    <div  class="css004b-inline-28263b531880">
                         <span>75% - 100%</span>
                         <strong>{{ avance_75_100 }} trabajos</strong>
                     </div>
@@ -482,33 +257,33 @@
     <!-- NUEVAS SECCIONES DETALLADAS -->
     
     <!-- Filtro de Período -->
-    <div style="margin: 2rem 0; padding: 1rem; background: var(--card-bg); border-radius: var(--border-radius-lg); box-shadow: var(--card-shadow);">
-        <form method="get" id="periodo-form" style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
-            <label for="periodo" style="font-weight: 600; color: var(--fg);">📅 Período de análisis:</label>
-            <select name="periodo" id="periodo-select" style="padding: 0.5rem 1rem; border: 1px solid var(--border-color); border-radius: var(--border-radius); background: var(--bg); color: var(--fg);">
+    <div  class="css004b-inline-6e9236c7b4c3">
+        <form method="get" id="periodo-form"  class="css004b-inline-7a22316fa40f">
+            <label for="periodo"  class="css004b-inline-c592f978fbae">📅 Período de análisis:</label>
+            <select name="periodo" id="periodo-select"  class="css004b-inline-c41ef67a9166">
                 <option value="7" {% if periodo_dias == 7 %}selected{% endif %}>Últimos 7 días</option>
                 <option value="30" {% if periodo_dias == 30 %}selected{% endif %}>Últimos 30 días</option>
                 <option value="60" {% if periodo_dias == 60 %}selected{% endif %}>Últimos 60 días</option>
                 <option value="90" {% if periodo_dias == 90 %}selected{% endif %}>Últimos 90 días</option>
             </select>
-            <button type="submit" style="padding: 0.5rem 1.5rem; background: var(--accent); color: white; border: none; border-radius: var(--border-radius); cursor: pointer; font-weight: 600;">Aplicar</button>
+            <button type="submit"  class="css004b-inline-edabab1fab25">Aplicar</button>
         </form>
     </div>
     
     <!-- Acciones Resueltas con Recurrencias -->
     <h2 class="section-title">🔧 Acciones Resueltas en el Período</h2>
-    <div style="background: var(--card-bg); border-radius: var(--border-radius-lg); padding: var(--spacing-lg); box-shadow: var(--card-shadow); margin-bottom: 2rem;">
-        <p style="color: var(--muted); margin-bottom: 1rem;">Detalle de todas las acciones/trabajos resueltos en los últimos {{ periodo_dias }} días, ordenadas por recurrencia.</p>
+    <div  class="css004b-inline-fb09d1649180">
+        <p  class="css004b-inline-560c4377567a">Detalle de todas las acciones/trabajos resueltos en los últimos {{ periodo_dias }} días, ordenadas por recurrencia.</p>
         {% if acciones_resueltas %}
-        <div style="overflow-x: auto;">
+        <div  class="css004b-inline-199f11a76c7c">
             <table class="table-stats" id="tabla-acciones-resueltas">
                 <thead>
                     <tr>
-                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-acciones-resueltas', 0)">Acción ↕️</th>
-                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-acciones-resueltas', 1)">Componente ↕️</th>
-                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-acciones-resueltas', 2, 'number')">Recurrencias ↕️</th>
-                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-acciones-resueltas', 3, 'number')">Cantidad Total ↕️</th>
-                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-acciones-resueltas', 4, 'currency')">Total Ingresos ↕️</th>
+                        <th  onclick="ordenarTabla('tabla-acciones-resueltas', 0)" class="css004b-inline-a07720600108">Acción ↕️</th>
+                        <th  onclick="ordenarTabla('tabla-acciones-resueltas', 1)" class="css004b-inline-a07720600108">Componente ↕️</th>
+                        <th  onclick="ordenarTabla('tabla-acciones-resueltas', 2, 'number')" class="css004b-inline-a07720600108">Recurrencias ↕️</th>
+                        <th  onclick="ordenarTabla('tabla-acciones-resueltas', 3, 'number')" class="css004b-inline-a07720600108">Cantidad Total ↕️</th>
+                        <th  onclick="ordenarTabla('tabla-acciones-resueltas', 4, 'currency')" class="css004b-inline-a07720600108">Total Ingresos ↕️</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -516,87 +291,87 @@
                     <tr>
                         <td><strong>{{ accion.accion_nombre }}</strong></td>
                         <td>{{ accion.componente_nombre }}</td>
-                        <td style="text-align: center;"><span class="badge-estado badge-trabajando">{{ accion.recurrencias }}</span></td>
-                        <td style="text-align: center;">{{ accion.cantidad_total }}</td>
-                        <td style="text-align: right; font-weight: 600; color: #28a745;">${{ accion.total_ingresos|floatformat:0|intcomma }}</td>
+                        <td  class="css004b-inline-2f535f21c02f"><span class="badge-estado badge-trabajando">{{ accion.recurrencias }}</span></td>
+                        <td  class="css004b-inline-2f535f21c02f">{{ accion.cantidad_total }}</td>
+                        <td  class="css004b-inline-4e9f759a87c7">${{ accion.total_ingresos|floatformat:0|intcomma }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
         {% else %}
-        <p style="text-align: center; padding: 2rem; color: var(--muted);">No hay acciones resueltas en este período.</p>
+        <p  class="css004b-inline-7d12c5a05014">No hay acciones resueltas en este período.</p>
         {% endif %}
     </div>
     
     <!-- Ingresos por Acción (Más Rentable a Menos Rentable) -->
     <h2 class="section-title">💰 Ingresos por Acción (Rentabilidad)</h2>
-    <div style="background: var(--card-bg); border-radius: var(--border-radius-lg); padding: var(--spacing-lg); box-shadow: var(--card-shadow); margin-bottom: 2rem;">
-        <p style="color: var(--muted); margin-bottom: 1rem;">Análisis de ingresos generados por cada tipo de acción, desde las más rentables hasta las menos rentables.</p>
+    <div  class="css004b-inline-fb09d1649180">
+        <p  class="css004b-inline-560c4377567a">Análisis de ingresos generados por cada tipo de acción, desde las más rentables hasta las menos rentables.</p>
         {% if ingresos_por_accion %}
-        <div style="overflow-x: auto;">
+        <div  class="css004b-inline-199f11a76c7c">
             <table class="table-stats" id="tabla-ingresos-accion">
                 <thead>
                     <tr>
                         <th>#</th>
-                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-ingresos-accion', 1)">Acción ↕️</th>
-                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-ingresos-accion', 2, 'currency')">Total Ingresos ↕️</th>
-                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-ingresos-accion', 3, 'number')">Trabajos ↕️</th>
-                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-ingresos-accion', 4, 'number')">Veces Realizada ↕️</th>
-                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-ingresos-accion', 5, 'currency')">Promedio por Trabajo ↕️</th>
+                        <th  onclick="ordenarTabla('tabla-ingresos-accion', 1)" class="css004b-inline-a07720600108">Acción ↕️</th>
+                        <th  onclick="ordenarTabla('tabla-ingresos-accion', 2, 'currency')" class="css004b-inline-a07720600108">Total Ingresos ↕️</th>
+                        <th  onclick="ordenarTabla('tabla-ingresos-accion', 3, 'number')" class="css004b-inline-a07720600108">Trabajos ↕️</th>
+                        <th  onclick="ordenarTabla('tabla-ingresos-accion', 4, 'number')" class="css004b-inline-a07720600108">Veces Realizada ↕️</th>
+                        <th  onclick="ordenarTabla('tabla-ingresos-accion', 5, 'currency')" class="css004b-inline-a07720600108">Promedio por Trabajo ↕️</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for ingreso in ingresos_por_accion %}
                     <tr>
-                        <td style="text-align: center; font-weight: 600; color: var(--muted);">{{ forloop.counter }}</td>
+                        <td  class="css004b-inline-d6cb08ed4f46">{{ forloop.counter }}</td>
                         <td><strong>{{ ingreso.accion_nombre }}</strong></td>
-                        <td style="text-align: right; font-weight: 700; color: #28a745; font-size: 1.1rem;">${{ ingreso.total_ingresos|floatformat:0|intcomma }}</td>
-                        <td style="text-align: center;">{{ ingreso.cantidad_trabajos }}</td>
-                        <td style="text-align: center;">{{ ingreso.cantidad_veces }}</td>
-                        <td style="text-align: right; color: var(--muted);">${{ ingreso.promedio_por_trabajo|floatformat:0|intcomma }}</td>
+                        <td  class="css004b-inline-e3b3a3fafd07">${{ ingreso.total_ingresos|floatformat:0|intcomma }}</td>
+                        <td  class="css004b-inline-2f535f21c02f">{{ ingreso.cantidad_trabajos }}</td>
+                        <td  class="css004b-inline-2f535f21c02f">{{ ingreso.cantidad_veces }}</td>
+                        <td  class="css004b-inline-dc6367b5a401">${{ ingreso.promedio_por_trabajo|floatformat:0|intcomma }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
         {% else %}
-        <p style="text-align: center; padding: 2rem; color: var(--muted);">No hay ingresos registrados en este período.</p>
+        <p  class="css004b-inline-7d12c5a05014">No hay ingresos registrados en este período.</p>
         {% endif %}
     </div>
     
     <!-- Concentración de Reparaciones por Componente -->
     <h2 class="section-title">🎯 Concentración de Reparaciones por Componente</h2>
-    <div style="background: var(--card-bg); border-radius: var(--border-radius-lg); padding: var(--spacing-lg); box-shadow: var(--card-shadow); margin-bottom: 2rem;">
-        <p style="color: var(--muted); margin-bottom: 1rem;">Análisis de dónde se concentran las reparaciones y dónde se genera mayor ganancia por componente.</p>
+    <div  class="css004b-inline-fb09d1649180">
+        <p  class="css004b-inline-560c4377567a">Análisis de dónde se concentran las reparaciones y dónde se genera mayor ganancia por componente.</p>
         {% if reparaciones_por_componente %}
-        <div style="overflow-x: auto;">
+        <div  class="css004b-inline-199f11a76c7c">
             <table class="table-stats" id="tabla-reparaciones-componente">
                 <thead>
                     <tr>
                         <th>#</th>
-                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-reparaciones-componente', 1)">Componente ↕️</th>
-                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-reparaciones-componente', 2, 'number')">Trabajos ↕️</th>
-                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-reparaciones-componente', 3, 'number')">Acciones Realizadas ↕️</th>
-                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-reparaciones-componente', 4, 'currency')">Total Ingresos ↕️</th>
-                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-reparaciones-componente', 5, 'number')">% del Total ↕️</th>
+                        <th  onclick="ordenarTabla('tabla-reparaciones-componente', 1)" class="css004b-inline-a07720600108">Componente ↕️</th>
+                        <th  onclick="ordenarTabla('tabla-reparaciones-componente', 2, 'number')" class="css004b-inline-a07720600108">Trabajos ↕️</th>
+                        <th  onclick="ordenarTabla('tabla-reparaciones-componente', 3, 'number')" class="css004b-inline-a07720600108">Acciones Realizadas ↕️</th>
+                        <th  onclick="ordenarTabla('tabla-reparaciones-componente', 4, 'currency')" class="css004b-inline-a07720600108">Total Ingresos ↕️</th>
+                        <th  onclick="ordenarTabla('tabla-reparaciones-componente', 5, 'number')" class="css004b-inline-a07720600108">% del Total ↕️</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for rep in reparaciones_por_componente %}
                     <tr>
-                        <td style="text-align: center; font-weight: 600; color: var(--muted);">{{ forloop.counter }}</td>
+                        <td  class="css004b-inline-d6cb08ed4f46">{{ forloop.counter }}</td>
                         <td><strong>{{ rep.componente_nombre }}</strong></td>
-                        <td style="text-align: center;"><span class="badge-estado badge-info">{{ rep.cantidad_trabajos }}</span></td>
-                        <td style="text-align: center;">{{ rep.cantidad_acciones }}</td>
-                        <td style="text-align: right; font-weight: 700; color: #17a2b8;">${{ rep.total_ingresos|floatformat:0|intcomma }}</td>
+                        <td  class="css004b-inline-2f535f21c02f"><span class="badge-estado badge-info">{{ rep.cantidad_trabajos }}</span></td>
+                        <td  class="css004b-inline-2f535f21c02f">{{ rep.cantidad_acciones }}</td>
+                        <td  class="css004b-inline-7d1bea7a1e34">${{ rep.total_ingresos|floatformat:0|intcomma }}</td>
                         <td>
-                            <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                <div class="progress-bar-container" style="flex: 1; height: 20px;">
+                            <div  class="css004b-inline-5aac7b55f96a">
+                                <div class="progress-bar-container css004b-inline-a489e6d5f1bf" >
                                     <div class="progress-bar-fill" style="width: {{ rep.porcentaje }}%; background: linear-gradient(90deg, #17a2b8 0%, #138496 100%);">
                                     </div>
                                 </div>
-                                <span style="min-width: 50px; text-align: right; font-weight: 600;">{{ rep.porcentaje }}%</span>
+                                <span  class="css004b-inline-ab0810a0a601">{{ rep.porcentaje }}%</span>
                             </div>
                         </td>
                     </tr>
@@ -605,47 +380,47 @@
             </table>
         </div>
         {% else %}
-        <p style="text-align: center; padding: 2rem; color: var(--muted);">No hay reparaciones registradas en este período.</p>
+        <p  class="css004b-inline-7d12c5a05014">No hay reparaciones registradas en este período.</p>
         {% endif %}
     </div>
     
     <!-- Repuestos Más Usados y Recurrentes -->
     <h2 class="section-title">🔩 Repuestos Más Usados y Recurrentes</h2>
-    <div style="background: var(--card-bg); border-radius: var(--border-radius-lg); padding: var(--spacing-lg); box-shadow: var(--card-shadow); margin-bottom: 2rem;">
-        <p style="color: var(--muted); margin-bottom: 1rem;">Análisis de los repuestos más utilizados y recurrentes en las reparaciones del período.</p>
+    <div  class="css004b-inline-fb09d1649180">
+        <p  class="css004b-inline-560c4377567a">Análisis de los repuestos más utilizados y recurrentes en las reparaciones del período.</p>
         {% if repuestos_usados %}
-        <div style="overflow-x: auto;">
+        <div  class="css004b-inline-199f11a76c7c">
             <table class="table-stats" id="tabla-repuestos-usados">
                 <thead>
                     <tr>
                         <th>#</th>
-                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-repuestos-usados', 1)">Repuesto ↕️</th>
+                        <th  onclick="ordenarTabla('tabla-repuestos-usados', 1)" class="css004b-inline-a07720600108">Repuesto ↕️</th>
                         <th>SKU/Código</th>
-                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-repuestos-usados', 3, 'number')">Veces Usado ↕️</th>
-                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-repuestos-usados', 4, 'number')">Cantidad Total ↕️</th>
-                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-repuestos-usados', 5, 'number')">Trabajos ↕️</th>
-                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-repuestos-usados', 6, 'currency')">Total Ingresos ↕️</th>
-                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-repuestos-usados', 7, 'currency')">Promedio por Trabajo ↕️</th>
+                        <th  onclick="ordenarTabla('tabla-repuestos-usados', 3, 'number')" class="css004b-inline-a07720600108">Veces Usado ↕️</th>
+                        <th  onclick="ordenarTabla('tabla-repuestos-usados', 4, 'number')" class="css004b-inline-a07720600108">Cantidad Total ↕️</th>
+                        <th  onclick="ordenarTabla('tabla-repuestos-usados', 5, 'number')" class="css004b-inline-a07720600108">Trabajos ↕️</th>
+                        <th  onclick="ordenarTabla('tabla-repuestos-usados', 6, 'currency')" class="css004b-inline-a07720600108">Total Ingresos ↕️</th>
+                        <th  onclick="ordenarTabla('tabla-repuestos-usados', 7, 'currency')" class="css004b-inline-a07720600108">Promedio por Trabajo ↕️</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for repuesto in repuestos_usados %}
                     <tr>
-                        <td style="text-align: center; font-weight: 600; color: var(--muted);">{{ forloop.counter }}</td>
+                        <td  class="css004b-inline-d6cb08ed4f46">{{ forloop.counter }}</td>
                         <td><strong>{{ repuesto.nombre }}</strong></td>
-                        <td style="color: var(--muted); font-size: 0.9rem;">{{ repuesto.sku }}</td>
-                        <td style="text-align: center;"><span class="badge-estado badge-warning">{{ repuesto.cantidad_veces }}</span></td>
-                        <td style="text-align: center;">{{ repuesto.cantidad_total }}</td>
-                        <td style="text-align: center;">{{ repuesto.cantidad_trabajos }}</td>
-                        <td style="text-align: right; font-weight: 700; color: #ffc107;">${{ repuesto.total_ingresos|floatformat:0|intcomma }}</td>
-                        <td style="text-align: right; color: var(--muted);">${{ repuesto.promedio_por_trabajo|floatformat:0|intcomma }}</td>
+                        <td  class="css004b-inline-8ac0e10601ba">{{ repuesto.sku }}</td>
+                        <td  class="css004b-inline-2f535f21c02f"><span class="badge-estado badge-warning">{{ repuesto.cantidad_veces }}</span></td>
+                        <td  class="css004b-inline-2f535f21c02f">{{ repuesto.cantidad_total }}</td>
+                        <td  class="css004b-inline-2f535f21c02f">{{ repuesto.cantidad_trabajos }}</td>
+                        <td  class="css004b-inline-cbf383ed763b">${{ repuesto.total_ingresos|floatformat:0|intcomma }}</td>
+                        <td  class="css004b-inline-dc6367b5a401">${{ repuesto.promedio_por_trabajo|floatformat:0|intcomma }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
         {% else %}
-        <p style="text-align: center; padding: 2rem; color: var(--muted);">No hay repuestos utilizados en este período.</p>
+        <p  class="css004b-inline-7d12c5a05014">No hay repuestos utilizados en este período.</p>
         {% endif %}
     </div>
     
@@ -681,7 +456,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="4" style="text-align: center; padding: 2rem; color: var(--muted);">
+                <td colspan="4"  class="css004b-inline-7d12c5a05014">
                     No hay trabajos registrados aún
                 </td>
             </tr>
@@ -690,9 +465,9 @@
     </table>
     
     <!-- Nota final -->
-    <div style="margin-top: 3rem; padding: 1.5rem; background: var(--bg-secondary); border-radius: var(--border-radius-lg); text-align: center; color: var(--muted);">
+    <div  class="css004b-inline-11b3f928c2c6">
         <p><strong>💡 Nota:</strong> Estas estadísticas se actualizan en tiempo real. Usa esta información para tomar decisiones informadas sobre la operación del taller.</p>
-        <p style="margin-top: 0.5rem; font-size: 0.9rem;">Reporte generado en tiempo real</p>
+        <p  class="css004b-inline-521891e451bb">Reporte generado en tiempo real</p>
     </div>
 </div>
 {% endblock %}
@@ -867,22 +642,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<style>
-@media print {
-    .estadisticas-header button,
-    #periodo-form,
-    th[onclick] {
-        display: none;
-    }
-    
-    .table-stats {
-        page-break-inside: avoid;
-    }
-    
-    .section-title {
-        page-break-after: avoid;
-    }
-}
-</style>
+
 {% endblock %}
 

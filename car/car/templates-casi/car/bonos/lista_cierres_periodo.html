@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Cierres de Períodos{% endblock %}
+
+{% block extra_css %}
+
+{% endblock %}
+
+{% block content %}
+<span hidden data-css004b="5bf4ecbedf"></span>
+<div class="lista-container">
+    <div class="lista-header">
+        <h1>📋 Cierres de Períodos</h1>
+        {% if mecanico %}
+        <p>{{ mecanico }}</p>
+        {% else %}
+        <p>Lista de todos los cierres de períodos</p>
+        {% endif %}
+    </div>
+    
+    {% if cierres %}
+    <table class="table-cierres">
+        <thead>
+            <tr>
+                <th>Mecánico</th>
+                <th>Período</th>
+                <th>Fecha de Cierre</th>
+                <th>Total Bonos</th>
+                <th>Total Pagado</th>
+                <th>Saldo Pendiente</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cierre in cierres %}
+            <tr>
+                <td><strong>{{ cierre.mecanico }}</strong></td>
+                <td>{{ cierre.periodo_texto }}</td>
+                <td>{{ cierre.fecha_cierre|date:"d/m/Y H:i" }}</td>
+                <td>${{ cierre.total_bonos|floatformat:0|intcomma }}</td>
+                <td  class="css004b-inline-7595cf66237f">${{ cierre.total_pagado|floatformat:0|intcomma }}</td>
+                <td  class="css004b-inline-4b6805747510">${{ cierre.saldo_pendiente|floatformat:0|intcomma }}</td>
+                <td>
+                    <a href="{% url 'cuenta_mecanico' cierre.mecanico.id %}?mes={{ cierre.periodo_mes }}&anio={{ cierre.periodo_anio }}" 
+                       class="btn-primary">
+                        Ver Detalles
+                    </a>
+                    <a href="{% url 'eliminar_cierre_periodo' cierre.id %}" 
+                       class="btn-danger"
+                       onclick="{% if ver_mensajes %}return confirm('¿Eliminar este cierre?');{% else %}return true;{% endif %}">
+                        Eliminar
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div  class="css004b-inline-e1fb6a9ffa65">
+        <p  class="css004b-inline-476b39ab2654">No hay cierres de períodos registrados</p>
+    </div>
+    {% endif %}
+    
+    {% if mecanico %}
+    <div  class="css004b-inline-9ef992c5e38e">
+        <a href="{% url 'cuenta_mecanico' mecanico.id %}" class="btn-primary">
+            ← Volver a Cuenta del Mecánico
+        </a>
+    </div>
+    {% else %}
+    <div  class="css004b-inline-9ef992c5e38e">
+        <a href="{% url 'lista_mecanicos_bonos' %}" class="btn-primary">
+            ← Volver a Lista de Mecánicos
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

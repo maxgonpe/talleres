@@ -1,12 +1,35 @@
 {% if context_menu %}
-<nav class="context-menu context-menu-{{ context_menu.group }}" aria-label="Navegación contextual">
-    <a href="{{ context_menu.parent.url }}" class="context-menu-item context-menu-parent" title="{{ context_menu.parent.label }}" aria-label="Volver a {{ context_menu.parent.label }}">
+{% if context_menu.group == 'panel' %}
+  {% with hierarchy_component='Panel principal' hierarchy_level='Nivel 1' %}
+    <span class="hierarchy-debug-label">Tipo: template | Contenedor: workspace | {{ hierarchy_component }} - {{ hierarchy_level }}</span>
+  {% endwith %}
+{% elif context_menu.group == 'pizarra' %}
+  {% with hierarchy_component='Pizarra' hierarchy_level='Nivel 2' %}
+    <span class="hierarchy-debug-label">Tipo: template | Contenedor: workspace | {{ hierarchy_component }} - {{ hierarchy_level }}</span>
+  {% endwith %}
+{% elif context_menu.group == 'trabajo' %}
+  {% with hierarchy_component='Detalle de trabajo' hierarchy_level='Nivel 3' %}
+    <span class="hierarchy-debug-label">Tipo: template | Contenedor: workspace | {{ hierarchy_component }} - {{ hierarchy_level }}</span>
+  {% endwith %}
+{% else %}
+  <span class="hierarchy-debug-label">Tipo: template | Contenedor: menú contextual | {{ context_menu.group|title }} - Nivel 3</span>
+{% endif %}
+<nav{% if context_menu.group == 'panel' %} id="panelTabs"{% endif %} class="workspace-menu workspace-menu-{{ context_menu.group }}{% if context_menu.group == 'panel' %} workspace-menu-panel{% endif %}" aria-label="Navegación contextual">
+    {% if context_menu.parent %}
+    <a href="{{ context_menu.parent.url }}" class="workspace-menu-item workspace-menu-parent" title="{{ context_menu.parent.label }}" aria-label="Volver a {{ context_menu.parent.label }}">
         <span aria-hidden="true">{{ context_menu.parent.icon }}</span>
     </a>
+    {% endif %}
     {% for item in context_menu.items %}
-    <a href="{{ item.url }}" class="context-menu-item{% if item.active %} active{% endif %}" title="{{ item.label }}" aria-label="{{ item.label }}">
+    {% if item.target %}
+    <button type="button" class="workspace-menu-item{% if item.active %} active{% endif %}" data-bs-toggle="tab" data-bs-target="{{ item.target }}" title="{{ item.label }}" aria-label="{{ item.label }}">
+        <span aria-hidden="true">{{ item.icon }}</span>
+    </button>
+    {% else %}
+    <a href="{{ item.url }}" class="workspace-menu-item{% if item.active %} active{% endif %}" title="{{ item.label }}" aria-label="{{ item.label }}">
         <span aria-hidden="true">{{ item.icon }}</span>
     </a>
+    {% endif %}
     {% endfor %}
 </nav>
 {% endif %}

@@ -1,0 +1,322 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+{% endblock %}
+
+{% block title %}Algoritmo de Relación Inteligente{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-brain text-primary"></i>
+                    Algoritmo de Relación Inteligente
+                </h1>
+                <a href="{% url 'administracion_taller' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Volver al Panel
+                </a>
+            </div>
+
+            {% if not resultados %}
+            <!-- Formulario inicial -->
+            <div class="card">
+                <div class="card-header bg-primary text-inverse">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cogs"></i>
+                        Configuración del Algoritmo
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>¿Qué hace este algoritmo?</strong><br>
+                        Analiza automáticamente los nombres, descripciones y posiciones de los repuestos para encontrar 
+                        relaciones inteligentes con los componentes del sistema. Utiliza similitudes de texto, 
+                        palabras clave y patrones específicos del sector automotriz.
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="umbral" class="form-label">
+                                        <i class="fas fa-sliders-h"></i>
+                                        Umbral de Confianza
+                                    </label>
+                                    <input type="range" class="form-range" id="umbral" name="umbral" 
+                                           min="0.1" max="1.0" step="0.1" value="{{ umbral_default }}" 
+                                           oninput="document.getElementById('umbralValue').textContent = this.value">
+                                    <div class="d-flex justify-content-between">
+                                        <small class="text-secondary">Bajo (0.1)</small>
+                                        <span id="umbralValue" class="badge bg-primary">{{ umbral_default }}</span>
+                                        <small class="text-secondary">Alto (1.0)</small>
+                                    </div>
+                                    <small class="form-text text-secondary">
+                                        Un umbral más bajo encontrará más relaciones pero con menor precisión.
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-play-circle"></i>
+                                        Acción
+                                    </label>
+                                    <div class="d-grid gap-2">
+                                        <button type="submit" name="ejecutar" value="false" class="btn btn-info">
+                                            <i class="fas fa-search"></i>
+                                            Solo Analizar (Sin Ejecutar)
+                                        </button>
+                                        <button type="submit" name="ejecutar" value="true" class="btn btn-success">
+                                            <i class="fas fa-magic"></i>
+                                            Ejecutar y Crear Relaciones
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% else %}
+            <!-- Resultados -->
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header bg-success text-inverse">
+                            <h6 class="mb-0">
+                                <i class="fas fa-chart-pie"></i>
+                                Estadísticas
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <div class="border-end">
+                                        <h4 class="text-primary">{{ resultados.estadisticas.total_repuestos|intcomma }}</h4>
+                                        <small class="text-secondary">Repuestos</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <h4 class="text-info">{{ resultados.estadisticas.total_componentes|intcomma }}</h4>
+                                    <small class="text-secondary">Componentes</small>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <div class="border-end">
+                                        <h4 class="text-warning">{{ resultados.estadisticas.relaciones_existentes|intcomma }}</h4>
+                                        <small class="text-secondary">Existentes</small>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <h4 class="text-success">{{ resultados.estadisticas.nuevas_relaciones|intcomma }}</h4>
+                                    <small class="text-secondary">Nuevas</small>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="text-center">
+                                <h3 class="text-success">{{ resultados.estadisticas.porcentaje_exito|floatformat:1 }}%</h3>
+                                <small class="text-secondary">Tasa de Éxito</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">
+                                <i class="fas fa-list"></i>
+                                Resultados del Análisis
+                            </h6>
+                            <div>
+                                <span class="badge bg-success">{{ resultados.relaciones_encontradas|length }} Relaciones</span>
+                                <span class="badge bg-warning">{{ resultados.relaciones_no_encontradas|length }} Sin Relación</span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            {% if ejecutado %}
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle"></i>
+                                <strong>¡Algoritmo ejecutado exitosamente!</strong><br>
+                                Se crearon {{ resultados.estadisticas.nuevas_relaciones|intcomma }} nuevas relaciones en la base de datos.
+                            </div>
+                            {% elif solo_analisis %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>Análisis completado</strong><br>
+                                Se encontraron {{ resultados.relaciones_encontradas|length }} posibles relaciones. 
+                                Para crearlas, ejecuta el algoritmo nuevamente.
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Relaciones encontradas -->
+                            {% if resultados.relaciones_encontradas %}
+                            <h6 class="text-success">
+                                <i class="fas fa-check"></i>
+                                Relaciones Encontradas ({{ resultados.relaciones_encontradas|length }})
+                            </h6>
+                            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                                <table class="table table-sm table-hover">
+                                    <thead class="table-light sticky-top">
+                                        <tr>
+                                            <th>Repuesto</th>
+                                            <th>Componente</th>
+                                            <th>Puntuación</th>
+                                            <th>Razones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for rel in resultados.relaciones_encontradas %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ rel.repuesto.nombre }}</strong><br>
+                                                <small class="text-secondary">{{ rel.repuesto.sku|default:"Sin SKU" }}</small>
+                                            </td>
+                                            <td>
+                                                <strong>{{ rel.componente.nombre }}</strong><br>
+                                                <small class="text-secondary">{{ rel.componente.codigo }}</small>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-{% if rel.puntuacion >= 0.8 %}success{% elif rel.puntuacion >= 0.6 %}warning{% else %}secondary{% endif %}">
+                                                    {{ rel.puntuacion|floatformat:2 }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <small>
+                                                    {% for razon in rel.razones %}
+                                                        <span class="badge bg-light text-dark me-1">{{ razon }}</span>
+                                                    {% endfor %}
+                                                </small>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Repuestos sin relación -->
+                            {% if resultados.relaciones_no_encontradas %}
+                            <hr>
+                            <h6 class="text-warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                Repuestos Sin Relación ({{ resultados.relaciones_no_encontradas|length }})
+                            </h6>
+                            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                                <table class="table table-sm table-hover">
+                                    <thead class="table-light sticky-top">
+                                        <tr>
+                                            <th>Repuesto</th>
+                                            <th>Mejor Puntuación</th>
+                                            <th>Mejor Componente</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for rel in resultados.relaciones_no_encontradas %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ rel.repuesto.nombre }}</strong><br>
+                                                <small class="text-secondary">{{ rel.repuesto.sku|default:"Sin SKU" }}</small>
+                                            </td>
+                                            <td>
+                                                {% if rel.mejor_puntuacion > 0 %}
+                                                <span class="badge bg-secondary">{{ rel.mejor_puntuacion|floatformat:2 }}</span>
+                                                {% else %}
+                                                <span class="badge bg-danger">0.00</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if rel.mejor_componente %}
+                                                {{ rel.mejor_componente.nombre }}
+                                                {% else %}
+                                                <span class="text-secondary">Ninguno</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Botones de acción -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <form method="post" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="umbral" value="{{ umbral }}">
+                                <button type="submit" name="ejecutar" value="false" class="btn btn-info me-2">
+                                    <i class="fas fa-redo"></i>
+                                    Analizar Nuevamente
+                                </button>
+                                {% if not ejecutado %}
+                                <button type="submit" name="ejecutar" value="true" class="btn btn-success me-2">
+                                    <i class="fas fa-magic"></i>
+                                    Ejecutar y Crear Relaciones
+                                </button>
+                                {% endif %}
+                            </form>
+                            <a href="{% url 'relacionar_repuestos_componentes' %}" class="btn btn-secondary">
+                                <i class="fas fa-home"></i>
+                                Nueva Configuración
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Actualizar el valor del umbral en tiempo real
+    const umbralSlider = document.getElementById('umbral');
+    const umbralValue = document.getElementById('umbralValue');
+    
+    if (umbralSlider && umbralValue) {
+        umbralSlider.addEventListener('input', function() {
+            umbralValue.textContent = this.value;
+        });
+    }
+});
+</script>
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

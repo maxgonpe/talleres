@@ -5,154 +5,11 @@
 {% block title %}Cuenta de {{ mecanico }} - Bonos{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
-<style>
-    .cuenta-container {
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: var(--spacing-md);
-    }
-    
-    .cuenta-header {
-        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
-        color: white;
-        padding: var(--spacing-xl);
-        border-radius: var(--border-radius-lg);
-        margin-bottom: 2rem;
-        box-shadow: var(--card-shadow);
-    }
-    
-    .saldo-cards {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 1.5rem;
-        margin-bottom: 2rem;
-    }
-    
-    .saldo-card {
-        background: var(--card-bg);
-        border-radius: var(--border-radius-lg);
-        padding: var(--spacing-lg);
-        box-shadow: var(--card-shadow);
-        border-left: 4px solid var(--accent);
-    }
-    
-    .saldo-card.pendiente {
-        border-left-color: #ffc107;
-    }
-    
-    .saldo-card.total {
-        border-left-color: #28a745;
-    }
-    
-    .saldo-card.pagado {
-        border-left-color: #17a2b8;
-    }
-    
-    .saldo-card h3 {
-        font-size: 0.9rem;
-        color: var(--muted);
-        text-transform: uppercase;
-        margin-bottom: 0.5rem;
-    }
-    
-    .saldo-card .valor {
-        font-size: 2rem;
-        font-weight: 700;
-        color: var(--accent);
-    }
-    
-    .saldo-card.pendiente .valor {
-        color: #ffc107;
-    }
-    
-    .saldo-card.total .valor {
-        color: #28a745;
-    }
-    
-    .saldo-card.pagado .valor {
-        color: #17a2b8;
-    }
-    
-    .table-bonos {
-        width: 100%;
-        border-collapse: collapse;
-        background: var(--card-bg);
-        border-radius: var(--border-radius-lg);
-        overflow: hidden;
-        box-shadow: var(--card-shadow);
-        margin-bottom: 2rem;
-    }
-    
-    .table-bonos th,
-    .table-bonos td {
-        padding: 1rem;
-        text-align: left;
-        border-bottom: 1px solid var(--border-color);
-    }
-    
-    .table-bonos th {
-        background: var(--bg-secondary);
-        font-weight: 600;
-        color: var(--fg);
-    }
-    
-    .table-bonos tbody tr:hover {
-        background: var(--hover-bg);
-    }
-    
-    .badge-pagado {
-        background: #28a745;
-        color: white;
-        padding: 0.25rem 0.75rem;
-        border-radius: var(--border-radius-xl);
-        font-size: 0.85rem;
-    }
-    
-    .badge-pendiente {
-        background: #ffc107;
-        color: #000;
-        padding: 0.25rem 0.75rem;
-        border-radius: var(--border-radius-xl);
-        font-size: 0.85rem;
-    }
-    
-    .btn-primary {
-        background: var(--accent);
-        color: white;
-        padding: 0.75rem 1.5rem;
-        border: none;
-        border-radius: var(--border-radius);
-        cursor: pointer;
-        font-weight: 600;
-        text-decoration: none;
-        display: inline-block;
-        transition: background 0.3s;
-    }
-    
-    .btn-primary:hover {
-        background: #138496;
-    }
-    
-    .btn-success {
-        background: #28a745;
-        color: white;
-        padding: 0.75rem 1.5rem;
-        border: none;
-        border-radius: var(--border-radius);
-        cursor: pointer;
-        font-weight: 600;
-        text-decoration: none;
-        display: inline-block;
-    }
-    
-    .btn-success:hover {
-        background: #218838;
-    }
-</style>
+
 {% endblock %}
 
 {% block content %}
+<span hidden data-css004b="8e024d1c19"></span>
 <div class="cuenta-container">
     <div class="cuenta-header">
         <h1>💰 Cuenta de Bonos - {{ mecanico }}</h1>
@@ -160,12 +17,12 @@
     </div>
     
     <!-- Selector de período y controles -->
-    <div style="background: var(--card-bg); padding: 1.5rem; border-radius: var(--border-radius-lg); margin-bottom: 2rem; box-shadow: var(--card-shadow);">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div  class="css004b-inline-62e39832f686">
+        <div  class="css004b-inline-7452612966b5">
             <div>
-                <h3 style="margin-bottom: 0.5rem;">📅 Filtrar por Período</h3>
-                <form method="get" style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-                    <select name="mes" style="padding: 0.5rem; border-radius: var(--border-radius); border: 1px solid var(--border-color);">
+                <h3  class="css004b-inline-3152a5512334">📅 Filtrar por Período</h3>
+                <form method="get"  class="css004b-inline-2c531195cda8">
+                    <select name="mes"  class="css004b-inline-afbe4626372d">
                         <option value="">Todos los meses</option>
                         <option value="1" {% if periodo_mes == 1 %}selected{% endif %}>Enero</option>
                         <option value="2" {% if periodo_mes == 2 %}selected{% endif %}>Febrero</option>
@@ -181,25 +38,25 @@
                         <option value="12" {% if periodo_mes == 12 %}selected{% endif %}>Diciembre</option>
                     </select>
                     <input type="number" name="anio" placeholder="Año (ej: 2025)" value="{{ periodo_anio }}" 
-                           style="padding: 0.5rem; border-radius: var(--border-radius); border: 1px solid var(--border-color); width: 120px;">
-                    <button type="submit" class="btn-primary" style="padding: 0.5rem 1rem;">Filtrar</button>
+                            class="css004b-inline-5f2220c6942f">
+                    <button type="submit" class="btn-primary css004b-inline-898b68a5ac4d" >Filtrar</button>
                     {% if periodo_mes or periodo_anio %}
-                    <a href="{% url 'cuenta_mecanico' mecanico.id %}" class="btn-primary" style="padding: 0.5rem 1rem; background: #6c757d;">
+                    <a href="{% url 'cuenta_mecanico' mecanico.id %}" class="btn-primary css004b-inline-b290e6bafad9" >
                         Limpiar Filtro
                     </a>
                     {% endif %}
                 </form>
             </div>
             {% if periodo_mes and periodo_anio %}
-            <div style="text-align: right;">
-                <p style="margin-bottom: 0.5rem;"><strong>Período actual:</strong> 
+            <div  class="css004b-inline-513cfdd157b0">
+                <p  class="css004b-inline-3152a5512334"><strong>Período actual:</strong> 
                     {% if periodo_mes == 1 %}Enero{% elif periodo_mes == 2 %}Febrero{% elif periodo_mes == 3 %}Marzo{% elif periodo_mes == 4 %}Abril{% elif periodo_mes == 5 %}Mayo{% elif periodo_mes == 6 %}Junio{% elif periodo_mes == 7 %}Julio{% elif periodo_mes == 8 %}Agosto{% elif periodo_mes == 9 %}Septiembre{% elif periodo_mes == 10 %}Octubre{% elif periodo_mes == 11 %}Noviembre{% elif periodo_mes == 12 %}Diciembre{% endif %} {{ periodo_anio }}
                 </p>
                 {% if cierre_actual %}
                 <span class="badge-pagado">✅ Período Cerrado</span>
                 <a href="{% url 'eliminar_cierre_periodo' cierre_actual.id %}" 
-                   class="btn-primary" 
-                   style="padding: 0.5rem 1rem; background: #dc3545; margin-left: 0.5rem;"
+                   class="btn-primary css004b-inline-358cb8d4e5af" 
+                   
                    onclick="{% if ver_mensajes %}return confirm('¿Está seguro de eliminar el cierre de este período?');{% else %}return true;{% endif %}">
                     Eliminar Cierre
                 </a>
@@ -216,19 +73,19 @@
     
     <!-- Cierres de períodos recientes -->
     {% if cierres %}
-    <div style="background: var(--card-bg); padding: 1rem; border-radius: var(--border-radius-lg); margin-bottom: 2rem; box-shadow: var(--card-shadow);">
+    <div  class="css004b-inline-f3c4862ca8e0">
         <h3>📋 Cierres de Períodos Recientes</h3>
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+        <div  class="css004b-inline-41a5d10601f3">
             {% for cierre in cierres %}
-            <div style="border: 1px solid var(--border-color); padding: 1rem; border-radius: var(--border-radius);">
+            <div  class="css004b-inline-7187600f2314">
                 <strong>{{ cierre.periodo_texto }}</strong>
-                <p style="margin: 0.5rem 0; font-size: 0.9rem;">
+                <p  class="css004b-inline-10fba52f86c9">
                     Total: ${{ cierre.total_bonos|floatformat:0|intcomma }}<br>
                     Pagado: ${{ cierre.total_pagado|floatformat:0|intcomma }}<br>
                     Pendiente: ${{ cierre.saldo_pendiente|floatformat:0|intcomma }}
                 </p>
                 <a href="{% url 'cuenta_mecanico' mecanico.id %}?mes={{ cierre.periodo_mes }}&anio={{ cierre.periodo_anio }}" 
-                   style="font-size: 0.85rem; color: var(--accent);">Ver detalles</a>
+                    class="css004b-inline-a4cf4a0cd40d">Ver detalles</a>
             </div>
             {% endfor %}
         </div>
@@ -240,7 +97,7 @@
         <div class="saldo-card pendiente">
             <h3>Saldo Pendiente</h3>
             <div class="valor">${{ saldo_pendiente|floatformat:0|intcomma }}</div>
-            <p style="color: var(--muted); font-size: 0.9rem; margin-top: 0.5rem;">
+            <p  class="css004b-inline-ff51ce01a889">
                 Bonos generados sin pagar
             </p>
         </div>
@@ -248,7 +105,7 @@
         <div class="saldo-card total">
             <h3>Total Generado</h3>
             <div class="valor">${{ total_generado|floatformat:0|intcomma }}</div>
-            <p style="color: var(--muted); font-size: 0.9rem; margin-top: 0.5rem;">
+            <p  class="css004b-inline-ff51ce01a889">
                 Bonos generados en total
             </p>
         </div>
@@ -256,7 +113,7 @@
         <div class="saldo-card pagado">
             <h3>Total Pagado</h3>
             <div class="valor">${{ total_pagado|floatformat:0|intcomma }}</div>
-            <p style="color: var(--muted); font-size: 0.9rem; margin-top: 0.5rem;">
+            <p  class="css004b-inline-ff51ce01a889">
                 Pagos realizados
             </p>
         </div>
@@ -264,7 +121,7 @@
     
     <!-- Información de configuración -->
     {% if config_bono %}
-    <div style="background: var(--card-bg); padding: 1rem; border-radius: var(--border-radius-lg); margin-bottom: 2rem; box-shadow: var(--card-shadow);">
+    <div  class="css004b-inline-f3c4862ca8e0">
         <h3>⚙️ Configuración de Bonos</h3>
         <p>
             <strong>Tipo:</strong> 
@@ -283,7 +140,7 @@
         </p>
     </div>
     {% else %}
-    <div style="background: #fff3cd; padding: 1rem; border-radius: var(--border-radius-lg); margin-bottom: 2rem; border-left: 4px solid #ffc107;">
+    <div  class="css004b-inline-24e1daed6a96">
         <p><strong>⚠️ Atención:</strong> Este mecánico no tiene configuración de bonos. 
         <a href="{% url 'configuracion_bonos' %}">Configurar bonos</a></p>
     </div>
@@ -291,7 +148,7 @@
     
     <!-- Botón para registrar pago -->
     {% if saldo_pendiente > 0 %}
-    <div style="margin-bottom: 2rem; text-align: center;">
+    <div  class="css004b-inline-fa0f1711304a">
         <a href="{% url 'registrar_pago_mecanico' mecanico.id %}" class="btn-success">
             💵 Registrar Pago
         </a>
@@ -322,14 +179,14 @@
                     {% if bono.periodo_mes and bono.periodo_anio %}
                     {{ bono.periodo_texto }}
                     {% if bono.cerrado %}
-                    <br><small style="color: #28a745;">[Cerrado]</small>
+                    <br><small  class="css004b-inline-86c1a9116d85">[Cerrado]</small>
                     {% endif %}
                     {% else %}
-                    <small style="color: var(--muted);">Sin período</small>
+                    <small  class="css004b-inline-bde184a1b183">Sin período</small>
                     {% endif %}
                 </td>
                 <td>
-                    <a href="{% url 'trabajo_detalle' bono.trabajo.id %}" style="color: var(--accent); text-decoration: none;">
+                    <a href="{% url 'trabajo_detalle' bono.trabajo.id %}"  class="css004b-inline-2e4c43b74282">
                         Trabajo #{{ bono.trabajo.id }} - {{ bono.trabajo.vehiculo }}
                     </a>
                 </td>
@@ -341,17 +198,17 @@
                     {% endif %}
                 </td>
                 <td>${{ bono.total_mano_obra|floatformat:0|intcomma }}</td>
-                <td><strong style="color: #ffc107;">${{ bono.monto|floatformat:0|intcomma }}</strong></td>
+                <td><strong  class="css004b-inline-93ade3ca8f30">${{ bono.monto|floatformat:0|intcomma }}</strong></td>
                 <td><span class="badge-pendiente">Pendiente</span></td>
                 <td>
                     {% if not bono.pagado and not bono.cerrado %}
                     <a href="{% url 'eliminar_bono' bono.id %}" 
-                       style="color: #dc3545; text-decoration: none; font-size: 0.85rem;"
-                       onclick="{% if ver_mensajes %}return confirm('¿Está seguro de eliminar este bono?');{% else %}return true;{% endif %}">
+                       
+                       onclick="{% if ver_mensajes %}return confirm('¿Está seguro de eliminar este bono?');{% else %}return true;{% endif %}" class="css004b-inline-145e197fd423">
                         🗑️ Eliminar
                     </a>
                     {% else %}
-                    <small style="color: var(--muted);">-</small>
+                    <small  class="css004b-inline-bde184a1b183">-</small>
                     {% endif %}
                 </td>
             </tr>
@@ -359,13 +216,13 @@
         </tbody>
     </table>
     {% else %}
-    <div style="background: var(--card-bg); padding: 2rem; border-radius: var(--border-radius-lg); text-align: center; box-shadow: var(--card-shadow);">
-        <p style="color: var(--muted);">No hay bonos pendientes</p>
+    <div  class="css004b-inline-471ea7584ef7">
+        <p  class="css004b-inline-bde184a1b183">No hay bonos pendientes</p>
     </div>
     {% endif %}
     
     <!-- Bonos pagados (últimos 20) -->
-    <h2 style="margin-top: 2rem;">✅ Bonos Pagados (Últimos 20)</h2>
+    <h2  class="css004b-inline-e8f12fa21d0a">✅ Bonos Pagados (Últimos 20)</h2>
     {% if bonos_pagados %}
     <table class="table-bonos">
         <thead>
@@ -386,12 +243,12 @@
                     {% if bono.periodo_mes and bono.periodo_anio %}
                     {{ bono.periodo_texto }}
                     {% else %}
-                    <small style="color: var(--muted);">Sin período</small>
+                    <small  class="css004b-inline-bde184a1b183">Sin período</small>
                     {% endif %}
                 </td>
                 <td>{{ bono.fecha_pago|date:"d/m/Y"|default:"-" }}</td>
                 <td>
-                    <a href="{% url 'trabajo_detalle' bono.trabajo.id %}" style="color: var(--accent); text-decoration: none;">
+                    <a href="{% url 'trabajo_detalle' bono.trabajo.id %}"  class="css004b-inline-2e4c43b74282">
                         Trabajo #{{ bono.trabajo.id }}
                     </a>
                 </td>
@@ -402,13 +259,13 @@
         </tbody>
     </table>
     {% else %}
-    <div style="background: var(--card-bg); padding: 2rem; border-radius: var(--border-radius-lg); text-align: center; box-shadow: var(--card-shadow);">
-        <p style="color: var(--muted);">No hay bonos pagados aún</p>
+    <div  class="css004b-inline-471ea7584ef7">
+        <p  class="css004b-inline-bde184a1b183">No hay bonos pagados aún</p>
     </div>
     {% endif %}
     
     <!-- Historial de pagos -->
-    <h2 style="margin-top: 2rem;">💵 Historial de Pagos</h2>
+    <h2  class="css004b-inline-e8f12fa21d0a">💵 Historial de Pagos</h2>
     {% if pagos %}
     <table class="table-bonos">
         <thead>
@@ -430,7 +287,7 @@
                     {% if pago.periodo_mes and pago.periodo_anio %}
                     {{ pago.periodo_texto }}
                     {% else %}
-                    <small style="color: var(--muted);">Sin período</small>
+                    <small  class="css004b-inline-bde184a1b183">Sin período</small>
                     {% endif %}
                 </td>
                 <td><strong>${{ pago.monto|floatformat:0|intcomma }}</strong></td>
@@ -439,8 +296,8 @@
                 <td>{{ pago.notas|default:"-" }}</td>
                 <td>
                     <a href="{% url 'eliminar_pago' pago.id %}" 
-                       style="color: #dc3545; text-decoration: none; font-size: 0.85rem;"
-                       onclick="{% if ver_mensajes %}return confirm('¿Está seguro de eliminar este pago? Esto marcará los bonos asociados como pendientes.');{% else %}return true;{% endif %}">
+                       
+                       onclick="{% if ver_mensajes %}return confirm('¿Está seguro de eliminar este pago? Esto marcará los bonos asociados como pendientes.');{% else %}return true;{% endif %}" class="css004b-inline-145e197fd423">
                         🗑️ Eliminar
                     </a>
                 </td>
@@ -449,12 +306,12 @@
         </tbody>
     </table>
     {% else %}
-    <div style="background: var(--card-bg); padding: 2rem; border-radius: var(--border-radius-lg); text-align: center; box-shadow: var(--card-shadow);">
-        <p style="color: var(--muted);">No hay pagos registrados</p>
+    <div  class="css004b-inline-471ea7584ef7">
+        <p  class="css004b-inline-bde184a1b183">No hay pagos registrados</p>
     </div>
     {% endif %}
     
-    <div style="margin-top: 2rem; text-align: center;">
+    <div  class="css004b-inline-4391944fc6a7">
         <a href="{% url 'lista_mecanicos_bonos' %}" class="btn-primary">
             ← Volver a Lista de Mecánicos
         </a>

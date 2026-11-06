@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Eliminar Pago{% endblock %}
+
+{% block extra_css %}
+
+{% endblock %}
+
+{% block content %}
+<span hidden data-css004b="20ace8218c"></span>
+<div class="confirm-container">
+    <div class="confirm-box">
+        <h1>⚠️ Eliminar Pago</h1>
+        <p  class="css004b-inline-d16d16adfd96">
+            <strong>{{ pago.mecanico }}</strong><br>
+            ${{ pago.monto|floatformat:0|intcomma }}
+        </p>
+        
+        <div class="warning-box">
+            <p><strong>⚠️ Atención:</strong> Al eliminar este pago:</p>
+            <ul  class="css004b-inline-9aeafba5da01">
+                <li>Los bonos asociados serán marcados como pendientes nuevamente</li>
+                <li>El registro del pago será eliminado permanentemente</li>
+                <li>Los bonos no se eliminarán, solo cambiarán su estado</li>
+            </ul>
+        </div>
+        
+        <div  class="css004b-inline-70bab8a50699">
+            <p><strong>Información del pago:</strong></p>
+            <p>
+                Monto: ${{ pago.monto|floatformat:0|intcomma }}<br>
+                Fecha: {{ pago.fecha_pago|date:"d/m/Y H:i" }}<br>
+                Método: {{ pago.get_metodo_pago_display }}<br>
+                Período: {% if pago.periodo_texto %}{{ pago.periodo_texto }}{% else %}Sin período{% endif %}<br>
+                Bonos aplicados: {{ pago.bonos_aplicados.count }}
+            </p>
+        </div>
+        
+        <form method="post"  class="css004b-inline-c974d1022c8d">
+            {% csrf_token %}
+            <button type="submit" class="btn-danger" onclick="{% if ver_mensajes %}return confirm('¿Está completamente seguro de eliminar este pago? Los bonos asociados volverán a estar pendientes.');{% else %}return true;{% endif %}">
+                🗑️ Sí, Eliminar Pago
+            </button>
+        </form>
+        <a href="{% url 'cuenta_mecanico' pago.mecanico.id %}" class="btn-secondary">
+            Cancelar
+        </a>
+    </div>
+</div>
+{% endblock %}

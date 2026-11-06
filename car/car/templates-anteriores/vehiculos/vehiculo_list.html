@@ -1,0 +1,718 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}NetGoGo - Compatibilidad de Vehículos{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+<style>
+    .vehiculos-container {
+        max-width: 100%;
+        margin: 0;
+        padding: var(--spacing-md);
+    }
+    
+    .vehiculos-header {
+        background: var(--gradient);
+        color: var(--btn-fg);
+        padding: var(--spacing-xl);
+        text-align: center;
+        border-radius: var(--border-radius-lg);
+        margin-bottom: 2rem;
+        box-shadow: var(--card-shadow);
+    }
+    
+    .vehiculos-header h2 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .search-container {
+        background: var(--card-bg);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-lg);
+        margin-bottom: 2rem;
+        box-shadow: var(--card-shadow);
+    }
+    
+    .search-input {
+        border-radius: var(--border-radius);
+        border: 2px solid var(--muted);
+        background: var(--bg);
+        color: var(--fg);
+        padding: var(--spacing-md);
+        font-size: 1.1rem;
+        transition: var(--transition);
+    }
+    
+    .search-input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 0.2rem rgba(var(--accent), 0.25);
+        outline: none;
+    }
+    
+    .search-input::placeholder {
+        color: var(--muted);
+    }
+    
+    .stats-container {
+        background: var(--card-bg);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-lg);
+        margin-bottom: 2rem;
+        box-shadow: var(--card-shadow);
+    }
+    
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    
+    .stat-card {
+        background: var(--hover-bg);
+        padding: var(--spacing-md);
+        border-radius: var(--border-radius);
+        text-align: center;
+        border-left: 4px solid var(--accent);
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--accent);
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        color: var(--fg);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Pestañas por marca */
+    .tabs-container {
+        background: var(--card-bg);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-lg);
+        margin-bottom: 2rem;
+        box-shadow: var(--card-shadow);
+    }
+    
+    .tabs-header {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--muted);
+        padding-bottom: 1rem;
+    }
+    
+    .tab-btn {
+        background: var(--hover-bg);
+        color: var(--fg);
+        border: 2px solid var(--muted);
+        border-radius: var(--border-radius);
+        padding: 0.75rem 1.5rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        white-space: nowrap;
+    }
+    
+    .tab-btn:hover {
+        background: var(--accent);
+        color: var(--btn-fg);
+        border-color: var(--accent);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        text-decoration: none;
+    }
+    
+    .tab-btn.active {
+        background: var(--accent);
+        color: var(--btn-fg);
+        border-color: var(--accent);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    
+    .tab-count {
+        background: rgba(255,255,255,0.2);
+        color: inherit;
+        padding: var(--spacing-xs) 0.5rem;
+        border-radius: var(--border-radius-lg);
+        font-size: 0.8rem;
+        font-weight: 700;
+    }
+    
+    .tab-btn.active .tab-count {
+        background: rgba(255,255,255,0.3);
+    }
+    
+    /* Contenido de vehículos */
+    .vehiculos-content {
+        background: var(--card-bg);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-lg);
+        box-shadow: var(--card-shadow);
+        min-height: 400px;
+    }
+    
+    .vehiculos-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .vehiculo-card {
+        background: var(--hover-bg);
+        border: 2px solid var(--muted);
+        border-radius: var(--border-radius);
+        padding: var(--spacing-lg);
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .vehiculo-card:hover {
+        border-color: var(--accent);
+        transform: translateY(-4px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .vehiculo-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--accent);
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+    }
+    
+    .vehiculo-card:hover::before {
+        transform: scaleX(1);
+    }
+    
+    .vehiculo-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .vehiculo-icon {
+        font-size: 2rem;
+        color: var(--accent);
+    }
+    
+    .vehiculo-info h3 {
+        color: var(--fg);
+        font-size: 1.2rem;
+        font-weight: 700;
+        margin: 0;
+        line-height: 1.2;
+    }
+    
+    .vehiculo-marca {
+        color: var(--muted);
+        font-size: 0.9rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .vehiculo-details {
+        margin-bottom: 1.5rem;
+    }
+    
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--spacing-sm) 0;
+        border-bottom: 1px solid var(--muted);
+    }
+    
+    .detail-row:last-child {
+        border-bottom: none;
+    }
+    
+    .detail-label {
+        color: var(--muted);
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    
+    .detail-value {
+        color: var(--fg);
+        font-weight: 600;
+    }
+    
+    .year-badge {
+        background: var(--accent);
+        color: var(--btn-fg);
+        padding: var(--spacing-xs) 0.75rem;
+        border-radius: var(--border-radius-lg);
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .vehiculo-actions {
+        display: flex;
+        gap: 0.5rem;
+        justify-content: flex-end;
+    }
+    
+    .btn-action {
+        border-radius: var(--border-radius);
+        padding: var(--spacing-sm) 0.75rem;
+        font-size: 0.85rem;
+        min-width: 38px;
+        height: 38px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: var(--transition);
+        border: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        text-decoration: none;
+    }
+    
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        text-decoration: none;
+    }
+    
+    .btn-warning {
+        background: #ffc107;
+        color: #000;
+    }
+    
+    .btn-info {
+        background: #17a2b8;
+        color: #fff;
+    }
+    
+    .btn-danger {
+        background: #dc3545;
+        color: #fff;
+    }
+    
+    .pagination-container {
+        margin-top: 2rem;
+        display: flex;
+        justify-content: center;
+    }
+    
+    .pagination .page-link {
+        color: var(--accent);
+        border-color: var(--muted);
+        background-color: var(--card-bg);
+    }
+    
+    .pagination .page-link:hover {
+        color: var(--btn-fg);
+        background-color: var(--accent);
+        border-color: var(--accent);
+    }
+    
+    .pagination .page-item.active .page-link {
+        background-color: var(--accent);
+        border-color: var(--accent);
+        color: var(--btn-fg);
+    }
+    
+    .no-vehiculos {
+        text-align: center;
+        padding: 3rem;
+        color: var(--muted);
+    }
+    
+    .no-vehiculos i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .vehiculos-container {
+            padding: var(--spacing-xs);
+        }
+        
+        .search-container,
+        .stats-container,
+        .tabs-container,
+        .vehiculos-content {
+            margin: var(--spacing-xs);
+            padding: 0.75rem;
+        }
+        
+        .stats-row {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.5rem;
+        }
+        
+        .tabs-header {
+            gap: 0.25rem;
+        }
+        
+        .tab-btn {
+            padding: var(--spacing-sm) 1rem;
+            font-size: 0.8rem;
+        }
+        
+        .vehiculos-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+        
+        .vehiculo-card {
+            padding: var(--spacing-md);
+        }
+        
+        .vehiculo-actions {
+            flex-wrap: wrap;
+        }
+        
+        .btn-action {
+            padding: 0.4rem 0.6rem;
+            font-size: 0.75rem;
+            min-width: 32px;
+            height: 32px;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .vehiculos-header h2 {
+            font-size: 2rem;
+        }
+        
+        .tabs-header {
+            justify-content: center;
+        }
+        
+        .tab-btn {
+            flex: 1;
+            min-width: 0;
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="vehiculos-container">
+    <!-- Header -->
+    <div class="vehiculos-header">
+        <h2 class="mb-0">🔗 Compatibilidad de Vehículos</h2>
+        <p class="mb-0">Administra la base de datos de vehículos para compatibilidad de repuestos</p>
+    </div>
+
+    <!-- Estadísticas -->
+    <div class="stats-container">
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-number">{{ total_vehiculos }}</div>
+                <div class="stat-label">Vehículos Compatibles</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ marcas_ordenadas|length }}</div>
+                <div class="stat-label">Marcas Disponibles</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ vehiculos|length }}</div>
+                <div class="stat-label">Mostrados</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Barra de búsqueda -->
+    <div class="search-container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" 
+                           id="search-vehiculos" 
+                           class="form-control search-input" 
+                           placeholder="🔍 Buscar por marca, modelo, año, motor o carrocería..."
+                           value="{{ search_query }}"
+                           autocomplete="off">
+                </div>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'vehiculo_compatibilidad_create' %}" class="btn btn-primary btn-action">
+                    <i class="fas fa-plus me-2"></i>Nuevo Vehículo Compatible
+                </a>
+                <a href="javascript:history.back()" class="btn btn-outline-secondary btn-action">
+                    <i class="fas fa-arrow-left me-2"></i>Volver
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pestañas por marca -->
+    <div class="tabs-container">
+        <div class="tabs-header">
+            <a href="?{% if search_query %}search={{ search_query }}{% endif %}" 
+               class="tab-btn {% if not marca_activa %}active{% endif %}">
+                <i class="fas fa-list"></i>
+                Todos los Vehículos
+                <span class="tab-count">{{ total_vehiculos }}</span>
+            </a>
+            {% for marca, count in marcas_con_conteos %}
+            <a href="?marca={{ marca|urlencode }}{% if search_query %}&search={{ search_query }}{% endif %}" 
+               class="tab-btn {% if marca_activa == marca %}active{% endif %}">
+                <i class="fas fa-car"></i>
+                {{ marca }}
+                <span class="tab-count">{{ count }}</span>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Contenido de vehículos -->
+    <div class="vehiculos-content">
+        {% if vehiculos %}
+            <div class="vehiculos-grid">
+                {% for vehiculo in vehiculos %}
+                <div class="vehiculo-card" 
+                     data-id="{{ vehiculo.id }}"
+                     data-marca="{{ vehiculo.marca|lower }}"
+                     data-modelo="{{ vehiculo.modelo|lower }}"
+                     data-anio-desde="{{ vehiculo.anio_desde }}"
+                     data-anio-hasta="{{ vehiculo.anio_hasta }}"
+                     data-motor="{{ vehiculo.motor|default:''|lower }}"
+                     data-carroceria="{{ vehiculo.carroceria|default:''|lower }}">
+                    
+                    <div class="vehiculo-header">
+                        <div class="vehiculo-icon">🚗</div>
+                        <div class="vehiculo-info">
+                            <h3>{{ vehiculo.modelo }}</h3>
+                            <div class="vehiculo-marca">{{ vehiculo.marca }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="vehiculo-details">
+                        <div class="detail-row">
+                            <span class="detail-label">ID:</span>
+                            <span class="detail-value">#{{ vehiculo.id }}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Años:</span>
+                            <span class="year-badge">{{ vehiculo.anio_desde }}-{{ vehiculo.anio_hasta }}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Rango:</span>
+                            <span class="detail-value">{{ vehiculo.rango_anos }} años</span>
+                        </div>
+                        {% if vehiculo.motor %}
+                        <div class="detail-row">
+                            <span class="detail-label">Motor:</span>
+                            <span class="detail-value">{{ vehiculo.motor }}</span>
+                        </div>
+                        {% endif %}
+                        {% if vehiculo.carroceria %}
+                        <div class="detail-row">
+                            <span class="detail-label">Carrocería:</span>
+                            <span class="detail-value">{{ vehiculo.carroceria }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="vehiculo-actions">
+                        <a href="{% url 'vehiculo_compatibilidad_update' vehiculo.pk %}" 
+                           class="btn-action btn-warning" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="{% url 'vehiculo_compatibilidad_detail' vehiculo.pk %}" 
+                           class="btn-action btn-info" title="Ver Detalles">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="{% url 'vehiculo_compatibilidad_delete' vehiculo.pk %}" 
+                           class="btn-action btn-danger" title="Eliminar" onclick="{% if ver_avisos %}return confirm('¿Estás seguro de eliminar este vehículo compatible?');{% else %}return true;{% endif %}">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-vehiculos">
+                <i class="fas fa-car"></i>
+                <h3>No hay vehículos para mostrar</h3>
+                {% if search_query %}
+                    <p>No se encontraron vehículos que coincidan con "{{ search_query }}"</p>
+                {% elif marca_activa %}
+                    <p>No hay vehículos registrados para la marca "{{ marca_activa }}"</p>
+                {% else %}
+                    <p>No hay vehículos compatibles registrados. <a href="{% url 'vehiculo_compatibilidad_create' %}">Crear el primero</a></p>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Paginación -->
+    {% if vehiculos.has_other_pages %}
+    <div class="pagination-container">
+        <nav aria-label="Paginación de vehículos">
+            <ul class="pagination">
+                {% if vehiculos.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if marca_activa %}&marca={{ marca_activa|urlencode }}{% endif %}">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ vehiculos.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if marca_activa %}&marca={{ marca_activa|urlencode }}{% endif %}">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                    </li>
+                {% endif %}
+
+                {% for num in vehiculos.paginator.page_range %}
+                    {% if vehiculos.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > vehiculos.number|add:'-3' and num < vehiculos.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if marca_activa %}&marca={{ marca_activa|urlencode }}{% endif %}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if vehiculos.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ vehiculos.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if marca_activa %}&marca={{ marca_activa|urlencode }}{% endif %}">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ vehiculos.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if marca_activa %}&marca={{ marca_activa|urlencode }}{% endif %}">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Función de búsqueda en tiempo real
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('search-vehiculos');
+    const vehiculoCards = document.querySelectorAll('.vehiculo-card');
+    const vehiculosContent = document.querySelector('.vehiculos-content');
+    
+    // Función para filtrar vehículos
+    function filtrarVehiculos(termino) {
+        const terminoLower = termino.toLowerCase();
+        let vehiculosVisibles = 0;
+        
+        vehiculoCards.forEach(card => {
+            const marca = card.dataset.marca;
+            const modelo = card.dataset.modelo;
+            const anioDesde = card.dataset.anioDesde;
+            const anioHasta = card.dataset.anioHasta;
+            const motor = card.dataset.motor || '';
+            const carroceria = card.dataset.carroceria || '';
+            
+            const coincide = marca.includes(terminoLower) || 
+                           modelo.includes(terminoLower) || 
+                           anioDesde.includes(terminoLower) || 
+                           anioHasta.includes(terminoLower) ||
+                           motor.includes(terminoLower) ||
+                           carroceria.includes(terminoLower);
+            
+            if (coincide) {
+                card.style.display = '';
+                vehiculosVisibles++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+        
+        // Mostrar mensaje si no hay resultados
+        const noResultsMessage = document.getElementById('no-results-message');
+        if (vehiculosVisibles === 0 && termino.length > 0) {
+            if (!noResultsMessage) {
+                const noResultsDiv = document.createElement('div');
+                noResultsDiv.id = 'no-results-message';
+                noResultsDiv.className = 'no-vehiculos';
+                noResultsDiv.innerHTML = `
+                    <i class="fas fa-search"></i>
+                    <h3>No se encontraron resultados</h3>
+                    <p>No hay vehículos que coincidan con "${termino}"</p>
+                `;
+                vehiculosContent.appendChild(noResultsDiv);
+            }
+        } else {
+            if (noResultsMessage) {
+                noResultsMessage.remove();
+            }
+        }
+    }
+    
+    // Event listener para la búsqueda con debounce
+    let searchTimeout;
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            const termino = this.value.trim();
+            filtrarVehiculos(termino);
+        }, 150); // Debounce de 150ms
+    });
+    
+    // Limpiar búsqueda con Escape
+    searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            this.value = '';
+            filtrarVehiculos('');
+            this.blur();
+        }
+    });
+    
+    // Auto-focus en la búsqueda
+    searchInput.focus();
+    
+    // Animación de entrada para las cards
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    });
+    
+    vehiculoCards.forEach(card => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(card);
+    });
+});
+</script>
+{% endblock %}

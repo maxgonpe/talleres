@@ -4,428 +4,14 @@
 {% block title %}Gestión de Usuarios y Permisos{% endblock %}
 
 {% block extra_css %}
-  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
 {% endblock %}
 
 {% block extra_head %}
-<style>
-    .usuarios-container {
-        max-width: 100%;
-        margin: 0;
-        padding: var(--spacing-sm);
-    }
-    
-    .usuarios-header {
-        background: linear-gradient(135deg, var(--btn-bg) 0%, var(--muted) 100%);
-        color: var(--btn-fg);
-        padding: var(--spacing-md);
-        border-radius: var(--border-radius-lg);
-        margin-bottom: 1rem;
-        text-align: center;
-    }
-    
-    /* Estadísticas */
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1rem;
-        margin-bottom: 2rem;
-    }
-    
-    .stat-card {
-        background: var(--card-bg);
-        border-radius: var(--border-radius-xl);
-        padding: var(--spacing-lg);
-        text-align: center;
-        box-shadow: var(--shadow-lg);
-    }
-    
-    .stat-value {
-        font-size: 2rem;
-        font-weight: 800;
-        color: var(--primary-600);
-    }
-    
-    .stat-label {
-        color: var(--muted);
-        font-size: 0.875rem;
-        margin-top: 0.5rem;
-    }
-    
-    /* Barra de búsqueda */
-    .search-bar {
-        background: var(--card-bg);
-        border-radius: var(--border-radius-xl);
-        padding: var(--spacing-lg);
-        margin-bottom: 1rem;
-        box-shadow: var(--shadow-lg);
-    }
-    
-    .search-input {
-        width: 100%;
-        padding: 0.75rem 1rem 0.75rem 2.5rem;
-        border: 2px solid var(--muted);
-        border-radius: var(--border-radius-lg);
-        background: var(--card-bg);
-        color: var(--fg);
-        font-size: 1rem;
-    }
-    
-    .search-input:focus {
-        outline: none;
-        border-color: var(--primary-600);
-        box-shadow: 0 0 0 0.2rem var(--primary-200);
-    }
-    
-    .search-icon {
-        position: absolute;
-        left: calc(var(--spacing-lg) + 0.75rem);
-        top: 50%;
-        transform: translateY(-50%);
-        color: var(--muted);
-    }
-    
-    .crear-usuario-card {
-        background: var(--card-bg);
-        border-radius: var(--border-radius-xl);
-        padding: var(--spacing-lg);
-        margin-bottom: 2rem;
-        box-shadow: var(--shadow-lg);
-    }
-    
-    .usuarios-table {
-        background: var(--card-bg);
-        border-radius: var(--border-radius-xl);
-        padding: var(--spacing-lg);
-        box-shadow: var(--shadow-lg);
-    }
-    
-    .table {
-        color: var(--fg);
-    }
-    
-    .table th {
-        background: var(--muted);
-        color: var(--fg);
-        border: none;
-        font-weight: 600;
-        padding: 0.5rem 0.3rem;
-        font-size: 0.85rem;
-        text-align: center;
-    }
-    
-    .table td {
-        border-color: var(--muted);
-        vertical-align: middle;
-        padding: 0.5rem 0.3rem;
-        font-size: 0.85rem;
-    }
-    
-    /* Columnas compactas para permisos */
-    .table th.col-permiso,
-    .table td.col-permiso {
-        width: 40px;
-        text-align: center;
-        padding: 0.3rem;
-    }
-    
-    /* Tooltips para abreviaciones */
-    .col-header-tooltip {
-        cursor: help;
-        position: relative;
-        display: inline-block;
-    }
-    
-    .col-header-tooltip:hover::after {
-        content: attr(data-tooltip);
-        position: absolute;
-        bottom: 100%;
-        left: 50%;
-        transform: translateX(-50%);
-        background: #333;
-        color: #fff;
-        padding: 0.5rem 0.75rem;
-        border-radius: 0.25rem;
-        font-size: 0.75rem;
-        white-space: nowrap;
-        z-index: 1000;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    }
-    
-    .col-header-tooltip:hover::before {
-        content: '';
-        position: absolute;
-        bottom: 100%;
-        left: 50%;
-        transform: translateX(-50%) translateY(8px);
-        border: 5px solid transparent;
-        border-top-color: #333;
-        z-index: 1000;
-    }
-    
-    .rol-badge {
-        padding: var(--spacing-xs) 0.75rem;
-        border-radius: var(--border-radius-xl);
-        font-size: 0.8rem;
-        font-weight: 600;
-        text-transform: uppercase;
-    }
-    
-    .rol-mecanico {
-        background: var(--primary-600);
-        color: var(--text-inverse);
-    }
-    
-    .rol-vendedor {
-        background: var(--success-600);
-        color: var(--text-inverse);
-    }
-    
-    .rol-admin {
-        background: var(--danger-600);
-        color: var(--text-inverse);
-    }
-    
-    .permiso-checkbox {
-        transform: scale(1.2);
-        cursor: pointer;
-    }
-    
-    .btn-eliminar {
-        background: var(--danger-600);
-        border: none;
-        color: var(--text-inverse);
-        padding: var(--spacing-xs) 0.5rem;
-        border-radius: var(--border-radius-sm);
-        font-size: 0.8rem;
-    }
-    
-    .btn-eliminar:hover {
-        background: var(--danger-700);
-        color: var(--text-inverse);
-    }
-    
-    .btn-editar {
-        background: var(--primary-600);
-        border: none;
-        color: var(--text-inverse);
-        padding: 0.25rem 0.4rem;
-        border-radius: var(--border-radius-sm);
-        font-size: 0.9rem;
-        margin-right: 0.15rem;
-        cursor: pointer;
-        line-height: 1;
-    }
-    
-    .btn-editar:hover {
-        background: var(--primary-700);
-        color: var(--text-inverse);
-        transform: scale(1.1);
-    }
-    
-    .btn-password {
-        background: var(--warning-600);
-        border: none;
-        color: var(--text-inverse);
-        padding: 0.25rem 0.4rem;
-        border-radius: var(--border-radius-sm);
-        font-size: 0.9rem;
-        margin-right: 0.15rem;
-        cursor: pointer;
-        line-height: 1;
-    }
-    
-    .btn-password:hover {
-        background: var(--warning-700);
-        color: var(--text-inverse);
-        transform: scale(1.1);
-    }
-    
-    .btn-eliminar {
-        padding: 0.25rem 0.4rem;
-        font-size: 0.9rem;
-        line-height: 1;
-    }
-    
-    .form-control, .form-select {
-        background: var(--card-bg);
-        border: 1px solid var(--muted);
-        color: var(--fg);
-    }
-    
-    .form-control:focus, .form-select:focus {
-        background: var(--card-bg);
-        border-color: var(--primary-600);
-        color: var(--fg);
-        box-shadow: 0 0 0 0.2rem var(--primary-200);
-    }
-    
-    /* Modales */
-    .modal {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.7);
-        z-index: 1000;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    .modal.active {
-        display: flex;
-    }
-    
-    .modal-content {
-        background: #ffffff;
-        border-radius: var(--border-radius-xl);
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-        max-width: 600px;
-        width: 90%;
-        max-height: 90vh;
-        overflow-y: auto;
-        animation: modalSlideIn 0.3s ease;
-        border: 2px solid #e0e0e0;
-    }
-    
-    /* Tema oscuro para el modal */
-    body.theme-oscuro .modal-content {
-        background: #2d2d2d;
-        border-color: #444;
-    }
-    
-    @keyframes modalSlideIn {
-        from {
-            opacity: 0;
-            transform: translateY(-50px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    .modal-header {
-        padding: var(--spacing-lg);
-        background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
-        color: #ffffff;
-        border-radius: var(--border-radius-xl) var(--border-radius-xl) 0 0;
-    }
-    
-    .modal-header h5 {
-        margin: 0;
-        color: #ffffff;
-    }
-    
-    .modal-body {
-        padding: var(--spacing-lg);
-        background: #ffffff;
-        color: #333;
-    }
-    
-    body.theme-oscuro .modal-body {
-        background: #2d2d2d;
-        color: #e0e0e0;
-    }
-    
-    .modal-body .form-label {
-        color: #333;
-        font-weight: 600;
-    }
-    
-    body.theme-oscuro .modal-body .form-label {
-        color: #e0e0e0;
-    }
-    
-    .modal-body .form-control,
-    .modal-body .form-select {
-        background: #f5f5f5;
-        border: 1px solid #ccc;
-        color: #333;
-    }
-    
-    body.theme-oscuro .modal-body .form-control,
-    body.theme-oscuro .modal-body .form-select {
-        background: #1a1a1a;
-        border-color: #555;
-        color: #e0e0e0;
-    }
-    
-    .modal-body .form-control:focus,
-    .modal-body .form-select:focus {
-        background: #ffffff;
-        border-color: #4a90e2;
-        color: #333;
-    }
-    
-    body.theme-oscuro .modal-body .form-control:focus,
-    body.theme-oscuro .modal-body .form-select:focus {
-        background: #2d2d2d;
-        border-color: #4a90e2;
-        color: #e0e0e0;
-    }
-    
-    .modal-body .alert {
-        background: #e3f2fd;
-        border: 1px solid #90caf9;
-        color: #1565c0;
-        padding: 0.75rem;
-        border-radius: 0.5rem;
-    }
-    
-    body.theme-oscuro .modal-body .alert {
-        background: #1a3a52;
-        border-color: #2980b9;
-        color: #90caf9;
-    }
-    
-    .modal-body .text-muted {
-        color: #777 !important;
-    }
-    
-    body.theme-oscuro .modal-body .text-muted {
-        color: #999 !important;
-    }
-    
-    .modal-footer {
-        padding: var(--spacing-md) var(--spacing-lg);
-        background: #f5f5f5;
-        border-radius: 0 0 var(--border-radius-xl) var(--border-radius-xl);
-        display: flex;
-        justify-content: flex-end;
-        gap: 0.5rem;
-        border-top: 1px solid #e0e0e0;
-    }
-    
-    body.theme-oscuro .modal-footer {
-        background: #1a1a1a;
-        border-top-color: #444;
-    }
-    
-    .status-badge {
-        display: inline-flex;
-        align-items: center;
-        padding: 0.25rem 0.5rem;
-        border-radius: var(--border-radius-sm);
-        font-size: 0.75rem;
-        font-weight: 600;
-    }
-    
-    .status-active {
-        background: var(--success-200);
-        color: var(--success-800);
-    }
-    
-    .status-inactive {
-        background: var(--danger-200);
-        color: var(--danger-800);
-    }
-</style>
+
 {% endblock %}
 
 {% block content %}
+<span hidden data-css004b="3d1d2e67a5"></span>
 <div class="usuarios-container">
     <!-- Header -->
     <div class="usuarios-header">
@@ -451,7 +37,7 @@
 
     <!-- Barra de Búsqueda -->
     <div class="search-bar">
-        <div style="position: relative;">
+        <div  class="css004b-inline-0b8d1654190a">
             <i class="fas fa-search search-icon"></i>
             <input 
                 type="text" 
@@ -522,10 +108,10 @@
             <table class="table table-striped">
                 <thead>
                     <tr>
-                        <th style="text-align: left;">Usuario</th>
-                        <th style="text-align: left;">Nombre</th>
-                        <th style="text-align: left;">Email</th>
-                        <th style="text-align: left;">Especialidad</th>
+                        <th  class="css004b-inline-95bec8f13ed7">Usuario</th>
+                        <th  class="css004b-inline-95bec8f13ed7">Nombre</th>
+                        <th  class="css004b-inline-95bec8f13ed7">Email</th>
+                        <th  class="css004b-inline-95bec8f13ed7">Especialidad</th>
                         <th>Estado</th>
                         <th>Rol</th>
                         <th class="col-permiso">
@@ -558,7 +144,7 @@
                                 ⚙️ Adm
                             </span>
                         </th>
-                        <th style="min-width: 120px;">Acciones</th>
+                        <th  class="css004b-inline-080b4237e4b8">Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="usersTableBody">
@@ -574,21 +160,21 @@
                             {% if usuario.first_name or usuario.last_name %}
                                 {{ usuario.first_name }} {{ usuario.last_name }}
                             {% else %}
-                                <em style="color: var(--muted);">Sin nombre</em>
+                                <em  class="css004b-inline-60793254adbd">Sin nombre</em>
                             {% endif %}
                         </td>
                         <td>
                             {% if usuario.email %}
                                 {{ usuario.email }}
                             {% else %}
-                                <em style="color: var(--muted);">Sin email</em>
+                                <em  class="css004b-inline-60793254adbd">Sin email</em>
                             {% endif %}
                         </td>
                         <td>
                             {% if usuario.mecanico.especialidad %}
                                 {{ usuario.mecanico.especialidad }}
                             {% else %}
-                                <em style="color: var(--muted);">Sin definir</em>
+                                <em  class="css004b-inline-60793254adbd">Sin definir</em>
                             {% endif %}
                         </td>
                         <td>
@@ -678,7 +264,7 @@
                                        onchange="this.form.submit()">
                             </form>
                         </td>
-                        <td style="white-space: nowrap;">
+                        <td  class="css004b-inline-db6040872e1f">
                             <button class="btn-editar btn-editar-user" 
                                     data-user-id="{{ usuario.id }}"
                                     data-username="{{ usuario.username }}"
@@ -735,7 +321,7 @@
             <div class="modal-body">
                 <div class="mb-3">
                     <label class="form-label">Username</label>
-                    <input type="text" class="form-control" id="editUsername" readonly style="background: #e9ecef;">
+                    <input type="text" class="form-control css004b-inline-d4d6ad38e402" id="editUsername" readonly >
                 </div>
                 
                 <div class="mb-3">
@@ -760,7 +346,7 @@
                 </div>
                 
                 <div class="mb-3">
-                    <label class="form-check-label" style="cursor: pointer;">
+                    <label class="form-check-label css004b-inline-71492a0e9b1d" >
                         <input type="checkbox" class="form-check-input" name="is_active" id="editIsActive">
                         Usuario activo
                     </label>

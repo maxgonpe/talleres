@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block extra_css %}
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h2>Eliminar Item de Compra</h2>
+  <div class="alert alert-warning">
+    <p>¿Estás seguro de que deseas eliminar este item de la compra?</p>
+    <p><strong>Repuesto:</strong> {{ item.repuesto.nombre }}</p>
+    <p><strong>Cantidad:</strong> {{ item.cantidad }}</p>
+    <p><strong>Precio Unitario:</strong> ${{ item.precio_unitario|floatformat:0 }}</p>
+  </div>
+  
+  <form method="post" id="deleteForm">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Sí, eliminar</button>
+    <a href="{% url 'compra_detail' compra.pk %}" class="btn btn-secondary">Cancelar</a>
+  </form>
+</div>
+
+<script>
+  // Si ver_avisos = False, auto-enviar el formulario
+  {% if not ver_avisos %}
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('deleteForm').submit();
+    });
+  {% endif %}
+</script>
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,215 @@
+<style>
+  .pizarra-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: var(--spacing-md);
+    height: 80vh;
+  }
+  
+  .pizarra-cell {
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-md);
+    overflow-y: auto;
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+  }
+
+  .pizarra-cell h4 {
+    text-align: center;
+    margin-bottom: var(--spacing-md);
+    font-weight: bold;
+    color: var(--text-primary);
+  }
+  
+  .vehiculo-item {
+    font-size: 1rem;
+    margin-bottom: var(--spacing-sm);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: var(--transition);
+  }
+  
+  .vehiculo-item:hover {
+    background-color: var(--hover-bg);
+  }
+  
+  .vehiculo-icon {
+    font-size: 1.5rem;
+    margin-right: var(--spacing-sm);
+  }
+  
+  .vehiculo-info { 
+    flex-grow: 1; 
+  }
+  
+  .dias-taller {
+    display: inline-block;
+    background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-left: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+  
+  .dias-taller.pocos {
+    background: linear-gradient(135deg, #51cf66, #37b24d);
+  }
+  
+  .dias-taller.medios {
+    background: linear-gradient(135deg, #ffd43b, #fab005);
+  }
+  
+  .dias-taller.muchos {
+    background: linear-gradient(135deg, #ff6b6b, #c92a2a);
+  }
+  
+  .dias-taller.entregado {
+    background: linear-gradient(135deg, #868e96, #495057);
+    animation: none;
+  }
+  
+  .progress { 
+    height: 8px; 
+    margin-top: var(--spacing-xs);
+    background-color: var(--neutral-200);
+  }
+  
+  .progress-bar {
+    background-color: var(--accent);
+  }
+  
+  .placa-chile {
+    display: inline-block;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border: 2px solid var(--text-primary);
+    border-radius: var(--border-radius-sm);
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+    font-weight: bold;
+    font-family: 'Arial Black', sans-serif;
+    letter-spacing: 2px;
+    font-size: 1.1rem;
+  }
+</style>
+
+<div class="pizarra-grid">
+  <!-- Iniciado -->
+  <div class="pizarra-cell">
+    <h4>🟡 Iniciado</h4>
+    {% for t in iniciados %}
+      <div class="vehiculo-item">
+        <a href="{% url 'trabajo_detalle' t.id %}" class="vehiculo-icon-link">
+          <span class="vehiculo-icon">🚗</span>
+        </a>
+        <div class="vehiculo-info">
+          <div>
+            <span class="placa-chile">{{ t.vehiculo.placa|default:"(sin patente)" }}</span>
+            <strong> - {{ t.vehiculo.cliente.nombre }}</strong>
+            <span class="dias-taller {% if t.dias_en_taller <= 2 %}pocos{% elif t.dias_en_taller <= 5 %}medios{% else %}muchos{% endif %}">
+              📅 {{ t.dias_en_taller_texto }}
+            </span>
+          </div>
+          <div class="progress">
+            <div class="progress-bar bg-warning" style="width: {{ t.porcentaje_avance }}%;">{{ t.porcentaje_avance }}%</div>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <p class="text-secondary">Sin trabajos en esta etapa</p>
+    {% endfor %}
+  </div>
+
+  <!-- Trabajando -->
+  <div class="pizarra-cell">
+    <h4>🔵 Trabajando</h4>
+    {% for t in trabajando %}
+      <div class="vehiculo-item">
+        <a href="{% url 'trabajo_detalle' t.id %}" class="vehiculo-icon-link">
+          <span class="vehiculo-icon">🚙</span>
+        </a>
+        <div class="vehiculo-info">
+          <div>
+            <span class="placa-chile">{{ t.vehiculo.placa|default:"(sin patente)" }}</span>
+            <strong> - {{ t.vehiculo.cliente.nombre }}</strong>
+            <span class="dias-taller {% if t.dias_en_taller <= 2 %}pocos{% elif t.dias_en_taller <= 5 %}medios{% else %}muchos{% endif %}">
+              📅 {{ t.dias_en_taller_texto }}
+            </span>
+          </div>
+          <div class="progress">
+            <div class="progress-bar bg-primary" style="width: {{ t.porcentaje_avance }}%;">{{ t.porcentaje_avance }}%</div>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <p class="text-secondary">Sin trabajos en esta etapa</p>
+    {% endfor %}
+  </div>
+
+  <!-- Completado -->
+  <div class="pizarra-cell">
+    <h4>🟢 Completado</h4>
+    {% for t in completados %}
+      <div class="vehiculo-item">
+        <a href="{% url 'trabajo_detalle' t.id %}" class="vehiculo-icon-link">
+          <span class="vehiculo-icon">🚕</span>
+        </a>
+        <div class="vehiculo-info">
+          <div>
+            <span class="placa-chile">{{ t.vehiculo.placa|default:"(sin patente)" }}</span>
+            <strong> - {{ t.vehiculo.cliente.nombre }}</strong>
+            <span class="dias-taller {% if t.dias_en_taller <= 2 %}pocos{% elif t.dias_en_taller <= 5 %}medios{% else %}muchos{% endif %}">
+              📅 {{ t.dias_en_taller_texto }}
+            </span>
+          </div>
+          <div class="progress">
+            <div class="progress-bar bg-success" style="width: {{ t.porcentaje_avance }}%;">{{ t.porcentaje_avance }}%</div>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <p class="text-secondary">Sin trabajos en esta etapa</p>
+    {% endfor %}
+  </div>
+
+  <!-- Entregado -->
+  <div class="pizarra-cell">
+    <h4>⚫ Entregado</h4>
+    {% for t in entregados %}
+      <div class="vehiculo-item">
+        <a href="{% url 'trabajo_detalle' t.id %}" class="vehiculo-icon-link">
+          <span class="vehiculo-icon">🚐</span>
+        </a>
+        <div class="vehiculo-info">
+          <div>
+            <span class="placa-chile">{{ t.vehiculo.placa|default:"(sin patente)" }}</span>
+            <strong> - {{ t.vehiculo.cliente.nombre }}</strong>
+            <span class="dias-taller entregado">
+              📅 {{ t.dias_en_taller_texto }}
+            </span>
+          </div>
+          <div class="progress">
+            <div class="progress-bar bg-primary" style="width: {{ t.porcentaje_avance }}%;">{{ t.porcentaje_avance }}%</div>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <p class="text-secondary">Sin trabajos en esta etapa</p>
+    {% endfor %}
+  </div>
+</div>

@@ -1,0 +1,108 @@
+<span hidden data-css004b="7432dbd346"></span>
+
+
+<div class="pizarra-grid">
+  <!-- Iniciado -->
+  <div class="pizarra-cell">
+    <h4>🟡 Iniciado</h4>
+    {% for t in iniciados %}
+      <div class="vehiculo-item">
+        <a href="{% url 'trabajo_detalle' t.id %}" class="vehiculo-icon-link">
+          <span class="vehiculo-icon">🚗</span>
+        </a>
+        <div class="vehiculo-info">
+          <div>
+            <span class="placa-chile">{{ t.vehiculo.placa|default:"(sin patente)" }}</span>
+            <strong> - {{ t.vehiculo.cliente.nombre }}</strong>
+            <span class="dias-taller {% if t.dias_en_taller <= 2 %}pocos{% elif t.dias_en_taller <= 5 %}medios{% else %}muchos{% endif %}">
+              📅 {{ t.dias_en_taller_texto }}
+            </span>
+          </div>
+          <div class="progress">
+            <div class="progress-bar bg-warning" style="width: {{ t.porcentaje_avance }}%;">{{ t.porcentaje_avance }}%</div>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <p class="text-secondary">Sin trabajos en esta etapa</p>
+    {% endfor %}
+  </div>
+
+  <!-- Trabajando -->
+  <div class="pizarra-cell">
+    <h4>🔵 Trabajando</h4>
+    {% for t in trabajando %}
+      <div class="vehiculo-item">
+        <a href="{% url 'trabajo_detalle' t.id %}" class="vehiculo-icon-link">
+          <span class="vehiculo-icon">🚙</span>
+        </a>
+        <div class="vehiculo-info">
+          <div>
+            <span class="placa-chile">{{ t.vehiculo.placa|default:"(sin patente)" }}</span>
+            <strong> - {{ t.vehiculo.cliente.nombre }}</strong>
+            <span class="dias-taller {% if t.dias_en_taller <= 2 %}pocos{% elif t.dias_en_taller <= 5 %}medios{% else %}muchos{% endif %}">
+              📅 {{ t.dias_en_taller_texto }}
+            </span>
+          </div>
+          <div class="progress">
+            <div class="progress-bar bg-primary" style="width: {{ t.porcentaje_avance }}%;">{{ t.porcentaje_avance }}%</div>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <p class="text-secondary">Sin trabajos en esta etapa</p>
+    {% endfor %}
+  </div>
+
+  <!-- Completado -->
+  <div class="pizarra-cell">
+    <h4>🟢 Completado</h4>
+    {% for t in completados %}
+      <div class="vehiculo-item">
+        <a href="{% url 'trabajo_detalle' t.id %}" class="vehiculo-icon-link">
+          <span class="vehiculo-icon">🚕</span>
+        </a>
+        <div class="vehiculo-info">
+          <div>
+            <span class="placa-chile">{{ t.vehiculo.placa|default:"(sin patente)" }}</span>
+            <strong> - {{ t.vehiculo.cliente.nombre }}</strong>
+            <span class="dias-taller {% if t.dias_en_taller <= 2 %}pocos{% elif t.dias_en_taller <= 5 %}medios{% else %}muchos{% endif %}">
+              📅 {{ t.dias_en_taller_texto }}
+            </span>
+          </div>
+          <div class="progress">
+            <div class="progress-bar bg-success" style="width: {{ t.porcentaje_avance }}%;">{{ t.porcentaje_avance }}%</div>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <p class="text-secondary">Sin trabajos en esta etapa</p>
+    {% endfor %}
+  </div>
+
+  <!-- Entregado -->
+  <div class="pizarra-cell">
+    <h4>⚫ Entregado</h4>
+    {% for t in entregados %}
+      <div class="vehiculo-item">
+        <a href="{% url 'trabajo_detalle' t.id %}" class="vehiculo-icon-link">
+          <span class="vehiculo-icon">🚐</span>
+        </a>
+        <div class="vehiculo-info">
+          <div>
+            <span class="placa-chile">{{ t.vehiculo.placa|default:"(sin patente)" }}</span>
+            <strong> - {{ t.vehiculo.cliente.nombre }}</strong>
+            <span class="dias-taller entregado">
+              📅 {{ t.dias_en_taller_texto }}
+            </span>
+          </div>
+          <div class="progress">
+            <div class="progress-bar bg-primary" style="width: {{ t.porcentaje_avance }}%;">{{ t.porcentaje_avance }}%</div>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <p class="text-secondary">Sin trabajos en esta etapa</p>
+    {% endfor %}
+  </div>
+</div>

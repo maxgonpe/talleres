@@ -1,0 +1,9 @@
+{% if trabajo %}
+<article class="card p-3">
+  <h2>{{ trabajo.vehiculo }}</h2>
+  <p>Estado: <strong>{{ trabajo.get_estado_display }}</strong></p>
+  <p>Avance: {{ trabajo.porcentaje_avance }}%</p>
+</article>
+{% else %}
+<div class="alert alert-info">No encontramos una orden para esa placa.</div>
+{% endif %}

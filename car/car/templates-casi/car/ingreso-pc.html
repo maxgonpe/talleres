@@ -1,0 +1,1854 @@
+{% extends 'base.html' %}
+
+{% block mobile_components %}
+  {% include 'car/mobile_bottom_nav.html' %}
+  {% include 'car/mobile_fab.html' %}
+{% endblock %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block extra_css %}
+  
+{% endblock %}
+
+{% block content %}
+<span hidden data-css004b="17262e7014"></span>
+
+<div class="container py-4">
+  <h2 class="mb-4">🔧 Ingreso de Diagnóstico</h2>
+
+  <form id="form-ingreso" method="post" novalidate>
+    {% csrf_token %}
+
+    <!-- ========================================
+         NAVEGACIÓN DE PESTAÑAS
+         ======================================== -->
+    <ul class="nav nav-tabs mb-4" id="ingresoTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="tab-cliente-btn" data-bs-toggle="tab" 
+                data-bs-target="#tab-cliente" type="button" role="tab" 
+                aria-controls="tab-cliente" aria-selected="true">
+          🏠 Cliente y Vehículo
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-componentes-btn" data-bs-toggle="tab" 
+                data-bs-target="#tab-componentes" type="button" role="tab" 
+                aria-controls="tab-componentes" aria-selected="false">
+          🔧 Componentes
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-seleccionados-btn" data-bs-toggle="tab" 
+                data-bs-target="#tab-seleccionados" type="button" role="tab" 
+                aria-controls="tab-seleccionados" aria-selected="false">
+          ✅ Seleccionados
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-acciones-btn" data-bs-toggle="tab" 
+                data-bs-target="#tab-acciones" type="button" role="tab" 
+                aria-controls="tab-acciones" aria-selected="false">
+          ⚡ Acciones
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-repuestos-btn" data-bs-toggle="tab" 
+                data-bs-target="#tab-repuestos" type="button" role="tab" 
+                aria-controls="tab-repuestos" aria-selected="false">
+          📦 Repuestos
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-insumos-btn" data-bs-toggle="tab" 
+                data-bs-target="#tab-insumos" type="button" role="tab" 
+                aria-controls="tab-insumos" aria-selected="false">
+          🧰 Insumos
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-observaciones-btn" data-bs-toggle="tab" 
+                data-bs-target="#tab-observaciones" type="button" role="tab" 
+                aria-controls="tab-observaciones" aria-selected="false">
+          📝 Observaciones
+        </button>
+      </li>
+    </ul>
+
+    <!-- ========================================
+         CONTENIDO DE PESTAÑAS
+         ======================================== -->
+    <div class="tab-content css004b-inline-6080eaaa7a7b" id="ingresoTabsContent" >
+      
+      <!-- PESTAÑA 1: Cliente y Vehículo -->
+      <div class="tab-pane fade show active" id="tab-cliente" role="tabpanel" 
+           aria-labelledby="tab-cliente-btn">
+        <div class="form-section">
+          <h3 class="mb-3">👤 Cliente</h3>
+    <div class="mb-3">
+      <label class="form-label">Elegir cliente existente:</label>
+      <select id="cliente_existente" name="cliente_existente" class="form-select">
+        <option value="">-- Nuevo cliente --</option>
+        {% for cliente in clientes_existentes %}
+          <option value="{{ cliente.rut }}"
+            {% if selected_cliente and selected_cliente|stringformat:"s" == cliente.rut|stringformat:"s" %} selected {% endif %}>
+            {{ cliente.nombre }} ({{ cliente.rut }}) - {{ cliente.telefono|default:"Sin teléfono" }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+          <div id="nuevo_cliente_campos">
+            {{ cliente_form|crispy }}
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3 class="mb-3">🚗 Vehículo</h3>
+          <div class="mb-3">
+            <label class="form-label">Seleccionar vehículo existente:</label>
+            <select id="vehiculo_select" name="vehiculo_existente" class="form-select" 
+                    data-selected="{{ selected_vehiculo|default:'' }}">
+              <option value="">-- Nuevo vehículo --</option>
+            </select>
+          </div>
+          <div id="vehiculo_fields">
+            <div class="mb-3">
+              <label for="vehiculo-placa" class="form-label">Placa</label>
+              <div class="input-group">
+                <input type="text" id="vehiculo-placa" name="vehiculo-placa" 
+                       class="form-control" placeholder="Ej: JGCX79">
+                <button type="button" class="btn btn-outline-primary" id="btn-buscar-vehiculo">
+                  🔍 Buscar en API
+                </button>
+              </div>
+            </div>
+            {{ vehiculo_form|crispy }}
+          </div>
+        </div>
+      </div>
+
+      <!-- PESTAÑA 2: Componentes -->
+      <div class="tab-pane fade" id="tab-componentes" role="tabpanel" 
+           aria-labelledby="tab-componentes-btn">
+        <div class="row">
+          <!-- Columna izquierda: acordeón -->
+          <div class="col-md-6 border-end">
+            <h4 class="mb-3">📋 Seleccionar por lista</h4>
+
+        <div class="accordion" id="componentesAccordion">
+          {% for padre in componentes %}
+            <div class="accordion-item">
+              <h2 class="accordion-header" id="heading-{{ padre.id }}">
+                <button class="accordion-button collapsed" type="button"
+                        data-bs-toggle="collapse" data-bs-target="#collapse-{{ padre.id }}"
+                        aria-expanded="false" aria-controls="collapse-{{ padre.id }}">
+                  {{ padre.nombre }}
+                </button>
+              </h2>
+              <div id="collapse-{{ padre.id }}" class="accordion-collapse collapse"
+                   aria-labelledby="heading-{{ padre.id }}" data-bs-parent="#componentesAccordion">
+                <div class="accordion-body">
+                  {% for hijo in padre.hijos.all %}
+                    <div class="form-check">
+                      <input class="form-check-input"
+                             type="checkbox"
+                             name="componentes_seleccionados"
+                             value="{{ hijo.id }}"
+                             id="comp-{{ hijo.id }}"
+                             data-nombre="{{ hijo.nombre }}"
+                             {% if hijo.id in selected_componentes_ids %}checked{% endif %}>
+                      <label class="form-check-label" for="comp-{{ hijo.id }}">
+                        {{ hijo.nombre }}
+                      </label>
+                    </div>
+                  {% empty %}
+                    <p class="text-secondary small">No hay subcomponentes registrados.</p>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+          <!-- Columna derecha: plano SVG -->
+          <div class="col-md-6">
+            <h4 class="mb-3">🗺️ Seleccionar en el plano</h4>
+            <button id="btn-reset-plano" type="button" class="btn btn-sm btn-outline-secondary mb-3">
+              ⬅️ Volver al plano inicial
+            </button>
+
+            <div id="plano-container"
+                 
+                 data-inicial-url="{% static 'images/vehiculo-desde-abajo.svg' %}" class="css004b-inline-84036b91da82">
+              <div  class="css004b-inline-ecfe9ecff8fb">
+                {{ svg|safe }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PESTAÑA 3: Componentes Seleccionados -->
+      <div class="tab-pane fade" id="tab-seleccionados" role="tabpanel" 
+           aria-labelledby="tab-seleccionados-btn">
+        <div class="form-section">
+          <h4 class="mb-3">✅ Componentes Seleccionados</h4>
+          <div id="componentes-seleccionados">
+            <ul id="lista-seleccionados" class="list-group">
+              <li class="list-group-item text-secondary text-center">Selecciona componentes en la pestaña "Componentes"</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- PESTAÑA 4: Acciones -->
+      <div class="tab-pane fade" id="tab-acciones" role="tabpanel" 
+           aria-labelledby="tab-acciones-btn">
+        <div class="form-section">
+          <h4 class="mb-3">⚡ Acciones para Componentes Seleccionados</h4>
+          <div id="acciones-container">
+            <ul id="acciones-para-componentes" class="list-group list-group-flush"></ul>
+            <input type="hidden" id="acciones_componentes_json" name="acciones_componentes_json" value="[]">
+            <div class="d-flex justify-content-between align-items-center mt-3 p-3 bg-light rounded">
+              <div>
+                <div class="small text-secondary">Total mano de obra</div>
+                <div class="fw-bold fs-5" id="total_mano_obra">$0</div>
+              </div>
+            </div>
+            <p class="text-secondary small mt-3">
+              <i class="fas fa-info-circle"></i> 
+              Selecciona componentes primero para ver las acciones disponibles.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- PESTAÑA 5: Repuestos -->
+      <div class="tab-pane fade" id="tab-repuestos" role="tabpanel" 
+           aria-labelledby="tab-repuestos-btn">
+        <div class="form-section">
+          <h4 class="mb-3">📦 Repuestos del Diagnóstico</h4>
+          
+          <!-- Diagnóstico meta -->
+          <div id="diagnostico-meta"
+               data-diagnostico-id="{{ diagnostico.id|default:'' }}"
+               data-csrf="{{ csrf_token }}">
+          </div>
+          
+          <!-- Botones de búsqueda -->
+          <div class="btn-group mb-3 w-100" role="group">
+            <button type="button" class="btn btn-outline-primary" onclick="cargarRepuestos()">
+              📦 Inventario Propio
+            </button>
+            <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" 
+                    data-bs-target="#modalRepuestosExternos">
+              🌐 Proveedores Externos
+            </button>
+          </div>
+
+          <!-- Contenedor de búsqueda de repuestos -->
+          <div id="repuestos-list"
+               data-preview-url="{% url 'sugerir_repuestos_preview' %}"
+               data-with-id-template="{% url 'sugerir_repuestos' 0 %}">
+            <p class="text-secondary">Busca en inventario propio o proveedores externos.</p>
+          </div>
+
+          <hr class="my-4">
+
+          <!-- Tabla de repuestos agregados (incluye insumos) -->
+          <h5 class="mb-3">🧾 Repuestos e Insumos agregados al diagnóstico</h5>
+          <div id="tabla-contenido">
+            <p class="text-secondary">Los repuestos e insumos agregados aparecerán aquí.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- PESTAÑA 6: Insumos (NUEVA) -->
+      <div class="tab-pane fade" id="tab-insumos" role="tabpanel" 
+           aria-labelledby="tab-insumos-btn">
+        <div class="form-section">
+          <h4 class="mb-3">🧰 Insumos - Búsqueda Amplia</h4>
+          
+          <div class="alert alert-info mb-3">
+            <strong>🔍 Búsqueda sin Filtros:</strong> 
+            Aquí puedes agregar cualquier repuesto del inventario sin restricciones de compatibilidad. 
+            Los insumos agregados aparecerán automáticamente en la pestaña "Repuestos" y se sumarán en los totales.
+          </div>
+          
+          <!-- Búsqueda de insumos -->
+          <div class="mb-3">
+            <label for="buscar-insumo" class="form-label">🔍 Buscar Insumo:</label>
+            <div class="input-group">
+              <input type="text" id="buscar-insumo" class="form-control" 
+                     placeholder="Buscar por nombre, SKU, código... (escribe para filtrar)">
+              <button class="btn btn-outline-primary" type="button" onclick="buscarInsumos()">
+                <i class="fas fa-search"></i> Buscar
+              </button>
+            </div>
+            <small class="text-muted">La búsqueda se realiza automáticamente mientras escribes (mínimo 2 caracteres)</small>
+          </div>
+          
+          <!-- Lista de insumos disponibles -->
+          <div id="insumos-disponibles" class="mb-3">
+            <h6>📋 Insumos Disponibles:</h6>
+            <div class="list-group" id="lista-insumos-disponibles">
+              <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> 
+                Escribe en el campo de búsqueda para ver insumos disponibles.
+              </div>
+            </div>
+          </div>
+          
+          <!-- Botón para agregar insumos -->
+          <div class="d-grid gap-2">
+            <button class="btn btn-success" type="button" onclick="agregarInsumos()">
+              <i class="fas fa-plus"></i> Agregar Insumos Seleccionados al Diagnóstico
+            </button>
+          </div>
+          
+          <div class="alert alert-success mt-3 css004b-inline-dd47237c7506" id="insumos-agregados-mensaje" >
+            <i class="fas fa-check-circle"></i> 
+            <strong>✅ Insumos agregados:</strong> 
+            Los insumos agregados aparecerán en la pestaña "Repuestos" y se sumarán en los totales.
+          </div>
+        </div>
+      </div>
+
+      <!-- PESTAÑA 7: Observaciones -->
+      <div class="tab-pane fade" id="tab-observaciones" role="tabpanel" 
+           aria-labelledby="tab-observaciones-btn">
+        <div class="form-section">
+          <h4 class="mb-3">📝 Descripción del Problema</h4>
+          
+          <div class="mb-3">
+            <label class="form-label">Describe el problema o diagnóstico:</label>
+            {{ diagnostico_form|crispy }}
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ========================================
+         CAMPOS HIDDEN PARA ENVÍO
+         ======================================== -->
+    <input type="hidden" name="repuestos_json" id="repuestos-json">
+    <input type="hidden" name="repuestos_externos_json" id="repuestos-externos-json">
+    <input type="hidden" name="insumos_json" id="insumos-json">
+    
+  </form>
+  
+  <!-- ========================================
+       BOTONES STICKY (fuera de pestañas)
+       ======================================== -->
+  <div  class="css004b-inline-2212c2e74c6a">
+    <button type="submit" form="form-ingreso" class="btn btn-primary btn-lg">
+      💾 Guardar Diagnóstico
+    </button>
+    <a href="javascript:history.back()" class="btn btn-secondary btn-lg">
+      ↩️ Regresar
+    </a>
+  </div>
+
+</div>
+
+<!-- Punto de referencia para build de endpoints (una sola vez) -->
+<div id="acciones-endpoints" data-acciones-url-template="{% url 'acciones_por_componente' 0 %}"></div>
+
+<div id="componentes-endpoints"
+     data-lookup-url="{% url 'componentes_lookup' %}">
+</div>
+
+<div id="repuestos-endpoints"
+     data-preview-url="{% url 'sugerir_repuestos_preview' %}"
+     data-with-id-template="{% url 'sugerir_repuestos' 0 %}">
+</div>
+
+
+
+<!-- ---------------- CSS PARA PESTAÑAS ACTIVAS MEJORADAS ---------------- -->
+
+
+<!-- ---------------- SCRIPTS (TODO integrado aquí) ---------------- -->
+<script src="{% static 'js/ingreso.js' %}"></script>
+<script>
+  // Variable global para controlar avisos
+  window.ver_avisos = {% if ver_avisos %}true{% else %}false{% endif %};
+</script>
+<script>
+  // Variable global para ver_avisos (disponible para scripts externos)
+  window.ver_avisos = {% if ver_avisos %}true{% else %}false{% endif %};
+</script>
+<script src="{% static 'js/plano-interactivo.js' %}"></script>
+<script>
+// ---------------------- BUSCAR VEHICULO POR PLACA ----------------------
+// usage: llama buscarVehiculoPorPlaca('JGCX79') o usa el botón/blur
+async function buscarVehiculoPorPlaca(rawPlaca, opts={showAlerts:true}) {
+  const placa = String(rawPlaca || '').trim().toUpperCase();
+  if (!placa) {
+    if (opts.showAlerts) console.warn("buscarVehiculoPorPlaca: placa vacía");
+    return null;
+  }
+  console.debug("buscarVehiculoPorPlaca ->", placa);
+
+  try {
+    const url = `/car/vehiculo_lookup/?placa=${encodeURIComponent(placa)}`;
+    console.debug("Fetch URL:", url);
+    const resp = await fetch(url);
+    if (!resp.ok) {
+      const msg = `Error HTTP ${resp.status}`;
+      console.error(msg);
+      if (opts.showAlerts) alert(msg);
+      return null;
+    }
+    const dataRaw = await resp.json();
+    console.debug("Respuesta JSON:", dataRaw);
+
+    // Soportar dos formatos posibles:
+    // 1) { success: true, data: {...} }
+    // 2) { marca: ..., modelo: ..., ... }
+    const payload = (dataRaw && dataRaw.success && dataRaw.data) ? dataRaw.data : dataRaw;
+
+    // Normalizar campos desde muchas posibles rutas
+    const marca = payload.marca || (payload.model && (payload.model.brand?.name || payload.model.brand_name)) || payload.brand?.name || '';
+    const modelo = payload.modelo || payload.model?.name || payload.version || payload.modelName || '';
+    const anio = payload.anio || payload.year || payload.yearRT || payload.model?.year || '';
+    const vin = payload.vin || payload.vinNumber || payload.vin_number || payload.vin_no || '';
+    const placaRes = payload.placa || payload.licensePlate || placa;
+    const descripcion_motor = payload.descripcion_motor || (payload.engine ? `Motor ${payload.engine} • ${payload.version || ''}` : (payload.engineNumber || ''));
+
+    const datos = {
+      marca: marca || '',
+      modelo: modelo || '',
+      anio: anio || '',
+      vin: vin || '',
+      placa: placaRes || placa,
+      descripcion_motor: descripcion_motor || ''
+    };
+    console.debug("vehículo datos procesados:", datos);
+
+    // Helper: intenta setear un campo probando varios selectores (id y name)
+    function setField(nameSuffix, value) {
+      if (value === undefined || value === null) value = '';
+      const candidates = [
+        `id_vehiculo-${nameSuffix}`,
+        `id_vehiculo_${nameSuffix}`,
+        `vehiculo-${nameSuffix}`,
+        `vehiculo_${nameSuffix}`,
+        `id_${nameSuffix}`,
+        nameSuffix
+      ];
+      for (const sel of candidates) {
+        // por id
+        const eById = document.getElementById(sel);
+        if (eById) { eById.value = value; eById.dispatchEvent(new Event('input',{bubbles:true})); console.debug("setField -> id:", sel, value); return true; }
+        // por name
+        const eByName = document.querySelector(`[name="${sel}"]`);
+        if (eByName) { eByName.value = value; eByName.dispatchEvent(new Event('input',{bubbles:true})); console.debug("setField -> name:", sel, value); return true; }
+      }
+      console.debug("setField: no encontró selector para", nameSuffix);
+      return false;
+    }
+
+    // Intentar rellenar
+    setField('marca', datos.marca);
+    setField('modelo', datos.modelo);
+    setField('anio', datos.anio);
+    setField('vin', datos.vin);
+    setField('placa', datos.placa);
+    setField('descripcion_motor', datos.descripcion_motor);
+
+    // Indicar éxito visualmente si quieres
+    if (opts.showAlerts) {
+      // añade un pequeño feedback en la UI si existe un contenedor para mensajes
+      const placaInput = document.querySelector('#id_vehiculo-placa, #id_vehiculo_placa, [name="vehiculo-placa"]');
+      if (placaInput) {
+        // crear/mostrar pequeño badge temporal
+        let badge = document.getElementById('vehiculo-lookup-badge');
+        if (!badge) {
+          badge = document.createElement('div');
+          badge.id = 'vehiculo-lookup-badge';
+          badge.style.fontSize = '0.9rem';
+          badge.style.marginTop = '0.35rem';
+          placaInput.closest('.mb-3')?.appendChild(badge) || placaInput.parentNode.appendChild(badge);
+        }
+        badge.textContent = `Vehículo encontrado: ${datos.marca} ${datos.modelo} ${datos.anio}`;
+        badge.style.color = '#0b5ed7';
+        setTimeout(()=> badge && badge.remove(), 4500);
+      } else {
+        console.info("Vehículo encontrado:", datos);
+      }
+    }
+
+    return datos;
+  } catch (err) {
+    console.error("Error en buscarVehiculoPorPlaca:", err);
+    if (opts.showAlerts) alert("Error al consultar la API del vehículo. Revisa consola Network/Console.");
+    return null;
+  }
+}
+
+// ------------------ conectar evento: botón o blur en campo placa ------------------
+document.addEventListener('DOMContentLoaded', function () {
+  // intenta localizar el input de placa usando los ids/names más probables
+  const placaInput = document.querySelector('#id_vehiculo-placa, #id_vehiculo_placa, [name="vehiculo-placa"], [name="vehiculo_placa"], [name="placa"]');
+  const btnId = 'btn-buscar-placa';
+
+  // si no existe botón en template, lo insertamos junto al input (si lo encontramos)
+  if (placaInput) {
+    // crear botón si no existe
+    if (!document.getElementById(btnId)) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.id = btnId;
+      btn.className = 'btn btn-sm btn-outline-secondary ms-2';
+      btn.textContent = 'Buscar placa';
+      // si está dentro de input-group o .form-control-wrap lo insertamos ahí, sino al lado
+      const wrapper = placaInput.closest('.input-group') || placaInput.parentNode;
+      // intentar colocar después del input
+      if (wrapper) {
+        // si wrapper es input-group y placaInput es hijo, agregar como lastChild
+        if (wrapper.classList && wrapper.classList.contains('input-group')) {
+          const wrapBtn = document.createElement('button');
+          wrapBtn.type = 'button';
+          wrapBtn.id = btnId;
+          wrapBtn.className = 'btn btn-outline-secondary';
+          wrapBtn.textContent = 'Buscar';
+          // añadir al final del input-group
+          wrapper.appendChild(wrapBtn);
+        } else {
+          // colocar el botón inmediatamente después del input
+          placaInput.insertAdjacentElement('afterend', btn);
+        }
+      } else {
+        placaInput.insertAdjacentElement('afterend', btn);
+      }
+    }
+
+    // click al botón -> buscar
+    document.getElementById(btnId)?.addEventListener('click', function () {
+      const val = placaInput.value || placaInput.textContent || '';
+      buscarVehiculoPorPlaca(val);
+    });
+
+    // también buscar al salir del campo (blur) o al presionar Enter
+    placaInput.addEventListener('blur', function () {
+      const val = placaInput.value || '';
+      if (val && String(val).trim().length >= 3) buscarVehiculoPorPlaca(val, {showAlerts:false});
+    });
+    placaInput.addEventListener('keydown', function(e){
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        buscarVehiculoPorPlaca(placaInput.value);
+      }
+    });
+
+    console.debug("Hook placa instalado en", placaInput);
+  } else {
+    console.debug("No se encontró input de placa (id_vehiculo-placa). Asegúrate del nombre/id del campo en el formulario.");
+  }
+});
+
+</script>
+
+<!-- Estilos para modal de repuestos externos -->
+
+
+<!-- Modal de Repuestos Externos -->
+<div class="modal fade" id="modalRepuestosExternos" tabindex="-1" aria-labelledby="modalRepuestosExternosLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title" id="modalRepuestosExternosLabel">
+          🌐 Buscar Repuestos en Proveedores Externos
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <!-- Búsqueda de Repuestos Externos -->
+            <div class="row mb-3">
+              <div class="col-md-8">
+                <input type="text" class="form-control" id="buscarRepuestoExterno" placeholder="Buscar repuestos externos guardados...">
+              </div>
+              <div class="col-md-4">
+                <button class="btn btn-primary w-100" onclick="buscarRepuestosExternos()">
+                  🔍 Buscar
+                </button>
+              </div>
+            </div>
+
+            <div id="resultadosExternos" class="mb-3">
+              <p class="text-muted">Ingresa un término para buscar en las referencias guardadas.</p>
+            </div>
+
+            <div class="alert alert-info">
+              <strong>💡 Tip:</strong> Si no encuentras el repuesto guardado, búscalo en los proveedores con los botones de abajo. Usa el <strong>bookmarklet</strong> para guardar nuevas referencias rápidamente.
+            </div>
+
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-success flex-fill" onclick="buscarEnMundoRepuestos()">
+                🛒 Buscar en Mundo Repuestos
+              </button>
+              <button type="button" class="btn btn-primary flex-fill" onclick="buscarEnAutoPlanet()">
+                🚗 Buscar en AutoPlanet
+              </button>
+              <button type="button" class="btn btn-warning flex-fill" onclick="buscarEnAmbosProveedores()">
+                ⚡ Buscar en AMBOS
+              </button>
+            </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ========================================
+// REPUESTOS EXTERNOS - Sistema Simplificado
+// ========================================
+
+// Buscar repuestos externos
+async function buscarRepuestosExternos() {
+  const termino = document.getElementById('buscarRepuestoExterno').value.trim();
+  const container = document.getElementById('resultadosExternos');
+  
+  if (!termino || termino.length < 2) {
+    container.innerHTML = '<p class="text-warning">⚠️ Ingresa al menos 2 caracteres.</p>';
+    return;
+  }
+  
+  container.innerHTML = '<div class="text-center"><div class="spinner-border text-success" role="status"></div><p>Buscando...</p></div>';
+  
+  try {
+    const response = await fetch(`/car/api/repuestos-externos/buscar/?termino=${encodeURIComponent(termino)}`);
+    const data = await response.json();
+    
+    if (!data.repuestos || data.repuestos.length === 0) {
+      container.innerHTML = '<p class="text-muted">No se encontraron repuestos con ese término.</p>';
+      return;
+    }
+    
+    let html = '<div class="list-group">';
+    data.repuestos.forEach(rep => {
+      html += `
+        <div class="list-group-item">
+          <div class="d-flex justify-content-between align-items-start">
+            <div class="flex-grow-1">
+              <h6 class="mb-1">${rep.nombre}</h6>
+              <p class="mb-1 text-muted small">
+                ${rep.proveedor} ${rep.marca ? '• ' + rep.marca : ''} ${rep.codigo ? '• Cód: ' + rep.codigo : ''}
+              </p>
+              <p class="mb-0 fw-bold text-success">$${rep.precio.toLocaleString('es-CL')}</p>
+            </div>
+            <div class="d-flex flex-column gap-1">
+              <button class="btn btn-sm btn-outline-primary" onclick="window.open('${rep.url}', '_blank')">
+                🔗 Ver
+              </button>
+              <button class="btn btn-sm btn-success" onclick="referenciarRepuestoExterno(${rep.id}, '${rep.nombre.replace(/'/g, "\\'")}', ${rep.precio})">
+                ✅ Usar
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    html += '</div>';
+    
+    container.innerHTML = html;
+  } catch (error) {
+    container.innerHTML = '<p class="text-danger">❌ Error al buscar: ' + error.message + '</p>';
+  }
+}
+
+// Array para almacenar repuestos externos agregados
+window.repuestosExternos = window.repuestosExternos || [];
+
+// Referenciar repuesto externo en el diagnóstico (agregar a la lista)
+function referenciarRepuestoExterno(id, nombre, precio) {
+  // Verificar si ya existe
+  const existe = window.repuestosExternos.find(r => r.id === id);
+  if (existe) {
+    alert('⚠️ Este repuesto externo ya está agregado');
+    return;
+  }
+  
+  // Agregar al array
+  window.repuestosExternos.push({
+    id: id,
+    nombre: nombre,
+    precio: precio,
+    cantidad: 1,
+    es_externo: true
+  });
+  
+  // Actualizar la visualización
+  actualizarTablaRepuestosExternos();
+  
+  // Cerrar modal
+  const modal = bootstrap.Modal.getInstance(document.getElementById('modalRepuestosExternos'));
+  if (modal) modal.hide();
+  
+  // Notificar éxito
+  mostrarNotificacion(`✅ Referencia agregada: ${nombre}`, 'success');
+}
+
+// Actualizar la tabla de repuestos (incluyendo externos)
+function actualizarTablaRepuestosExternos() {
+  const tablaContenido = document.getElementById('tabla-contenido');
+  
+  if (!tablaContenido) return;
+  
+  if (window.repuestosExternos.length === 0) {
+    tablaContenido.innerHTML = '<p class="text-muted">No hay repuestos externos agregados aún.</p>';
+    return;
+  }
+  
+  let html = `
+    <div class="alert alert-info mb-2">
+      <strong>ℹ️ Referencias Externas:</strong> Estos repuestos están marcados con 🌐 y son referencias de proveedores externos.
+    </div>
+    <table class="table table-sm table-bordered table-hover">
+      <thead class="table-success">
+        <tr>
+          <th style="width: 5%;">Tipo</th>
+          <th style="width: 40%;">Nombre</th>
+          <th style="width: 15%;">Cantidad</th>
+          <th style="width: 15%;">Precio Ref.</th>
+          <th style="width: 15%;">Subtotal</th>
+          <th style="width: 10%;">Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+  
+  let total = 0;
+  
+  window.repuestosExternos.forEach((rep, index) => {
+    const subtotal = rep.precio * rep.cantidad;
+    total += subtotal;
+    
+    html += `
+      <tr>
+        <td class="text-center">🌐</td>
+        <td>${rep.nombre}</td>
+        <td>
+          <input type="number" 
+                 class="form-control form-control-sm" 
+                 value="${rep.cantidad}" 
+                 min="1" 
+                 style="width: 80px;"
+                 onchange="actualizarCantidadExterna(${index}, this.value)">
+        </td>
+        <td class="text-end">$${rep.precio.toLocaleString('es-CL')}</td>
+        <td class="text-end fw-bold">$${subtotal.toLocaleString('es-CL')}</td>
+        <td class="text-center">
+          <button class="btn btn-sm btn-outline-danger" onclick="eliminarRepuestoExterno(${index})" title="Eliminar">
+            🗑️
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+  
+  html += `
+      </tbody>
+      <tfoot>
+        <tr class="table-light">
+          <td colspan="4" class="text-end fw-bold">TOTAL REFERENCIAS EXTERNAS:</td>
+          <td class="text-end fw-bold text-success">$${total.toLocaleString('es-CL')}</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+  `;
+  
+  tablaContenido.innerHTML = html;
+}
+
+// Actualizar cantidad de repuesto externo
+function actualizarCantidadExterna(index, nuevaCantidad) {
+  const cantidad = parseInt(nuevaCantidad) || 1;
+  if (cantidad < 1) {
+    alert('❌ La cantidad debe ser al menos 1');
+    return;
+  }
+  
+  window.repuestosExternos[index].cantidad = cantidad;
+  actualizarTablaRepuestosExternos();
+}
+
+// Eliminar repuesto externo
+function eliminarRepuestoExterno(index) {
+  const verAvisos = (typeof window.ver_avisos !== 'undefined' && window.ver_avisos);
+  if (verAvisos ? confirm('¿Eliminar esta referencia externa?') : true) {
+    window.repuestosExternos.splice(index, 1);
+    actualizarTablaRepuestosExternos();
+    mostrarNotificacion('🗑️ Referencia eliminada', 'info');
+  }
+}
+
+// Mostrar notificación temporal
+function mostrarNotificacion(mensaje, tipo = 'success') {
+  const colores = {
+    'success': '#28a745',
+    'info': '#17a2b8',
+    'warning': '#ffc107',
+    'danger': '#dc3545'
+  };
+  
+  const notif = document.createElement('div');
+  notif.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: ${colores[tipo] || colores.success};
+    color: white;
+    padding: 15px 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    z-index: 9999;
+    animation: slideInRight 0.3s ease;
+    max-width: 350px;
+  `;
+  notif.textContent = mensaje;
+  document.body.appendChild(notif);
+  
+  setTimeout(() => {
+    notif.style.animation = 'slideOutRight 0.3s ease';
+    setTimeout(() => notif.remove(), 300);
+  }, 3000);
+}
+
+// Agregar CSS para animaciones
+const styleNotif = document.createElement('style');
+styleNotif.textContent = `
+  @keyframes slideInRight {
+    from { transform: translateX(400px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes slideOutRight {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(400px); opacity: 0; }
+  }
+`;
+document.head.appendChild(styleNotif);
+
+// Preparar repuestos externos antes de enviar el formulario
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.querySelector('form');
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      // Preparar JSON de repuestos externos
+      const hiddenExternos = document.getElementById('repuestos-externos-json');
+      if (hiddenExternos && window.repuestosExternos) {
+        hiddenExternos.value = JSON.stringify(window.repuestosExternos);
+        console.log('✅ Repuestos externos preparados:', hiddenExternos.value);
+      }
+    });
+  }
+});
+
+// Buscar al presionar Enter
+document.getElementById('buscarRepuestoExterno')?.addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    buscarRepuestosExternos();
+  }
+});
+
+// Buscar directamente en Mundo Repuestos
+function buscarEnMundoRepuestos() {
+  const termino = document.getElementById('buscarRepuestoExterno').value.trim();
+  
+  if (!termino) {
+    alert('❌ Por favor ingresa un término de búsqueda');
+    document.getElementById('buscarRepuestoExterno').focus();
+    return;
+  }
+  
+  // Formato: espacios se convierten en dobles guiones
+  const terminoFormateado = termino.replace(/\s+/g, '--');
+  const url = `https://mundorepuestos.com/busqueda/${terminoFormateado}`;
+  
+  window.open(url, '_blank');
+}
+
+// Buscar directamente en AutoPlanet
+function buscarEnAutoPlanet() {
+  const termino = document.getElementById('buscarRepuestoExterno').value.trim();
+  
+  if (!termino) {
+    alert('❌ Por favor ingresa un término de búsqueda');
+    document.getElementById('buscarRepuestoExterno').focus();
+    return;
+  }
+  
+  const url = `https://www.autoplanet.cl/busqueda/${encodeURIComponent(termino)}`;
+  
+  window.open(url, '_blank');
+}
+
+// Buscar en ambos proveedores simultáneamente
+function buscarEnAmbosProveedores() {
+  const termino = document.getElementById('buscarRepuestoExterno').value.trim();
+  
+  if (!termino) {
+    alert('❌ Por favor ingresa un término de búsqueda');
+    document.getElementById('buscarRepuestoExterno').focus();
+    return;
+  }
+  
+  // Abrir ambos con un pequeño delay
+  buscarEnMundoRepuestos();
+  
+  setTimeout(() => {
+    buscarEnAutoPlanet();
+  }, 300);
+}
+</script>
+
+<!-- ========================================
+     JAVASCRIPT PARA INSUMOS
+     ======================================== -->
+<script>
+// Helper para escapar HTML
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// Función para buscar insumos (con debounce)
+let buscarInsumosTimeout;
+window.buscarInsumos = async function() {
+  const buscarInput = document.getElementById('buscar-insumo');
+  const cont = document.getElementById('lista-insumos-disponibles');
+  
+  if (!buscarInput || !cont) {
+    console.error('❌ Elementos de búsqueda no encontrados');
+    return;
+  }
+  
+  const busqueda = buscarInput.value.trim();
+  
+  if (busqueda.length < 2) {
+    cont.innerHTML = '<div class="alert alert-info">Escribe al menos 2 caracteres para buscar</div>';
+    return;
+  }
+  
+  cont.innerHTML = '<div class="alert alert-info"><i class="fas fa-spinner fa-spin"></i> Buscando insumos...</div>';
+  
+  try {
+    const url = `/car/repuestos/buscar-insumos/?q=${encodeURIComponent(busqueda)}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    
+    if (data.insumos && data.insumos.length > 0) {
+      cont.innerHTML = '';
+      data.insumos.forEach((insumo) => {
+        const item = document.createElement('div');
+        item.className = 'list-group-item';
+        item.innerHTML = `
+          <div class="d-flex justify-content-between align-items-center">
+            <div class="form-check flex-grow-1">
+              <input class="form-check-input insumo-check" type="checkbox" 
+                     data-id="${insumo.id}" 
+                     data-nombre="${escapeHtml(insumo.nombre)}"
+                     data-precio="${insumo.precio || 0}"
+                     data-stock="${insumo.stock || 0}"
+                     id="insumo-${insumo.id}">
+              <label class="form-check-label" for="insumo-${insumo.id}">
+                <strong>${escapeHtml(insumo.nombre)}</strong><br>
+                <small class="text-muted">
+                  SKU: ${escapeHtml(insumo.sku || 'N/A')} | 
+                  ${insumo.marca ? 'Marca: ' + escapeHtml(insumo.marca) + ' | ' : ''}
+                  Precio: $${(insumo.precio || 0).toLocaleString('es-CL')} | 
+                  Stock: ${insumo.stock || 0}
+                </small>
+              </label>
+            </div>
+            <div>
+              <input type="number" class="form-control insumo-cantidad" 
+                     data-id="${insumo.id}" value="1" min="1" max="${insumo.stock || 999}"
+                     style="width: 80px;">
+            </div>
+          </div>
+        `;
+        cont.appendChild(item);
+      });
+    } else {
+      cont.innerHTML = '<div class="alert alert-info">No se encontraron insumos con ese término de búsqueda</div>';
+    }
+    
+  } catch (error) {
+    console.error('❌ Error buscando insumos:', error);
+    cont.innerHTML = '<div class="alert alert-danger">❌ Error buscando insumos: ' + error.message + '</div>';
+  }
+};
+
+// Búsqueda con debounce mientras escribes
+window.buscarInsumosDebounced = function() {
+  clearTimeout(buscarInsumosTimeout);
+  buscarInsumosTimeout = setTimeout(buscarInsumos, 300);
+};
+
+// Conectar evento de búsqueda automática
+document.addEventListener('DOMContentLoaded', function() {
+  const buscarInput = document.getElementById('buscar-insumo');
+  if (buscarInput) {
+    buscarInput.addEventListener('input', buscarInsumosDebounced);
+    buscarInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        buscarInsumos();
+      }
+    });
+  }
+  
+  // Inicializar pestañas Bootstrap
+  const triggerTabList = document.querySelectorAll('#ingresoTabs button[data-bs-toggle="tab"]');
+  triggerTabList.forEach(triggerEl => {
+    const tabTrigger = new bootstrap.Tab(triggerEl);
+    triggerEl.addEventListener('click', event => {
+      event.preventDefault();
+      tabTrigger.show();
+    });
+  });
+});
+
+// Función para agregar insumos al diagnóstico
+window.agregarInsumos = async function() {
+  console.log('='.repeat(80));
+  console.log('🔧 FUNCIÓN agregarInsumos() LLAMADA');
+  console.log('='.repeat(80));
+  
+  const insumos = [];
+  const checkboxes = document.querySelectorAll("#lista-insumos-disponibles input.insumo-check:checked");
+  console.log('📋 Checkboxes seleccionados:', checkboxes.length);
+  
+  checkboxes.forEach(chk => {
+    const cantidadInput = document.querySelector(
+      `input.insumo-cantidad[data-id="${chk.dataset.id}"]`
+    );
+    const cantidad = cantidadInput ? parseInt(cantidadInput.value) || 1 : 1;
+    insumos.push({
+      id: parseInt(chk.dataset.id),
+      nombre: chk.dataset.nombre,
+      cantidad: cantidad,
+      precio_unitario: parseFloat(chk.dataset.precio) || 0
+    });
+  });
+  
+  console.log('📦 Insumos recopilados:', insumos);
+  console.log('📦 Total insumos:', insumos.length);
+  
+  if (insumos.length === 0) {
+    console.warn('⚠️ No hay insumos seleccionados');
+    alert('⚠️ No hay insumos seleccionados para agregar');
+    return;
+  }
+  
+  try {
+    // 🔧 NUEVO: Agregar insumos directamente al campo repuestos_json
+    const repuestosJson = document.getElementById('repuestos-json');
+    console.log('📋 Campo repuestos-json encontrado:', repuestosJson ? 'SÍ' : 'NO');
+    if (repuestosJson) {
+      let repuestosPrevios = [];
+      try {
+        const previos = JSON.parse(repuestosJson.value || '[]');
+        repuestosPrevios = Array.isArray(previos) ? previos : [];
+      } catch (e) {
+        repuestosPrevios = [];
+      }
+      
+      const idsPrevios = new Set(repuestosPrevios.map(r => r.id));
+      const nuevos = insumos.filter(i => !idsPrevios.has(i.id));
+      
+      if (nuevos.length === 0) {
+        alert('⚠️ Todos los insumos seleccionados ya están agregados');
+        return;
+      }
+      
+      // Agregar los insumos al campo de repuestos
+      repuestosPrevios.push(...nuevos);
+      repuestosJson.value = JSON.stringify(repuestosPrevios);
+      
+      console.log('='.repeat(80));
+      console.log('✅ INSUMOS AGREGADOS A REPUESTOS_JSON');
+      console.log('='.repeat(80));
+      console.log('📋 Nuevos insumos agregados:', nuevos);
+      console.log('📋 Total repuestos (incluyendo insumos):', repuestosPrevios.length);
+      console.log('📋 repuestos_json completo:', repuestosJson.value);
+      console.log('='.repeat(80));
+      
+      // 🆕 ACTUALIZAR LA TABLA DE REPUESTOS PARA MOSTRAR LOS INSUMOS
+      actualizarTablaRepuestosConInsumos(repuestosPrevios);
+      
+      const mensaje = document.getElementById('insumos-agregados-mensaje');
+      if (mensaje) {
+        mensaje.style.display = 'block';
+        mensaje.innerHTML = `<i class="fas fa-check-circle"></i> <strong>✅ ${nuevos.length} insumo(s) agregado(s)!</strong> Ve a la pestaña "Repuestos" para verlos.`;
+        
+        document.querySelectorAll("#lista-insumos-disponibles input.insumo-check:checked").forEach(chk => {
+          chk.checked = false;
+        });
+        
+        setTimeout(() => {
+          mensaje.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 100);
+      }
+      
+      // Cambiar automáticamente a la pestaña de Repuestos para que el usuario vea los insumos
+      setTimeout(() => {
+        const btnRepuestos = document.getElementById('tab-repuestos-btn');
+        if (btnRepuestos) {
+          btnRepuestos.click();
+        }
+      }, 1500);
+    }
+  } catch (error) {
+    console.error('❌ Error al agregar insumos:', error);
+    alert('❌ Error al agregar los insumos: ' + error.message);
+  }
+};
+
+// 🆕 Función para actualizar la tabla de repuestos mostrando TODOS los items (repuestos + insumos)
+function actualizarTablaRepuestosConInsumos(todosLosItems) {
+  const tablaContenido = document.getElementById('tabla-contenido');
+  
+  if (!tablaContenido) {
+    console.error('❌ No se encontró tabla-contenido');
+    return;
+  }
+  
+  if (!todosLosItems || todosLosItems.length === 0) {
+    tablaContenido.innerHTML = '<p class="text-secondary">No hay repuestos ni insumos agregados aún.</p>';
+    return;
+  }
+  
+  let html = `
+    <div class="alert alert-success mb-2">
+      <strong>✅ Repuestos e Insumos:</strong> Todos los items agregados aparecen aquí (${todosLosItems.length} total).
+    </div>
+    <table class="table table-sm table-bordered table-hover">
+      <thead class="table-light">
+        <tr>
+          <th style="width: 5%;">Tipo</th>
+          <th style="width: 40%;">Nombre</th>
+          <th style="width: 15%;">Cantidad</th>
+          <th style="width: 15%;">Precio Unit.</th>
+          <th style="width: 15%;">Subtotal</th>
+          <th style="width: 10%;">Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+  
+  let total = 0;
+  
+  todosLosItems.forEach((item, index) => {
+    const subtotal = (item.precio_unitario || 0) * (item.cantidad || 1);
+    total += subtotal;
+    
+    html += `
+      <tr>
+        <td class="text-center">📦</td>
+        <td>${escapeHtml(item.nombre)}</td>
+        <td>
+          <input type="number" 
+                 class="form-control form-control-sm" 
+                 value="${item.cantidad || 1}" 
+                 min="1" 
+                 style="width: 80px;"
+                 onchange="actualizarCantidadRepuesto(${index}, this.value)">
+        </td>
+        <td class="text-end">$${(item.precio_unitario || 0).toLocaleString('es-CL')}</td>
+        <td class="text-end fw-bold">$${subtotal.toLocaleString('es-CL')}</td>
+        <td class="text-center">
+          <button class="btn btn-sm btn-outline-danger" onclick="eliminarRepuestoItem(${index})" title="Eliminar">
+            🗑️
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+  
+  html += `
+      </tbody>
+      <tfoot>
+        <tr class="table-success">
+          <td colspan="4" class="text-end fw-bold">TOTAL:</td>
+          <td class="text-end fw-bold text-success">$${total.toLocaleString('es-CL')}</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+  `;
+  
+  tablaContenido.innerHTML = html;
+  console.log('✅ Tabla de repuestos actualizada con', todosLosItems.length, 'items');
+}
+
+// Función para actualizar cantidad de un repuesto/insumo en la tabla
+window.actualizarCantidadRepuesto = function(index, nuevaCantidad) {
+  const cantidad = parseInt(nuevaCantidad) || 1;
+  if (cantidad < 1) {
+    alert('❌ La cantidad debe ser al menos 1');
+    return;
+  }
+  
+  const repuestosJson = document.getElementById('repuestos-json');
+  if (!repuestosJson) return;
+  
+  try {
+    const items = JSON.parse(repuestosJson.value || '[]');
+    if (items[index]) {
+      items[index].cantidad = cantidad;
+      repuestosJson.value = JSON.stringify(items);
+      actualizarTablaRepuestosConInsumos(items);
+    }
+  } catch (error) {
+    console.error('Error actualizando cantidad:', error);
+  }
+};
+
+// Función para eliminar un repuesto/insumo de la tabla
+window.eliminarRepuestoItem = function(index) {
+  const verAvisos = (typeof window.ver_avisos !== 'undefined' && window.ver_avisos);
+  if (verAvisos && !confirm('¿Eliminar este item?')) return;
+  
+  const repuestosJson = document.getElementById('repuestos-json');
+  if (!repuestosJson) return;
+  
+  try {
+    const items = JSON.parse(repuestosJson.value || '[]');
+    items.splice(index, 1);
+    repuestosJson.value = JSON.stringify(items);
+    actualizarTablaRepuestosConInsumos(items);
+    alert('🗑️ Item eliminado');
+  } catch (error) {
+    console.error('Error eliminando item:', error);
+    alert('❌ Error al eliminar el item');
+  }
+};
+
+// Función para actualizar la tabla de repuestos con insumos (DEPRECATED - usar actualizarTablaRepuestosConInsumos)
+function actualizarTablaInsumosEnRepuestos() {
+  const tablaContenido = document.getElementById('tabla-contenido');
+  const insumosJson = document.getElementById('insumos-json');
+  
+  if (!tablaContenido || !insumosJson) return;
+  
+  try {
+    const insumos = JSON.parse(insumosJson.value || '[]');
+    
+    if (!Array.isArray(insumos) || insumos.length === 0) {
+      return;
+    }
+    
+    let htmlInsumos = '';
+    let totalInsumos = 0;
+    
+    insumos.forEach((insumo) => {
+      const subtotal = (insumo.precio_unitario || 0) * (insumo.cantidad || 1);
+      totalInsumos += subtotal;
+      
+      htmlInsumos += `
+        <tr class="insumo-row" data-insumo-id="${insumo.id}">
+          <td class="text-center">🧰</td>
+          <td>${escapeHtml(insumo.nombre)}</td>
+          <td>
+            <input type="number" class="form-control form-control-sm cantidad-insumo" 
+                   data-id="${insumo.id}" value="${insumo.cantidad || 1}" min="1" 
+                   style="width: 80px;" onchange="actualizarCantidadInsumo(${insumo.id}, this.value)">
+          </td>
+          <td class="text-end">$${(insumo.precio_unitario || 0).toLocaleString('es-CL')}</td>
+          <td class="text-end fw-bold subtotal-insumo" data-id="${insumo.id}">$${subtotal.toLocaleString('es-CL')}</td>
+          <td class="text-center">
+            <button class="btn btn-sm btn-outline-danger" onclick="eliminarInsumo(${insumo.id})" title="Eliminar">
+              🗑️
+            </button>
+          </td>
+        </tr>
+      `;
+    });
+    
+    let tablaExistente = tablaContenido.querySelector('table');
+    
+    if (!tablaExistente) {
+      tablaContenido.innerHTML = `
+        <div class="alert alert-info mb-2">
+          <strong>📦 Repuestos e Insumos:</strong> Aquí se muestran todos los repuestos e insumos agregados al diagnóstico.
+        </div>
+        <table class="table table-sm table-bordered table-hover">
+          <thead class="table-light">
+            <tr>
+              <th style="width: 5%;">Tipo</th>
+              <th style="width: 35%;">Nombre</th>
+              <th style="width: 12%;">Cantidad</th>
+              <th style="width: 15%;">Precio Unit.</th>
+              <th style="width: 15%;">Subtotal</th>
+              <th style="width: 8%;">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-repuestos-insumos">
+            ${htmlInsumos}
+          </tbody>
+          <tfoot id="tfoot-totales">
+            <tr class="table-light">
+              <td colspan="4" class="text-end fw-bold">TOTAL:</td>
+              <td class="text-end fw-bold text-success" id="total-repuestos-insumos">$${totalInsumos.toLocaleString('es-CL')}</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      `;
+    } else {
+      let tbody = tablaExistente.querySelector('tbody');
+      if (!tbody) {
+        tbody = document.createElement('tbody');
+        tbody.id = 'tbody-repuestos-insumos';
+        tablaExistente.appendChild(tbody);
+      }
+      
+      tbody.querySelectorAll('.insumo-row').forEach(row => row.remove());
+      tbody.insertAdjacentHTML('beforeend', htmlInsumos);
+      actualizarTotalRepuestosInsumos();
+    }
+    
+  } catch (error) {
+    console.error('Error actualizando tabla de insumos:', error);
+  }
+}
+
+// Actualizar cantidad de insumo
+window.actualizarCantidadInsumo = function(insumoId, nuevaCantidad) {
+  const cantidad = parseInt(nuevaCantidad) || 1;
+  if (cantidad < 1) {
+    alert('❌ La cantidad debe ser al menos 1');
+    return;
+  }
+  
+  const insumosJson = document.getElementById('insumos-json');
+  if (!insumosJson) return;
+  
+  try {
+    const insumos = JSON.parse(insumosJson.value || '[]');
+    const insumo = insumos.find(i => i.id === insumoId);
+    if (insumo) {
+      insumo.cantidad = cantidad;
+      insumosJson.value = JSON.stringify(insumos);
+      
+      const subtotalEl = document.querySelector(`.subtotal-insumo[data-id="${insumoId}"]`);
+      if (subtotalEl) {
+        const subtotal = (insumo.precio_unitario || 0) * cantidad;
+        subtotalEl.textContent = `$${subtotal.toLocaleString('es-CL')}`;
+      }
+      
+      actualizarTotalRepuestosInsumos();
+    }
+  } catch (error) {
+    console.error('Error actualizando cantidad:', error);
+  }
+};
+
+// Eliminar insumo
+window.eliminarInsumo = function(insumoId) {
+  const verAvisos = (typeof window.ver_avisos !== 'undefined' && window.ver_avisos);
+  if (verAvisos && !confirm('¿Eliminar este insumo?')) return;
+  
+  const insumosJson = document.getElementById('insumos-json');
+  if (!insumosJson) return;
+  
+  try {
+    const insumos = JSON.parse(insumosJson.value || '[]');
+    const filtrados = insumos.filter(i => i.id !== insumoId);
+    insumosJson.value = JSON.stringify(filtrados);
+    
+    actualizarTablaInsumosEnRepuestos();
+    alert('🗑️ Insumo eliminado');
+  } catch (error) {
+    console.error('Error eliminando insumo:', error);
+    alert('❌ Error al eliminar el insumo');
+  }
+};
+
+// Actualizar total combinado (función placeholder - se integra con sistema de repuestos)
+function actualizarTotalRepuestosInsumos() {
+  const totalEl = document.getElementById('total-repuestos-insumos');
+  if (!totalEl) return;
+  
+  const insumosJson = document.getElementById('insumos-json');
+  let totalInsumos = 0;
+  if (insumosJson && insumosJson.value) {
+    try {
+      const insumos = JSON.parse(insumosJson.value || '[]');
+      totalInsumos = insumos.reduce((sum, insumo) => {
+        return sum + ((insumo.precio_unitario || 0) * (insumo.cantidad || 1));
+      }, 0);
+    } catch (e) {
+      console.error('Error calculando total insumos:', e);
+    }
+  }
+  
+  const total = totalInsumos; // TODO: Sumar con total de repuestos
+  totalEl.textContent = `$${total.toLocaleString('es-CL')}`;
+}
+
+// Preparar insumos antes de enviar el formulario
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('form-ingreso');
+  if (form) {
+    console.log('✅ Formulario encontrado:', form);
+    form.addEventListener('submit', function(e) {
+      console.log('='.repeat(80));
+      console.log('🚀 SUBMIT DISPARADO - Preparando datos para envío...');
+      console.log('='.repeat(80));
+      
+      // Verificar repuestos_json (AQUÍ DEBERÍAN ESTAR LOS INSUMOS)
+      const repuestosJson = document.getElementById('repuestos-json');
+      console.log('📦 Campo repuestos-json:', repuestosJson);
+      console.log('📦 Valor:', repuestosJson ? repuestosJson.value : 'NO ENCONTRADO');
+      if (repuestosJson && repuestosJson.value) {
+        try {
+          const repuestosData = JSON.parse(repuestosJson.value);
+          console.log('📦 Total items en repuestos_json:', repuestosData.length);
+          console.log('📦 Items:', repuestosData);
+        } catch (e) {
+          console.error('❌ Error parseando repuestos_json:', e);
+        }
+      }
+      
+      // Verificar repuestos externos
+      const hiddenExternos = document.getElementById('repuestos-externos-json');
+      if (hiddenExternos && window.repuestosExternos) {
+        hiddenExternos.value = JSON.stringify(window.repuestosExternos);
+        console.log('🌐 Repuestos externos:', hiddenExternos.value);
+      }
+      
+      console.log('='.repeat(80));
+      console.log('✅ Formulario listo para enviar');
+      console.log('='.repeat(80));
+    });
+  } else {
+    console.error('❌ No se encontró el formulario form-ingreso');
+  }
+  
+  // Cargar insumos guardados al iniciar
+  actualizarTablaInsumosEnRepuestos();
+  
+  // ========================================
+  // FORZAR ESTILOS DE VISIBILIDAD EN TEMA OSCURO
+  // Aplicar estilos inline directamente para máxima prioridad
+  // ========================================
+  
+  // Flag para prevenir loops infinitos
+  let aplicandoEstilos = false;
+  let ultimaAplicacion = 0;
+  
+  function aplicarEstilosTemaOscuro() {
+    // Prevenir ejecuciones simultáneas o muy frecuentes
+    const ahora = Date.now();
+    if (aplicandoEstilos || (ahora - ultimaAplicacion < 500)) {
+      return;
+    }
+    
+    aplicandoEstilos = true;
+    ultimaAplicacion = ahora;
+    
+    // Detectar si estamos en tema oscuro (verificar en html y body)
+    const htmlClass = document.documentElement.className || '';
+    const bodyClass = document.body.className || '';
+    const isDarkTheme = htmlClass.includes('theme-dark') || 
+                       htmlClass.includes('theme-piedra') ||
+                       bodyClass.includes('theme-dark') || 
+                       bodyClass.includes('theme-piedra');
+    
+    if (!isDarkTheme) {
+      aplicandoEstilos = false;
+      return;
+    }
+    
+    console.log('🌙 Aplicando estilos de tema oscuro...', {htmlClass, bodyClass});
+    
+    try {
+    
+    // Aplicar estilos directamente a inputs de cantidad (MÁXIMA PRIORIDAD - inline styles)
+    document.querySelectorAll('#tabla-contenido input[type="number"], #tab-repuestos input[type="number"], input.cantidad-insumo, .cantidad-insumo').forEach(input => {
+      if (input && input.style) {
+        input.style.setProperty('background-color', '#ffffff', 'important');
+        input.style.setProperty('color', '#212529', 'important');
+        input.style.setProperty('border', '2px solid #ced4da', 'important');
+        input.style.setProperty('font-weight', '700', 'important');
+        input.style.setProperty('font-size', '0.9rem', 'important');
+        input.style.setProperty('opacity', '1', 'important');
+        // Asegurar que los inputs sean clickeables
+        input.style.setProperty('pointer-events', 'auto', 'important');
+        input.style.setProperty('z-index', '10', 'important');
+        input.style.setProperty('position', 'relative', 'important');
+      }
+    });
+    
+    // Aplicar a lista de acciones - FORZAR COLOR BLANCO
+    // NO aplicar pointer-events: none ni bloquear eventos
+    document.querySelectorAll('#acciones-para-componentes .list-group-item').forEach(item => {
+      if (item && item.style) {
+        item.style.setProperty('background-color', '#2a2a2a', 'important');
+        item.style.setProperty('border-color', '#555', 'important');
+        item.style.setProperty('color', '#ffffff', 'important');
+        // Asegurar que los eventos funcionen
+        item.style.setProperty('pointer-events', 'auto', 'important');
+        item.style.setProperty('cursor', 'default', 'important');
+      }
+    });
+    
+    document.querySelectorAll('#acciones-para-componentes .list-group-item *').forEach(el => {
+      // NO aplicar a inputs, buttons, ni elementos interactivos
+      if (el && el.style && 
+          el.tagName !== 'INPUT' && 
+          el.tagName !== 'BUTTON' && 
+          el.tagName !== 'LABEL' &&
+          !el.classList.contains('text-success') &&
+          !el.closest('input') &&
+          !el.closest('button') &&
+          !el.closest('label')) {
+        el.style.setProperty('color', '#ffffff', 'important');
+        el.style.setProperty('opacity', '1', 'important');
+      }
+    });
+    
+    // Precios en verde brillante
+    document.querySelectorAll('#acciones-para-componentes .text-success, #acciones-para-componentes .accion-precio').forEach(el => {
+      if (el && el.style) {
+        el.style.setProperty('color', '#4ade80', 'important');
+        el.style.setProperty('font-weight', '700', 'important');
+        el.style.setProperty('opacity', '1', 'important');
+      }
+    });
+    
+    // Aplicar a total mano de obra
+    const totalMO = document.getElementById('total_mano_obra');
+    if (totalMO && totalMO.style) {
+      totalMO.style.setProperty('color', '#ffffff', 'important');
+      totalMO.style.setProperty('font-weight', '700', 'important');
+      totalMO.style.setProperty('opacity', '1', 'important');
+      totalMO.style.setProperty('font-size', '1.5rem', 'important');
+      totalMO.style.setProperty('text-shadow', '0 2px 4px rgba(0, 0, 0, 0.5)', 'important');
+    }
+    
+    // Contenedor del total
+    const totalContainer = totalMO?.closest('.bg-light, .rounded');
+    if (totalContainer && totalContainer.style) {
+      totalContainer.style.setProperty('background-color', '#333', 'important');
+      totalContainer.style.setProperty('border', '2px solid #555', 'important');
+    }
+    
+    // Labels del total
+    document.querySelectorAll('#tab-acciones .text-secondary, #tab-acciones .small.text-secondary').forEach(el => {
+      if (el && el.style) {
+        el.style.setProperty('color', '#c0c0c0', 'important');
+        el.style.setProperty('font-weight', '600', 'important');
+        el.style.setProperty('opacity', '1', 'important');
+      }
+    });
+    
+    // Aplicar a lista de insumos
+    document.querySelectorAll('#lista-insumos-disponibles .list-group-item').forEach(item => {
+      if (item && item.style) {
+        item.style.setProperty('background-color', '#2a2a2a', 'important');
+        item.style.setProperty('border-color', '#555', 'important');
+        item.style.setProperty('color', '#ffffff', 'important');
+        // Asegurar que los eventos funcionen
+        item.style.setProperty('pointer-events', 'auto', 'important');
+        item.style.setProperty('cursor', 'default', 'important');
+      }
+    });
+    
+    document.querySelectorAll('#lista-insumos-disponibles label, #lista-insumos-disponibles strong, #lista-insumos-disponibles .form-check-label').forEach(el => {
+      if (el && el.style) {
+        el.style.setProperty('color', '#ffffff', 'important');
+        el.style.setProperty('opacity', '1', 'important');
+        el.style.setProperty('font-weight', '600', 'important');
+      }
+    });
+    
+    document.querySelectorAll('#lista-insumos-disponibles small, #lista-insumos-disponibles .text-muted, #lista-insumos-disponibles .text-muted *').forEach(el => {
+      if (el && el.style) {
+        el.style.setProperty('color', '#c0c0c0', 'important');
+        el.style.setProperty('opacity', '1', 'important');
+      }
+    });
+    
+    // Inputs de cantidad en lista de insumos
+    document.querySelectorAll('#lista-insumos-disponibles input[type="number"], input.insumo-cantidad, .insumo-cantidad').forEach(input => {
+      if (input && input.style) {
+        input.style.setProperty('background-color', '#ffffff', 'important');
+        input.style.setProperty('color', '#212529', 'important');
+        input.style.setProperty('border', '2px solid #ced4da', 'important');
+        input.style.setProperty('font-weight', '700', 'important');
+        input.style.setProperty('opacity', '1', 'important');
+        // Asegurar que los inputs sean clickeables
+        input.style.setProperty('pointer-events', 'auto', 'important');
+        input.style.setProperty('z-index', '10', 'important');
+      }
+    });
+    
+    // Checkboxes - asegurar que sean clickeables y visibles cuando están marcados
+    function aplicarEstilosCheckbox(cb) {
+      if (!cb || !cb.style) return;
+      
+      if (cb.checked) {
+        // Checkbox marcado - fondo azul brillante con borde blanco grueso para máximo contraste
+        cb.style.setProperty('background-color', '#0d6efd', 'important');
+        cb.style.setProperty('border-color', '#ffffff', 'important');
+        cb.style.setProperty('border-width', '4px', 'important');
+        cb.style.setProperty('box-shadow', '0 0 0 3px rgba(13, 110, 253, 0.8), inset 0 0 0 2px #ffffff, 0 0 12px rgba(13, 110, 253, 1)', 'important');
+        cb.style.setProperty('outline', '3px solid #ffffff', 'important');
+        cb.style.setProperty('outline-offset', '2px', 'important');
+      } else {
+        // Checkbox no marcado - fondo blanco con borde más visible
+        cb.style.setProperty('background-color', '#ffffff', 'important');
+        cb.style.setProperty('border-color', '#6c757d', 'important');
+        cb.style.setProperty('border-width', '2px', 'important');
+        cb.style.setProperty('box-shadow', 'none', 'important');
+        cb.style.setProperty('outline', 'none', 'important');
+      }
+      cb.style.setProperty('pointer-events', 'auto', 'important');
+      cb.style.setProperty('cursor', 'pointer', 'important');
+      cb.style.setProperty('z-index', '10', 'important');
+      cb.style.setProperty('position', 'relative', 'important');
+      cb.style.setProperty('width', '1.3em', 'important');
+      cb.style.setProperty('height', '1.3em', 'important');
+      cb.style.setProperty('flex-shrink', '0', 'important');
+    }
+    
+    // Aplicar estilos a checkboxes existentes
+    document.querySelectorAll('#lista-insumos-disponibles input[type="checkbox"], #acciones-para-componentes input[type="checkbox"]').forEach(cb => {
+      aplicarEstilosCheckbox(cb);
+      
+      // Agregar listener para actualizar estilos cuando cambie el estado
+      const updateOnChange = function() {
+        setTimeout(() => aplicarEstilosCheckbox(this), 50);
+      };
+      
+      // Remover listener anterior si existe para evitar duplicados
+      cb.removeEventListener('change', updateOnChange);
+      cb.addEventListener('change', updateOnChange);
+      
+      // También actualizar al hacer clic (antes del change) para feedback inmediato
+      cb.addEventListener('click', function(e) {
+        // Permitir que el evento se procese primero
+        setTimeout(() => {
+          aplicarEstilosCheckbox(this);
+        }, 50);
+      });
+    });
+    
+    // Re-aplicar estilos a checkboxes cuando se creen nuevos elementos dinámicamente
+    setTimeout(() => {
+      document.querySelectorAll('#lista-insumos-disponibles input[type="checkbox"], #acciones-para-componentes input[type="checkbox"]').forEach(cb => {
+        if (!cb.hasAttribute('data-estilos-aplicados')) {
+          aplicarEstilosCheckbox(cb);
+          cb.setAttribute('data-estilos-aplicados', 'true');
+          
+          const updateOnChange = function() {
+            setTimeout(() => aplicarEstilosCheckbox(this), 50);
+          };
+          cb.addEventListener('change', updateOnChange);
+          cb.addEventListener('click', function() {
+            setTimeout(() => aplicarEstilosCheckbox(this), 50);
+          });
+        }
+      });
+    }, 500);
+    
+    // Aplicar a tabla de repuestos/insumos
+    document.querySelectorAll('#tabla-contenido td').forEach(td => {
+      if (td && td.style && !td.querySelector('input')) {
+        td.style.setProperty('color', '#ffffff', 'important');
+        td.style.setProperty('background-color', '#2a2a2a', 'important');
+      }
+    });
+    
+    document.querySelectorAll('#tabla-contenido th').forEach(th => {
+      if (th && th.style) {
+        th.style.setProperty('color', '#ffffff', 'important');
+        th.style.setProperty('background-color', '#333', 'important');
+        th.style.setProperty('font-weight', '700', 'important');
+      }
+    });
+    
+    document.querySelectorAll('#tabla-contenido .fw-bold, #tabla-contenido .subtotal-insumo').forEach(el => {
+      if (el && el.style) {
+        el.style.setProperty('color', '#ffffff', 'important');
+        el.style.setProperty('font-weight', '700', 'important');
+        el.style.setProperty('opacity', '1', 'important');
+      }
+    });
+    
+    // Títulos de pestañas
+    document.querySelectorAll('#tab-acciones h4, #tab-repuestos h4, #tab-insumos h4, #tab-insumos h3').forEach(h => {
+      if (h && h.style) {
+        h.style.setProperty('color', '#ffffff', 'important');
+        h.style.setProperty('font-weight', '700', 'important');
+      }
+    });
+    
+      console.log('✅ Estilos de tema oscuro aplicados');
+    } catch (error) {
+      console.error('❌ Error aplicando estilos:', error);
+    } finally {
+      // Siempre liberar el flag
+      setTimeout(() => {
+        aplicandoEstilos = false;
+      }, 100);
+    }
+  }
+  
+  // Ejecutar solo unas pocas veces al inicio (NO excesivamente)
+  aplicarEstilosTemaOscuro();
+  setTimeout(() => aplicarEstilosTemaOscuro(), 1000);
+  
+  // También aplicar cuando la página esté completamente cargada (solo una vez)
+  window.addEventListener('load', () => {
+    setTimeout(() => aplicarEstilosTemaOscuro(), 1500);
+  }, { once: true });
+  
+  // Observar cambios en el DOM (MUY CONSERVADOR para evitar loops infinitos)
+  let observerTimeout;
+  let observerCount = 0;
+  const MAX_OBSERVER_CALLS = 10; // Límite de llamadas por segundo
+  
+  const observer = new MutationObserver((mutations) => {
+    // Limitar llamadas excesivas
+    observerCount++;
+    if (observerCount > MAX_OBSERVER_CALLS) {
+      console.warn('⚠️ Demasiadas llamadas al observer, deteniendo...');
+      return;
+    }
+    
+    // Resetear contador después de 1 segundo
+    setTimeout(() => { observerCount = 0; }, 1000);
+    
+    // Solo re-aplicar si hay cambios relevantes (nuevos elementos importantes)
+    const hasNewElements = mutations.some(m => 
+      m.addedNodes.length > 0 && 
+      Array.from(m.addedNodes).some(node => {
+        if (node.nodeType !== 1) return false;
+        
+        // Solo si es un contenedor importante o hijo directo de uno
+        const isImportant = node.id === 'acciones-para-componentes' || 
+                           node.id === 'lista-insumos-disponibles' || 
+                           node.id === 'tabla-contenido';
+        
+        const isInImportant = node.closest && (
+          node.closest('#acciones-para-componentes') || 
+          node.closest('#lista-insumos-disponibles') ||
+          node.closest('#tabla-contenido')
+        );
+        
+        // Solo si es un elemento HTML real con contenido (no solo un nodo de texto)
+        const hasContent = node.tagName && node.tagName !== 'SCRIPT' && node.tagName !== 'STYLE';
+        
+        return (isImportant || isInImportant) && hasContent;
+      })
+    );
+    
+    if (hasNewElements && !aplicandoEstilos) {
+      clearTimeout(observerTimeout);
+      observerTimeout = setTimeout(() => {
+        aplicarEstilosTemaOscuro();
+      }, 800); // Delay más largo para evitar loops
+    }
+  });
+  
+  // Observar SOLO nuevos elementos hijos, NO atributos ni cambios de estilo
+  observer.observe(document.body, {
+    childList: true,
+    subtree: false, // SOLO cambios directos en hijos del body, no en todo el árbol
+    attributes: false,
+    characterData: false,
+    attributeOldValue: false,
+    characterDataOldValue: false
+  });
+  
+  // Observer más específico solo para los contenedores críticos cuando existan
+  setTimeout(() => {
+    const accionesContainer = document.getElementById('acciones-para-componentes');
+    const insumosContainer = document.getElementById('lista-insumos-disponibles');
+    const tablaContainer = document.getElementById('tabla-contenido');
+    
+    if (accionesContainer) {
+      const accionesObserver = new MutationObserver(() => {
+        if (!aplicandoEstilos) {
+          setTimeout(aplicarEstilosTemaOscuro, 500);
+        }
+      });
+      accionesObserver.observe(accionesContainer, {
+        childList: true,
+        subtree: false,
+        attributes: false
+      });
+    }
+    
+    if (insumosContainer) {
+      const insumosObserver = new MutationObserver(() => {
+        if (!aplicandoEstilos) {
+          setTimeout(aplicarEstilosTemaOscuro, 500);
+        }
+      });
+      insumosObserver.observe(insumosContainer, {
+        childList: true,
+        subtree: false,
+        attributes: false
+      });
+    }
+    
+    if (tablaContainer) {
+      const tablaObserver = new MutationObserver(() => {
+        if (!aplicandoEstilos) {
+          setTimeout(aplicarEstilosTemaOscuro, 500);
+        }
+      });
+      tablaObserver.observe(tablaContainer, {
+        childList: true,
+        subtree: false,
+        attributes: false
+      });
+    }
+  }, 1000);
+  
+  // Re-aplicar cuando cambien las pestañas (solo una vez por cambio)
+  document.querySelectorAll('#ingresoTabs button[data-bs-toggle="tab"]').forEach(btn => {
+    btn.addEventListener('shown.bs.tab', () => {
+      if (!aplicandoEstilos) {
+        setTimeout(() => aplicarEstilosTemaOscuro(), 500);
+      }
+    }, { once: false });
+  });
+  
+  // Re-aplicar cuando se carguen repuestos o acciones dinámicamente
+  if (typeof cargarRepuestos === 'function') {
+    const originalCargarRepuestos = cargarRepuestos;
+    window.cargarRepuestos = function() {
+      originalCargarRepuestos.apply(this, arguments);
+      setTimeout(aplicarEstilosTemaOscuro, 500);
+      setTimeout(aplicarEstilosTemaOscuro, 1500);
+    };
+  }
+  
+  // Interceptar actualización de acciones (del script ingreso.js)
+  const originalUpdateHiddenAndTotal = window.updateHiddenAndTotal;
+  if (typeof originalUpdateHiddenAndTotal === 'function') {
+    window.updateHiddenAndTotal = function() {
+      originalUpdateHiddenAndTotal.apply(this, arguments);
+      setTimeout(aplicarEstilosTemaOscuro, 300);
+    };
+  }
+  
+  // NO hacer re-aplicación periódica automática - solo cuando sea necesario
+  // El observer y los eventos de pestañas son suficientes
+});
+</script>
+
+{% endblock %}

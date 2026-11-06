@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+  <style>
+    .container {
+      background: var(--bg-card);
+      border-radius: var(--border-radius-lg);
+      padding: var(--spacing-lg);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .btn {
+      border-radius: var(--border-radius);
+      font-weight: 500;
+      transition: var(--transition);
+      padding: var(--spacing-sm) var(--spacing-md);
+    }
+    
+    .btn-primary {
+      background: var(--primary-600);
+      border-color: var(--primary-600);
+    }
+    
+    .btn-primary:hover {
+      background: var(--primary-700);
+      border-color: var(--primary-700);
+    }
+    
+    .btn-secondary {
+      background: var(--neutral-600);
+      border-color: var(--neutral-600);
+    }
+    
+    .btn-secondary:hover {
+      background: var(--neutral-700);
+      border-color: var(--neutral-700);
+    }
+    
+    h2 {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+    
+    .form-control, .form-select {
+      background: var(--bg);
+      border: 2px solid var(--border-color);
+      color: var(--text-primary);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-sm);
+      transition: var(--transition);
+    }
+    
+    .form-control:focus, .form-select:focus {
+      border-color: var(--primary-600);
+      box-shadow: 0 0 0 0.2rem rgba(var(--primary-600), 0.25);
+      outline: none;
+    }
+    
+    .form-label {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h2>{{ view.object|default:"Nuevo Mecanico" }}</h2>
+  <form method="post">{% csrf_token %}
+    {{ form|crispy }}
+    <button type="submit" class="btn btn-primary">Guardar</button>
+    <a href="{% url 'mecanico_list' %}" class="btn btn-secondary">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

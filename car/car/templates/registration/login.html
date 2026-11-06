@@ -2,7 +2,6 @@
 {% load static %}
 
 {% block extra_css %}
-  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
 {% endblock %}
 
 {% block title %}Iniciar Sesión{% endblock %}
@@ -50,12 +49,12 @@
             </div>
 
             <div class="col-md-6">
-              <div class="p-3 p-md-4 rounded-3 border" style="background: linear-gradient(135deg, var(--warning-50), var(--warning-100));">
+              <div class="p-3 p-md-4 rounded-3 border css004b-inline-c23808b15fd0" >
                 <div class="d-flex align-items-center mb-3">
                   {% if config and config.logo_secundario_url %}
-                    <img src="{{ config.logo_secundario_url }}" alt="Taller" style="height:40px" class="me-2">
+                    <img src="{{ config.logo_secundario_url }}" alt="Taller"  class="me-2 css004b-inline-9f5da7a77a05">
                   {% else %}
-                    <img src="{% static 'images/Logo1.svg' %}" alt="Taller" style="height:40px" class="me-2">
+                    <img src="{% static 'images/Logo1.svg' %}" alt="Taller"  class="me-2 css004b-inline-9f5da7a77a05">
                   {% endif %}
                   <h5 class="mb-0">Seguimiento de vehículo</h5>
                 </div>

@@ -7,148 +7,8 @@
   {% include 'car/mobile_fab.html' %}
 {% endblock %}
 
-{% block extra_css %}
-  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
-  <style>
-    .historial-container {
-      background: var(--bg-card);
-      border-radius: var(--border-radius-lg);
-      padding: var(--spacing-lg);
-      box-shadow: var(--shadow-md);
-    }
-    
-    .historial-header {
-      background: var(--gradient);
-      color: var(--text-inverse);
-      padding: var(--spacing-lg);
-      border-radius: var(--border-radius-lg);
-      margin-bottom: var(--spacing-lg);
-      text-align: center;
-    }
-    
-    .historial-header h2 {
-      font-size: 2rem;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-    }
-    
-    .trabajo-item {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: var(--border-radius-lg);
-      padding: var(--spacing-md);
-      margin-bottom: var(--spacing-md);
-      box-shadow: var(--shadow-sm);
-      transition: var(--transition);
-    }
-    
-    .trabajo-item:hover {
-      box-shadow: var(--shadow-md);
-      transform: translateY(-2px);
-    }
-    
-    .trabajo-item-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: var(--spacing-sm);
-      padding-bottom: var(--spacing-sm);
-      border-bottom: 2px solid var(--border-color);
-    }
-    
-    .trabajo-item-title {
-      font-size: 1.2rem;
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-    
-    .trabajo-item-info {
-      color: var(--text-secondary);
-      font-size: 0.9rem;
-      margin-bottom: var(--spacing-xs);
-    }
-    
-    .trabajo-item-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: var(--spacing-sm);
-      padding-top: var(--spacing-sm);
-      border-top: 1px solid var(--border-color);
-    }
-    
-    .badge {
-      border-radius: var(--border-radius-sm);
-      font-weight: 500;
-      padding: var(--spacing-xs) var(--spacing-sm);
-    }
-    
-    .btn {
-      border-radius: var(--border-radius);
-      font-weight: 500;
-      transition: var(--transition);
-      padding: var(--spacing-sm) var(--spacing-md);
-    }
-    
-    .btn-secondary {
-      background: var(--secondary-600);
-      border-color: var(--secondary-600);
-      color: var(--text-inverse);
-    }
-    
-    .btn-secondary:hover {
-      background: var(--secondary-700);
-      border-color: var(--secondary-700);
-    }
-    
-    .saldo-pendiente {
-      padding: var(--spacing-xs) var(--spacing-sm);
-      border-radius: var(--border-radius);
-      font-weight: 600;
-      font-size: 0.9rem;
-    }
-    
-    .saldo-pendiente.positivo {
-      background: #fff3cd;
-      color: #856404;
-      border: 2px solid #ffc107;
-    }
-    
-    .saldo-pendiente.cero {
-      background: #d1e7dd;
-      color: #0f5132;
-      border: 2px solid #198754;
-    }
-    
-    @media (max-width: 768px) {
-      .historial-container {
-        padding: var(--spacing-sm);
-      }
-      
-      .historial-header {
-        padding: var(--spacing-md);
-      }
-      
-      .historial-header h2 {
-        font-size: 1.5rem;
-      }
-      
-      .trabajo-item-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--spacing-xs);
-      }
-      
-      .trabajo-item-footer {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--spacing-xs);
-      }
-    }
-  </style>
-{% endblock %}
-
 {% block content %}
+<div class="css004a-work-history">
 <div class="historial-container">
   <div class="historial-header">
     <h2>📜 Historial de Trabajos</h2>
@@ -164,7 +24,7 @@
              class="form-control" 
              placeholder="Buscar por ID, cliente, placa, RUT, mecánico, estado..."
              autocomplete="off">
-      <button class="btn btn-outline-secondary" type="button" id="btn-limpiar-busqueda" style="display:none;">
+      <button class="btn btn-outline-secondary css004a-search-clear" type="button" id="btn-limpiar-busqueda">
         ✕ Limpiar
       </button>
     </div>
@@ -399,4 +259,5 @@
   }
 })();
 </script>
+</div>
 {% endblock %}

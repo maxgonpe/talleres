@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}{{ repuesto.nombre }} - Ficha del Repuesto - NetGoGo{% endblock %}
+
+{% block extra_css %}
+
+{% endblock %}
+
+{% block content %}
+<span hidden data-css004b="8a3a7bf25a"></span>
+<div class="detail-container">
+    <!-- Header -->
+    <div class="detail-header">
+        <h2 class="mb-0">📦 {{ repuesto.nombre }}</h2>
+        {% if repuesto.sku %}
+        <div class="sku-badge">SKU: {{ repuesto.sku }}</div>
+        {% endif %}
+    </div>
+
+    <!-- Información del repuesto -->
+    <div class="info-grid">
+        <!-- Información General -->
+        <div class="info-card">
+            <h5><i class="fas fa-info-circle"></i>Información General</h5>
+            <div class="info-item">
+                <span class="info-label">ID</span>
+                <span class="info-value">{{ repuesto.id }}</span>
+            </div>
+            {% if repuesto.sku %}
+            <div class="info-item">
+                <span class="info-label">SKU</span>
+                <span class="info-value">{{ repuesto.sku }}</span>
+            </div>
+            {% endif %}
+            {% if repuesto.oem %}
+            <div class="info-item">
+                <span class="info-label">OEM</span>
+                <span class="info-value">{{ repuesto.oem }}</span>
+            </div>
+            {% endif %}
+            {% if repuesto.referencia %}
+            <div class="info-item">
+                <span class="info-label">Referencia</span>
+                <span class="info-value">{{ repuesto.referencia }}</span>
+            </div>
+            {% endif %}
+            {% if repuesto.marca %}
+            <div class="info-item">
+                <span class="info-label">Marca</span>
+                <span class="info-value">{{ repuesto.marca }}</span>
+            </div>
+            {% endif %}
+            {% if repuesto.descripcion %}
+            <div class="info-item">
+                <span class="info-label">Descripción</span>
+                <span class="info-value">{{ repuesto.descripcion }}</span>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Especificaciones Técnicas -->
+        <div class="info-card">
+            <h5><i class="fas fa-cog"></i>Especificaciones Técnicas</h5>
+            {% if repuesto.medida %}
+            <div class="info-item">
+                <span class="info-label">Medida</span>
+                <span class="info-value">{{ repuesto.medida }}</span>
+            </div>
+            {% endif %}
+            {% if repuesto.posicion %}
+            <div class="info-item">
+                <span class="info-label">Posición</span>
+                <span class="info-value">{{ repuesto.posicion }}</span>
+            </div>
+            {% endif %}
+            {% if repuesto.unidad %}
+            <div class="info-item">
+                <span class="info-label">Unidad</span>
+                <span class="info-value">{{ repuesto.unidad }}</span>
+            </div>
+            {% endif %}
+            {% if repuesto.codigo_barra %}
+            <div class="info-item">
+                <span class="info-label">Código de Barras</span>
+                <span class="info-value">{{ repuesto.codigo_barra }}</span>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Información Comercial -->
+        <div class="info-card">
+            <h5><i class="fas fa-dollar-sign"></i>Información Comercial</h5>
+            <div class="info-item">
+                <span class="info-label">Precio Costo</span>
+                <span class="info-value">${{ repuesto.precio_costo|default:"0"|floatformat:0|intcomma }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Precio Venta</span>
+                <span class="info-value">${{ repuesto.precio_venta|default:"0"|floatformat:0|intcomma }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Stock Total</span>
+                <span class="info-value">
+                    <span class="stock-badge {% if repuesto.stock_total > 0 %}success{% else %}danger{% endif %}">
+                        {{ repuesto.stock_total|default:0 }}
+                    </span>
+                </span>
+            </div>
+        </div>
+        
+        <!-- Información de Proveedor -->
+        <div class="info-card">
+            <h5><i class="fas fa-truck"></i>Información de Proveedor</h5>
+            {% if repuesto.origen_repuesto %}
+            <div class="info-item">
+                <span class="info-label">Origen</span>
+                <span class="info-value">{{ repuesto.origen_repuesto }}</span>
+            </div>
+            {% endif %}
+            {% if repuesto.cod_prov %}
+            <div class="info-item">
+                <span class="info-label">Código Proveedor</span>
+                <span class="info-value">{{ repuesto.cod_prov }}</span>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Compatibilidad Vehículo -->
+        <div class="info-card">
+            <h5><i class="fas fa-car"></i>Compatibilidad Vehículo</h5>
+            {% if repuesto.marca_veh %}
+            <div class="info-item">
+                <span class="info-label">Marca Vehículo</span>
+                <span class="info-value">{{ repuesto.marca_veh }}</span>
+            </div>
+            {% endif %}
+            {% if repuesto.tipo_de_motor %}
+            <div class="info-item">
+                <span class="info-label">Tipo de Motor</span>
+                <span class="info-value">{{ repuesto.tipo_de_motor }}</span>
+            </div>
+            {% endif %}
+            {% if repuesto.carroceria %}
+            <div class="info-item">
+                <span class="info-label">Carrocería</span>
+                <span class="info-value">{{ repuesto.carroceria }}</span>
+            </div>
+            {% endif %}
+            {% if repuesto.cilindrada %}
+            <div class="info-item">
+                <span class="info-label">Cilindrada</span>
+                <span class="info-value">{{ repuesto.cilindrada }}</span>
+            </div>
+            {% endif %}
+            {% if repuesto.nro_valvulas %}
+            <div class="info-item">
+                <span class="info-label">Número de Válvulas</span>
+                <span class="info-value">{{ repuesto.nro_valvulas }}</span>
+            </div>
+            {% endif %}
+            {% if repuesto.combustible %}
+            <div class="info-item">
+                <span class="info-label">Combustible</span>
+                <span class="info-value">{{ repuesto.combustible }}</span>
+            </div>
+            {% endif %}
+            {% if repuesto.otro_especial %}
+            <div class="info-item">
+                <span class="info-label">Otro Especial</span>
+                <span class="info-value">{{ repuesto.otro_especial }}</span>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Información del Sistema -->
+        <div class="info-card">
+            <h5><i class="fas fa-database"></i>Información del Sistema</h5>
+            <div class="info-item">
+                <span class="info-label">Fecha Creación</span>
+                <span class="info-value">{{ repuesto.created|date:"d/m/Y H:i" }}</span>
+            </div>
+            {% if repuesto.updated %}
+            <div class="info-item">
+                <span class="info-label">Última Actualización</span>
+                <span class="info-value">{{ repuesto.updated|date:"d/m/Y H:i" }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Botones de Acción -->
+    <div class="action-buttons">
+        <a href="{% url 'repuesto_list' %}" class="btn btn-secondary btn-action-detail">
+            <i class="fas fa-arrow-left"></i>Volver a la Lista
+        </a>
+        <a href="{% url 'repuesto_update' repuesto.pk %}" class="btn btn-warning btn-action-detail">
+            <i class="fas fa-edit"></i>Editar Repuesto
+        </a>
+        <a href="{% url 'repuesto_compatibilidad' repuesto.pk %}" class="btn btn-success btn-action-detail">
+            <i class="fas fa-link"></i>Ver Compatibilidad
+        </a>
+    </div>
+</div>
+{% endblock %}
+

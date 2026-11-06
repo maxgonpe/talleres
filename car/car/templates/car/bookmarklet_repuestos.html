@@ -4,6 +4,7 @@
 {% block title %}📌 Bookmarklet - Extractor de Repuestos{% endblock %}
 
 {% block content %}
+<span hidden data-css004b="38989ad32a"></span>
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-lg-10">
@@ -31,8 +32,8 @@
                                     <a href="#" 
                                        id="bookmarkletLink"
                                        draggable="true"
-                                       class="btn btn-lg btn-success px-5 py-3 d-inline-block"
-                                       style="cursor: move; font-size: 1.2rem; font-weight: bold; user-select: none; -webkit-user-drag: element;"
+                                       class="btn btn-lg btn-success px-5 py-3 d-inline-block css004b-inline-90b640188748"
+                                       
                                        onmousedown="event.preventDefault(); return false;">
                                         🔖 Arrástrame a Marcadores
                                     </a>
@@ -199,33 +200,7 @@
     </div>
 </div>
 
-<style>
-.card {
-    border: none;
-    border-radius: 15px;
-}
 
-.card-header {
-    border-radius: 15px 15px 0 0 !important;
-}
-
-@keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-}
-
-.btn-success:hover {
-    animation: pulse 1s infinite;
-}
-
-#bookmarkletLink {
-    text-decoration: none;
-}
-
-#bookmarkletLink:active {
-    opacity: 0.8;
-}
-</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

@@ -7,368 +7,8 @@
   {% include 'car/mobile_fab.html' %}
 {% endblock %}
 
-{% block extra_css %}
-  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
-  <style>
-    .trabajos-container {
-      background: var(--bg-card);
-      border-radius: var(--border-radius-lg);
-      padding: var(--spacing-lg);
-      box-shadow: var(--shadow-md);
-    }
-    
-    .trabajos-header {
-      background: var(--gradient);
-      color: var(--text-inverse);
-      padding: var(--spacing-lg);
-      border-radius: var(--border-radius-lg);
-      margin-bottom: var(--spacing-lg);
-      text-align: center;
-    }
-    
-    .trabajos-header h2 {
-      font-size: 2rem;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-    }
-    
-    .search-container {
-      background: var(--bg-card);
-      border-radius: var(--border-radius-lg);
-      padding: var(--spacing-md);
-      margin-bottom: var(--spacing-lg);
-      box-shadow: var(--shadow-sm);
-    }
-    
-    .form-control {
-      background: var(--bg);
-      border: 2px solid var(--border-color);
-      color: var(--text-primary);
-      border-radius: var(--border-radius);
-      padding: var(--spacing-sm);
-      transition: var(--transition);
-    }
-    
-    .form-control:focus {
-      border-color: var(--primary-600);
-      box-shadow: 0 0 0 0.2rem rgba(var(--primary-600), 0.25);
-      outline: none;
-    }
-    
-    .form-control::placeholder {
-      color: var(--text-secondary);
-    }
-    
-    .card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: var(--border-radius-lg);
-      box-shadow: var(--shadow-sm);
-      transition: var(--transition);
-    }
-    
-    .card:hover {
-      box-shadow: var(--shadow-md);
-      transform: translateY(-2px);
-    }
-    
-    .card-body {
-      padding: var(--spacing-lg);
-    }
-    
-    .card-title {
-      color: var(--text-primary);
-      font-weight: 600;
-      margin-bottom: var(--spacing-sm);
-    }
-    
-    .card-text {
-      color: var(--text-secondary);
-      margin-bottom: var(--spacing-sm);
-    }
-    
-    .badge {
-      border-radius: var(--border-radius-sm);
-      font-weight: 500;
-      padding: var(--spacing-xs) var(--spacing-sm);
-    }
-    
-    .badge.bg-success {
-      background: var(--success-600) !important;
-      color: var(--text-inverse);
-    }
-    
-    .badge.bg-warning {
-      background: var(--warning-600) !important;
-      color: var(--text-inverse);
-    }
-    
-    .badge.bg-danger {
-      background: var(--danger-600) !important;
-      color: var(--text-inverse);
-    }
-    
-    .badge.bg-info {
-      background: var(--info-600) !important;
-      color: var(--text-inverse);
-    }
-    
-    .btn {
-      border-radius: var(--border-radius);
-      font-weight: 500;
-      transition: var(--transition);
-      padding: var(--spacing-sm) var(--spacing-md);
-    }
-    
-    .btn-primary {
-      background: var(--primary-600);
-      border-color: var(--primary-600);
-    }
-    
-    .btn-primary:hover {
-      background: var(--primary-700);
-      border-color: var(--primary-700);
-    }
-    
-    .btn-warning {
-      background: var(--warning-600);
-      border-color: var(--warning-600);
-    }
-    
-    .btn-warning:hover {
-      background: var(--warning-700);
-      border-color: var(--warning-700);
-    }
-    
-    .btn-danger {
-      background: var(--danger-600);
-      border-color: var(--danger-600);
-    }
-    
-    .btn-danger:hover {
-      background: var(--danger-700);
-      border-color: var(--danger-700);
-    }
-    
-    .watermark {
-      position: absolute;
-      top: 10%;
-      left: 60%;
-      transform: translate(-30%, -30%);
-      font-size: 5rem;
-      font-weight: bold;
-      color: rgba(0, 0, 0, 0.4);
-      pointer-events: none;
-    }
-    
-    .progress {
-      background: var(--bg-secondary);
-      border-radius: var(--border-radius);
-      height: 8px;
-      overflow: hidden;
-    }
-    
-    .progress-bar {
-      background: var(--primary-600);
-      transition: var(--transition);
-    }
-    
-    .text-muted {
-      color: var(--text-secondary) !important;
-    }
-    
-    .text-success {
-      color: var(--success-600) !important;
-    }
-    
-    .text-warning {
-      color: var(--warning-600) !important;
-    }
-    
-    .text-danger {
-      color: var(--danger-600) !important;
-    }
-    
-    .text-info {
-      color: var(--info-600) !important;
-    }
-    
-    .mb-4 {
-      margin-bottom: var(--spacing-lg) !important;
-    }
-    
-    .mb-3 {
-      margin-bottom: var(--spacing-md) !important;
-    }
-    
-    .mb-2 {
-      margin-bottom: var(--spacing-sm) !important;
-    }
-    
-    .mt-2 {
-      margin-top: var(--spacing-sm) !important;
-    }
-    
-    .mt-3 {
-      margin-top: var(--spacing-md) !important;
-    }
-    
-    .p-3 {
-      padding: var(--spacing-md) !important;
-    }
-    
-    .shadow-sm {
-      box-shadow: var(--shadow-sm) !important;
-    }
-    
-    .shadow {
-      box-shadow: var(--shadow-md) !important;
-    }
-    
-    .shadow-lg {
-      box-shadow: var(--shadow-lg) !important;
-    }
-    
-    .h-100 {
-      height: 100% !important;
-    }
-    
-    .position-relative {
-      position: relative !important;
-    }
-    
-    .text-center {
-      text-align: center !important;
-    }
-    
-    .text-end {
-      text-align: end !important;
-    }
-    
-    .d-flex {
-      display: flex !important;
-    }
-    
-    .justify-content-between {
-      justify-content: space-between !important;
-    }
-    
-    .align-items-center {
-      align-items: center !important;
-    }
-    
-    .w-100 {
-      width: 100% !important;
-    }
-    
-    .flex-wrap {
-      flex-wrap: wrap !important;
-    }
-    
-    .gap-2 {
-      gap: var(--spacing-sm) !important;
-    }
-    
-    .gap-3 {
-      gap: var(--spacing-md) !important;
-    }
-    
-    .row {
-      display: flex;
-      flex-wrap: wrap;
-      margin: 0 -0.5rem;
-    }
-    
-    .col-md-6 {
-      flex: 0 0 50%;
-      max-width: 50%;
-      padding: 0 0.5rem;
-    }
-    
-    /* Pestañas de estado */
-    .estado-tabs {
-      display: flex;
-      gap: var(--spacing-xs);
-      margin-bottom: var(--spacing-lg);
-      overflow-x: auto;
-      padding: var(--spacing-xs);
-      background: var(--bg-card);
-      border-radius: var(--border-radius-lg);
-      box-shadow: var(--shadow-sm);
-    }
-    
-    .estado-tab {
-      flex: 1;
-      min-width: 120px;
-      padding: var(--spacing-sm) var(--spacing-md);
-      background: var(--bg);
-      border: 2px solid var(--border-color);
-      border-radius: var(--border-radius);
-      color: var(--text-primary);
-      font-weight: 600;
-      font-size: 0.9rem;
-      text-align: center;
-      cursor: pointer;
-      transition: var(--transition);
-      white-space: nowrap;
-    }
-    
-    .estado-tab:hover {
-      background: var(--hover-bg);
-      transform: translateY(-2px);
-    }
-    
-    .estado-tab.active {
-      background: var(--primary-600);
-      color: var(--text-inverse);
-      border-color: var(--primary-600);
-      box-shadow: var(--shadow-md);
-    }
-    
-    .estado-tab .count {
-      display: block;
-      font-size: 1.2rem;
-      font-weight: bold;
-      margin-top: 0.25rem;
-    }
-    
-    @media (max-width: 768px) {
-      .col-md-6 {
-        flex: 0 0 100%;
-        max-width: 100%;
-      }
-      
-      .trabajos-container {
-        padding: var(--spacing-sm);
-      }
-      
-      .trabajos-header {
-        padding: var(--spacing-md);
-      }
-      
-      .trabajos-header h2 {
-        font-size: 1.5rem;
-      }
-      
-      .estado-tabs {
-        flex-wrap: nowrap;
-        gap: var(--spacing-xs);
-      }
-      
-      .estado-tab {
-        min-width: 90px;
-        padding: var(--spacing-xs) var(--spacing-sm);
-        font-size: 0.8rem;
-      }
-      
-      .estado-tab .count {
-        font-size: 1rem;
-      }
-    }
-  </style>
-{% endblock %}
-
 {% block content %}
+<div class="css004a-work-list">
 <div class="work-list-heading">
   <div class="eyebrow">FLOTA / OPERACIÓN</div>
   <h2 class="mb-1">Órdenes de trabajo</h2>
@@ -494,7 +134,7 @@
         <p><strong>📷 Progreso:</strong></p>
         <div class="d-flex flex-wrap gap-2">
           {% for foto in trabajo.fotos.all|slice:":3" %}
-            <img src="{{ foto.imagen.url }}" class="img-thumbnail" style="width: 80px; height: 80px; object-fit: cover;">
+            <img src="{{ foto.imagen.url }}" class="img-thumbnail css004a-photo-thumb">
           {% endfor %}
           {% if not trabajo.fotos.all %}
             <span class="text-secondary">Sin fotos</span>
@@ -502,12 +142,12 @@
         </div>
 
         <!-- Barra de progreso -->
-        <div class="progress mt-3" style="height: 20px;">
+        <div class="progress mt-3 css004a-progress">
           <div class="progress-bar 
             {% if trabajo.porcentaje_avance < 50 %}bg-danger
             {% elif trabajo.porcentaje_avance < 100 %}bg-warning
             {% else %}bg-success{% endif %}"
-            style="width: {{ trabajo.porcentaje_avance }}%;">
+            data-progress="{{ trabajo.porcentaje_avance }}" class="css004a-progress-fill">
             {{ trabajo.porcentaje_avance }}%
           </div>
         </div>
@@ -518,12 +158,12 @@
         </div>
 
         <!-- Saldo Pendiente -->
-        <div class="mt-2 p-2 rounded" style="background: {% if trabajo.saldo_pendiente > 0 %}#fff3cd{% else %}#d1e7dd{% endif %}; border: 2px solid {% if trabajo.saldo_pendiente > 0 %}#ffc107{% else %}#198754{% endif %};">
+        <div class="mt-2 p-2 rounded css004a-balance {% if trabajo.saldo_pendiente > 0 %}css004a-balance-pending{% else %}css004a-balance-settled{% endif %}">
           <div class="text-center">
-            <small class="d-block" style="color: {% if trabajo.saldo_pendiente > 0 %}#856404{% else %}#0f5132{% endif %}; font-weight: 600;">
+            <small class="d-block css004a-balance-label">
               💵 Saldo Pendiente
             </small>
-            <strong class="d-block" style="color: {% if trabajo.saldo_pendiente > 0 %}#dc3545{% else %}#198754{% endif %}; font-size: 1.2rem;">
+            <strong class="d-block css004a-balance-amount">
               ${{ trabajo.saldo_pendiente|default:0|floatformat:0|intcomma }}
             </strong>
           </div>
@@ -621,4 +261,14 @@ function contarTrabajos() {
   document.getElementById('count-entregado').textContent = contadores['entregado'];
 }
 </script>
+<script>
+// CSS-004A: porcentaje calculado por Django, aplicado como dimensión dinámica.
+document.querySelectorAll('.css004a-work-list [data-progress]').forEach(function (elemento) {
+  const porcentaje = Number(String(elemento.dataset.progress).replace(',', '.'));
+  if (Number.isFinite(porcentaje)) {
+    elemento.style.width = Math.max(0, Math.min(100, porcentaje)) + '%';
+  }
+});
+</script>
+</div>
 {% endblock %}

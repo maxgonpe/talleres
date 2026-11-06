@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+  <h1>Recibir compra #{{ compra.numero_compra }}</h1>
+  <p>Se recibirán todos los items pendientes y se actualizará el stock.</p>
+  <form method="post">
+    {% csrf_token %}
+    <button class="btn btn-success" type="submit">Confirmar recepción</button>
+    <a class="btn btn-secondary" href="{% url 'compra_detail' compra.pk %}">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

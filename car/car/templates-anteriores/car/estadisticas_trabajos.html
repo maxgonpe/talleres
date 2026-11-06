@@ -1,0 +1,888 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Estadísticas de Trabajos - NetGoGo{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+  <style>
+    .estadisticas-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: var(--spacing-md);
+    }
+    
+    .estadisticas-header {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+        padding: var(--spacing-xl);
+        border-radius: var(--border-radius-lg);
+        margin-bottom: 2rem;
+        text-align: center;
+        box-shadow: var(--card-shadow);
+    }
+    
+    .estadisticas-header h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .estadisticas-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: var(--card-bg);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-lg);
+        box-shadow: var(--card-shadow);
+        border-left: 4px solid var(--accent);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    }
+    
+    .stat-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-card-title {
+        font-size: 0.9rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+    }
+    
+    .stat-card-icon {
+        font-size: 2rem;
+        opacity: 0.3;
+    }
+    
+    .stat-card-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--accent);
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-card-subtitle {
+        font-size: 0.85rem;
+        color: var(--muted);
+    }
+    
+    .stat-card.primary {
+        border-left-color: #17a2b8;
+    }
+    
+    .stat-card.primary .stat-card-value {
+        color: #17a2b8;
+    }
+    
+    .stat-card.success {
+        border-left-color: #28a745;
+    }
+    
+    .stat-card.success .stat-card-value {
+        color: #28a745;
+    }
+    
+    .stat-card.warning {
+        border-left-color: #ffc107;
+    }
+    
+    .stat-card.warning .stat-card-value {
+        color: #ffc107;
+    }
+    
+    .stat-card.danger {
+        border-left-color: #dc3545;
+    }
+    
+    .stat-card.danger .stat-card-value {
+        color: #dc3545;
+    }
+    
+    .stat-card.info {
+        border-left-color: #17a2b8;
+    }
+    
+    .stat-card.info .stat-card-value {
+        color: #17a2b8;
+    }
+    
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--fg);
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 3px solid var(--accent);
+    }
+    
+    .progress-bar-container {
+        background: var(--bg-secondary);
+        border-radius: var(--border-radius);
+        height: 30px;
+        margin: 0.5rem 0;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .progress-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 0.85rem;
+        transition: width 0.5s ease;
+    }
+    
+    .table-stats {
+        width: 100%;
+        background: var(--card-bg);
+        border-radius: var(--border-radius-lg);
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+    }
+    
+    .table-stats thead {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+    }
+    
+    .table-stats th,
+    .table-stats td {
+        padding: 1rem;
+        text-align: left;
+    }
+    
+    .table-stats tbody tr {
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .table-stats tbody tr:hover {
+        background: var(--hover-bg);
+    }
+    
+    .badge-estado {
+        padding: 0.25rem 0.75rem;
+        border-radius: var(--border-radius-xl);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .badge-iniciado {
+        background: #ffc107;
+        color: #000;
+    }
+    
+    .badge-trabajando {
+        background: #17a2b8;
+        color: white;
+    }
+    
+    .badge-completado {
+        background: #28a745;
+        color: white;
+    }
+    
+    .badge-entregado {
+        background: #6c757d;
+        color: white;
+    }
+    
+    .badge-warning {
+        background: #ffc107;
+        color: #000;
+    }
+    
+    .badge-info {
+        background: #17a2b8;
+        color: white;
+    }
+    
+    @media (max-width: 768px) {
+        .estadisticas-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .estadisticas-header h1 {
+            font-size: 1.8rem;
+        }
+        
+        .stat-card-value {
+            font-size: 2rem;
+        }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="estadisticas-container">
+    <!-- Header -->
+    <div class="estadisticas-header">
+        <h1>📊 Estadísticas de Trabajos</h1>
+        <p>Análisis completo de tiempos, eficiencia y productividad del taller</p>
+    </div>
+    
+    <!-- Resumen General -->
+    <h2 class="section-title">📈 Resumen General</h2>
+    <div class="estadisticas-grid">
+        <div class="stat-card primary">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Total de Trabajos</div>
+                <div class="stat-card-icon">🔧</div>
+            </div>
+            <div class="stat-card-value">{{ total_trabajos }}</div>
+            <div class="stat-card-subtitle">Trabajos registrados en el sistema</div>
+        </div>
+        
+        <div class="stat-card success">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Trabajos Activos</div>
+                <div class="stat-card-icon">⚙️</div>
+            </div>
+            <div class="stat-card-value">{{ trabajos_activos }}</div>
+            <div class="stat-card-subtitle">En proceso actualmente</div>
+        </div>
+        
+        <div class="stat-card warning">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Completados</div>
+                <div class="stat-card-icon">✅</div>
+            </div>
+            <div class="stat-card-value">{{ trabajos_completados }}</div>
+            <div class="stat-card-subtitle">{{ tasa_completacion|floatformat:1 }}% del total</div>
+        </div>
+        
+        <div class="stat-card info">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Entregados</div>
+                <div class="stat-card-icon">🚗</div>
+            </div>
+            <div class="stat-card-value">{{ trabajos_entregados }}</div>
+            <div class="stat-card-subtitle">{{ tasa_entrega|floatformat:1 }}% del total</div>
+        </div>
+    </div>
+    
+    <!-- Tiempos y Eficiencia -->
+    <h2 class="section-title">⏱️ Análisis de Tiempos</h2>
+    <div class="estadisticas-grid">
+        <div class="stat-card info">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Tiempo de Respuesta Promedio</div>
+                <div class="stat-card-icon">⏰</div>
+            </div>
+            <div class="stat-card-value">{{ tiempo_respuesta_promedio|floatformat:1 }}</div>
+            <div class="stat-card-subtitle">Horas desde diagnóstico hasta aprobación</div>
+        </div>
+        
+        <div class="stat-card primary">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Días Promedio en Taller</div>
+                <div class="stat-card-icon">📅</div>
+            </div>
+            <div class="stat-card-value">{{ dias_promedio_taller|floatformat:1 }}</div>
+            <div class="stat-card-subtitle">Tiempo promedio total de trabajo</div>
+        </div>
+        
+        <div class="stat-card warning">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Días en Etapa "Iniciado"</div>
+                <div class="stat-card-icon">🟡</div>
+            </div>
+            <div class="stat-card-value">{{ dias_promedio_por_etapa.iniciado|floatformat:1 }}</div>
+            <div class="stat-card-subtitle">Promedio de días en esta etapa</div>
+        </div>
+        
+        <div class="stat-card info">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Días en Etapa "Trabajando"</div>
+                <div class="stat-card-icon">🔨</div>
+            </div>
+            <div class="stat-card-value">{{ dias_promedio_por_etapa.trabajando|floatformat:1 }}</div>
+            <div class="stat-card-subtitle">Promedio de días en esta etapa</div>
+        </div>
+        
+        <div class="stat-card success">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Días en Etapa "Completado"</div>
+                <div class="stat-card-icon">✅</div>
+            </div>
+            <div class="stat-card-value">{{ dias_promedio_por_etapa.completado|floatformat:1 }}</div>
+            <div class="stat-card-subtitle">Promedio de días en esta etapa</div>
+        </div>
+    </div>
+    
+    <!-- Vehículos y Productividad -->
+    <h2 class="section-title">🚗 Vehículos Ingresados</h2>
+    <div class="estadisticas-grid">
+        <div class="stat-card success">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Esta Semana</div>
+                <div class="stat-card-icon">📊</div>
+            </div>
+            <div class="stat-card-value">{{ vehiculos_semana }}</div>
+            <div class="stat-card-subtitle">Vehículos ingresados en los últimos 7 días</div>
+        </div>
+        
+        <div class="stat-card primary">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Este Mes</div>
+                <div class="stat-card-icon">📈</div>
+            </div>
+            <div class="stat-card-value">{{ vehiculos_mes }}</div>
+            <div class="stat-card-subtitle">Vehículos ingresados en los últimos 30 días</div>
+        </div>
+        
+        <div class="stat-card info">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Promedio Semanal</div>
+                <div class="stat-card-icon">📉</div>
+            </div>
+            <div class="stat-card-value">{{ promedio_semanal|floatformat:1 }}</div>
+            <div class="stat-card-subtitle">Promedio de las últimas 4 semanas</div>
+        </div>
+        
+        <div class="stat-card warning">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Completados Esta Semana</div>
+                <div class="stat-card-icon">✨</div>
+            </div>
+            <div class="stat-card-value">{{ trabajos_completados_semana }}</div>
+            <div class="stat-card-subtitle">Trabajos finalizados en los últimos 7 días</div>
+        </div>
+    </div>
+    
+    <!-- Financiero -->
+    <h2 class="section-title">💰 Análisis Financiero</h2>
+    <div class="estadisticas-grid">
+        <div class="stat-card success">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Total Ingresos</div>
+                <div class="stat-card-icon">💵</div>
+            </div>
+            <div class="stat-card-value">${{ total_ingresos|floatformat:0|intcomma }}</div>
+            <div class="stat-card-subtitle">Mano de obra + Repuestos (todos los trabajos)</div>
+        </div>
+        
+        <div class="stat-card primary">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Total Mano de Obra</div>
+                <div class="stat-card-icon">🛠️</div>
+            </div>
+            <div class="stat-card-value">${{ total_mano_obra|floatformat:0|intcomma }}</div>
+            <div class="stat-card-subtitle">Promedio: ${{ promedio_mano_obra|floatformat:0|intcomma }} por trabajo</div>
+        </div>
+        
+        <div class="stat-card info">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Total Repuestos</div>
+                <div class="stat-card-icon">🔩</div>
+            </div>
+            <div class="stat-card-value">${{ total_repuestos|floatformat:0|intcomma }}</div>
+            <div class="stat-card-subtitle">Promedio: ${{ promedio_repuestos|floatformat:0|intcomma }} por trabajo</div>
+        </div>
+        
+        <div class="stat-card warning">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Ingresos Esta Semana</div>
+                <div class="stat-card-icon">📊</div>
+            </div>
+            <div class="stat-card-value">${{ ingresos_semana|floatformat:0|intcomma }}</div>
+            <div class="stat-card-subtitle">
+                MO: ${{ ingresos_semana_mano_obra|floatformat:0|intcomma }} | 
+                Rep: ${{ ingresos_semana_repuestos|floatformat:0|intcomma }}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Avance de Trabajos -->
+    <h2 class="section-title">📊 Avance de Trabajos</h2>
+    <div class="estadisticas-grid">
+        <div class="stat-card info">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Avance Promedio</div>
+                <div class="stat-card-icon">📈</div>
+            </div>
+            <div class="stat-card-value">{{ promedio_avance|floatformat:1 }}%</div>
+            <div class="stat-card-subtitle">Porcentaje promedio de avance de todos los trabajos</div>
+        </div>
+        
+        <div class="stat-card" style="grid-column: span 2;">
+            <div class="stat-card-header">
+                <div class="stat-card-title">Distribución por Rango de Avance</div>
+            </div>
+            <div style="margin-top: 1rem;">
+                <div style="margin-bottom: 0.5rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                        <span>0% - 25%</span>
+                        <strong>{{ avance_0_25 }} trabajos</strong>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" style="width: {{ porcentaje_avance_0_25 }}%; background: #dc3545;">
+                            {{ porcentaje_avance_0_25 }}%
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-bottom: 0.5rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                        <span>25% - 50%</span>
+                        <strong>{{ avance_25_50 }} trabajos</strong>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" style="width: {{ porcentaje_avance_25_50 }}%; background: #ffc107;">
+                            {{ porcentaje_avance_25_50 }}%
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-bottom: 0.5rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                        <span>50% - 75%</span>
+                        <strong>{{ avance_50_75 }} trabajos</strong>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" style="width: {{ porcentaje_avance_50_75 }}%; background: #17a2b8;">
+                            {{ porcentaje_avance_50_75 }}%
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                        <span>75% - 100%</span>
+                        <strong>{{ avance_75_100 }} trabajos</strong>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" style="width: {{ porcentaje_avance_75_100 }}%; background: #28a745;">
+                            {{ porcentaje_avance_75_100 }}%
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- NUEVAS SECCIONES DETALLADAS -->
+    
+    <!-- Filtro de Período -->
+    <div style="margin: 2rem 0; padding: 1rem; background: var(--card-bg); border-radius: var(--border-radius-lg); box-shadow: var(--card-shadow);">
+        <form method="get" id="periodo-form" style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+            <label for="periodo" style="font-weight: 600; color: var(--fg);">📅 Período de análisis:</label>
+            <select name="periodo" id="periodo-select" style="padding: 0.5rem 1rem; border: 1px solid var(--border-color); border-radius: var(--border-radius); background: var(--bg); color: var(--fg);">
+                <option value="7" {% if periodo_dias == 7 %}selected{% endif %}>Últimos 7 días</option>
+                <option value="30" {% if periodo_dias == 30 %}selected{% endif %}>Últimos 30 días</option>
+                <option value="60" {% if periodo_dias == 60 %}selected{% endif %}>Últimos 60 días</option>
+                <option value="90" {% if periodo_dias == 90 %}selected{% endif %}>Últimos 90 días</option>
+            </select>
+            <button type="submit" style="padding: 0.5rem 1.5rem; background: var(--accent); color: white; border: none; border-radius: var(--border-radius); cursor: pointer; font-weight: 600;">Aplicar</button>
+        </form>
+    </div>
+    
+    <!-- Acciones Resueltas con Recurrencias -->
+    <h2 class="section-title">🔧 Acciones Resueltas en el Período</h2>
+    <div style="background: var(--card-bg); border-radius: var(--border-radius-lg); padding: var(--spacing-lg); box-shadow: var(--card-shadow); margin-bottom: 2rem;">
+        <p style="color: var(--muted); margin-bottom: 1rem;">Detalle de todas las acciones/trabajos resueltos en los últimos {{ periodo_dias }} días, ordenadas por recurrencia.</p>
+        {% if acciones_resueltas %}
+        <div style="overflow-x: auto;">
+            <table class="table-stats" id="tabla-acciones-resueltas">
+                <thead>
+                    <tr>
+                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-acciones-resueltas', 0)">Acción ↕️</th>
+                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-acciones-resueltas', 1)">Componente ↕️</th>
+                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-acciones-resueltas', 2, 'number')">Recurrencias ↕️</th>
+                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-acciones-resueltas', 3, 'number')">Cantidad Total ↕️</th>
+                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-acciones-resueltas', 4, 'currency')">Total Ingresos ↕️</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for accion in acciones_resueltas %}
+                    <tr>
+                        <td><strong>{{ accion.accion_nombre }}</strong></td>
+                        <td>{{ accion.componente_nombre }}</td>
+                        <td style="text-align: center;"><span class="badge-estado badge-trabajando">{{ accion.recurrencias }}</span></td>
+                        <td style="text-align: center;">{{ accion.cantidad_total }}</td>
+                        <td style="text-align: right; font-weight: 600; color: #28a745;">${{ accion.total_ingresos|floatformat:0|intcomma }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p style="text-align: center; padding: 2rem; color: var(--muted);">No hay acciones resueltas en este período.</p>
+        {% endif %}
+    </div>
+    
+    <!-- Ingresos por Acción (Más Rentable a Menos Rentable) -->
+    <h2 class="section-title">💰 Ingresos por Acción (Rentabilidad)</h2>
+    <div style="background: var(--card-bg); border-radius: var(--border-radius-lg); padding: var(--spacing-lg); box-shadow: var(--card-shadow); margin-bottom: 2rem;">
+        <p style="color: var(--muted); margin-bottom: 1rem;">Análisis de ingresos generados por cada tipo de acción, desde las más rentables hasta las menos rentables.</p>
+        {% if ingresos_por_accion %}
+        <div style="overflow-x: auto;">
+            <table class="table-stats" id="tabla-ingresos-accion">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-ingresos-accion', 1)">Acción ↕️</th>
+                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-ingresos-accion', 2, 'currency')">Total Ingresos ↕️</th>
+                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-ingresos-accion', 3, 'number')">Trabajos ↕️</th>
+                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-ingresos-accion', 4, 'number')">Veces Realizada ↕️</th>
+                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-ingresos-accion', 5, 'currency')">Promedio por Trabajo ↕️</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ingreso in ingresos_por_accion %}
+                    <tr>
+                        <td style="text-align: center; font-weight: 600; color: var(--muted);">{{ forloop.counter }}</td>
+                        <td><strong>{{ ingreso.accion_nombre }}</strong></td>
+                        <td style="text-align: right; font-weight: 700; color: #28a745; font-size: 1.1rem;">${{ ingreso.total_ingresos|floatformat:0|intcomma }}</td>
+                        <td style="text-align: center;">{{ ingreso.cantidad_trabajos }}</td>
+                        <td style="text-align: center;">{{ ingreso.cantidad_veces }}</td>
+                        <td style="text-align: right; color: var(--muted);">${{ ingreso.promedio_por_trabajo|floatformat:0|intcomma }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p style="text-align: center; padding: 2rem; color: var(--muted);">No hay ingresos registrados en este período.</p>
+        {% endif %}
+    </div>
+    
+    <!-- Concentración de Reparaciones por Componente -->
+    <h2 class="section-title">🎯 Concentración de Reparaciones por Componente</h2>
+    <div style="background: var(--card-bg); border-radius: var(--border-radius-lg); padding: var(--spacing-lg); box-shadow: var(--card-shadow); margin-bottom: 2rem;">
+        <p style="color: var(--muted); margin-bottom: 1rem;">Análisis de dónde se concentran las reparaciones y dónde se genera mayor ganancia por componente.</p>
+        {% if reparaciones_por_componente %}
+        <div style="overflow-x: auto;">
+            <table class="table-stats" id="tabla-reparaciones-componente">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-reparaciones-componente', 1)">Componente ↕️</th>
+                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-reparaciones-componente', 2, 'number')">Trabajos ↕️</th>
+                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-reparaciones-componente', 3, 'number')">Acciones Realizadas ↕️</th>
+                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-reparaciones-componente', 4, 'currency')">Total Ingresos ↕️</th>
+                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-reparaciones-componente', 5, 'number')">% del Total ↕️</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rep in reparaciones_por_componente %}
+                    <tr>
+                        <td style="text-align: center; font-weight: 600; color: var(--muted);">{{ forloop.counter }}</td>
+                        <td><strong>{{ rep.componente_nombre }}</strong></td>
+                        <td style="text-align: center;"><span class="badge-estado badge-info">{{ rep.cantidad_trabajos }}</span></td>
+                        <td style="text-align: center;">{{ rep.cantidad_acciones }}</td>
+                        <td style="text-align: right; font-weight: 700; color: #17a2b8;">${{ rep.total_ingresos|floatformat:0|intcomma }}</td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <div class="progress-bar-container" style="flex: 1; height: 20px;">
+                                    <div class="progress-bar-fill" style="width: {{ rep.porcentaje }}%; background: linear-gradient(90deg, #17a2b8 0%, #138496 100%);">
+                                    </div>
+                                </div>
+                                <span style="min-width: 50px; text-align: right; font-weight: 600;">{{ rep.porcentaje }}%</span>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p style="text-align: center; padding: 2rem; color: var(--muted);">No hay reparaciones registradas en este período.</p>
+        {% endif %}
+    </div>
+    
+    <!-- Repuestos Más Usados y Recurrentes -->
+    <h2 class="section-title">🔩 Repuestos Más Usados y Recurrentes</h2>
+    <div style="background: var(--card-bg); border-radius: var(--border-radius-lg); padding: var(--spacing-lg); box-shadow: var(--card-shadow); margin-bottom: 2rem;">
+        <p style="color: var(--muted); margin-bottom: 1rem;">Análisis de los repuestos más utilizados y recurrentes en las reparaciones del período.</p>
+        {% if repuestos_usados %}
+        <div style="overflow-x: auto;">
+            <table class="table-stats" id="tabla-repuestos-usados">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-repuestos-usados', 1)">Repuesto ↕️</th>
+                        <th>SKU/Código</th>
+                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-repuestos-usados', 3, 'number')">Veces Usado ↕️</th>
+                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-repuestos-usados', 4, 'number')">Cantidad Total ↕️</th>
+                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-repuestos-usados', 5, 'number')">Trabajos ↕️</th>
+                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-repuestos-usados', 6, 'currency')">Total Ingresos ↕️</th>
+                        <th style="cursor: pointer;" onclick="ordenarTabla('tabla-repuestos-usados', 7, 'currency')">Promedio por Trabajo ↕️</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for repuesto in repuestos_usados %}
+                    <tr>
+                        <td style="text-align: center; font-weight: 600; color: var(--muted);">{{ forloop.counter }}</td>
+                        <td><strong>{{ repuesto.nombre }}</strong></td>
+                        <td style="color: var(--muted); font-size: 0.9rem;">{{ repuesto.sku }}</td>
+                        <td style="text-align: center;"><span class="badge-estado badge-warning">{{ repuesto.cantidad_veces }}</span></td>
+                        <td style="text-align: center;">{{ repuesto.cantidad_total }}</td>
+                        <td style="text-align: center;">{{ repuesto.cantidad_trabajos }}</td>
+                        <td style="text-align: right; font-weight: 700; color: #ffc107;">${{ repuesto.total_ingresos|floatformat:0|intcomma }}</td>
+                        <td style="text-align: right; color: var(--muted);">${{ repuesto.promedio_por_trabajo|floatformat:0|intcomma }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p style="text-align: center; padding: 2rem; color: var(--muted);">No hay repuestos utilizados en este período.</p>
+        {% endif %}
+    </div>
+    
+    <!-- Trabajos por Estado -->
+    <h2 class="section-title">📋 Distribución por Estado</h2>
+    <table class="table-stats">
+        <thead>
+            <tr>
+                <th>Estado</th>
+                <th>Cantidad</th>
+                <th>Porcentaje</th>
+                <th>Visualización</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for estado_data in trabajos_por_estado %}
+            <tr>
+                <td>
+                    <span class="badge-estado badge-{{ estado_data.estado }}">
+                        {{ estado_data.estado|capfirst }}
+                    </span>
+                </td>
+                <td><strong>{{ estado_data.cantidad }}</strong></td>
+                <td>
+                    {{ estado_data.porcentaje }}%
+                </td>
+                <td>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" style="width: {{ estado_data.porcentaje }}%;">
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" style="text-align: center; padding: 2rem; color: var(--muted);">
+                    No hay trabajos registrados aún
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <!-- Nota final -->
+    <div style="margin-top: 3rem; padding: 1.5rem; background: var(--bg-secondary); border-radius: var(--border-radius-lg); text-align: center; color: var(--muted);">
+        <p><strong>💡 Nota:</strong> Estas estadísticas se actualizan en tiempo real. Usa esta información para tomar decisiones informadas sobre la operación del taller.</p>
+        <p style="margin-top: 0.5rem; font-size: 0.9rem;">Reporte generado en tiempo real</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Variables para controlar el ordenamiento
+let ordenamientoActual = {};
+
+/**
+ * Función para ordenar tablas dinámicamente
+ * @param {string} tablaId - ID de la tabla a ordenar
+ * @param {number} columna - Índice de la columna (0-based)
+ * @param {string} tipo - Tipo de dato: 'text', 'number', 'currency'
+ */
+function ordenarTabla(tablaId, columna, tipo = 'text') {
+    const tabla = document.getElementById(tablaId);
+    if (!tabla) return;
+    
+    const tbody = tabla.querySelector('tbody');
+    if (!tbody) return;
+    
+    const filas = Array.from(tbody.querySelectorAll('tr'));
+    
+    // Determinar orden (ascendente o descendente)
+    const clave = `${tablaId}-${columna}`;
+    const ordenActual = ordenamientoActual[clave] || 'asc';
+    const nuevoOrden = ordenActual === 'asc' ? 'desc' : 'asc';
+    ordenamientoActual[clave] = nuevoOrden;
+    
+    // Función de comparación
+    function comparar(a, b) {
+        const celdaA = a.cells[columna]?.textContent.trim() || '';
+        const celdaB = b.cells[columna]?.textContent.trim() || '';
+        
+        let valorA, valorB;
+        
+        if (tipo === 'number' || tipo === 'currency') {
+            // Extraer números (remover símbolos de moneda, comas, etc.)
+            valorA = parseFloat(celdaA.replace(/[^0-9.-]/g, '')) || 0;
+            valorB = parseFloat(celdaB.replace(/[^0-9.-]/g, '')) || 0;
+        } else {
+            valorA = celdaA.toLowerCase();
+            valorB = celdaB.toLowerCase();
+        }
+        
+        if (valorA < valorB) return nuevoOrden === 'asc' ? -1 : 1;
+        if (valorA > valorB) return nuevoOrden === 'asc' ? 1 : -1;
+        return 0;
+    }
+    
+    // Ordenar filas
+    filas.sort(comparar);
+    
+    // Reordenar en el DOM
+    filas.forEach(fila => tbody.appendChild(fila));
+    
+    // Actualizar indicadores visuales en los headers
+    const headers = tabla.querySelectorAll('thead th');
+    headers.forEach((header, index) => {
+        if (index === columna) {
+            header.innerHTML = header.innerHTML.replace(/↕️|↑|↓/g, '');
+            header.innerHTML += nuevoOrden === 'asc' ? ' ↑' : ' ↓';
+        } else {
+            header.innerHTML = header.innerHTML.replace(/↕️|↑|↓/g, '↕️');
+        }
+    });
+}
+
+/**
+ * Función para formatear números con separadores de miles
+ */
+function formatearNumero(numero) {
+    return numero.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+/**
+ * Función para exportar tabla a CSV
+ */
+function exportarTablaCSV(tablaId, nombreArchivo) {
+    const tabla = document.getElementById(tablaId);
+    if (!tabla) return;
+    
+    const filas = tabla.querySelectorAll('tr');
+    let csv = [];
+    
+    filas.forEach(fila => {
+        const celdas = fila.querySelectorAll('th, td');
+        const valores = Array.from(celdas).map(celda => {
+            let texto = celda.textContent.trim();
+            // Remover emojis y símbolos de ordenamiento
+            texto = texto.replace(/[↕️↑↓]/g, '').trim();
+            // Escapar comillas
+            texto = texto.replace(/"/g, '""');
+            return `"${texto}"`;
+        });
+        csv.push(valores.join(','));
+    });
+    
+    const contenido = csv.join('\n');
+    const blob = new Blob([contenido], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${nombreArchivo}_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Inicialización cuando el DOM está listo
+document.addEventListener('DOMContentLoaded', function() {
+    // Agregar tooltips a los headers ordenables
+    const headersOrdenables = document.querySelectorAll('th[onclick]');
+    headersOrdenables.forEach(header => {
+        header.style.cursor = 'pointer';
+        header.title = 'Click para ordenar';
+        header.addEventListener('mouseenter', function() {
+            this.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+        });
+        header.addEventListener('mouseleave', function() {
+            this.style.backgroundColor = '';
+        });
+    });
+    
+    // Mejorar la experiencia del selector de período
+    const periodoSelect = document.getElementById('periodo-select');
+    if (periodoSelect) {
+        periodoSelect.addEventListener('change', function() {
+            // Opcional: auto-submit al cambiar
+            // document.getElementById('periodo-form').submit();
+        });
+    }
+    
+    // Agregar animación suave al hacer scroll
+    const secciones = document.querySelectorAll('.section-title');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, { threshold: 0.1 });
+    
+    secciones.forEach(seccion => {
+        seccion.style.opacity = '0';
+        seccion.style.transform = 'translateY(20px)';
+        seccion.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+        observer.observe(seccion);
+    });
+});
+
+// Función para imprimir el reporte
+function imprimirReporte() {
+    window.print();
+}
+
+// Agregar botón de impresión (opcional)
+document.addEventListener('DOMContentLoaded', function() {
+    const header = document.querySelector('.estadisticas-header');
+    if (header) {
+        const botonImprimir = document.createElement('button');
+        botonImprimir.textContent = '🖨️ Imprimir Reporte';
+        botonImprimir.style.cssText = 'position: absolute; top: 1rem; right: 1rem; padding: 0.5rem 1rem; background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); border-radius: var(--border-radius); cursor: pointer; font-weight: 600;';
+        botonImprimir.onclick = imprimirReporte;
+        header.style.position = 'relative';
+        header.appendChild(botonImprimir);
+    }
+});
+</script>
+
+<style>
+@media print {
+    .estadisticas-header button,
+    #periodo-form,
+    th[onclick] {
+        display: none;
+    }
+    
+    .table-stats {
+        page-break-inside: avoid;
+    }
+    
+    .section-title {
+        page-break-after: avoid;
+    }
+}
+</style>
+{% endblock %}
+

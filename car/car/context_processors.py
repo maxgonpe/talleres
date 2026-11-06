@@ -62,6 +62,8 @@ CONTEXT_MENUS = {
 
 
 URL_MENU_GROUPS = {
+    "pizarra_estado": "pizarra",
+    "trabajo_detalle": "trabajo",
     "configuracion_bonos": "administracion",
     "editar_configuracion_bono": "administracion",
     "eliminar_configuracion_bono": "administracion",
@@ -75,6 +77,7 @@ URL_MENU_GROUPS = {
     "excepcion_bono_trabajo": "administracion",
     "eliminar_excepcion_bono": "administracion",
     "eliminar_bono": "administracion",
+    "pago_mecanico": "administracion",
     "administracion_taller": "administracion",
     "gestion_usuarios": "administracion",
     "cliente_taller_list": "taller",
@@ -87,14 +90,65 @@ URL_MENU_GROUPS = {
     "lista_diagnosticos": "diagnostico",
     "lista_trabajos": "diagnostico",
     "historial_trabajos": "diagnostico",
+    "editar_diagnostico": "diagnostico",
+    "eliminar_diagnostico": "diagnostico",
+    "ingreso_exitoso": "diagnostico",
+    "ingreso_voz": "diagnostico",
+    "relacionar_repuestos_componentes": "diagnostico",
     "repuesto_list": "inventario",
     "repuesto_compatibilidad": "inventario",
+    "repuesto_create": "inventario",
+    "repuesto_detail": "inventario",
+    "repuesto_update": "inventario",
+    "repuesto_delete": "inventario",
+    "vehiculo_compatibilidad_list": "inventario",
+    "vehiculo_compatibilidad_create": "inventario",
+    "vehiculo_compatibilidad_detail": "inventario",
+    "vehiculo_compatibilidad_update": "inventario",
+    "vehiculo_compatibilidad_delete": "inventario",
     "pos_principal": "pos",
     "ventas_historial": "pos",
     "pos_historial_cotizaciones": "pos",
+    "pos_procesar_venta": "pos",
+    "pos_venta_detalle": "pos",
+    "pos_configuracion": "pos",
+    "pos_procesar_cotizacion": "pos",
+    "pos_cotizacion_detalle": "pos",
+    "pos_convertir_cotizacion": "pos",
+    "pos_dashboard": "pos",
     "compra_dashboard": "compras",
     "compra_list": "compras",
     "compra_create": "compras",
+    "compra_detail": "compras",
+    "compra_edit": "compras",
+    "compra_confirmar": "compras",
+    "compra_cancelar": "compras",
+    "compra_recibir": "compras",
+    "compra_item_edit": "compras",
+    "compra_item_delete": "compras",
+    "compra_item_recibir": "compras",
+    "cliente_create": "taller",
+    "cliente_update": "taller",
+    "cliente_delete": "taller",
+    "cliente_taller_create": "taller",
+    "cliente_taller_update": "taller",
+    "cliente_taller_delete": "taller",
+    "vehiculo_create": "taller",
+    "vehiculo_update": "taller",
+    "vehiculo_delete": "taller",
+    "mecanico_create": "taller",
+    "mecanico_update": "taller",
+    "mecanico_delete": "taller",
+    "componente_create": "taller",
+    "componente_update": "taller",
+    "componente_delete": "taller",
+    "accion_create": "taller",
+    "accion_update": "taller",
+    "accion_delete": "taller",
+    "comp_accion_list": "taller",
+    "comp_accion_create": "taller",
+    "comp_accion_update": "taller",
+    "comp_accion_delete": "taller",
 }
 
 
@@ -108,7 +162,52 @@ def configuracion_taller(request):
     menu_group = URL_MENU_GROUPS.get(url_name)
     menu = CONTEXT_MENUS.get(menu_group)
     context_menu = None
-    if menu:
+    if url_name == "panel_principal":
+        context_menu = {
+            "group": "panel",
+            "parent": None,
+            "items": [
+                {"target": "#pizarra", "icon": "📊", "label": "Pizarra", "active": True},
+                {"target": "#inicio", "icon": "🏠", "label": "Inicio", "active": False},
+                {"target": "#taller", "icon": "🔧", "label": "Taller", "active": False},
+                {"target": "#pos", "icon": "🛒", "label": "POS", "active": False},
+                {"target": "#administracion", "icon": "⚙️", "label": "Administración", "active": False},
+            ],
+        }
+    elif url_name == "trabajo_detalle":
+        trabajo_id = request.resolver_match.kwargs.get("pk")
+        base_url = reverse("trabajo_detalle", kwargs={"pk": trabajo_id})
+        tabs = [("info", "📋", "Información"), ("acciones", "🛠️", "Acciones"),
+                ("repuestos", "🔧", "Repuestos"), ("insumos", "📦", "Insumos"),
+                ("adicionales", "➕", "Adicionales"), ("fotos", "📷", "Fotos"),
+                ("abonos", "💵", "Abonos"), ("estado", "⚡", "Estado")]
+        active_tab = request.GET.get("tab", "info")
+        context_menu = {
+            "group": "trabajo",
+            "parent": {"url": f"{reverse('pizarra')}#pizarra", "icon": "📊", "label": "Pizarra"},
+            "items": [
+                {"url": f"{base_url}?tab={tab}", "icon": icon, "label": label, "active": tab == active_tab}
+                for tab, icon, label in tabs
+            ],
+        }
+    elif url_name == "pizarra_estado":
+        estado = request.resolver_match.kwargs.get("estado", "")
+        estados = {
+            "iniciados": ("🟡", "Iniciados"),
+            "progreso": ("🔵", "En progreso"),
+            "completados": ("🟢", "Completados"),
+            "entregados": ("⚫", "Entregados"),
+        }
+        context_menu = {
+            "group": "pizarra",
+            "parent": {"url": f"{reverse('panel_principal')}#pizarra", "icon": "📊", "label": "Pizarra"},
+            "items": [
+                {"url": reverse("pizarra_estado", kwargs={"estado": slug}), "icon": icon,
+                 "label": label, "active": slug == estado}
+                for slug, (icon, label) in estados.items()
+            ],
+        }
+    elif menu:
         parent_name, parent_fragment, parent_icon, parent_label = menu["parent"]
         context_menu = {
             "group": menu_group,
@@ -129,11 +228,6 @@ def configuracion_taller(request):
         'ver_mensajes': config.ver_mensajes,
         'context_menu': context_menu,
     }
-
-
-
-
-
 
 
 

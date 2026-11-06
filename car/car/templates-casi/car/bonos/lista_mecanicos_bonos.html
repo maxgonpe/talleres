@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Resumen de Bonos - Mecánicos{% endblock %}
+
+{% block extra_css %}
+
+{% endblock %}
+
+{% block content %}
+<span hidden data-css004b="e9f49e350b"></span>
+<div class="lista-container">
+    <div class="lista-header">
+        <h1>💰 Resumen de Bonos - Mecánicos</h1>
+        <p>Vista general de bonos y saldos de todos los mecánicos</p>
+    </div>
+    
+    <div  class="css004b-inline-1b7bd6e16058">
+        <a href="{% url 'configuracion_bonos' %}" class="btn-primary css004b-inline-87ac8716264a" >
+            ⚙️ Configurar Bonos
+        </a>
+    </div>
+    
+    {% if mecanicos_con_saldos %}
+    <table class="table-mecanicos">
+        <thead>
+            <tr>
+                <th>Mecánico</th>
+                <th>Configuración</th>
+                <th>Saldo Pendiente</th>
+                <th>Total Generado</th>
+                <th>Total Pagado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in mecanicos_con_saldos %}
+            <tr>
+                <td><strong>{{ item.mecanico }}</strong></td>
+                <td>
+                    {% if item.tiene_config %}
+                    <span class="badge-config">Configurado</span>
+                    {% else %}
+                    <span class="badge-sin-config">Sin Config</span>
+                    {% endif %}
+                </td>
+                <td class="saldo-pendiente">${{ item.saldo_pendiente|floatformat:0|intcomma }}</td>
+                <td class="saldo-total">${{ item.total_generado|floatformat:0|intcomma }}</td>
+                <td class="saldo-pagado">${{ item.total_pagado|floatformat:0|intcomma }}</td>
+                <td>
+                    <a href="{% url 'cuenta_mecanico' item.mecanico.id %}" class="btn-primary">
+                        Ver Cuenta
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div  class="css004b-inline-441fb56f17e2">
+        <p  class="css004b-inline-622897574a06">No hay mecánicos registrados</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

@@ -1,0 +1,294 @@
+<span hidden data-css004b="6a4399eb2e"></span>
+{% load static %}
+{# Componente de Búsqueda Externa de Repuestos #}
+{# Versión optimizada con apertura de ventanas organizadas #}
+
+<!-- Botón flotante de búsqueda externa -->
+<button type="button" class="btn btn-info btn-external-search" data-bs-toggle="modal" data-bs-target="#modalBusquedaExterna">
+    🌐 Buscar Repuestos
+</button>
+
+<!-- Modal de búsqueda externa -->
+<div class="modal fade" id="modalBusquedaExterna" tabindex="-1" aria-labelledby="modalBusquedaExternaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-gradient text-white css004b-inline-5e350dca127e" >
+                <h5 class="modal-title" id="modalBusquedaExternaLabel">
+                    🌐 Buscar Repuestos en Proveedores Chilenos
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- Campo de búsqueda grande y destacado -->
+                <div class="mb-4">
+                    <label for="terminoBusquedaExterna" class="form-label fw-bold fs-5">
+                        🔍 ¿Qué repuesto buscas?
+                    </label>
+                    <div class="input-group input-group-lg shadow-sm">
+                        <span class="input-group-text bg-light">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input 
+                            type="text" 
+                            class="form-control form-control-lg" 
+                            id="terminoBusquedaExterna" 
+                            placeholder="Ej: Filtro aceite Toyota Corolla 2020"
+                            autocomplete="off"
+                        >
+                    </div>
+                    <div class="form-text mt-2">
+                        💡 <strong>Tip:</strong> Incluye marca, modelo y año para resultados más precisos
+                    </div>
+                </div>
+
+                <!-- Botones grandes de proveedores -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <button 
+                            type="button" 
+                            class="btn btn-lg btn-proveedor btn-mundo w-100 shadow-sm" 
+                            onclick="buscarEnProveedor('mundorepuestos')"
+                        >
+                            <div class="d-flex flex-column align-items-center p-2">
+                                <div class="fs-1 mb-2">🛒</div>
+                                <div class="fw-bold fs-5">Mundo Repuestos</div>
+                                <small class="text-white-50">Mayor catálogo de Chile</small>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div class="col-md-6">
+                        <button 
+                            type="button" 
+                            class="btn btn-lg btn-proveedor btn-autoplanet w-100 shadow-sm" 
+                            onclick="buscarEnProveedor('autoplanet')"
+                        >
+                            <div class="d-flex flex-column align-items-center p-2">
+                                <div class="fs-1 mb-2">🚗</div>
+                                <div class="fw-bold fs-5">AutoPlanet</div>
+                                <small class="text-white-50">Originales y alternativos</small>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Botón de búsqueda en ambos -->
+                <div class="d-grid mb-4">
+                    <button 
+                        type="button" 
+                        class="btn btn-warning btn-lg shadow-sm css004b-inline-9cbd4f2b10c5" 
+                        onclick="buscarEnAmbos()"
+                        
+                    >
+                        <div class="d-flex align-items-center justify-content-center">
+                            <span class="fs-4 me-2">⚡</span>
+                            <div>
+                                <div class="fw-bold">Buscar en AMBOS proveedores</div>
+                                <small>Compara precios en 2 pestañas</small>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+
+                <!-- Historial de búsquedas recientes -->
+                <div id="historialContainer"  class="css004b-inline-9acf304d8aba">
+                    <hr class="my-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0 fw-bold">📋 Búsquedas Recientes</h6>
+                        <button class="btn btn-sm btn-outline-danger" onclick="limpiarHistorial()">
+                            <i class="fas fa-trash"></i> Limpiar
+                        </button>
+                    </div>
+                    <div id="historialBusquedas" class="d-flex flex-wrap gap-2"></div>
+                </div>
+
+                <!-- Instrucciones -->
+                <div class="alert alert-info mt-3 mb-0" role="alert">
+                    <strong>ℹ️ Cómo funciona:</strong>
+                    <ul class="mb-0 mt-2 small">
+                        <li>Las búsquedas se abren en <strong>nuevas pestañas</strong> del navegador</li>
+                        <li>Puedes comparar precios entre ambos proveedores fácilmente</li>
+                        <li>Presiona <kbd>Enter</kbd> para buscar rápidamente en ambos</li>
+                        <li>Tu historial se guarda localmente para acceso rápido</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer bg-light">
+                <small class="text-muted">
+                    🔒 Esta herramienta solo abre los sitios web. Los precios y stock son referenciales.
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estilos mejorados -->
+
+
+<!-- JavaScript optimizado -->
+<script>
+// Configuración de proveedores
+const PROVEEDORES = {
+    'mundorepuestos': {
+        nombre: 'Mundo Repuestos',
+        icono: '🛒',
+        url: (termino) => {
+            // Mundo Repuestos usa guiones en vez de espacios
+            const terminoFormateado = termino.replace(/\s+/g, '--');
+            return `https://mundorepuestos.com/busqueda/${terminoFormateado}`;
+        }
+    },
+    'autoplanet': {
+        nombre: 'AutoPlanet',
+        icono: '🚗',
+        url: (termino) => `https://www.autoplanet.cl/busqueda/${encodeURIComponent(termino)}`
+    }
+};
+
+// Cargar historial al abrir el modal
+document.getElementById('modalBusquedaExterna')?.addEventListener('shown.bs.modal', function () {
+    const input = document.getElementById('terminoBusquedaExterna');
+    input.focus();
+    input.select();
+    cargarHistorial();
+});
+
+// Enter para buscar rápido en ambos
+document.getElementById('terminoBusquedaExterna')?.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        buscarEnAmbos();
+    }
+});
+
+function buscarEnProveedor(proveedor) {
+    const termino = document.getElementById('terminoBusquedaExterna').value.trim();
+    
+    if (!termino) {
+        mostrarAlerta('❌ Por favor ingresa un término de búsqueda', 'warning');
+        document.getElementById('terminoBusquedaExterna').focus();
+        return;
+    }
+
+    const config = PROVEEDORES[proveedor];
+    const url = config.url(termino);
+
+    // Abrir en nueva pestaña
+    window.open(url, '_blank');
+
+    // Guardar en historial
+    guardarEnHistorial(termino);
+
+    // Mostrar confirmación
+    mostrarAlerta(`${config.icono} Abriendo "${termino}" en ${config.nombre}`, 'success');
+}
+
+function buscarEnAmbos() {
+    const termino = document.getElementById('terminoBusquedaExterna').value.trim();
+    
+    if (!termino) {
+        mostrarAlerta('❌ Por favor ingresa un término de búsqueda', 'warning');
+        document.getElementById('terminoBusquedaExterna').focus();
+        return;
+    }
+
+    // Abrir ambos proveedores con pequeño delay para evitar bloqueo del navegador
+    buscarEnProveedor('mundorepuestos');
+    
+    setTimeout(() => {
+        buscarEnProveedor('autoplanet');
+    }, 300);
+
+    mostrarAlerta(`⚡ Buscando "${termino}" en ambos proveedores`, 'info');
+}
+
+function guardarEnHistorial(termino) {
+    let historial = JSON.parse(localStorage.getItem('historialBusquedaRepuestos') || '[]');
+    
+    // Normalizar término
+    termino = termino.trim();
+    
+    // Evitar duplicados (case-insensitive)
+    historial = historial.filter(item => item.toLowerCase() !== termino.toLowerCase());
+    
+    // Agregar al inicio
+    historial.unshift(termino);
+    
+    // Mantener solo últimos 8
+    historial = historial.slice(0, 8);
+    
+    localStorage.setItem('historialBusquedaRepuestos', JSON.stringify(historial));
+    
+    cargarHistorial();
+}
+
+function cargarHistorial() {
+    const historial = JSON.parse(localStorage.getItem('historialBusquedaRepuestos') || '[]');
+    const container = document.getElementById('historialBusquedas');
+    const historialContainer = document.getElementById('historialContainer');
+    
+    if (historial.length === 0) {
+        historialContainer.style.display = 'none';
+        return;
+    }
+    
+    historialContainer.style.display = 'block';
+    container.innerHTML = '';
+    
+    historial.forEach(termino => {
+        const badge = document.createElement('span');
+        badge.className = 'badge badge-historial';
+        badge.innerHTML = `<i class="fas fa-history"></i> ${termino}`;
+        badge.onclick = () => {
+            document.getElementById('terminoBusquedaExterna').value = termino;
+            document.getElementById('terminoBusquedaExterna').focus();
+        };
+        container.appendChild(badge);
+    });
+}
+
+function limpiarHistorial() {
+    {% if ver_avisos %}
+    if (confirm('¿Estás seguro de que quieres limpiar el historial?')) {
+    {% else %}
+    if (true) {
+    {% endif %}
+        localStorage.removeItem('historialBusquedaRepuestos');
+        document.getElementById('historialContainer').style.display = 'none';
+        mostrarAlerta('🗑️ Historial limpiado', 'info');
+    }
+}
+
+function mostrarAlerta(mensaje, tipo = 'success') {
+    // Crear toast
+    const toast = document.createElement('div');
+    toast.className = `toast-busqueda alert alert-${tipo} alert-dismissible fade show shadow-lg`;
+    toast.setAttribute('role', 'alert');
+    toast.innerHTML = `
+        <strong>${mensaje}</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Auto-cerrar después de 3 segundos
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 150);
+    }, 3000);
+}
+
+// Shortcuts de teclado globales (Ctrl+Shift+B para abrir búsqueda)
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey && e.shiftKey && e.key === 'B') {
+        e.preventDefault();
+        const modal = new bootstrap.Modal(document.getElementById('modalBusquedaExterna'));
+        modal.show();
+    }
+});
+
+// Inicializar al cargar
+document.addEventListener('DOMContentLoaded', function() {
+    cargarHistorial();
+});
+</script>

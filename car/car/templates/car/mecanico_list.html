@@ -2,69 +2,11 @@
 {% load static %}
 
 {% block extra_css %}
-  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
-  <style>
-    .container {
-      background: var(--bg-card);
-      border-radius: var(--border-radius-lg);
-      padding: var(--spacing-lg);
-      box-shadow: var(--shadow-md);
-    }
-    
-    .table {
-      color: var(--text-primary);
-    }
-    
-    .table th {
-      background: var(--bg-secondary);
-      color: var(--text-primary);
-      border: none;
-      font-weight: 600;
-    }
-    
-    .table td {
-      border-color: var(--border-color);
-      vertical-align: middle;
-    }
-    
-    .btn {
-      border-radius: var(--border-radius-sm);
-      font-weight: 500;
-    }
-    
-    .btn-primary {
-      background: var(--primary-600);
-      border-color: var(--primary-600);
-    }
-    
-    .btn-primary:hover {
-      background: var(--primary-700);
-      border-color: var(--primary-700);
-    }
-    
-    .btn-warning {
-      background: var(--warning-600);
-      border-color: var(--warning-600);
-    }
-    
-    .btn-warning:hover {
-      background: var(--warning-700);
-      border-color: var(--warning-700);
-    }
-    
-    .btn-danger {
-      background: var(--danger-600);
-      border-color: var(--danger-600);
-    }
-    
-    .btn-danger:hover {
-      background: var(--danger-700);
-      border-color: var(--danger-700);
-    }
-  </style>
+  
 {% endblock %}
 
 {% block content %}
+<span hidden data-css004b="f0e4e7e0ca"></span>
 <div class="container py-4">
   <h2>👥 Mecanicos</h2>
   <a href="{% url 'mecanico_create' %}" class="btn btn-sm btn-primary mb-3">➕ Nuevo Mecanico</a>

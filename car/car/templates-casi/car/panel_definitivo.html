@@ -1,0 +1,497 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block mobile_components %}
+  {% include 'car/mobile_bottom_nav.html' %}
+  {% include 'car/mobile_fab.html' %}
+{% endblock %}
+
+{% block title %}Panel Principal - Taller Mecánico{% endblock %}
+
+{% block extra_css %}
+
+{% endblock %}
+
+{% block content %}
+<span hidden data-css004b="f3fcd426b0"></span>
+<div class="panel-container">
+    <!-- Header -->
+    <!--
+    <div class="panel-header">
+        <div class="eyebrow">OPERACIONES / HOY</div>
+        <h1 class="mb-0">Centro de operaciones</h1>
+        <small>Gestión completa del taller</small>
+    </div>
+    -->
+
+    <!-- Reloj y Fecha - Visible en todas las pestañas -->
+    <div class="panel-clock-container">
+        <div class="pizarra-clock">
+            <span class="pizarra-clock-time" id="clock-time">--:--:--</span>
+            <span class="pizarra-clock-date" id="clock-date">-- -- ----</span>
+        </div>
+    </div>
+
+    <!-- Contenido de los Tabs -->
+    <div class="tab-content" id="panelTabsContent">
+        <!-- TAB PIZARRA -->
+        <div class="tab-pane fade show active" id="pizarra" role="tabpanel" aria-labelledby="pizarra-tab">
+            <!-- Pizarra de trabajos -->
+            <div class="pizarra-section">
+                <div class="pizarra-header">
+                    <span class="action-icon">📊</span>
+                    <h2 class="pizarra-title">Pizarra</h2>
+                </div>
+                
+                <div class="pizarra-grid">
+                    <!-- Trabajos Iniciados -->
+                    <a class="pizarra-cell pizarra-cell-link" href="{% url 'pizarra_estado' 'iniciados' %}">
+                        <div class="pizarra-cell-header">
+                            <span>🟡 Iniciados ({{ iniciados|length }})</span>
+                        </div>
+                        {% for trabajo in iniciados %}
+                        <div class="vehiculo-item">
+                            <div class="vehiculo-header">
+                                <span class="vehiculo-icon">🚗</span>
+                                <div class="vehiculo-info">
+                                    <span class="vehiculo-placa">{{ trabajo.vehiculo.placa|default:"(sin patente)" }}</span>
+                                    <span class="vehiculo-cliente">{{ trabajo.vehiculo.cliente.nombre }}</span>
+                                    <span class="dias-taller {{ trabajo.dias_en_taller_texto.css_class }}">
+                                        ⏱️ {{ trabajo.dias_en_taller_texto.texto }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-warning" style="width: {{ trabajo.porcentaje_avance|default:0 }}%">
+                                    {{ trabajo.porcentaje_avance|default:0 }}%
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-secondary text-center">No hay trabajos iniciados</div>
+                        {% endfor %}
+                    </a>
+
+                    <!-- Trabajos en Progreso -->
+                    <a class="pizarra-cell pizarra-cell-link" href="{% url 'pizarra_estado' 'progreso' %}">
+                        <div class="pizarra-cell-header">
+                            <span>🔵 En Progreso ({{ trabajando|length }})</span>
+                        </div>
+                        {% for trabajo in trabajando %}
+                        <div class="vehiculo-item">
+                            <div class="vehiculo-header">
+                                <span class="vehiculo-icon">🚙</span>
+                                <div class="vehiculo-info">
+                                    <span class="vehiculo-placa">{{ trabajo.vehiculo.placa|default:"(sin patente)" }}</span>
+                                    <span class="vehiculo-cliente">{{ trabajo.vehiculo.cliente.nombre }}</span>
+                                    <span class="dias-taller {{ trabajo.dias_en_taller_texto.css_class }}">
+                                        ⏱️ {{ trabajo.dias_en_taller_texto.texto }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-primary" style="width: {{ trabajo.porcentaje_avance|default:0 }}%">
+                                    {{ trabajo.porcentaje_avance|default:0 }}%
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-secondary text-center">No hay trabajos en progreso</div>
+                        {% endfor %}
+                    </a>
+
+                    <!-- Trabajos Completados -->
+                    <a class="pizarra-cell pizarra-cell-link" href="{% url 'pizarra_estado' 'completados' %}">
+                        <div class="pizarra-cell-header">
+                            <span>🟢 Completados ({{ completados|length }})</span>
+                        </div>
+                        {% for trabajo in completados %}
+                        <div class="vehiculo-item">
+                            <div class="vehiculo-header">
+                                <span class="vehiculo-icon">🚕</span>
+                                <div class="vehiculo-info">
+                                    <span class="vehiculo-placa">{{ trabajo.vehiculo.placa|default:"(sin patente)" }}</span>
+                                    <span class="vehiculo-cliente">{{ trabajo.vehiculo.cliente.nombre }}</span>
+                                    <span class="dias-taller {{ trabajo.dias_en_taller_texto.css_class }}">
+                                        ⏱️ {{ trabajo.dias_en_taller_texto.texto }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-success" style="width: {{ trabajo.porcentaje_avance|default:100 }}%">
+                                    {{ trabajo.porcentaje_avance|default:100 }}%
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-secondary text-center">No hay trabajos completados</div>
+                        {% endfor %}
+                    </a>
+
+                    <!-- Trabajos Entregados -->
+                    <div class="pizarra-cell pizarra-cell-link" role="link" tabindex="0" onclick="window.location.href='{% url 'pizarra_estado' 'entregados' %}'" onkeydown="if (event.key === 'Enter') window.location.href='{% url 'pizarra_estado' 'entregados' %}'">
+                        <div class="pizarra-cell-header">
+                            <span>⚫ Entregados ({{ entregados|length }})</span>
+                        </div>
+                        {% for trabajo in entregados %}
+                        <div class="vehiculo-item">
+                            <div class="vehiculo-header">
+                                <span class="vehiculo-icon">🚐</span>
+                                <div class="vehiculo-info">
+                                    <span class="vehiculo-placa">{{ trabajo.vehiculo.placa|default:"(sin patente)" }}</span>
+                                    <span class="vehiculo-cliente">{{ trabajo.vehiculo.cliente.nombre }}</span>
+                                    <span class="dias-taller {{ trabajo.dias_en_taller_texto.css_class }}">
+                                        ⏱️ {{ trabajo.dias_en_taller_texto.texto }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-primary" style="width: {{ trabajo.porcentaje_avance|default:100 }}%">
+                                    {{ trabajo.porcentaje_avance|default:100 }}%
+                                </div>
+                            </div>
+                            <div class="mt-2 text-end">
+                                <form method="post"  onclick="event.stopPropagation();" onsubmit="{% if ver_avisos %}return confirm('¿Ocultar este trabajo del listado?');{% else %}return true;{% endif %}" class="css004b-inline-990d6cbe91d9">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="trabajo_id" value="{{ trabajo.id }}">
+                                    <button type="submit" name="ocultar_trabajo" class="btn btn-sm btn-outline-secondary">
+                                        🗑️ Ocultar
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-secondary text-center">No hay trabajos entregados</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB INICIO -->
+        <div class="tab-pane fade" id="inicio" role="tabpanel" aria-labelledby="inicio-tab">
+            <!-- Estadísticas rápidas -->
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-number">{{ diagnosticos_hoy|default:"0" }}</div>
+                    <div class="stat-label">Diagnósticos Hoy</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ trabajos_activos|default:"0" }}</div>
+                    <div class="stat-label">Trabajos Activos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ ventas_hoy|default:"0" }}</div>
+                    <div class="stat-label">Ventas Hoy</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ repuestos_total|default:"0" }}</div>
+                    <div class="stat-label">Total Repuestos</div>
+                </div>
+            </div>
+            
+
+            <!-- Acciones principales -->
+            <div class="actions-grid">
+                {% if request.permisos.diagnosticos %}
+                <a href="{% url 'ingreso_rapido' %}" class="action-card">
+                    <span class="action-icon">⚡</span>
+                    <div class="action-title">Nuevo Diagnóstico Rápido</div>
+                    <div class="action-description">Flujo fusionado en 3 pasos</div>
+                </a>
+                
+                <a href="{% url 'lista_diagnosticos' %}" class="action-card">
+                    <span class="action-icon">📋</span>
+                    <div class="action-title">Ver Diagnósticos</div>
+                    <div class="action-description">Lista de diagnósticos pendientes</div>
+                </a>
+                {% endif %}
+                
+                {% if request.permisos.trabajos %}
+                <a href="{% url 'lista_trabajos' %}" class="action-card">
+                    <span class="action-icon">🚗</span>
+                    <div class="action-title">Ver Trabajos</div>
+                    <div class="action-description">Lista completa de trabajos activos</div>
+                </a>
+                
+                <a href="{% url 'estadisticas_trabajos' %}" class="action-card">
+                    <span class="action-icon">📊</span>
+                    <div class="action-title">Estadísticas</div>
+                    <div class="action-description">Ver estadísticas de trabajos</div>
+                </a>
+                {% endif %}
+                
+                {% if request.permisos.pos %}
+                <a href="{% url 'pos_principal' %}" class="action-card">
+                    <span class="action-icon">🛒</span>
+                    <div class="action-title">Punto de Venta</div>
+                    <div class="action-description">Ventas y cotizaciones de repuestos</div>
+                </a>
+                {% endif %}
+                
+                {% if request.permisos.compras %}
+                <a href="{% url 'compra_dashboard' %}" class="action-card">
+                    <span class="action-icon">📥</span>
+                    <div class="action-title">Compras</div>
+                    <div class="action-description">Gestiona compras de repuestos</div>
+                </a>
+                {% endif %}
+
+            </div>
+        </div>
+
+        <!-- TAB TALLER -->
+        <div class="tab-pane fade" id="taller" role="tabpanel" aria-labelledby="taller-tab">
+            <div class="pizarra-section">
+                <div class="pizarra-header">
+                    <span class="action-icon">🔧</span>
+                    <h2 class="pizarra-title">Taller</h2>
+                </div>
+                
+                <div class="actions-grid">
+                    <a href="{% url 'cliente_taller_list' %}" class="action-card">
+                        <span class="action-icon">👥</span>
+                        <div class="action-title">Clientes del Taller</div>
+                        <div class="action-description">Gestionar clientes del taller</div>
+                    </a>
+                    
+                    <a href="{% url 'vehiculo_list' %}" class="action-card">
+                        <span class="action-icon">🚗</span>
+                        <div class="action-title">Vehículos</div>
+                        <div class="action-description">Gestionar vehículos</div>
+                    </a>
+                    
+                    <a href="{% url 'componente_list' %}" class="action-card">
+                        <span class="action-icon">⚙️</span>
+                        <div class="action-title">Componentes</div>
+                        <div class="action-description">Gestionar componentes</div>
+                    </a>
+                    
+                    <a href="{% url 'accion_list' %}" class="action-card">
+                        <span class="action-icon">🔨</span>
+                        <div class="action-title">Acciones</div>
+                        <div class="action-description">Gestionar acciones de reparación</div>
+                    </a>
+                    
+                    <a href="{% url 'mecanico_list' %}" class="action-card">
+                        <span class="action-icon">👷</span>
+                        <div class="action-title">Mecánicos</div>
+                        <div class="action-description">Gestionar mecánicos</div>
+                    </a>
+                    
+                    {% if request.permisos.trabajos %}
+                    <a href="{% url 'lista_mecanicos_bonos' %}" class="action-card">
+                        <span class="action-icon">💰</span>
+                        <div class="action-title">Bonos de Mecánicos</div>
+                        <div class="action-description">Resumen de bonos - Mecánicos</div>
+                    </a>
+                    {% endif %}
+                    
+                    {% if request.permisos.diagnosticos %}
+                    <a href="{% url 'ingreso' %}" class="action-card">
+                        <span class="action-icon">🔧</span>
+                        <div class="action-title">Nuevo Diagnóstico</div>
+                        <div class="action-description">Crear nuevo diagnóstico de vehículo</div>
+                    </a>
+
+                    <a href="{% url 'ingreso_rapido' %}" class="action-card">
+                        <span class="action-icon">⚡</span>
+                        <div class="action-title">Nuevo Diagnóstico Rápido</div>
+                        <div class="action-description">Flujo fusionado en 3 pasos</div>
+                    </a>
+
+                    <a href="{% url 'ingreso_voz' %}" class="action-card">
+                        <span class="action-icon">🎤</span>
+                        <div class="action-title">Ingreso por Voz</div>
+                        <div class="action-description">Diagnóstico con control por voz</div>
+                    </a>
+                    
+                    <a href="{% url 'lista_diagnosticos' %}" class="action-card">
+                        <span class="action-icon">📋</span>
+                        <div class="action-title">Diagnósticos</div>
+                        <div class="action-description">Lista de diagnósticos</div>
+                    </a>
+                    {% endif %}
+                    
+                    {% if request.permisos.trabajos %}
+                    <a href="{% url 'lista_trabajos' %}" class="action-card">
+                        <span class="action-icon">🚗</span>
+                        <div class="action-title">Trabajos</div>
+                        <div class="action-description">Lista completa de trabajos</div>
+                    </a>
+                    
+                    <a href="{% url 'historial_trabajos' %}" class="action-card">
+                        <span class="action-icon">📜</span>
+                        <div class="action-title">Historial de Trabajos</div>
+                        <div class="action-description">Ver historial de trabajos realizados</div>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB ADMINISTRACIÓN -->
+        <div class="tab-pane fade" id="administracion" role="tabpanel" aria-labelledby="administracion-tab">
+            <!-- Sección de Administración -->
+            <div class="pizarra-section">
+                <div class="pizarra-header">
+                    <span class="action-icon">⚙️</span>
+                    <h2 class="pizarra-title">Administración</h2>
+                </div>
+                
+                <div class="actions-grid">
+                    {% if request.permisos.trabajos %}
+                    <a href="{% url 'configuracion_bonos' %}" class="action-card">
+                        <span class="action-icon">💰</span>
+                        <div class="action-title">Bonos de Mecánicos</div>
+                        <div class="action-description">Configurar y gestionar bonos e incentivos</div>
+                    </a>
+                    {% endif %}
+                    
+                    {% if request.permisos.administracion %}
+                    <a href="{% url 'administracion_taller' %}" class="action-card">
+                        <span class="action-icon">🏢</span>
+                        <div class="action-title">Configurar Taller</div>
+                        <div class="action-description">Ajustes generales del taller</div>
+                    </a>
+                    {% endif %}
+                    
+                    {% if request.permisos.administracion %}
+                    <a href="{% url 'gestion_usuarios' %}" class="action-card">
+                        <span class="action-icon">👥</span>
+                        <div class="action-title">Gestión de Usuarios</div>
+                        <div class="action-description">Administrar usuarios y permisos</div>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB POS -->
+        <div class="tab-pane fade" id="pos" role="tabpanel" aria-labelledby="pos-tab">
+            <div class="pizarra-section">
+                <div class="pizarra-header">
+                    <span class="action-icon">🛒</span>
+                    <h2 class="pizarra-title">Punto de Venta</h2>
+                </div>
+                
+                <div class="actions-grid">
+                    {% if request.permisos.pos %}
+                    <a href="{% url 'pos_principal' %}" class="action-card">
+                        <span class="action-icon">🛒</span>
+                        <div class="action-title">Punto de Venta</div>
+                        <div class="action-description">Sistema de ventas y cotizaciones</div>
+                    </a>
+                    {% endif %}
+                    
+                    {% if request.permisos.inventario %}
+                    <a href="{% url 'repuesto_list' %}" class="action-card">
+                        <span class="action-icon">📦</span>
+                        <div class="action-title">Inventario</div>
+                        <div class="action-description">Gestionar repuestos y stock</div>
+                    </a>
+                    {% endif %}
+                    
+                    <a href="{% url 'vehiculo_compatibilidad_list' %}" class="action-card">
+                        <span class="action-icon">🚗</span>
+                        <div class="action-title">Compatibilidad de Vehículos</div>
+                        <div class="action-description">Gestionar vehículos y compatibilidad</div>
+                    </a>
+                    
+                    {% if request.permisos.compras %}
+                    <a href="{% url 'compra_dashboard' %}" class="action-card">
+                        <span class="action-icon">📥</span>
+                        <div class="action-title">Compras</div>
+                        <div class="action-description">Gestionar compras de repuestos</div>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// JavaScript simplificado para el panel principal
+document.addEventListener('DOMContentLoaded', function() {
+    // Aplicar tema automáticamente
+    const saved = localStorage.getItem("theme") || "piedra";
+    document.body.className = `theme-${saved}`;
+
+    const initialSection = window.location.hash;
+    if (initialSection) {
+        const initialTab = document.querySelector(`#panelTabs [data-bs-target="${initialSection}"]`);
+        if (initialTab) {
+            bootstrap.Tab.getOrCreateInstance(initialTab).show();
+        }
+    }
+
+    // Forzar visibilidad de las estadísticas
+    setTimeout(function() {
+        const statCards = document.querySelectorAll('.stat-card');
+        const statNumbers = document.querySelectorAll('.stat-number');
+        const statLabels = document.querySelectorAll('.stat-label');
+        
+        statCards.forEach(function(card) {
+            card.style.opacity = '1';
+            card.style.visibility = 'visible';
+            card.style.zIndex = '10';
+            card.style.position = 'relative';
+        });
+        
+        statNumbers.forEach(function(number) {
+            number.style.opacity = '1';
+            number.style.visibility = 'visible';
+            number.style.zIndex = '11';
+            number.style.position = 'relative';
+        });
+        
+        statLabels.forEach(function(label) {
+            label.style.opacity = '1';
+            label.style.visibility = 'visible';
+            label.style.zIndex = '11';
+            label.style.position = 'relative';
+        });
+    }, 100);
+    
+    // Reloj en tiempo real para la pizarra
+    function updateClock() {
+        const now = new Date();
+        
+        // Formatear hora
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        const timeString = `${hours}:${minutes}:${seconds}`;
+        
+        // Formatear fecha
+        const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+        const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
+                       'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        const dayName = days[now.getDay()];
+        const day = now.getDate();
+        const month = months[now.getMonth()];
+        const year = now.getFullYear();
+        const dateString = `${dayName}, ${day} de ${month} ${year}`;
+        
+        // Actualizar elementos
+        const timeElement = document.getElementById('clock-time');
+        const dateElement = document.getElementById('clock-date');
+        
+        if (timeElement) {
+            timeElement.textContent = timeString;
+        }
+        if (dateElement) {
+            dateElement.textContent = dateString;
+        }
+    }
+    
+    // Actualizar reloj inmediatamente y luego cada segundo
+    updateClock();
+    setInterval(updateClock, 1000);
+});
+</script>
+{% endblock %}

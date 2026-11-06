@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Eliminar Bono{% endblock %}
+
+{% block extra_css %}
+
+{% endblock %}
+
+{% block content %}
+<span hidden data-css004b="23f50cb222"></span>
+<div class="confirm-container">
+    <div class="confirm-box">
+        <h1>⚠️ Eliminar Bono</h1>
+        <p  class="css004b-inline-b54fdcc5311f">
+            <strong>{{ bono.mecanico }}</strong><br>
+            Trabajo #{{ bono.trabajo.id }}
+        </p>
+        
+        <div class="warning-box">
+            <p><strong>⚠️ Atención:</strong> Esta acción eliminará permanentemente este bono del sistema.</p>
+            <p  class="css004b-inline-90f3ec37cacb"><strong>Información del bono:</strong></p>
+            <ul  class="css004b-inline-f9ca2071f7a6">
+                <li>Monto: ${{ bono.monto|floatformat:0|intcomma }}</li>
+                <li>Fecha: {{ bono.fecha_generacion|date:"d/m/Y H:i" }}</li>
+                <li>Período: {% if bono.periodo_texto %}{{ bono.periodo_texto }}{% else %}Sin período{% endif %}</li>
+                <li>Estado: {% if bono.pagado %}Pagado{% else %}Pendiente{% endif %}</li>
+            </ul>
+        </div>
+        
+        <form method="post"  class="css004b-inline-51d89df9defe">
+            {% csrf_token %}
+            <button type="submit" class="btn-danger" onclick="{% if ver_mensajes %}return confirm('¿Está completamente seguro de eliminar este bono? Esta acción no se puede deshacer.');{% else %}return true;{% endif %}">
+                🗑️ Sí, Eliminar Bono
+            </button>
+        </form>
+        <a href="{% url 'cuenta_mecanico' bono.mecanico.id %}" class="btn-secondary">
+            Cancelar
+        </a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,402 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block mobile_components %}
+  {% include 'car/mobile_bottom_nav.html' %}
+  {% include 'car/mobile_fab.html' %}
+{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
+  <style>
+    .historial-container {
+      background: var(--bg-card);
+      border-radius: var(--border-radius-lg);
+      padding: var(--spacing-lg);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .historial-header {
+      background: var(--gradient);
+      color: var(--text-inverse);
+      padding: var(--spacing-lg);
+      border-radius: var(--border-radius-lg);
+      margin-bottom: var(--spacing-lg);
+      text-align: center;
+    }
+    
+    .historial-header h2 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    
+    .trabajo-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-lg);
+      padding: var(--spacing-md);
+      margin-bottom: var(--spacing-md);
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition);
+    }
+    
+    .trabajo-item:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+    
+    .trabajo-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--spacing-sm);
+      padding-bottom: var(--spacing-sm);
+      border-bottom: 2px solid var(--border-color);
+    }
+    
+    .trabajo-item-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .trabajo-item-info {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin-bottom: var(--spacing-xs);
+    }
+    
+    .trabajo-item-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: var(--spacing-sm);
+      padding-top: var(--spacing-sm);
+      border-top: 1px solid var(--border-color);
+    }
+    
+    .badge {
+      border-radius: var(--border-radius-sm);
+      font-weight: 500;
+      padding: var(--spacing-xs) var(--spacing-sm);
+    }
+    
+    .btn {
+      border-radius: var(--border-radius);
+      font-weight: 500;
+      transition: var(--transition);
+      padding: var(--spacing-sm) var(--spacing-md);
+    }
+    
+    .btn-secondary {
+      background: var(--secondary-600);
+      border-color: var(--secondary-600);
+      color: var(--text-inverse);
+    }
+    
+    .btn-secondary:hover {
+      background: var(--secondary-700);
+      border-color: var(--secondary-700);
+    }
+    
+    .saldo-pendiente {
+      padding: var(--spacing-xs) var(--spacing-sm);
+      border-radius: var(--border-radius);
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    
+    .saldo-pendiente.positivo {
+      background: #fff3cd;
+      color: #856404;
+      border: 2px solid #ffc107;
+    }
+    
+    .saldo-pendiente.cero {
+      background: #d1e7dd;
+      color: #0f5132;
+      border: 2px solid #198754;
+    }
+    
+    @media (max-width: 768px) {
+      .historial-container {
+        padding: var(--spacing-sm);
+      }
+      
+      .historial-header {
+        padding: var(--spacing-md);
+      }
+      
+      .historial-header h2 {
+        font-size: 1.5rem;
+      }
+      
+      .trabajo-item-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-xs);
+      }
+      
+      .trabajo-item-footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-xs);
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="historial-container">
+  <div class="historial-header">
+    <h2>📜 Historial de Trabajos</h2>
+    <p class="mb-0">Trabajos archivados (no visibles en la lista principal)</p>
+  </div>
+
+  <!-- Barra de búsqueda -->
+  <div class="mb-4">
+    <div class="input-group input-group-lg">
+      <span class="input-group-text">🔍</span>
+      <input type="text" 
+             id="buscar-trabajos" 
+             class="form-control" 
+             placeholder="Buscar por ID, cliente, placa, RUT, mecánico, estado..."
+             autocomplete="off">
+      <button class="btn btn-outline-secondary" type="button" id="btn-limpiar-busqueda" style="display:none;">
+        ✕ Limpiar
+      </button>
+    </div>
+    <small class="text-muted d-block mt-2">
+      <span id="contador-resultados"></span>
+    </small>
+  </div>
+
+  <!-- Contenedor para resultados filtrados -->
+  <div id="trabajos-lista">
+  {% if trabajos %}
+    {% for trabajo in trabajos %}
+    <div class="trabajo-item">
+      <div class="trabajo-item-header">
+        <div>
+          <div class="trabajo-item-title">
+            🔧 Trabajo #{{ trabajo.id }} – {{ trabajo.vehiculo }}
+          </div>
+          <div class="trabajo-item-info">
+            <strong>Cliente:</strong> {{ trabajo.vehiculo.cliente.nombre }} | 
+            <strong>Fecha:</strong> {{ trabajo.fecha_inicio|date:"d/m/Y H:i" }} | 
+            <strong>Estado:</strong> 
+            <span class="badge 
+              {% if trabajo.estado == 'iniciado' %}bg-secondary
+              {% elif trabajo.estado == 'trabajando' %}bg-warning
+              {% elif trabajo.estado == 'completado' %}bg-success
+              {% elif trabajo.estado == 'entregado' %}bg-dark
+              {% endif %}">
+              {{ trabajo.get_estado_display }}
+            </span>
+          </div>
+        </div>
+        <div class="saldo-pendiente {% if trabajo.saldo_pendiente > 0 %}positivo{% else %}cero{% endif %}">
+          💵 Saldo: ${{ trabajo.saldo_pendiente|default:0|floatformat:0|intcomma }}
+        </div>
+      </div>
+      
+      <div class="trabajo-item-info">
+        <strong>Total:</strong> ${{ trabajo.total_general|default:0|floatformat:0|intcomma }} | 
+        <strong>Abonos:</strong> ${{ trabajo.total_abonos|default:0|floatformat:0|intcomma }}
+      </div>
+      
+      <div class="trabajo-item-footer">
+        <div class="trabajo-item-info">
+          <strong>Mecánicos:</strong>
+          {% if trabajo.mecanicos.count %}
+            {% for mec in trabajo.mecanicos.all %}
+              <span class="badge bg-info text-inverse">
+                {{ mec.user.get_full_name|default:mec.user.username }}
+              </span>
+            {% endfor %}
+          {% else %}
+            <span class="text-secondary">No asignados</span>
+          {% endif %}
+        </div>
+        <a href="{% url 'trabajo_detalle' trabajo.pk %}" class="btn btn-secondary btn-sm">
+          Ver Detalles
+        </a>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="text-center p-4">
+      <p class="text-secondary">No hay trabajos en el historial.</p>
+      <a href="{% url 'lista_trabajos' %}" class="btn btn-secondary">Volver a Trabajos</a>
+    </div>
+  {% endif %}
+  </div>
+  
+  <div class="mt-3">
+    <a href="{% url 'lista_trabajos' %}" class="btn btn-secondary">← Volver a Trabajos</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+  const buscarInput = document.getElementById('buscar-trabajos');
+  const btnLimpiar = document.getElementById('btn-limpiar-busqueda');
+  const trabajosLista = document.getElementById('trabajos-lista');
+  const contadorResultados = document.getElementById('contador-resultados');
+  const trabajosOriginales = trabajosLista.innerHTML; // Guardar HTML original
+  let buscarTimeout;
+
+  // Función para formatear números con separadores de miles
+  function formatearNumero(num) {
+    return new Intl.NumberFormat('es-CL').format(Math.round(num));
+  }
+
+  // Función para obtener clase de badge según estado
+  function getBadgeClass(estado) {
+    const clases = {
+      'iniciado': 'bg-secondary',
+      'trabajando': 'bg-warning',
+      'completado': 'bg-success',
+      'entregado': 'bg-dark'
+    };
+    return clases[estado] || 'bg-secondary';
+  }
+
+  // Función para renderizar trabajos
+  function renderizarTrabajos(trabajos) {
+    if (trabajos.length === 0) {
+      trabajosLista.innerHTML = `
+        <div class="text-center p-4">
+          <p class="text-secondary">No se encontraron trabajos que coincidan con la búsqueda.</p>
+        </div>
+      `;
+      contadorResultados.textContent = '0 trabajos encontrados';
+      return;
+    }
+
+    let html = '';
+    trabajos.forEach(trabajo => {
+      const mecanicosHtml = trabajo.mecanicos.length > 0
+        ? trabajo.mecanicos.map(m => `<span class="badge bg-info text-inverse">${m}</span>`).join(' ')
+        : '<span class="text-secondary">No asignados</span>';
+      
+      const saldoClass = trabajo.saldo_pendiente > 0 ? 'positivo' : 'cero';
+      
+      html += `
+        <div class="trabajo-item">
+          <div class="trabajo-item-header">
+            <div>
+              <div class="trabajo-item-title">
+                🔧 Trabajo #${trabajo.id} – ${trabajo.vehiculo}
+              </div>
+              <div class="trabajo-item-info">
+                <strong>Cliente:</strong> ${trabajo.cliente_nombre} | 
+                <strong>Fecha:</strong> ${trabajo.fecha_inicio} | 
+                <strong>Estado:</strong> 
+                <span class="badge ${getBadgeClass(trabajo.estado)}">
+                  ${trabajo.estado_display}
+                </span>
+              </div>
+            </div>
+            <div class="saldo-pendiente ${saldoClass}">
+              💵 Saldo: $${formatearNumero(trabajo.saldo_pendiente)}
+            </div>
+          </div>
+          
+          <div class="trabajo-item-info">
+            <strong>Total:</strong> $${formatearNumero(trabajo.total_general)} | 
+            <strong>Abonos:</strong> $${formatearNumero(trabajo.total_abonos)}
+          </div>
+          
+          <div class="trabajo-item-footer">
+            <div class="trabajo-item-info">
+              <strong>Mecánicos:</strong> ${mecanicosHtml}
+            </div>
+            <a href="${trabajo.url_detalle}" class="btn btn-secondary btn-sm">
+              Ver Detalles
+            </a>
+          </div>
+        </div>
+      `;
+    });
+
+    trabajosLista.innerHTML = html;
+    contadorResultados.textContent = `${trabajos.length} trabajo${trabajos.length !== 1 ? 's' : ''} encontrado${trabajos.length !== 1 ? 's' : ''}`;
+  }
+
+  // Función para buscar trabajos
+  function buscarTrabajos(termino) {
+    if (!termino || termino.trim().length < 2) {
+      // Si el término es muy corto, mostrar todos los trabajos originales
+      trabajosLista.innerHTML = trabajosOriginales;
+      contadorResultados.textContent = '';
+      return;
+    }    // Mostrar indicador de carga
+    trabajosLista.innerHTML = '<div class="text-center p-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Buscando...</p></div>';    // Realizar búsqueda AJAX
+    fetch(`{% url 'historial_trabajos' %}?q=${encodeURIComponent(termino)}`, {
+      method: 'GET',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      renderizarTrabajos(data.trabajos);
+    })
+    .catch(error => {
+      console.error('Error en la búsqueda:', error);
+      trabajosLista.innerHTML = `
+        <div class="text-center p-4">
+          <p class="text-danger">❌ Error al buscar trabajos. Por favor, intenta nuevamente.</p>
+        </div>
+      `;
+    });
+  }
+
+  // Event listener para el campo de búsqueda (con debounce)
+  if (buscarInput) {
+    buscarInput.addEventListener('input', function(e) {
+      const termino = e.target.value.trim();
+      
+      // Limpiar timeout anterior
+      clearTimeout(buscarTimeout);
+      
+      // Mostrar/ocultar botón limpiar
+      if (termino.length > 0) {
+        btnLimpiar.style.display = 'inline-block';
+      } else {
+        btnLimpiar.style.display = 'none';
+        trabajosLista.innerHTML = trabajosOriginales;
+        contadorResultados.textContent = '';
+        return;
+      }
+      
+      // Esperar 300ms antes de buscar (debounce)
+      buscarTimeout = setTimeout(() => {
+        buscarTrabajos(termino);
+      }, 300);
+    });    // Permitir búsqueda con Enter
+    buscarInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        clearTimeout(buscarTimeout);
+        buscarTrabajos(e.target.value.trim());
+      }
+    });
+  }  // Botón limpiar búsqueda
+  if (btnLimpiar) {
+    btnLimpiar.addEventListener('click', function() {
+      buscarInput.value = '';
+      btnLimpiar.style.display = 'none';
+      trabajosLista.innerHTML = trabajosOriginales;
+      contadorResultados.textContent = '';
+      buscarInput.focus();
+    });
+  }
+})();
+</script>
+{% endblock %}

@@ -66,6 +66,7 @@ from .utils_auditoria import (
     registrar_abono, registrar_foto_agregada, registrar_mecanico_asignado,
     registrar_mecanico_removido, registrar_observacion
 )
+from .helpers_auditoria import filtrar_trabajos_entregados_por_dias
 from .forms import ComponenteForm, ClienteTallerForm, ClienteTallerRapidoForm, VehiculoForm,\
                    DiagnosticoForm, AccionForm, ComponenteAccionForm,\
                    MecanicoForm, AsignarMecanicosForm, SubirFotoForm,\
@@ -3695,7 +3696,7 @@ def pizarra_view(request):
     # Obtener configuración del taller
     config = AdministracionTaller.get_configuracion_activa()
     
-    trabajos = Trabajo.objects.select_related("vehiculo", "vehiculo__cliente")
+    trabajos = Trabajo.objects.filter(visible=True).select_related("vehiculo", "vehiculo__cliente")
     
     # Filtrar trabajos entregados que tienen más de 3 días (no mostrar en pizarra)
     trabajos_visibles = filtrar_trabajos_entregados_por_dias(trabajos, dias_desde_entrega=3)
@@ -3708,6 +3709,31 @@ def pizarra_view(request):
         "config": config,
     }
     return render(request, "car/pizarra_page.html", context)
+
+
+@login_required
+def pizarra_estado(request, estado):
+    estados = {
+        "iniciados": ("iniciado", "Iniciados", "🟡"),
+        "progreso": ("trabajando", "En progreso", "🔵"),
+        "completados": ("completado", "Completados", "🟢"),
+        "entregados": ("entregado", "Entregados", "⚫"),
+    }
+    estado_data = estados.get(estado)
+    if not estado_data:
+        raise Http404("Estado de pizarra no válido")
+
+    config = AdministracionTaller.get_configuracion_activa()
+    trabajos = Trabajo.objects.filter(visible=True).select_related("vehiculo", "vehiculo__cliente")
+    if estado != "entregados":
+        trabajos = filtrar_trabajos_entregados_por_dias(trabajos, dias_desde_entrega=3)
+    return render(request, "car/pizarra_estado.html", {
+        "config": config,
+        "trabajos": trabajos.filter(estado=estado_data[0]),
+        "estado_nombre": estado_data[1],
+        "estado_icono": estado_data[2],
+        "estado_slug": estado,
+    })
 
 @login_required
 def panel_principal(request):

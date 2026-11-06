@@ -4,96 +4,11 @@
 {% block title %}Ingreso de Diagnóstico (Flujo Fusionado){% endblock %}
 
 {% block extra_css %}
-  <link rel="stylesheet" href="{% static 'css/centralized-colors.css' %}">
-  <style>
-    .wizard-progress { background: var(--bg-card); border-radius: 16px; padding: 1.5rem; box-shadow: var(--shadow-md); margin-bottom: 2rem; }
-    .wizard-steps { display: flex; justify-content: center; gap: 2.5rem; }
-    .wizard-step { text-align: center; min-width: 110px; }
-    .wizard-step-circle { width: 42px; height: 42px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; margin-bottom: .35rem; }
-    .wizard-step.active .wizard-step-circle { background: var(--primary-600); color: #fff; }
-    .wizard-step.done .wizard-step-circle { background: var(--success-500); color: #fff; }
-    .wizard-step.pending .wizard-step-circle { background: var(--border-color); color: var(--text-secondary); }
-    .wizard-step-label { font-size: .9rem; font-weight: 600; color: var(--text-secondary); }
-
-    .wizard-pane { display: none; }
-    .wizard-pane.active { display: block; }
-
-    /* Estilos para el acordeón de componentes - Bordes blancos en tema oscuro */
-    body.theme-piedra .accordion-item,
-    body.theme-dark .accordion-item,
-    body.theme-forest .accordion-item { border: 2px solid #ffffff; border-radius: 12px; }
-    body.theme-piedra .accordion-button,
-    body.theme-dark .accordion-button,
-    body.theme-forest .accordion-button { border-bottom: 2px solid #ffffff !important; }
-    body.theme-piedra .accordion-button:not(.collapsed),
-    body.theme-dark .accordion-button:not(.collapsed),
-    body.theme-forest .accordion-button:not(.collapsed) { border-bottom: 2px solid #ffffff !important; }
-
-    .componente-item { border: 1px solid var(--border-color); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1rem; background: var(--bg-card); transition: border .3s, box-shadow .3s; }
-    .componente-item.active { border-color: var(--primary-500); box-shadow: 0 8px 24px rgba(13, 110, 253, .12); }
-    body.theme-piedra .componente-item,
-    body.theme-dark .componente-item,
-    body.theme-forest .componente-item { border: 2px solid #ffffff; }
-    /* Primer nivel: Card activa - Azul marino */
-    body.theme-piedra .componente-item.active,
-    body.theme-dark .componente-item.active,
-    body.theme-forest .componente-item.active { 
-      border: 2px solid #ffffff; 
-      background: #001f3f !important; /* Azul marino */
-    }
-    /* Segundo nivel: Elementos dentro de la card activa - Azul eléctrico */
-    body.theme-piedra .componente-item.active .componente-header,
-    body.theme-piedra .componente-item.active .acciones-panel,
-    body.theme-dark .componente-item.active .componente-header,
-    body.theme-dark .componente-item.active .acciones-panel,
-    body.theme-forest .componente-item.active .componente-header,
-    body.theme-forest .componente-item.active .acciones-panel { 
-      background: #0066ff !important; /* Azul eléctrico */
-    }
-    .componente-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; cursor: pointer; }
-    .componente-header strong { font-size: 1.05rem; color: var(--text-primary); }
-    .acciones-panel { margin-top: 1rem; border-top: 1px dashed var(--border-color); padding-top: 1rem; display: none; }
-    .acciones-panel.show { display: block; }
-    .accion-item { border: 1px solid var(--border-color); border-radius: 10px; padding: .85rem; margin-bottom: .75rem; background: var(--bg-secondary); }
-    .accion-item.seleccionada { border-color: var(--primary-500); background: rgba(13, 110, 253, 0.08); }
-    body.theme-piedra .accion-item,
-    body.theme-dark .accion-item,
-    body.theme-forest .accion-item { border: 2px solid #ffffff; }
-    body.theme-piedra .accion-item.seleccionada,
-    body.theme-dark .accion-item.seleccionada,
-    body.theme-forest .accion-item.seleccionada { border: 2px solid #ffffff; }
-    .accion-item .accion-head { display: flex; justify-content: space-between; align-items: center; gap: .75rem; }
-    .accion-item .accion-head .badge { font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; }
-    .accion-item .accion-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: .75rem; margin-top: .75rem; }
-    .accion-item .accion-subtotal { text-align: right; font-weight: 700; color: var(--success-600); }
-    /* Precio en rojo para modo oscuro */
-    body.theme-piedra .accion-item .accion-subtotal,
-    body.theme-dark .accion-item .accion-subtotal,
-    body.theme-forest .accion-item .accion-subtotal { color: #ff0000 !important; }
-    /* Capitalizar primera letra de componentes y acciones */
-    .accordion-button,
-    .componente-header strong,
-    .accion-item .form-check-label { text-transform: capitalize; }
-
-    .resumen-card { border: 1px solid var(--border-color); border-radius: 12px; padding: 1.25rem; background: var(--bg-card); box-shadow: var(--shadow-sm); }
-    body.theme-oscuro .resumen-card { border: 2px solid var(--border-color); }
-    .resumen-card h5 { font-size: 1.05rem; font-weight: 700; color: var(--text-secondary); margin-bottom: .75rem; }
-    .resumen-card ul { list-style: none; padding: 0; margin: 0; }
-    .resumen-card ul li { padding: .35rem 0; border-bottom: 1px dashed var(--border-color); font-size: .95rem; }
-    .resumen-card ul li:last-child { border-bottom: none; }
-
-    .total-mano-obra { font-size: 1.4rem; font-weight: 800; color: var(--primary-700); }
-    .wizard-navigation { position: sticky; bottom: 0; background: var(--bg-card); padding: 1rem 0; margin-top: 1.5rem; border-top: 1px solid var(--border-color); box-shadow: 0 -4px 24px rgba(0,0,0,.05); z-index: 50; }
-
-    @media (max-width: 992px) {
-      .wizard-steps { flex-direction: column; gap: 1rem; }
-      .componente-header { flex-direction: column; align-items: flex-start; }
-      .wizard-navigation { position: static; box-shadow: none; border-top: none; }
-    }
-  </style>
+  
 {% endblock %}
 
 {% block content %}
+<span hidden data-css004b="0c71cc6ca3"></span>
 <div class="container py-4" id="ingreso-fusionado-root"
      data-acciones-template="{% url 'acciones_por_componente' 0 %}">
 
@@ -158,9 +73,9 @@
               </select>
             </div>
             <div id="vehiculo_fields">
-              <div class="alert alert-info border border-primary border-3 rounded-3 p-4 mb-4 shadow-sm" style="background: linear-gradient(135deg, rgba(13, 110, 253, 0.12) 0%, rgba(13, 110, 253, 0.05) 100%);">
+              <div class="alert alert-info border border-primary border-3 rounded-3 p-4 mb-4 shadow-sm css004b-inline-43240edf59c7" >
                 <div class="d-flex align-items-center mb-3">
-                  <div class="bg-primary text-white rounded-circle p-3 me-3" style="width: 52px; height: 52px; display: flex; align-items: center; justify-content: center;">
+                  <div class="bg-primary text-white rounded-circle p-3 me-3 css004b-inline-1fd8bbfc9834" >
                     <i class="fas fa-search fa-lg"></i>
                   </div>
                   <div>
@@ -173,10 +88,10 @@
                   <input type="text"
                          id="vehiculo-placa"
                          name="vehiculo-placa"
-                         class="form-control text-uppercase fw-semibold"
+                         class="form-control text-uppercase fw-semibold css004b-inline-f9aeb38f337d"
                          placeholder="Ej: JGCX79"
                          autocomplete="off"
-                         style="letter-spacing: 0.12em;">
+                         >
                   <button type="button" class="btn btn-primary" id="btn-buscar-vehiculo">
                     <i class="fas fa-search me-1"></i> Buscar en API
                   </button>
@@ -269,9 +184,9 @@
             <div class="resumen-card">
               <h5 class="mb-3">🗺️ Plano interactivo</h5>
               <div id="plano-container"
-                   style="border:1px solid var(--border-color); max-height:600px; min-height:400px; overflow:auto;"
-                   data-inicial-url="{% static 'images/vehiculo-desde-abajo.svg' %}">
-                <div style="transform:scale(1.024); transform-origin: top left;">
+                   
+                   data-inicial-url="{% static 'images/vehiculo-desde-abajo.svg' %}" class="css004b-inline-cd4196e36051">
+                <div  class="css004b-inline-9006488b146d">
                   {{ svg|safe }}
                 </div>
               </div>
@@ -387,7 +302,7 @@
             <button class="btn btn-success w-100" type="button" onclick="agregarInsumos()">
               ➕ Agregar insumos seleccionados
             </button>
-            <div class="alert alert-success mt-3 small" id="insumos-agregados-mensaje" style="display:none;">
+            <div class="alert alert-success mt-3 small css004b-inline-cb700f96018f" id="insumos-agregados-mensaje" >
               ✅ Insumos agregados. Revisa la tabla de repuestos.
             </div>
           </div>
@@ -402,7 +317,7 @@
     <div class="wizard-navigation">
       <div class="container">
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-          <button type="button" class="btn btn-outline-secondary" id="wizard-prev" style="display:none;">
+          <button type="button" class="btn btn-outline-secondary css004b-inline-cb700f96018f" id="wizard-prev" >
             ← Anterior
           </button>
           <div class="flex-grow-1"></div>
@@ -410,14 +325,14 @@
             <button type="button" class="btn btn-primary" id="wizard-next">
               Siguiente →
             </button>
-            <button type="button" class="btn btn-primary" id="wizard-save-approve-create" style="display:none;"
+            <button type="button" class="btn btn-primary css004b-inline-cb700f96018f" id="wizard-save-approve-create" 
                     onclick="guardarAprobarYCrearOT()">
               ✅ Guardar Aprobar y Crear OT
             </button>
-            <button type="submit" class="btn btn-success" id="wizard-submit" style="display:none;">
+            <button type="submit" class="btn btn-success css004b-inline-cb700f96018f" id="wizard-submit" >
               💾 Guardar diagnóstico
             </button>
-            <button type="button" class="btn btn-outline-warning" id="wizard-skip" style="display:none;"
+            <button type="button" class="btn btn-outline-warning css004b-inline-cb700f96018f" id="wizard-skip" 
                     onclick="skipRepuestosAndSubmit()">
               ⏭️ Omitir repuestos y guardar
             </button>

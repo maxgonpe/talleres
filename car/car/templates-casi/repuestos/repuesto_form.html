@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ view.object|default:"Nuevo Repuesto" }}{% endblock %}
+
+{% block extra_css %}
+{% endblock %}
+
+{% block extra_head %}
+
+{% endblock %}
+
+{% block content %}
+<span hidden data-css004b="69a15d6ad0"></span>
+<div class="form-container">
+    <!-- Header -->
+    <div class="form-header">
+        <h2 class="mb-0">
+            {% if view.object %}
+                ✏️ Editar Repuesto
+            {% else %}
+                ➕ Nuevo Repuesto
+            {% endif %}
+        </h2>
+        <small>Gestión de inventario de repuestos</small>
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <!-- Información Básica -->
+        <div class="form-card">
+            <div class="form-section">
+                <h5>📋 Información Básica</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Nombre del Repuesto *</label>
+                            {{ form.nombre }}
+                            {% if form.nombre.help_text %}
+                                <div class="help-text">{{ form.nombre.help_text }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Marca</label>
+                            {{ form.marca }}
+                            {% if form.marca.help_text %}
+                                <div class="help-text">{{ form.marca.help_text }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Descripción</label>
+                    {{ form.descripcion }}
+                    {% if form.descripcion.help_text %}
+                        <div class="help-text">{{ form.descripcion.help_text }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Códigos y Referencias -->
+        <div class="form-card">
+            <div class="form-section">
+                <h5>🔢 Códigos y Referencias</h5>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">SKU</label>
+                            {{ form.sku }}
+                            <div class="help-text">Se genera automáticamente si se deja vacío</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Código OEM</label>
+                            {{ form.oem }}
+                            <div class="help-text">Código del fabricante original</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Código de Barras</label>
+                            {{ form.codigo_barra }}
+                            <div class="help-text">Código de barras único</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Referencia</label>
+                            {{ form.referencia }}
+                            <div class="help-text">Referencia del proveedor</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Código Proveedor</label>
+                            {{ form.cod_prov }}
+                            <div class="help-text">Código específico del proveedor</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Especificaciones Técnicas -->
+        <div class="form-card">
+            <div class="form-section">
+                <h5>⚙️ Especificaciones Técnicas</h5>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Medida</label>
+                            {{ form.medida }}
+                            <div class="help-text">Ej: 258x22mm, 10x1.25</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Posición</label>
+                            {{ form.posicion }}
+                            <div class="help-text">Ej: freno delantero, motor</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Unidad</label>
+                            {{ form.unidad }}
+                            <div class="help-text">pieza, metro, litro, etc.</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Origen del Repuesto</label>
+                            {{ form.origen_repuesto }}
+                            <div class="help-text">Ej: Original, Alternativo, Reconstruido</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Marca Vehículo</label>
+                            {{ form.marca_veh }}
+                            <div class="help-text">Ej: Toyota, Honda, Ford</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Tipo de Motor</label>
+                    {{ form.tipo_de_motor }}
+                    <div class="help-text">Ej: 1.6L, 2.0L Turbo, V6, etc.</div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Carrocería</label>
+                            {{ form.carroceria }}
+                            <div class="help-text">Ej: Sedán, Hatchback, SUV, Pickup, etc.</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Cilindrada</label>
+                            {{ form.cilindrada }}
+                            <div class="help-text">Ej: 1.6L, 2000cc, 2.4L</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Número de Válvulas</label>
+                            {{ form.nro_valvulas }}
+                            <div class="help-text">Ej: 8, 16, 24</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Combustible</label>
+                            {{ form.combustible }}
+                            <div class="help-text">Ej: Gasolina, Diesel, Híbrido, Eléctrico</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Otro Especial</label>
+                            {{ form.otro_especial }}
+                            <div class="help-text">Información adicional especial</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Precios y Stock -->
+        <div class="form-card">
+            <div class="form-section">
+                <h5>💰 Precios y Stock</h5>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Precio Costo</label>
+                            {{ form.precio_costo }}
+                            <div class="help-text">Precio de compra</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Precio Venta</label>
+                            {{ form.precio_venta }}
+                            <div class="help-text">Precio de venta al público</div>
+                        </div>
+                    </div>
+                    <!-- Stock -->
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label class="form-label">Stock</label>
+                            {{ form.stock }}
+                            <div class="help-text">Cantidad en inventario</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="form-card text-center">
+            <button type="submit" class="btn btn-save me-3">
+                {% if view.object %}
+                    💾 Actualizar Repuesto
+                {% else %}
+                    ➕ Crear Repuesto
+                {% endif %}
+            </button>
+            <a href="{% url 'repuesto_list' %}" class="btn btn-cancel">
+                ❌ Cancelar
+            </a>
+        </div>
+  </form>
+</div>
+{% endblock %}
+

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Eliminar Cierre de Período{% endblock %}
+
+{% block extra_css %}
+
+{% endblock %}
+
+{% block content %}
+<span hidden data-css004b="f3de79b5b8"></span>
+<div class="confirm-container">
+    <div class="confirm-box">
+        <h1>⚠️ Eliminar Cierre de Período</h1>
+        <p  class="css004b-inline-66ab0cb6625c">
+            <strong>{{ cierre.mecanico }}</strong><br>
+            <strong>{{ cierre.periodo_texto }}</strong>
+        </p>
+        
+        <div class="warning-box">
+            <p><strong>⚠️ Atención:</strong> Al eliminar este cierre:</p>
+            <ul  class="css004b-inline-bd0008baf52e">
+                <li>Los bonos del período dejarán de estar marcados como cerrados</li>
+                <li>El registro del cierre será eliminado permanentemente</li>
+                <li>Los bonos y pagos no se eliminarán</li>
+            </ul>
+        </div>
+        
+        <div  class="css004b-inline-37a38ca6a5c2">
+            <p><strong>Resumen del cierre:</strong></p>
+            <p>
+                Total Bonos: ${{ cierre.total_bonos|floatformat:0|intcomma }}<br>
+                Total Pagado: ${{ cierre.total_pagado|floatformat:0|intcomma }}<br>
+                Saldo Pendiente: ${{ cierre.saldo_pendiente|floatformat:0|intcomma }}
+            </p>
+        </div>
+        
+        <form method="post"  class="css004b-inline-0b61568e4711">
+            {% csrf_token %}
+            <button type="submit" class="btn-danger" onclick="{% if ver_mensajes %}return confirm('¿Está completamente seguro de eliminar este cierre?');{% else %}return true;{% endif %}">
+                🗑️ Sí, Eliminar Cierre
+            </button>
+        </form>
+        <a href="{% url 'cuenta_mecanico' cierre.mecanico.id %}" class="btn-secondary">
+            Cancelar
+        </a>
+    </div>
+</div>
+{% endblock %}

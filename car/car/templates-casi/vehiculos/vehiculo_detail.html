@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}{{ vehiculo.marca }} {{ vehiculo.modelo }} - Compatibilidad - NetGoGo{% endblock %}
+
+{% block extra_css %}
+
+{% endblock %}
+
+{% block content %}
+<span hidden data-css004b="00ae1adb66"></span>
+<div class="detail-container">
+    <!-- Header -->
+    <div class="detail-header">
+        <h2 class="mb-0">{{ vehiculo.marca }} {{ vehiculo.modelo }}</h2>
+        <div class="year-badge">{{ vehiculo.anio_desde }}-{{ vehiculo.anio_hasta }}</div>
+    </div>
+
+    <!-- Información del vehículo -->
+    <div class="info-grid">
+        <div class="info-card">
+            <h5><i class="fas fa-car"></i>Información General</h5>
+            <div class="info-item">
+                <span class="info-label">ID:</span>
+                <span class="info-value">{{ vehiculo.id }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Marca:</span>
+                <span class="info-value">{{ vehiculo.marca }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Modelo:</span>
+                <span class="info-value">{{ vehiculo.modelo }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Período:</span>
+                <span class="info-value">{{ vehiculo.anio_desde }} - {{ vehiculo.anio_hasta }}</span>
+            </div>
+        </div>
+        
+        <div class="info-card">
+            <h5><i class="fas fa-chart-bar"></i>Estadísticas</h5>
+            <div class="info-item">
+                <span class="info-label">Repuestos Compatibles:</span>
+                <span class="info-value">{{ repuestos_compatibles.count }}</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Años de Producción:</span>
+                <span class="info-value">{{ vehiculo.anio_hasta|add:"-"|add:vehiculo.anio_desde|add:"+1" }} años</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Estado:</span>
+                <span class="info-value">
+                    {% if repuestos_compatibles.count > 0 %}
+                        <span  class="css004b-inline-107a1c11ba59">Activo</span>
+                    {% else %}
+                        <span  class="css004b-inline-128dfd34c3c2">Sin repuestos</span>
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Repuestos compatibles -->
+    <div class="repuestos-section">
+        <h5><i class="fas fa-cogs"></i>Repuestos Compatibles ({{ repuestos_compatibles.count }})</h5>
+        
+        {% if repuestos_compatibles %}
+            <div class="repuestos-grid">
+                {% for aplicacion in repuestos_compatibles %}
+                <div class="repuesto-card">
+                    <div class="repuesto-name">{{ aplicacion.repuesto.nombre }}</div>
+                    <div class="repuesto-details">
+                        <strong>SKU:</strong> {{ aplicacion.repuesto.sku|default:"N/A" }}<br>
+                        <strong>Marca:</strong> {{ aplicacion.repuesto.marca|default:"N/A" }}<br>
+                        <strong>Precio:</strong> ${{ aplicacion.repuesto.precio_venta|default:"0"|floatformat:0|intcomma }}
+                    </div>
+                    {% if aplicacion.posicion %}
+                        <div class="repuesto-position">
+                            <i class="fas fa-map-marker-alt me-1"></i>{{ aplicacion.posicion }}
+                        </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-repuestos">
+                <i class="fas fa-info-circle fa-2x mb-2"></i><br>
+                Este vehículo aún no tiene repuestos compatibles registrados.<br>
+                <a href="{% url 'repuesto_list' %}" class="btn btn-primary btn-sm mt-2">
+                    <i class="fas fa-plus me-1"></i>Agregar Compatibilidad
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Acciones -->
+    <div class="actions-section">
+        <a href="{% url 'vehiculo_compatibilidad_update' vehiculo.pk %}" class="btn btn-warning btn-action">
+            <i class="fas fa-edit me-2"></i>Editar Vehículo Compatible
+        </a>
+        <a href="{% url 'vehiculo_compatibilidad_delete' vehiculo.pk %}" class="btn btn-danger btn-action" onclick="{% if ver_avisos %}return confirm('¿Estás seguro de eliminar este vehículo compatible?');{% else %}return true;{% endif %}">
+            <i class="fas fa-trash me-2"></i>Eliminar Vehículo Compatible
+        </a>
+        <a href="{% url 'vehiculo_compatibilidad_list' %}" class="btn btn-secondary btn-action">
+            <i class="fas fa-arrow-left me-2"></i>Volver al Listado
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Agregar efectos de hover a las tarjetas de repuestos
+    const repuestoCards = document.querySelectorAll('.repuesto-card');
+    
+    repuestoCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.borderColor = 'var(--accent)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.borderColor = 'var(--muted)';
+        });
+    });
+});
+</script>
+{% endblock %}
