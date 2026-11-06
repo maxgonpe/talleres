@@ -182,9 +182,15 @@ def configuracion_taller(request):
                 ("adicionales", "➕", "Adicionales"), ("fotos", "📷", "Fotos"),
                 ("abonos", "💵", "Abonos"), ("estado", "⚡", "Estado")]
         active_tab = request.GET.get("tab", "info")
+        # Volver al último tablero de estado visitado, incluso al cambiar de pestaña.
+        estado_origen = request.session.get("pizarra_estado_origen")
+        if estado_origen in ("iniciados", "progreso", "completados", "entregados"):
+            url_retorno = reverse("pizarra_estado", kwargs={"estado": estado_origen})
+        else:
+            url_retorno = f"{reverse('panel_principal')}#pizarra"
         context_menu = {
             "group": "trabajo",
-            "parent": {"url": f"{reverse('pizarra')}#pizarra", "icon": "📊", "label": "Pizarra"},
+            "parent": {"url": url_retorno, "icon": "📊", "label": "Pizarra"},
             "items": [
                 {"url": f"{base_url}?tab={tab}", "icon": icon, "label": label, "active": tab == active_tab}
                 for tab, icon, label in tabs
@@ -198,6 +204,9 @@ def configuracion_taller(request):
             "completados": ("🟢", "Completados"),
             "entregados": ("⚫", "Entregados"),
         }
+        # Conservar el nivel de pizarra desde el que se abrirá un trabajo.
+        if estado in estados:
+            request.session["pizarra_estado_origen"] = estado
         context_menu = {
             "group": "pizarra",
             "parent": {"url": f"{reverse('panel_principal')}#pizarra", "icon": "📊", "label": "Pizarra"},

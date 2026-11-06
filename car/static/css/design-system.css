@@ -2248,7 +2248,7 @@ body .pizarra-cell .vehiculo-item .vehiculo-placa {
 .workspace-heading p { color: var(--ui-muted); margin: 0; }
 .workspace-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 18px; max-width: 1500px; margin: 0 auto; }
 .workspace-card { min-height: 220px; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end; padding: 24px; color: var(--ui-ink); text-decoration: none; transition: transform .22s ease, box-shadow .22s ease, background .22s ease; }
-.workspace-card:hover { color: var(--ui-ink); background: var(--ui-surface-3); transform: translateY(-5px); box-shadow: var(--ui-shadow-2); }
+.workspace-card:hover { color: var(--ui-ink); background: var(--surface-level-3); transform: translateY(-5px); box-shadow: var(--ui-shadow-2); }
 .workspace-card-icon { margin-bottom: auto; font-size: 2.8rem; }
 .workspace-card-title { font-size: 1.35rem; font-weight: 800; }
 .workspace-card-meta { color: var(--ui-muted); font-size: .9rem; }
