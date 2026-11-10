@@ -3,6 +3,7 @@ Context processors para hacer disponibles variables globales en todos los templa
 """
 from .models import AdministracionTaller
 from django.urls import reverse
+from .visual_catalog import menu_icon
 
 
 CONTEXT_MENUS = {
@@ -38,7 +39,7 @@ CONTEXT_MENUS = {
         "parent": ("panel_principal", "#pos", "📦", "Inventario"),
         "items": [
             ("repuesto_list", "📦", "Repuestos"),
-            ("repuesto_compatibilidad", "🚗", "Compatibilidad"),
+            #("repuesto_compatibilidad", "🚗", "Compatibilidad"),
             ("compra_dashboard", "📥", "Compras"),
         ],
     },
@@ -231,11 +232,24 @@ def configuracion_taller(request):
             ],
         }
 
+
+    # VIS-002: resolver iconos por función y especialidad sin modificar las URL.
+    if context_menu:
+        section = context_menu['group']
+        overrides = config.iconos_menu if isinstance(config.iconos_menu, dict) else {}
+        specialty = config.tipo_taller
+        if context_menu.get('parent'):
+            parent = context_menu['parent']
+            parent['icon_class'] = menu_icon(section, parent['label'], specialty, overrides)
+        for item in context_menu.get('items', []):
+            item['icon_class'] = menu_icon(section, item['label'], specialty, overrides)
+
     return {
         'config_taller': config,
         'ver_avisos': config.ver_avisos,
         'ver_mensajes': config.ver_mensajes,
         'context_menu': context_menu,
+        'mostrar_jerarquia': config.mostrar_jerarquia,
     }
 
 

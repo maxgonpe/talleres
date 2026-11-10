@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Estilos · Configuración visual{% endblock %}
+{% block content %}
+<div class="container-fluid py-4 estilos-admin" id="estilos-admin">
+  <header class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+    <div>
+      <div class="text-muted text-uppercase small">Superusuario · Sistema visual</div>
+      <h1 class="h2 mb-1">Editor de estilos</h1>
+      <p class="mb-0">Edita las variables globales sin abrir el archivo CSS. El diseño existente permanece intacto.</p>
+    </div>
+    <a href="{% url 'admin:index' %}" class="btn btn-outline-secondary">Volver al administrador</a>
+  </header>
+  {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+  {% for message in messages %}<div class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'success' %}alert-success{% else %}alert-info{% endif %}">{{ message }}</div>{% endfor %}
+  <div class="row g-3">
+    <div class="col-lg-8">
+      <section class="card mb-3 ui-card-level-1">
+        <div class="card-body">
+          <div class="d-flex justify-content-between flex-wrap gap-3 align-items-center mb-3">
+            <div>
+              <h2 class="h5 mb-1">Tema activo de edición</h2>
+              <small>{{ total }} variables disponibles · Los alias dependientes son de solo lectura</small>
+            </div>
+            <div class="btn-group" role="group" aria-label="Tema">
+              <a class="btn {% if theme == 'piedra' %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="?theme=piedra">Piedra</a>
+              <a class="btn {% if theme == 'sand' %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="?theme=sand">Sand</a>
+              <a class="btn {% if theme == 'base' %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="?theme=base">Base</a>
+            </div>
+          </div>
+          <input class="form-control mb-3" id="buscar-estilo" type="search" placeholder="Buscar: nivel 2, botón, borde, texto, --variable..." autocomplete="off">
+          <p class="small text-muted mb-0">Los cambios del tema seleccionado no modifican directamente las variables del otro tema. Las variables <code>var(...)</code> se muestran como alias y no se editan aquí.</p>
+        </div>
+      </section>
+      {% for group in groups %}
+      <section class="card ui-card-level-1 mb-3 estilos-grupo" data-grupo="{{ group.name }}">
+        <div class="card-header"><h2 class="h5 mb-0">{{ group.name }} <small>({{ group.items|length }})</small></h2></div>
+        <div class="card-body">
+          <div class="row g-3">
+            {% for item in group.items %}
+            <div class="col-xl-6 estilo-item" data-busqueda="{{ item.key }} {{ item.label }} {{ group.name }}">
+              <form method="post" class="border rounded p-3 h-100 estilo-form" data-variable="{{ item.key }}">
+                {% csrf_token %}
+                <input type="hidden" name="checksum" value="{{ checksum }}">
+                <input type="hidden" name="theme" value="{{ theme }}">
+                <input type="hidden" name="variable" value="{{ item.key }}">
+                <label class="fw-semibold d-block mb-1" for="variable-{{ forloop.parentloop.counter }}-{{ forloop.counter }}">{{ item.label }}</label>
+                <div class="small text-muted mb-2"><code>{{ item.key }}</code></div>
+                <div class="d-flex gap-2 align-items-center">
+                  {% if item.color %}<input type="color" class="form-control form-control-color estilo-color" value="{{ item.value }}" aria-label="Seleccionar color para {{ item.label }}" {% if item.alias %}disabled{% endif %}>{% endif %}
+                  <input id="variable-{{ forloop.parentloop.counter }}-{{ forloop.counter }}" class="form-control estilo-value" name="value" value="{{ item.value }}" maxlength="180" {% if item.alias %}readonly{% endif %}>
+                  <button class="btn btn-primary" type="submit" {% if item.alias %}disabled{% endif %}>Guardar</button>
+                </div>
+                {% if item.alias %}<small class="text-muted d-block mt-2">Alias: cambia la variable a la que hace referencia.</small>{% endif %}
+              </form>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+      {% endfor %}
+    </div>
+    <div class="col-lg-4">
+      <div class="card ui-card-level-1 position-sticky estilos-preview-sticky">
+        <div class="card-header"><h2 class="h5 mb-0">Vista previa · {{ theme|capfirst }}</h2></div>
+        <div class="card-body">
+          <div id="estilos-preview" class="estilos-preview rounded p-3">
+            <strong>Jerarquía de superficies</strong>
+            <div class="estilos-nivel nivel-1">Nivel 1
+              <div class="estilos-nivel nivel-2">Nivel 2
+                <div class="estilos-nivel nivel-3">Nivel 3
+                  <div class="estilos-nivel nivel-4">Nivel 4
+                    <div class="estilos-nivel nivel-5">Nivel 5</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="d-flex flex-wrap gap-2 mt-3"><button type="button" class="btn btn-primary">Primario</button><button type="button" class="btn btn-secondary">Secundario</button></div>
+            <div class="mt-3"><label class="form-label" for="ejemplo-control">Formulario</label><input class="form-control" id="ejemplo-control" value="Campo de ejemplo" readonly></div>
+          </div>
+          <p class="small text-muted mt-3">La vista previa representa el tema seleccionado. El color se actualiza mientras lo eliges; Guardar aplica el cambio a todo el sistema.</p>
+          <small class="text-muted">Origen: {{ css_location }}</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{{ preview_variables|json_script:"estilos-preview-data" }}
+<script>
+(function(){
+  const root = document.getElementById('estilos-admin');
+  const theme = '{{ theme|escapejs }}';
+  const preview = document.getElementById('estilos-preview');
+  preview.classList.add('estilos-tema-' + theme);
+  const tokens = JSON.parse(document.getElementById('estilos-preview-data').textContent);
+  Object.entries(tokens).forEach(([key, value]) => preview.style.setProperty(key, value));
+  const search = document.getElementById('buscar-estilo');
+  search.addEventListener('input', function(){
+    const q = this.value.trim().toLocaleLowerCase();
+    root.querySelectorAll('.estilo-item').forEach(el => {
+      el.hidden = !el.dataset.busqueda.toLocaleLowerCase().includes(q);
+    });
+    root.querySelectorAll('.estilos-grupo').forEach(el => {
+      el.hidden = !el.querySelector('.estilo-item:not([hidden])');
+    });
+  });
+  root.querySelectorAll('.estilo-form').forEach(form => {
+    const picker = form.querySelector('.estilo-color');
+    const text = form.querySelector('.estilo-value');
+    const key = form.dataset.variable;
+    const apply = () => { if(text && text.value.trim()) preview.style.setProperty(key, text.value.trim()); };
+    if(picker){ picker.addEventListener('input', () => { text.value=picker.value; apply(); }); }
+    text.addEventListener('input', () => {
+      if(picker && /^#[0-9a-fA-F]{6}$/.test(text.value)) picker.value=text.value;
+      apply();
+    });
+  });
+})();
+</script>
+{% endblock %}

@@ -1397,6 +1397,14 @@ class AdministracionTaller(models.Model):
         help_text="Permitir visualización de avisos"
     )
     
+    # VIS-001/002: personalización persistente para cada instalación.
+    tipo_taller = models.CharField(max_length=15, default='auto', choices=[
+        ('auto', 'Automóviles'), ('moto', 'Motocicletas'),
+        ('bici', 'Bicicletas'), ('maquinaria', 'Maquinaria y equipos'),
+    ])
+    mostrar_jerarquia = models.BooleanField(default=False)
+    iconos_menu = models.JSONField(default=dict, blank=True)
+
     # Metadatos
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_actualizacion = models.DateTimeField(auto_now=True)

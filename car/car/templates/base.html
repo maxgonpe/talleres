@@ -41,10 +41,10 @@
   {% block extra_head %}{% endblock %}
 
   <!-- Archivo CSS propio único. Bootstrap y FontAwesome permanecen como dependencias externas. -->
-  <link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20261106-1">
+  <link rel="stylesheet" href="{% static 'css/design-system.css' %}?v={{ design_css_version }}">
 </head>
 
-<body class="d-flex flex-column min-vh-100">
+<body class="d-flex flex-column min-vh-100 {% if mostrar_jerarquia %}hierarchy-labels-visible{% else %}hierarchy-labels-hidden{% endif %}">
   <script>
     document.body.classList.add(document.documentElement.className.match(/theme-\w+/)?.[0] || 'theme-piedra');
   </script>

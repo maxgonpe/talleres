@@ -1,0 +1,326 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Estilos · Configuración visual{% endblock %}
+{% block content %}
+<div class="container-fluid py-4 estilos-admin" id="estilos-admin">
+  <header class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+    <div>
+      <div class="text-muted text-uppercase small">Superusuario · Sistema visual</div>
+      <h1 class="h2 mb-1">Editor de estilos</h1>
+      <p class="mb-0">Edita las variables globales sin abrir el archivo CSS. El diseño existente permanece intacto.</p>
+    </div>
+    <a href="{% url 'admin:index' %}" class="btn btn-outline-secondary">Volver al administrador</a>
+  </header>
+  <div class="mb-3"><a class="btn btn-outline-primary" href="{% url 'identidad_visual' %}">
+    <i class="fa-solid fa-icons" aria-hidden="true"></i> Identidad visual, especialidad e iconos
+  </a></div>
+
+  {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+  {% for message in messages %}<div class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'success' %}alert-success{% else %}alert-info{% endif %}">{{ message }}</div>{% endfor %}
+  <div class="row g-3">
+    <div class="col-lg-8">
+      <section class="card mb-3 ui-card-level-1">
+        <div class="card-body">
+          <div class="d-flex justify-content-between flex-wrap gap-3 align-items-center mb-3">
+            <div>
+              <h2 class="h5 mb-1">Tema activo de edición</h2>
+              <small>{{ total }} variables disponibles · Los alias dependientes son de solo lectura</small>
+            </div>
+            <div class="btn-group" role="group" aria-label="Tema">
+              <a class="btn {% if theme == 'piedra' %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="?theme=piedra">Piedra</a>
+              <a class="btn {% if theme == 'sand' %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="?theme=sand">Sand</a>
+              <a class="btn {% if theme == 'base' %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="?theme=base">Base</a>
+            </div>
+          </div>
+          <div class="alert alert-info mb-3" role="note">
+            <strong>Cards jerárquicas (niveles 1–5).</strong> Cada nivel controla fondo, texto, borde y fondo hover.
+            Para comprobar el hover, coloca el cursor sobre una card en la vista previa.
+            Los valores se administran por separado en Piedra y Sand. Una advertencia de contraste no bloquea el guardado.
+          </div>
+          <div id="estilos-contraste" class="alert alert-warning mb-3" role="status" hidden></div>
+          <input class="form-control mb-3" id="buscar-estilo" type="search" placeholder="Buscar: nivel 2, botón, borde, texto, --variable..." autocomplete="off">
+          <p class="small text-muted mb-0">Los cambios del tema seleccionado no modifican directamente las variables del otro tema. Las variables <code>var(...)</code> se muestran como alias y no se editan aquí.</p>
+        </div>
+      </section>
+      {% for group in groups %}
+      <section class="card ui-card-level-1 mb-3 estilos-grupo" data-grupo="{{ group.name }}">
+        <div class="card-header"><h2 class="h5 mb-0">{{ group.name }} <small>({{ group.items|length }})</small></h2></div>
+        <div class="card-body">
+          <div class="row g-3">
+            {% for item in group.items %}
+            <div class="col-xl-6 estilo-item" data-busqueda="{{ item.key }} {{ item.label }} {{ group.name }}">
+              <form method="post" class="border rounded p-3 h-100 estilo-form" data-variable="{{ item.key }}">
+                {% csrf_token %}
+                <input type="hidden" name="checksum" value="{{ checksum }}">
+                <input type="hidden" name="theme" value="{{ theme }}">
+                <input type="hidden" name="variable" value="{{ item.key }}">
+                <label class="fw-semibold d-block mb-1" for="variable-{{ forloop.parentloop.counter }}-{{ forloop.counter }}">{{ item.label }}</label>
+                <div class="small text-muted mb-2"><code>{{ item.key }}</code></div>
+                <div class="d-flex gap-2 align-items-center">
+                  {% if item.color %}<input type="color" class="form-control form-control-color estilo-color" value="{{ item.value }}" aria-label="Seleccionar color para {{ item.label }}" {% if item.alias %}disabled{% endif %}>{% endif %}
+                  <input id="variable-{{ forloop.parentloop.counter }}-{{ forloop.counter }}" class="form-control estilo-value" name="value" value="{{ item.value }}" maxlength="180" {% if item.alias %}readonly{% endif %}>
+                  <button class="btn btn-primary" type="submit" {% if item.alias %}disabled{% endif %}>Guardar</button>
+                </div>
+                {% if item.alias %}<small class="text-muted d-block mt-2">Alias: cambia la variable a la que hace referencia.</small>{% endif %}
+              </form>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+      {% endfor %}
+    </div>
+    <div class="col-lg-4">
+      <div class="card ui-card-level-1 position-sticky estilos-preview-sticky">
+        <div class="card-header"><h2 class="h5 mb-0">Vista previa · {{ theme|capfirst }}</h2></div>
+        <div class="card-body">
+          <div id="estilos-preview" class="estilos-preview rounded p-3">
+            <strong>Jerarquía de superficies</strong>
+            <div class="estilos-nivel nivel-1">Nivel 1
+              <div class="estilos-nivel nivel-2">Nivel 2
+                <div class="estilos-nivel nivel-3">Nivel 3
+                  <div class="estilos-nivel nivel-4">Nivel 4
+                    <div class="estilos-nivel nivel-5">Nivel 5</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="d-flex flex-wrap gap-2 mt-3"><button type="button" class="btn btn-primary">Primario</button><button type="button" class="btn btn-secondary">Secundario</button></div>
+            <div class="mt-3"><label class="form-label" for="ejemplo-control">Formulario</label><input class="form-control" id="ejemplo-control" value="Campo de ejemplo" readonly></div>
+          </div>
+          <p class="small text-muted mt-3">La vista previa representa el tema seleccionado. El color se actualiza mientras lo eliges; Guardar aplica el cambio a todo el sistema.</p>
+          <small class="text-muted">Origen: {{ css_location }}</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- === CSS-005C2: DIAGNOSTICO DE CASCADA REAL === -->
+<section class="card ui-card-level-1 mb-3 estilos-diagnostico" id="css005c2-diagnostico">
+  <div class="card-header"><h2 class="h5 mb-0">Diagnóstico de cards · Cascada real</h2></div>
+  <div class="card-body">
+    <p>Compara las variables de cada nivel con los estilos que calcula el navegador. El estado hover se comprueba al colocar el cursor sobre las tarjetas de prueba.</p>
+    <button type="button" class="btn btn-outline-primary mb-3" id="css005c2-verificar">Volver a verificar</button>
+    <p class="small" id="css005c2-resumen" role="status" aria-live="polite">Preparando diagnóstico…</p>
+    <div class="table-responsive"><table class="table table-sm"><thead><tr><th>Nivel</th><th>Fondo</th><th>Texto</th><th>Borde</th><th>Interior</th><th>Hover</th></tr></thead><tbody id="css005c2-resultados"></tbody></table></div>
+    <p class="small text-muted">La prueba usa las mismas reglas globales y los cinco niveles de card en un documento aislado. No comprueba las excepciones específicas de cada URL. Para medir hover, mueve el cursor sobre las tarjetas siguientes.</p>
+    <iframe id="css005c2-frame" title="Tarjetas de diagnóstico" sandbox="allow-same-origin" data-css-url="{% static 'css/design-system.css' %}" class="css005c2-frame"></iframe>
+  </div>
+</section>
+<!-- === FIN CSS-005C2 === -->
+
+{{ preview_variables|json_script:"estilos-preview-data" }}
+<script>
+(function(){
+  const root = document.getElementById('estilos-admin');
+  const theme = '{{ theme|escapejs }}';
+  const preview = document.getElementById('estilos-preview');
+  preview.classList.add('estilos-tema-' + theme);
+  const tokens = JSON.parse(document.getElementById('estilos-preview-data').textContent);
+  Object.entries(tokens).forEach(([key, value]) => preview.style.setProperty(key, value));
+  const search = document.getElementById('buscar-estilo');
+  search.addEventListener('input', function(){
+    const q = this.value.trim().toLocaleLowerCase();
+    root.querySelectorAll('.estilo-item').forEach(el => {
+      el.hidden = !el.dataset.busqueda.toLocaleLowerCase().includes(q);
+    });
+    root.querySelectorAll('.estilos-grupo').forEach(el => {
+      el.hidden = !el.querySelector('.estilo-item:not([hidden])');
+    });
+  });
+  // CSS-005B2: contraste WCAG estimado de los tokens actuales y los cambios en edición.
+  const contrastPanel = document.getElementById('estilos-contraste');
+  const hexRgb = val => {
+    const match = /^#([0-9a-fA-F]{6})$/.exec((val || '').trim());
+    if (!match) return null;
+    const n = parseInt(match[1], 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  };
+  const luminance = rgb => rgb.map(v => {
+    const x=v/255;
+    return x <= .04045 ? x/12.92 : Math.pow((x+.055)/1.055,2.4);
+  }).reduce((sum,v,i)=>sum+v*[.2126,.7152,.0722][i],0);
+  const checkContrast = () => {
+    const issues=[];
+    for (let level=1; level<=5; level++) {
+      const bg=hexRgb(preview.style.getPropertyValue('--surface-level-'+level));
+      const fg=hexRgb(preview.style.getPropertyValue('--surface-level-'+level+'-text'));
+      if (!bg || !fg) continue;
+      const a=luminance(bg), b=luminance(fg), ratio=(Math.max(a,b)+.05)/(Math.min(a,b)+.05);
+      if (ratio<4.5) issues.push('Nivel '+level+': contraste '+ratio.toFixed(2)+':1 (recomendado ≥ 4.5:1 para texto normal)');
+    }
+    contrastPanel.hidden=!issues.length;
+    contrastPanel.textContent=issues.length ? 'Avisos de contraste: '+issues.join(' · ') : '';
+  };
+  checkContrast();
+
+  root.querySelectorAll('.estilo-form').forEach(form => {
+    const picker = form.querySelector('.estilo-color');
+    const text = form.querySelector('.estilo-value');
+    const key = form.dataset.variable;
+    const apply = () => { if(text && text.value.trim()) { preview.style.setProperty(key, text.value.trim()); checkContrast(); } };
+    if(picker){ picker.addEventListener('input', () => { text.value=picker.value; apply(); }); }
+    text.addEventListener('input', () => {
+      if(picker && /^#[0-9a-fA-F]{6}$/.test(text.value)) picker.value=text.value;
+      apply();
+    });
+  });
+})();
+</script>
+<script>
+/* CSS-005C2: usa getComputedStyle sobre cards reales y su descendencia. */
+(function () {
+  'use strict';
+  const frame = document.getElementById('css005c2-frame');
+  const tbody = document.getElementById('css005c2-resultados');
+  const summary = document.getElementById('css005c2-resumen');
+  const button = document.getElementById('css005c2-verificar');
+  if (!frame || !tbody || !summary || !button) return;
+  const activeTheme = '{{ theme|escapejs }}';
+  const themeClass = activeTheme === 'piedra' ? 'theme-piedra' : activeTheme === 'sand' ? 'theme-sand' : '';
+  const cssURL = new URL(frame.dataset.cssUrl, window.location.href);
+  // Consultar siempre el archivo vigente; no la versión precargada en caché.
+  cssURL.searchParams.set('css005c2', '{{ checksum|escapejs }}'.slice(0, 12));
+  const esc = s => String(s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  let doc = null;
+  const pending = new Map();
+  const html = `<!doctype html><html class="${esc(themeClass)}"><head><meta charset="utf-8"><link rel="stylesheet" href="${esc(cssURL.href)}"></head><body>
+    <div class="css005c2-test-grid">
+    ${[1,2,3,4,5].map(n => `<div class="card ui-card-level-${n} css005c2-card" data-level="${n}"><div class="card-header">Encabezado ${n}</div><div class="card-body">Cuerpo de prueba ${n}</div><div class="card-footer">Pie ${n}</div></div>`).join('')}
+    </div></body></html>`;
+
+  function expectedColor(name, property) {
+    const probe = doc.createElement('div');
+    probe.setAttribute('style', property + ':var(' + name + ');position:absolute;visibility:hidden');
+    doc.body.appendChild(probe);
+    const result = getComputedStyle(probe).getPropertyValue(property).trim();
+    probe.remove();
+    return result;
+  }
+  function normalizeColor(value) {
+    const s = String(value || '').toLowerCase().replace(/\s+/g, '');
+    // Normalizar rgb/rgba opacos para comparaciones entre navegadores.
+    const m = /^rgba?\((\d+),(\d+),(\d+)(?:,([\d.]+))?\)$/.exec(s);
+    if (m) return (+m[4] === 1 || m[4] === undefined) ? `rgb(${+m[1]},${+m[2]},${+m[3]})` : s;
+    return s;
+  }
+  function matches(a,b) { return normalizeColor(a) === normalizeColor(b); }
+  function report(level, kind, ok, detail) {
+    const row = tbody.querySelector(`[data-result-level="${level}"]`);
+    if (!row) return;
+    const cell = row.querySelector(`[data-check="${kind}"]`);
+    cell.textContent = ok ? 'OK' : 'Difiere';
+    cell.title = detail || '';
+    cell.classList.toggle('text-danger', !ok);
+    cell.classList.toggle('fw-bold', !ok);
+    return ok;
+  }
+  function transitionTimeMs(el) {
+    const s = doc.defaultView.getComputedStyle(el);
+    const toMs = v => v.trim().endsWith('ms') ? parseFloat(v) : parseFloat(v) * 1000;
+    const durations = s.transitionDuration.split(',').map(toMs);
+    const delays = s.transitionDelay.split(',').map(toMs);
+    return Math.max(0, ...durations.map((v, i) => Math.max(0, v + (delays[i % delays.length] || 0))));
+  }
+  function clearPending(card) {
+    if (pending.has(card)) {
+      clearTimeout(pending.get(card));
+      pending.delete(card);
+    }
+  }
+  function scheduleVerification(card) {
+    clearPending(card);
+    const n = +card.dataset.level;
+    for (const key of ['fondo', 'hover']) {
+      const cell = tbody.querySelector(`[data-result-level="${n}"] [data-check="${key}"]`);
+      if (cell) {
+        cell.textContent = 'Transición';
+        cell.title = 'Esperando que termine el efecto visual para medir el color definitivo';
+        cell.classList.remove('text-danger', 'fw-bold');
+      }
+    }
+    const duration = Math.min(4000, transitionTimeMs(card) + 80);
+    pending.set(card, setTimeout(() => {
+      pending.delete(card);
+      verify();
+    }, duration));
+  }
+  function verify() {
+    if (!doc || !doc.defaultView || !doc.styleSheets.length) return;
+    let failures = 0, checked = 0;
+    for (let n=1; n<=5; n++) {
+      const card = doc.querySelector(`[data-level="${n}"]`);
+      if (pending.has(card)) continue; // Nunca comparar colores intermedios.
+      const styles = doc.defaultView.getComputedStyle(card);
+      const hovered = card.matches(':hover');
+      for (const [key,prop,token] of [
+        ['fondo','backgroundColor',hovered ? `--surface-level-${n}-hover` : `--surface-level-${n}`],
+        ['texto','color',`--surface-level-${n}-text`],
+        ['borde','borderTopColor',`--surface-level-${n}-border`]
+      ]) {
+        const cssProp = prop === 'backgroundColor' ? 'background-color' : prop === 'borderTopColor' ? 'border-top-color' : 'color';
+        const expected = expectedColor(token, cssProp);
+        const actual = styles[prop];
+        const ok=matches(expected,actual);
+        report(n,key,ok,`Esperado: ${expected} | Calculado: ${actual}`);
+        checked++; if(!ok) failures++;
+      }
+      const children = card.querySelectorAll(':scope > .card-header, :scope > .card-body, :scope > .card-footer');
+      let all=true, detail=[];
+      for (const el of children) {
+        const st=doc.defaultView.getComputedStyle(el);
+        // Transparencia: el color visible debe provenir del padre, no de un fondo adicional.
+        const bg=normalizeColor(st.backgroundColor);
+        const valid=(bg==='rgba(0,0,0,0)'||bg==='transparent') && matches(st.color, styles.color) && matches(st.borderTopColor, styles.borderTopColor);
+        if(!valid){all=false;detail.push(`${el.className}: fondo=${st.backgroundColor}, texto=${st.color}, borde=${st.borderTopColor}`);}
+      }
+      report(n,'interior',all,all?'Los interiores heredan el color y el fondo':detail.join(' | '));
+      checked++;if(!all)failures++;
+      if (hovered) {
+        const expected=expectedColor(`--surface-level-${n}-hover`,'background-color');
+        const actual=styles.backgroundColor;
+        const ok=matches(expected,actual);
+        report(n,'hover',ok,`Esperado: ${expected} | Calculado: ${actual}`);
+        checked++;if(!ok)failures++;
+      } else {
+        const cell=tbody.querySelector(`[data-result-level="${n}"] [data-check="hover"]`);
+        cell.textContent='Pasa el cursor'; cell.title='Sin interacción aún';cell.classList.remove('text-danger','fw-bold');
+      }
+    }
+    const awaiting = pending.size;
+    summary.textContent=`${checked-failures}/${checked} verificaciones coinciden (${activeTheme}). ${awaiting ? awaiting + ' card(s) en transición; se medirán al terminar. ' : ''}${failures ? 'Revisa las celdas que dicen Difiere.' : 'Sin diferencias estables en estas cards de prueba.'}`;
+  }
+  function start() {
+    doc=frame.contentDocument;
+    if (!doc) { summary.textContent='No fue posible acceder al documento de diagnóstico.';return; }
+    const sheet=doc.querySelector('link[rel=stylesheet]');
+    // El navegador debe haber cargado el CSS antes de medir estilos.
+    if (sheet && !sheet.sheet) {summary.textContent='No se pudo cargar la hoja CSS para diagnóstico.';return;}
+    tbody.replaceChildren();
+    for (let i=1;i<=5;i++) {
+      const tr=doc.createElement('tr');
+      tr.dataset.resultLevel=String(i);
+      const first=doc.createElement('th');first.textContent=String(i);tr.appendChild(first);
+      ['fondo','texto','borde','interior','hover'].forEach(key=>{
+        const td=doc.createElement('td');td.dataset.check=key;td.textContent='—';tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    }
+    doc.querySelectorAll('.css005c2-card').forEach(el=>{
+      el.addEventListener('pointerenter', () => { scheduleVerification(el); verify(); });
+      el.addEventListener('pointerleave', () => { scheduleVerification(el); verify(); });
+      el.addEventListener('transitionend', event => {
+        if (event.target === el && event.propertyName === 'background-color') {
+          clearPending(el); verify();
+        }
+      });
+    });
+    button.addEventListener('click',verify);
+    verify();
+  }
+  frame.addEventListener('load',start,{once:true});
+  frame.srcdoc=html;
+})();
+</script>
+
+{% endblock %}

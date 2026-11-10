@@ -17,17 +17,17 @@
 <nav{% if context_menu.group == 'panel' %} id="panelTabs"{% endif %} class="workspace-menu workspace-menu-{{ context_menu.group }}{% if context_menu.group == 'panel' %} workspace-menu-panel{% endif %}" aria-label="Navegación contextual">
     {% if context_menu.parent %}
     <a href="{{ context_menu.parent.url }}" class="workspace-menu-item workspace-menu-parent" title="{{ context_menu.parent.label }}" aria-label="Volver a {{ context_menu.parent.label }}">
-        <span aria-hidden="true">{{ context_menu.parent.icon }}</span>
+        <span aria-hidden="true">{% if context_menu.parent.icon_class %}<i class="fa-solid {{ context_menu.parent.icon_class }}" aria-hidden="true"></i>{% else %}{{ context_menu.parent.icon }}{% endif %}</span>
     </a>
     {% endif %}
     {% for item in context_menu.items %}
     {% if item.target %}
     <button type="button" class="workspace-menu-item{% if item.active %} active{% endif %}" data-bs-toggle="tab" data-bs-target="{{ item.target }}" title="{{ item.label }}" aria-label="{{ item.label }}">
-        <span aria-hidden="true">{{ item.icon }}</span>
+        <span aria-hidden="true">{% if item.icon_class %}<i class="fa-solid {{ item.icon_class }}" aria-hidden="true"></i>{% else %}{{ item.icon }}{% endif %}</span>
     </button>
     {% else %}
     <a href="{{ item.url }}" class="workspace-menu-item{% if item.active %} active{% endif %}" title="{{ item.label }}" aria-label="{{ item.label }}">
-        <span aria-hidden="true">{{ item.icon }}</span>
+        <span aria-hidden="true">{% if item.icon_class %}<i class="fa-solid {{ item.icon_class }}" aria-hidden="true"></i>{% else %}{{ item.icon }}{% endif %}</span>
     </a>
     {% endif %}
     {% endfor %}

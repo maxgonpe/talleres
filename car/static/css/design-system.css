@@ -1661,27 +1661,27 @@ body {
   display: flex;
   gap: 6px;
   padding: 5px;
-  border: 1px solid rgba(24, 33, 31, .1);
+  border: 1px solid var(--floating-menu-border);
   border-radius: 999px;
-  background: rgba(255, 255, 255, .82);
+  background: var(--floating-menu-bg);
   box-shadow: 0 12px 28px rgba(24, 33, 31, .12);
   backdrop-filter: blur(14px);
 }
 .context-menu.context-menu-admin, .workspace-menu { left: auto !important; right: clamp(12px, 3vw, 46px) !important; margin-left: auto; }
-.context-menu-parent, .workspace-menu-parent { border-right: 1px solid var(--line); border-radius: 50% 0 0 50%; margin-right: 2px; }
+.context-menu-parent, .workspace-menu-parent { border-right: 1px solid var(--floating-menu-separator); border-radius: 50% 0 0 50%; margin-right: 2px; }
 .context-menu-item, .workspace-menu-item {
   display: grid;
   width: 38px;
   height: 38px;
   place-items: center;
   border-radius: 50%;
-  color: var(--ink);
+  color: var(--floating-menu-icon);
   font-size: 1rem;
   text-decoration: none;
   transition: transform .2s ease, background .2s ease, color .2s ease;
 }
-.context-menu-item:hover, .workspace-menu-item:hover { transform: translateY(-2px); background: rgba(217, 243, 106, .42); color: var(--ink); }
-.context-menu-item.active, .workspace-menu-item.active { background: var(--night); color: var(--signal); box-shadow: 0 5px 12px rgba(23, 34, 31, .18); }
+.context-menu-item:hover, .workspace-menu-item:hover { transform: translateY(-2px); background: var(--floating-menu-hover-bg); color: var(--floating-menu-hover-icon); }
+.context-menu-item.active, .workspace-menu-item.active { background: var(--floating-menu-active-bg); color: var(--floating-menu-active-icon); box-shadow: 0 5px 12px rgba(23, 34, 31, .18); }
 .navbar .nav-link { color: #c8d1cc !important; font-size: .8rem; font-weight: 700; padding: .65rem .85rem !important; border-radius: 999px; }
 .navbar .nav-link:hover, .navbar .nav-link.active { color: var(--night) !important; background: var(--signal); }
 .navbar-toggler { border-color: #607069; }
@@ -1709,10 +1709,12 @@ main > .container { max-width: 1500px; padding: clamp(1rem, 3vw, 2.8rem); }
 .estado-tabs { gap: .55rem !important; margin-bottom: 1.5rem !important; }
 .estado-tab { background: var(--panel) !important; border: 1px solid var(--line) !important; border-radius: 999px !important; color: var(--muted) !important; font-weight: 800 !important; padding: .7rem 1rem !important; }
 .estado-tab.active { background: var(--night) !important; border-color: var(--night) !important; color: var(--signal) !important; }
-.info-card { background: var(--surface-level-1); border: 1px solid var(--line) !important; border-radius: 18px !important; box-shadow: var(--shadow) !important; }
+.info-card { background: var(--surface-level-1); border: 1px solid var(--line); border-radius: 18px !important; box-shadow: var(--shadow) !important; }
+.info-card:not(:is(.ui-card-level-1, .ui-card-level-2, .ui-card-level-3, .ui-card-level-4, .ui-card-level-5)) { border: 1px solid var(--line) !important; }
 .tab-btn { background: transparent !important; border: 1px solid var(--line) !important; border-radius: 999px !important; color: var(--muted) !important; font-weight: 800 !important; }
 .tab-btn.active { background: var(--night) !important; border-color: var(--night) !important; color: var(--signal) !important; }
-.item-card { border: 1px solid var(--line) !important; border-radius: 14px !important; background: var(--surface-level-1); }
+.item-card { border: 1px solid var(--line); border-radius: 14px !important; background: var(--surface-level-1); }
+.item-card:not(:is(.ui-card-level-1, .ui-card-level-2, .ui-card-level-3, .ui-card-level-4, .ui-card-level-5)) { border: 1px solid var(--line) !important; }
 .item-card.completado { border-left: 4px solid var(--signal-dark) !important; }
 .item-card.pendiente { border-left: 4px solid #d4ddd6 !important; }
 .pos-container { max-width: 1500px !important; }
@@ -1720,7 +1722,8 @@ main > .container { max-width: 1500px; padding: clamp(1rem, 3vw, 2.8rem); }
 .pos-header h4 { color: #fff; font-size: 1.5rem; letter-spacing: -.04em; }
 .pos-header small { color: #aebbb3; font-family: "DM Mono", monospace; }
 .stats-row { gap: .8rem !important; }
-.pos-container .stat-card { background: var(--surface-level-1); border: 1px solid var(--line) !important; border-radius: 16px !important; box-shadow: none !important; }
+.pos-container .stat-card { background: var(--surface-level-1); border: 1px solid var(--line); border-radius: 16px !important; box-shadow: none !important; }
+.pos-container .stat-card:not(:is(.ui-card-level-1, .ui-card-level-2, .ui-card-level-3, .ui-card-level-4, .ui-card-level-5)) { border: 1px solid var(--line) !important; }
 .pos-container .stat-number { color: var(--ink) !important; font-weight: 800; }
 .search-container, .carrito-container { background: var(--surface-level-1); border: 1px solid var(--line) !important; border-radius: 18px !important; box-shadow: var(--shadow) !important; }
 .search-container input { font-size: 1.05rem; border-width: 2px; }
@@ -1747,9 +1750,13 @@ main > .container { max-width: 1500px; padding: clamp(1rem, 3vw, 2.8rem); }
 .container > h2, .container > h3 { font-weight: 800; letter-spacing: -.05em; }
 .container > .eyebrow { margin-top: .5rem; }
 .card-header h5, .card-header h6 { font-weight: 800; }
-.section-card { border: 1px solid var(--line) !important; border-radius: 18px !important; box-shadow: var(--shadow) !important; background: var(--surface-level-1); }
-.item-card-movil { border: 1px solid var(--line) !important; border-radius: 13px !important; background: var(--surface-level-1); }
-.stat-card, .action-card { border: 1px solid var(--line) !important; border-radius: 18px !important; box-shadow: none !important; transition: transform .2s ease, box-shadow .2s ease; }
+.section-card { border: 1px solid var(--line); border-radius: 18px !important; box-shadow: var(--shadow) !important; background: var(--surface-level-1); }
+.section-card:not(:is(.ui-card-level-1, .ui-card-level-2, .ui-card-level-3, .ui-card-level-4, .ui-card-level-5)) { border: 1px solid var(--line) !important; }
+.item-card-movil { border: 1px solid var(--line); border-radius: 13px !important; background: var(--surface-level-1); }
+.item-card-movil:not(:is(.ui-card-level-1, .ui-card-level-2, .ui-card-level-3, .ui-card-level-4, .ui-card-level-5)) { border: 1px solid var(--line) !important; }
+.stat-card, .action-card { border: 1px solid var(--line); border-radius: 18px !important; box-shadow: none !important; transition: transform .2s ease, box-shadow .2s ease; }
+.stat-card:not(:is(.ui-card-level-1, .ui-card-level-2, .ui-card-level-3, .ui-card-level-4, .ui-card-level-5)),
+.action-card:not(:is(.ui-card-level-1, .ui-card-level-2, .ui-card-level-3, .ui-card-level-4, .ui-card-level-5)) { border: 1px solid var(--line) !important; }
 .stat-card:hover, .action-card:hover { transform: translateY(-3px); box-shadow: var(--shadow) !important; }
 footer { background: var(--night); color: #aebbb3; border: 0 !important; }
 footer .container { max-width: 1500px; }
@@ -1823,7 +1830,7 @@ footer .container { max-width: 1500px; }
   --heading-1-color: var(--text-heading);
   --clock-text-color: var(--ui-accent-strong);
   --surface-level-3-text: var(--text-body);
-  --hierarchy-label-visibility: visible;
+  --hierarchy-label-visibility: hidden;
   --ink: var(--text-body);
   --line: var(--border-default);
   --signal: var(--ui-accent);
@@ -2085,36 +2092,29 @@ small, .text-muted, .action-description, .stat-label { color: var(--ui-muted) !i
 
 .ui-surface { background: var(--app-background); color: var(--text-body); border: 1px solid var(--border-default); }
 
-.ui-card-level-1,
-.ui-card-level-2,
-.ui-card-level-3,
-.ui-card-level-4,
-.ui-card-level-5 {
-  color: var(--text-body);
-  border: 1px solid var(--border-default);
-}
+/* Apariencia (texto y borde) definida por CSS-005B2; aquí solo geometría. */
 .ui-card-level-1 {
-  background: var(--surface-level-1);
+  
   border-radius: var(--ui-radius-lg);
   box-shadow: var(--ui-shadow-2);
 }
 .ui-card-level-2 {
-  background: var(--surface-level-2);
+  
   border-radius: var(--ui-radius-md);
   box-shadow: var(--ui-shadow-1);
 }
 .ui-card-level-3 {
-  background: var(--surface-level-3);
+  
   border-radius: var(--ui-radius-sm);
-  color: var(--surface-level-3-text);
+  
 }
 .ui-card-level-4 {
-  background: var(--surface-level-4);
+  
   border-radius: var(--ui-radius-sm);
 }
 .ui-card-level-5 {
-  background: var(--surface-level-5);
-  border: 1px solid var(--border-strong);
+  
+  
   border-radius: var(--ui-radius-sm);
 }
 .ui-heading-1 { color: var(--heading-1-color); font-size: var(--heading-1-size); }
@@ -2178,11 +2178,11 @@ body .trabajo-container .card {
   border-color: var(--border-default);
   color: var(--text-body);
 }
-body .trabajo-container .ui-card-level-1 { background: var(--surface-level-1); }
-body .trabajo-container .ui-card-level-2 { background: var(--surface-level-2); }
-body .trabajo-container .ui-card-level-3 { background: var(--surface-level-3); }
-body .trabajo-container .ui-card-level-4 { background: var(--surface-level-4); }
-body .trabajo-container .ui-card-level-5 { background: var(--surface-level-5); }
+
+
+
+
+
 body .trabajo-container .tab-container {
   background: var(--surface-level-1);
   background-color: var(--surface-level-1);
@@ -2227,7 +2227,7 @@ body .pizarra-cell .vehiculo-item .vehiculo-placa {
   letter-spacing: .03em;
   text-transform: uppercase;
 }
-#panelTabs.workspace-menu { display: flex !important; grid-template-columns: none !important; gap: 6px !important; margin: 0 !important; padding: 5px !important; border: 1px solid rgba(24, 33, 31, .1) !important; border-radius: var(--ui-radius-pill) !important; background: rgba(255, 255, 255, .82) !important; box-shadow: var(--ui-shadow-1) !important; }
+#panelTabs.workspace-menu { display: flex !important; grid-template-columns: none !important; gap: 6px !important; margin: 0 !important; padding: 5px !important; border: 1px solid var(--floating-menu-border) !important; border-radius: var(--ui-radius-pill) !important; background: var(--floating-menu-bg) !important; box-shadow: var(--ui-shadow-1) !important; }
 .context-menu-item, .workspace-menu-item { flex: 0 0 auto; }
 .workspace-menu-item { border: 0; background: transparent; cursor: pointer; font: inherit; }
 .panel-clock-container { justify-content: flex-start; }
@@ -13342,3 +13342,242 @@ html:has([data-css004b="c8cd0a1bbe"]) body:not(.theme-dark):not(.theme-piedra):n
 .css004b-inline-3da4a6072297 { width: 50% !important; }
 .css004b-inline-4c916eb5279e { width: 10% !important; }
 .css004b-inline-9f86755a4492 { width: 15% !important; }
+
+/* === EDITOR ADMINISTRATIVO /estilos/ (componentes globales) === */
+.estilos-admin .estilos-preview { background: var(--app-background); color: var(--text-body); border:1px solid var(--border-default); }
+.estilos-admin .estilos-nivel { display:block; margin:8px 0 0; padding:12px; border:1px solid var(--border-default); border-radius:var(--ui-radius-sm); color:var(--text-body); }
+.estilos-admin .nivel-1 { background:var(--surface-level-1); }
+.estilos-admin .nivel-2 { background:var(--surface-level-2); }
+.estilos-admin .nivel-3 { background:var(--surface-level-3); }
+.estilos-admin .nivel-4 { background:var(--surface-level-4); }
+.estilos-admin .nivel-5 { background:var(--surface-level-5); }
+.estilos-admin .estilo-item[hidden], .estilos-admin .estilos-grupo[hidden] { display:none !important; }
+.estilos-admin .form-control-color { flex:0 0 54px; width:54px; min-width:54px; padding:3px; }
+.estilos-admin .estilos-preview-sticky { top: 1rem; }
+
+/* === CSS-005C1: LEGACY AISLADO DE CARDS JERARQUICAS === */
+/* === CSS-005B2: CONTRATO CANONICO DE CARDS === */
+/* Cada nivel tiene fondo, texto, borde y hover editables desde /estilos/.
+   Valores iniciales conservan el aspecto del proyecto; nivel 3 Piedra requiere revisar contraste.
+   Esta sección es propiedad de CSS-005B2: no insertar excepciones por template. */
+:root {
+  --surface-level-1-text: #18211f;
+  --surface-level-1-border: #dce3dc;
+  --surface-level-1-hover: #ffffff;
+  --surface-level-2-text: #18211f;
+  --surface-level-2-border: #dce3dc;
+  --surface-level-2-hover: #e8eee6;
+  --surface-level-3-text: #18211f;
+  --surface-level-3-border: #dce3dc;
+  --surface-level-3-hover: #dfeac2;
+  --surface-level-4-text: #18211f;
+  --surface-level-4-border: #dce3dc;
+  --surface-level-4-hover: #f8faf7;
+  --surface-level-5-text: #18211f;
+  --surface-level-5-border: #b9c5bd;
+  --surface-level-5-hover: #eef2ed;
+}
+html.theme-piedra, html.theme-oscuro, html.theme-dark {
+  --surface-level-1-text: #e6eee8;
+  --surface-level-1-border: #ffffff;
+  --surface-level-1-hover: #808080;
+  --surface-level-2-text: #e6eee8;
+  --surface-level-2-border: #ffffff;
+  --surface-level-2-hover: #606060;
+  --surface-level-3-text: #000000;
+  --surface-level-3-border: #ffffff;
+  --surface-level-3-hover: #404040;
+  --surface-level-4-text: #e6eee8;
+  --surface-level-4-border: #ffffff;
+  --surface-level-4-hover: #202020;
+  --surface-level-5-text: #e6eee8;
+  --surface-level-5-border: #ffffff;
+  --surface-level-5-hover: #080808;
+}
+html.theme-sand, html.theme-claro {
+  --surface-level-1-text: #18211f;
+  --surface-level-1-border: #dce3dc;
+  --surface-level-1-hover: #ffffff;
+  --surface-level-2-text: #18211f;
+  --surface-level-2-border: #dce3dc;
+  --surface-level-2-hover: #e8eee6;
+  --surface-level-3-text: #18211f;
+  --surface-level-3-border: #dce3dc;
+  --surface-level-3-hover: #dfeac2;
+  --surface-level-4-text: #18211f;
+  --surface-level-4-border: #dce3dc;
+  --surface-level-4-hover: #f8faf7;
+  --surface-level-5-text: #18211f;
+  --surface-level-5-border: #b9c5bd;
+  --surface-level-5-hover: #eef2ed;
+}
+
+/* Alta especificidad deliberada para migración de reglas legacy sin !important.
+   Se aplica solo a cards CON nivel explícito; no modifica otras cards. */
+html body .ui-card-level-1.ui-card-level-1.ui-card-level-1 {
+  background: var(--surface-level-1);
+  color: var(--surface-level-1-text);
+  border-color: var(--surface-level-1-border);
+}
+html body .ui-card-level-1.ui-card-level-1.ui-card-level-1:hover {
+  background: var(--surface-level-1-hover);
+}
+
+html body .ui-card-level-2.ui-card-level-2.ui-card-level-2 {
+  background: var(--surface-level-2);
+  color: var(--surface-level-2-text);
+  border-color: var(--surface-level-2-border);
+}
+html body .ui-card-level-2.ui-card-level-2.ui-card-level-2:hover {
+  background: var(--surface-level-2-hover);
+}
+
+html body .ui-card-level-3.ui-card-level-3.ui-card-level-3 {
+  background: var(--surface-level-3);
+  color: var(--surface-level-3-text);
+  border-color: var(--surface-level-3-border);
+}
+html body .ui-card-level-3.ui-card-level-3.ui-card-level-3:hover {
+  background: var(--surface-level-3-hover);
+}
+
+html body .ui-card-level-4.ui-card-level-4.ui-card-level-4 {
+  background: var(--surface-level-4);
+  color: var(--surface-level-4-text);
+  border-color: var(--surface-level-4-border);
+}
+html body .ui-card-level-4.ui-card-level-4.ui-card-level-4:hover {
+  background: var(--surface-level-4-hover);
+}
+
+html body .ui-card-level-5.ui-card-level-5.ui-card-level-5 {
+  background: var(--surface-level-5);
+  color: var(--surface-level-5-text);
+  border-color: var(--surface-level-5-border);
+}
+html body .ui-card-level-5.ui-card-level-5.ui-card-level-5:hover {
+  background: var(--surface-level-5-hover);
+}
+
+/* Vista previa del administrador; mismo contrato de tokens que las cards reales. */
+.estilos-admin .estilos-preview .estilos-nivel { transition: background-color .15s ease; }
+.estilos-admin .estilos-preview .estilos-nivel.nivel-1 {
+  background: var(--surface-level-1);
+  color: var(--surface-level-1-text);
+  border-color: var(--surface-level-1-border);
+}
+.estilos-admin .estilos-preview .estilos-nivel.nivel-1:hover {
+  background: var(--surface-level-1-hover);
+}
+.estilos-admin .estilos-preview .estilos-nivel.nivel-2 {
+  background: var(--surface-level-2);
+  color: var(--surface-level-2-text);
+  border-color: var(--surface-level-2-border);
+}
+.estilos-admin .estilos-preview .estilos-nivel.nivel-2:hover {
+  background: var(--surface-level-2-hover);
+}
+.estilos-admin .estilos-preview .estilos-nivel.nivel-3 {
+  background: var(--surface-level-3);
+  color: var(--surface-level-3-text);
+  border-color: var(--surface-level-3-border);
+}
+.estilos-admin .estilos-preview .estilos-nivel.nivel-3:hover {
+  background: var(--surface-level-3-hover);
+}
+.estilos-admin .estilos-preview .estilos-nivel.nivel-4 {
+  background: var(--surface-level-4);
+  color: var(--surface-level-4-text);
+  border-color: var(--surface-level-4-border);
+}
+.estilos-admin .estilos-preview .estilos-nivel.nivel-4:hover {
+  background: var(--surface-level-4-hover);
+}
+.estilos-admin .estilos-preview .estilos-nivel.nivel-5 {
+  background: var(--surface-level-5);
+  color: var(--surface-level-5-text);
+  border-color: var(--surface-level-5-border);
+}
+.estilos-admin .estilos-preview .estilos-nivel.nivel-5:hover {
+  background: var(--surface-level-5-hover);
+}
+/* === CSS-005B2: FIN CONTRATO DE CARDS === */
+
+/* === CSS-005C2: INTERIORES DE CARDS JERARQUICAS === */
+/* Solo hijos directos, no cards anidadas. Propiedades visuales consumen tokens del contrato. */
+html body .ui-card-level-1.ui-card-level-1.ui-card-level-1 > :is(.card-header, .card-body, .card-footer) {
+  background-color: transparent;
+  color: inherit;
+  border-color: var(--surface-level-1-border);
+}
+html body .ui-card-level-2.ui-card-level-2.ui-card-level-2 > :is(.card-header, .card-body, .card-footer) {
+  background-color: transparent;
+  color: inherit;
+  border-color: var(--surface-level-2-border);
+}
+html body .ui-card-level-3.ui-card-level-3.ui-card-level-3 > :is(.card-header, .card-body, .card-footer) {
+  background-color: transparent;
+  color: inherit;
+  border-color: var(--surface-level-3-border);
+}
+html body .ui-card-level-4.ui-card-level-4.ui-card-level-4 > :is(.card-header, .card-body, .card-footer) {
+  background-color: transparent;
+  color: inherit;
+  border-color: var(--surface-level-4-border);
+}
+html body .ui-card-level-5.ui-card-level-5.ui-card-level-5 > :is(.card-header, .card-body, .card-footer) {
+  background-color: transparent;
+  color: inherit;
+  border-color: var(--surface-level-5-border);
+}
+/* === CSS-005C2: FIN INTERIORES === */
+
+
+/* CSS-005C2: Geometría del diagnóstico, sin colores fijos. */
+.estilos-admin .css005c2-frame { width:100%; min-height: 680px; border: 1px solid var(--border-default); border-radius: var(--ui-radius-md, .5rem); }
+/* VIS-001: preferencia de jerarquía por instalación, almacenada en la BD. */
+body.hierarchy-labels-hidden { --hierarchy-label-visibility: hidden; }
+body.hierarchy-labels-visible { --hierarchy-label-visibility: visible; }
+
+/* === VIS-003A: VARIABLES DEL MENU FLOTANTE === */
+/* Valores iniciales iguales a la apariencia existente; personalizar desde /estilos/. */
+html.theme-piedra, html.theme-oscuro, html.theme-dark {
+  --floating-menu-bg: rgba(255, 255, 255, .82);
+  --floating-menu-border: rgba(24, 33, 31, .1);
+  --floating-menu-icon: #18211f;
+  --floating-menu-hover-bg: rgba(217, 243, 106, .42);
+  --floating-menu-hover-icon: #18211f;
+  --floating-menu-active-bg: #17221f;
+  --floating-menu-active-icon: #d9f36a;
+  --floating-menu-separator: #dce3dc;
+}
+html.theme-sand, html.theme-claro {
+  --floating-menu-bg: rgba(255, 255, 255, .82);
+  --floating-menu-border: rgba(24, 33, 31, .1);
+  --floating-menu-icon: #18211f;
+  --floating-menu-hover-bg: rgba(217, 243, 106, .42);
+  --floating-menu-hover-icon: #18211f;
+  --floating-menu-active-bg: #17221f;
+  --floating-menu-active-icon: #d9f36a;
+  --floating-menu-separator: #dce3dc;
+}
+/* === VIS-003A: FIN VARIABLES DEL MENU === */
+
+/* === ESTILOS: INICIO DE AJUSTES ADMINISTRADOS === */
+/* Ajustes guardados desde /estilos/; no editar este bloque manualmente. */
+html.theme-piedra, html.theme-oscuro, html.theme-dark {
+  --app-background: #3d3846;
+  --panel: #dc8add;
+  --surface-level-1: #77767b;
+  --surface-level-2: #5e5c64;
+  --surface-level-2-border: #ffffff;
+}
+html.theme-sand, html.theme-claro {
+  --app-background: #e5a50a;
+  --clock-text-color: #ff0000;
+  --surface-level-1: #ffffff;
+  --surface-level-2: #ffffff;
+  --surface-level-3: #ffffff;
+  --ui-accent-strong: #ffffff;
+}
+/* === ESTILOS: FIN DE AJUSTES ADMINISTRADOS === */

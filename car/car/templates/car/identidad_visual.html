@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Identidad visual · Estilos{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <div><h1 class="h3">Identidad visual del taller</h1><p class="text-muted mb-0">Especialidad, indicadores técnicos e iconos de los menús flotantes.</p></div>
+    <a class="btn btn-outline-secondary" href="/estilos/">Volver a Estilos</a>
+  </div>
+  <form method="post" id="identidad-form">{% csrf_token %}
+    <section class="card ui-card-level-1 mb-3"><div class="card-body">
+      <h2 class="h5">Tipo de taller</h2>
+      <p class="text-muted">La configuración predeterminada es Automóviles. No altera los modelos ni los datos.</p>
+      <select class="form-select" name="tipo_taller" id="tipo-taller">
+        {% for value, name in especialidades %}<option value="{{ value }}" {% if identidad.tipo_taller == value %}selected{% endif %}>{{ name }}</option>{% endfor %}
+      </select>
+      <div class="form-check form-switch mt-3">
+        <input class="form-check-input" type="checkbox" name="mostrar_jerarquia" id="mostrar-jerarquia" {% if identidad.mostrar_jerarquia %}checked{% endif %}>
+        <label class="form-check-label" for="mostrar-jerarquia">Mostrar indicadores técnicos de jerarquía</label>
+      </div>
+    </div></section>
+    <section class="card ui-card-level-1 mb-3"><div class="card-header"><h2 class="h5 mb-0">Iconos de los menús flotantes</h2></div>
+      <div class="card-body">
+        <p class="text-muted">Cada opción tiene su propio icono. Se utilizan Font Awesome y una lista controlada de símbolos para evitar repeticiones.</p>
+        <div class="row g-3">
+          {% for item in items_menu %}
+          <div class="col-md-6 col-xl-4"><div class="border rounded p-3 h-100">
+            <div class="small text-muted">{{ item.group }}</div>
+            <label class="form-label fw-semibold" for="icon-{{ forloop.counter }}">{{ item.label }}</label>
+            <div class="d-flex gap-2 align-items-center">
+              <i class="fa-solid {{ item.selected }} fa-lg identidad-icono" aria-hidden="true"></i>
+              <select class="form-select identidad-selector" name="icon_{{ item.key }}" data-key="{{ item.key }}" id="icon-{{ forloop.counter }}">
+                {% for icon, name in catalogo_iconos %}<option value="{{ icon }}" {% if item.selected == icon %}selected{% endif %}>{{ name }}</option>{% endfor %}
+              </select>
+            </div>
+          </div></div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+    <button type="submit" class="btn btn-primary mb-5">Guardar identidad visual</button>
+  </form>
+</div>
+<script>
+  // Al cambiar de especialidad, actualizar solo iconos que aún coincidan con el predeterminado anterior.
+  const tipo = document.getElementById('tipo-taller');
+  const specialtyIcons = { auto:'fa-car-side', moto:'fa-motorcycle', bici:'fa-bicycle', maquinaria:'fa-tractor' };
+  let previous = tipo.value;
+  tipo.addEventListener('change', function() {
+    document.querySelectorAll('.identidad-selector').forEach(function(select) {
+      if (!/\.(vehiculos|compatibilidad)$/.test(select.dataset.key)) return;
+      if (select.value === specialtyIcons[previous]) {
+        select.value = specialtyIcons[tipo.value];
+        select.dispatchEvent(new Event('change'));
+      }
+    });
+    previous = tipo.value;
+  });
+  document.querySelectorAll('.identidad-selector').forEach(function(select) {
+    select.addEventListener('change', function() {
+      const icon = select.parentElement.querySelector('.identidad-icono');
+      icon.className = 'fa-solid ' + select.value + ' fa-lg identidad-icono';
+    });
+  });
+</script>
+{% endblock %}

@@ -77,6 +77,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'django.template.context_processors.static',
                 'car.context_processors.configuracion_taller',
+                'car.views_estilos.version_context',
             ],
         },
     },
